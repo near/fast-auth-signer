@@ -25,9 +25,9 @@
   },
   "homepage": "https://github.com/brandiqa/react-parcel-starter#readme",
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/preset-react": "^7.0.0",
     "parcel-bundler": "^1.12.3"
   },
   "dependencies": {
