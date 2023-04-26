@@ -11,8 +11,6 @@ jobs:
   bundle-frontend:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
-    env:
-      NEAR_WALLET_ENV: ${{ inputs.near_wallet_env }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -20,7 +18,7 @@ jobs:
           node-version: 18.x
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
-      - run: yarn build
+      - run: yarn bundle
       - uses: google-github-actions/setup-gcloud@v1
       - uses: google-github-actions/auth@v1
         with:

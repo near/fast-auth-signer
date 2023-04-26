@@ -6,6 +6,7 @@
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build src/index.html",
+    "bundle": "parcel build src/index.html --public-url /fastauth",
     "watch": "parcel watch src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
