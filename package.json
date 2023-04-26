@@ -26,6 +26,7 @@
   "dependencies": {
     "@near-js/biometric-ed25519": "^0.0.7",
     "@stitches/react": "^1.2.8",
+    "near-api-js": "^2.1.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },

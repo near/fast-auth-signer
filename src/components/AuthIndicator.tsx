@@ -6,7 +6,9 @@ import { styled } from '../styles/stitches.config'
 const AuthIndicator = () => {
     const isSignedIn = FastAuthController.isSignedIn()
     return (
-        <StyledContainer isSignedIn={isSignedIn}>{isSignedIn ? <p>signed in</p> : <p>not signed in</p>}</StyledContainer>
+        <StyledContainer isSignedIn={isSignedIn}>
+            {isSignedIn ? <p>signed in</p> : <p>not signed in</p>}
+        </StyledContainer>
     )
 }
 
