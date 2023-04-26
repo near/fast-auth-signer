@@ -9,14 +9,9 @@ class FastAuthController {
     }
 
     getPublicKey() { }
-
-    sendMessage(payload: any, receiverWindow: Window | null) {
-        if (receiverWindow) {
-            receiverWindow.postMessage(payload, '*');
-        } else {
-            console.error('Unable to send message to parent iframe: parent window is not available.');
-        }
-    }
+    getAccounts() { }
+    signTransaction() { }
+    signDelegateAction() { }
 }
 
 export default new FastAuthController();
