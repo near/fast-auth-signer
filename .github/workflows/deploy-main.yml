@@ -1,0 +1,29 @@
+name: Deploy Site
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: 'fast-auth-signer-deployment'
+  cancel-in-progress: true
+
+jobs:
+  deploy-testnet:
+    uses: ./.github/workflows/bundle-and-deploy.yml
+    with:
+      environment: testnet
+    secrets: inherit
+
+  deploy-staging:
+    uses: ./.github/workflows/bundle-and-deploy.yml
+    with:
+      environment: staging
+    secrets: inherit
+
+  deploy-mainnet:
+    uses: ./.github/workflows/bundle-and-deploy.yml
+    with:
+      environment: mainnet
+    secrets: inherit
