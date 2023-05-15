@@ -25,8 +25,12 @@
     "last 1 Chrome version"
   ],
   "dependencies": {
-    "@near-js/biometric-ed25519": "^0.0.7",
+    "@near-js/accounts": "^0.1.3",
+    "@near-js/biometric-ed25519": "0.1.0",
+    "@near-js/crypto": "^0.0.4",
+    "@near-js/keystores": "^0.0.4",
     "@stitches/react": "^1.2.8",
+    "borsh": "^0.7.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
