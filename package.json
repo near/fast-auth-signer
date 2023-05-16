@@ -1,25 +1,28 @@
 {
-  "name": "wallet-fast-auth",
+  "name": "@near-js/fast-auth-signer",
   "version": "1.0.1",
-  "description": "This is a minimal React starter project. Only React and React DOM have been installed",
+  "description": "Signer for fast auth functionality in near-discovery gateways",
   "main": "src/index.html",
   "scripts": {
     "start": "parcel src/index.html",
     "build": "parcel build src/index.html",
     "bundle": "parcel build src/index.html --public-url /fastauth",
     "watch": "parcel watch src/index.html",
+    "lint": "eslint ./",
+    "fix": "eslint ./ --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brandiqa/react-parcel-starter.git"
+    "url": "git+https://github.com/near/fast-auth-signer.git"
   },
   "keywords": [
     "React",
     "Parcel",
     "Starter"
   ],
-  "author": "Michael Wanyoike",
+  "author": "Pagoda, Inc.",
+  "contributors": ["Andy Haynes", "Daryl Collins (daryl@darylcollins.com)", "Philip Obosi (philip.c.obosi@gmail.com)"],
   "license": "MIT",
   "browserslist": [
     "last 1 Chrome version"
@@ -28,6 +31,7 @@
     "@near-js/accounts": "^0.1.3",
     "@near-js/biometric-ed25519": "0.1.0",
     "@near-js/crypto": "^0.0.4",
+    "@near-js/iframe-rpc": "^0.0.2",
     "@near-js/keystores": "^0.0.4",
     "@stitches/react": "^1.2.8",
     "borsh": "^0.7.0",
@@ -35,9 +39,21 @@
     "react-dom": "^16.13.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.2",
+    "@babel/core": "7.18.6",
+    "@babel/eslint-parser": "^7.21.8",
     "@babel/preset-env": "^7.10.2",
     "@babel/preset-react": "^7.10.1",
+    "@types/react": "^18.2.6",
+    "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^5.59.6",
+    "@typescript-eslint/parser": "^5.59.6",
+    "eslint": "^8.40.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "parcel-bundler": "^1.12.4",
     "typescript": "^5.0.4"
   }
