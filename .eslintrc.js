@@ -13,10 +13,12 @@ module.exports = {
   overrides: [{
     files: ['*.ts', '*.tsx'],
   }],
-  extends: ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
-  rules:   {
-    'react/prop-types':             [0],
-    'react/jsx-filename-extension': [0],
+  ignorePatterns: ['dist'],
+  extends:        ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
+  rules:          {
+    'react/require-default-props':  'off',
+    'react/prop-types':             'off',
+    'react/jsx-filename-extension': 'off',
     'prefer-destructuring':                [
       'error', {
         VariableDeclarator:   {
