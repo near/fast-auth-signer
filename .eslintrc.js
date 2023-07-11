@@ -16,6 +16,7 @@ module.exports = {
   ignorePatterns: ['dist'],
   extends:        ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
   rules:          {
+    'linebreak-style':              0,
     'react/require-default-props':  'off',
     'react/prop-types':             'off',
     'react/jsx-filename-extension': 'off',
@@ -88,5 +89,5 @@ module.exports = {
     'arrow-parens':                        ['error', 'always'],
     'key-spacing':                         ['warn', { align: 'value', mode: 'minimum' }],
     'one-var-declaration-per-line':        ['error', 'initializations']
-  }
+  },
 };
