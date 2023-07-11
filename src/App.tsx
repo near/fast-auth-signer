@@ -1,7 +1,11 @@
 import debug from 'debug';
 import * as React from 'react';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
+import Layout from './components/Layout/Layout';
+import Login from './components/Login/Login';
+import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
 
@@ -29,7 +33,15 @@ export default function App() {
   return (
     <>
       <GlobalStyle />
-      <AuthIndicator controller={window.fastAuthController} />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
+            <Route path="login" element={<Login />} />
+            <Route path="sign" element={<Sign />} />
+          </Route>
+        </Routes>
+      </Router>
     </>
   );
 }
