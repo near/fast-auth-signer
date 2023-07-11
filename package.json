@@ -4,7 +4,7 @@
   "description": "Signer for fast auth functionality in near-discovery gateways",
   "main": "src/index.html",
   "scripts": {
-    "start": "webpack serve --mode development",
+    "start": "webpack serve --mode development --history-api-fallback",
     "bundle": "webpack build --mode production --output-public-path /fastauth",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",
@@ -45,6 +45,7 @@
     "react-dom": "^16.13.1",
     "react-i18next": "^13.0.2",
     "react-router": "^6.14.1",
+    "react-router-dom": "^6.14.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "styled-components": "^6.0.0-rc.1",
