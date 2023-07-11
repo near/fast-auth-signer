@@ -40,28 +40,17 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route
-              index
-              element={(
-                <>
-                  <AuthIndicator controller={window.fastAuthController} />
-                  <h1>{t("main.title")}</h1>
-                  <button type="button" onClick={() => i18n.changeLanguage("de")}>
-                    de
-                  </button>
-                  <button type="button" onClick={() => i18n.changeLanguage("en")}>
-                    en
-                  </button>
-                  <p>{t("main.titleDesc")}</p>
-                </>
-              )}
-            />
+            <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
           </Route>
         </Routes>
       </Router>
+      <h1>{t('main.title')}</h1>
+      <button type="button" onClick={() => i18n.changeLanguage('de')}>de</button>
+      <button type="button" onClick={() => i18n.changeLanguage('en')}>en</button>
+      <p>{t('main.titleDesc')}</p>
     </>
   );
 }
