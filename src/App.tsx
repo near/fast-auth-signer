@@ -1,7 +1,7 @@
 import debug from 'debug';
 import * as React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
