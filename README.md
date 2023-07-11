@@ -1,45 +1,39 @@
-# React Parcel Starter Kit
+# Fast-Auth-Signer
 
-This is a minimal React starter project that uses the [Parcel JS](https://www.parceljs.org) to build the project. Only React and React DOM modules have been installed.
-
-## Prerequisites
-
-- Install latest [Node.js LTS version](https://nodejs.org/en/download/)
-- Install latest version of [Yarn](https://classic.yarnpkg.com/en/)
-
-Do note if you use `npm`, a different lock file will be created. If you wish to use `npm` instead of Yarn, then delete `yarn.lock` file. Don't mix package managers.
-
-## How to setup a project
-
-First create a **completely blank** GitHub/BitBucket repository on your account. Then execute the following commands to install blank new React project in your machine:
-
-```bash
-# Replace `projectName` with a name of your choice
-$ git clone git@github.com:brandiqa/react-parcel-starter.git projectName
-$ cd projectName
-$ git remote rm origin
-# Replace `username` and `repositoryName` with your values
-$ git remote add origin git@github.com:username/repositoryName.git
-$ git config master.remote origin
-$ git config master.merge refs/heads/master
-$ git push -u origin master
-$ npm install
-
-```
+This application facilitates generation of ED25519 keys via biometrics, signing of transactions using those keys, and an implementation of 'sign in' functionality using the same paradigm as wallet apps in the ecosystem support.
+It is designed to be integrated into [near-discovery](https://github.com/near/near-discovery) by way of inter-iframe RPC calls leveraging [iframe-rpc](https://github.com/near/near-api-js/tree/master/packages/iframe-rpc).
 
 ## How to run
 
-After you have completed the above steps. You'll need to install the dependencies first before you start the dev server.
+This repository uses Yarn for package management. You'll need to install the dependencies first before you start the dev server.
 
 ```bash
-npm install
-npm start
+yarn install
+yarn start
 ```
 
-## Miscellaneous
+## UI Routes
+#### `/sign`
+- Displays a UI to display transaction details, allowing the user to review the transaction and approve signing it.
+#### `/login`
+- Displays a UI to display a detailed overview of access key permissions that are being requested to be added to the user's account.
 
-Open the file `package.json` and update the repository details. You may also need to update the dependencies manually if a major version has been release.
-
-## Contribution
-
-Simply create a fork of this project. Do your contribution on a separate branch then submit a pull request for review.
+## RPC API
+#### `getPublicKey()`
+- Returns the user's public key in hex format, which is derived from a WebAuthN (typically biometric) interaction
+- Throws error if user has not yet authenticated
+#### `getAccount()`
+- Returns the account ID of the account that the user is currently authenticated to use.  
+- Throws error if user has not yet authenticated
+#### `signTransactions(transactions[])`
+- Navigates to the appropate UI route (/sign)
+- Returns signed transactions that can be submitted by the requester if approved
+- Throws error if failed or cancelled by user
+#### `signDelegateAction(actions)`
+- Navigates to the appropate UI route (/sign)
+- Returns a signed DelegateAction composed of the requested actions so that the requester can submit them for execution by a relayer if approved
+- Throws error if failed or cancelled by user
+#### `login(accessKey)`
+- Navigates to the appropate UI route (/login)
+- Returns true if login was successful
+- Throws error if failed or cancelled by user
