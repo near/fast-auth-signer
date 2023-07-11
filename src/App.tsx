@@ -1,6 +1,7 @@
 import debug from 'debug';
 import * as React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
@@ -31,13 +32,30 @@ export default function App() {
   log('faLog');
   log2('faLogzzzzz');
 
+  const { t, i18n } = useTranslation('common');
+
   return (
     <>
       <GlobalStyle />
       <Router>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
+            <Route
+              index
+              element={(
+                <>
+                  <AuthIndicator controller={window.fastAuthController} />
+                  <h1>{t("main.title")}</h1>
+                  <button type="button" onClick={() => i18n.changeLanguage("de")}>
+                    de
+                  </button>
+                  <button type="button" onClick={() => i18n.changeLanguage("en")}>
+                    en
+                  </button>
+                  <p>{t("main.titleDesc")}</p>
+                </>
+              )}
+            />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
