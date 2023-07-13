@@ -19,7 +19,7 @@ yarn start
 - FAK is generated via WebAuthN prompt (typically biometrics)
 #### `/add-device`
 - Displays a UI to authorize the current machine to control a recovery-service enabled account (adds a new biometric-based FAK to the account)
-- - FAK is generated via WebAuthN prompt (typically biometrics)
+- FAK is generated via WebAuthN prompt (typically biometrics)
 #### `/sign`
 - Displays a UI to display transaction details, allowing the user to review the transaction and approve signing it.
 #### `/login`
