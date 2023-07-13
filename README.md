@@ -28,7 +28,7 @@ yarn start
 
 
 ## RPC API
-#### `createAccount(limitedAccessPublicKey) -> { accountId: string, fullAccessPublicKey:string }`
+#### `createAccount(limitedAccessPublicKeys[]) -> { accountId: string, fullAccessPublicKey:string }`
 - Returns the account ID of the account that the user created, along with the publicKey of the FAK that was used to secure the account (generated via WebAuthN prompt)
 #### `getPublicKey() -> <PublicKey in Hex format`
 - Returns the user's public key in hex format, which is derived from a WebAuthN (typically biometric) interaction
