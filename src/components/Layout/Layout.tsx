@@ -10,7 +10,10 @@ function Layout() {
             <Link to="/">Home</Link>
           </li>
           <li>
-            <Link to="/login">Login</Link>
+            <Link to="/add-device">Add Device</Link>
+          </li>
+          <li>
+            <Link to="/create-account">Create Account</Link>
           </li>
           <li>
             <Link to="/sign">Sign</Link>

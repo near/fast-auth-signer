@@ -3,9 +3,10 @@ import * as React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
+import CreateAccount from './components/CreateAccount/CreateAccount';
 import Layout from './components/Layout/Layout';
-import Login from './components/Login/Login';
 import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
@@ -40,7 +41,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
-            <Route path="login" element={<Login />} />
+            <Route path="add-device" element={<AddDevice />} />
+            <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
           </Route>
         </Routes>
