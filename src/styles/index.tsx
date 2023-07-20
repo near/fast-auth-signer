@@ -9,11 +9,13 @@ export default createGlobalStyle`
     min-height: 100vh;
     position: relative;
   }
+
   html {
     .wallet-selector-get-a-wallet-modal {
       .modal-left {
         display: none;
       }
+
       .modal-right {
         width: 100% !important;
       }
@@ -23,6 +25,7 @@ export default createGlobalStyle`
         margin: 91px auto 0 auto;
       }
     }
+
     box-sizing: border-box;
     min-height: 100vh;
     height: auto !important;
@@ -90,6 +93,7 @@ export default createGlobalStyle`
       font-weight: 900 !important;
     }
   }
+
   h2, .h2 {
     font-size: 24px;
     font-weight: 900;
@@ -100,12 +104,14 @@ export default createGlobalStyle`
       color: #3F4045;
     }
   }
+
   h3, .h3 {
     font-size: 20px;
     font-weight: 900;
     color: #272729;
     margin: 0px;
   }
+
   h4, .h4 {
     font-size: 16px;
     font-weight: 500;
@@ -156,34 +162,30 @@ export default createGlobalStyle`
 
       @keyframes link {
         0%, 20% {
-          color: rgba(0,0,0,0);
-          text-shadow:
-                  .3em 0 0 rgba(0,0,0,0),
-                  .6em 0 0 rgba(0,0,0,0);
+          color: rgba(0, 0, 0, 0);
+          text-shadow: .3em 0 0 rgba(0, 0, 0, 0),
+          .6em 0 0 rgba(0, 0, 0, 0);
         }
         40% {
           color: #4a4f54;
-          text-shadow:
-                  .3em 0 0 rgba(0,0,0,0),
-                  .6em 0 0 rgba(0,0,0,0);
+          text-shadow: .3em 0 0 rgba(0, 0, 0, 0),
+          .6em 0 0 rgba(0, 0, 0, 0);
         }
         60% {
-          text-shadow:
-                  .3em 0 0 #4a4f54,
-                  .6em 0 0 rgba(0,0,0,0);
+          text-shadow: .3em 0 0 #4a4f54,
+          .6em 0 0 rgba(0, 0, 0, 0);
         }
         80%, 100% {
-          text-shadow:
-                  .3em 0 0 #4a4f54,
-                  .6em 0 0 #4a4f54;
+          text-shadow: .3em 0 0 #4a4f54,
+          .6em 0 0 #4a4f54;
         }
       }
     }
   }
 
   //Navbar styles
-  .nav-links{
-    a{
+  .nav-links {
+    a {
       text-decoration: none;
     }
   }
@@ -257,7 +259,7 @@ export default createGlobalStyle`
   }
 
   input[type=number] {
-    -moz-appearance:textfield;
+    -moz-appearance: textfield;
   }
 
   .input-validation-label {
@@ -286,6 +288,7 @@ export default createGlobalStyle`
     padding: 14px;
     line-height: 180%;
     font-size: 16px;
+
     ::placeholder {
       color: #A2A2A8;
     }
@@ -300,6 +303,7 @@ export default createGlobalStyle`
 
   .spinner {
     margin-right: 10px !important;
+
     :before,
     :after {
       top: 28px !important;
@@ -307,6 +311,7 @@ export default createGlobalStyle`
       height: 24px !important;
     }
   }
+
   .problem > .input > input,
   .problem > .input > input:focus,
   .problem > input {
@@ -337,15 +342,19 @@ export default createGlobalStyle`
   .color-seafoam-blue {
     color: #6ad1e3 !important;
   }
+
   .color-blue {
     color: #0072ce !important;
   }
+
   .color-brown-grey {
     color: #999;
   }
+
   .color-charcoal-grey {
     color: #4a4f54 !important;
   }
+
   .color-black {
     color: #24272a !important;
 
@@ -353,9 +362,11 @@ export default createGlobalStyle`
       color: #24272a;
     }
   }
+
   .color-red {
     color: #ff585d !important;
   }
+
   .color-green {
     color: #00C08B !important;
   }
@@ -368,9 +379,11 @@ export default createGlobalStyle`
   .border-bottom {
     border-bottom: 2px solid #f8f8f8 !important;
   }
+
   .border-bottom-bold {
     border-bottom: 4px solid #e6e6e6 !important;
   }
+
   .border-bottom-light {
     border-bottom: 1px solid #f8f8f8 !important;
   }
@@ -382,6 +395,7 @@ export default createGlobalStyle`
   .border-top-bold {
     border-top: 4px solid #e6e6e6 !important;
   }
+
   .border-top-light {
     border-top: 1px solid #f8f8f8 !important;
   }
@@ -394,9 +408,11 @@ export default createGlobalStyle`
   .border-right {
     border-right: 2px solid #e6e6e6;
   }
+
   .border-right-light {
     border-right: 1px solid #e6e6e6;
   }
+
   .background-lg {
     background: #f8f8f8;
   }
@@ -405,6 +421,25 @@ export default createGlobalStyle`
   button, .button {
     cursor: pointer;
     outline: none;
+
+    border-radius: 50px;
+    height: 48px;
+    padding: 8px 24px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    align-self: stretch;
+    display: block;
+
+    &.primary {
+      color: #FFFFFF;
+      background: var(--sand-dark-1, #161615);
+    }
+
+    &.secondary {
+      border-radius: 50px;
+      background: var(--sand-light-1, #FDFDFC);
+    }
   }
 
   .box {
@@ -418,23 +453,28 @@ export default createGlobalStyle`
     .row {
       padding: 0px !important;
     }
+
     .column {
       padding: 16px 18px !important;
       word-wrap: break-word;
     }
+
     .segment {
       padding: 30px 0 20px 0 !important;
     }
+
     .list {
       > .item {
         > img {
           top: -4px;
           margin: 0 10px;
         }
+
         > img.transarrow {
           width: 11px !important;
         }
       }
+
       > h5.item {
         top: -4px;
       }
@@ -484,9 +524,10 @@ export default createGlobalStyle`
     margin: auto;
   }
 
-  .ui.popup>.header, .ui.popup {
+  .ui.popup > .header, .ui.popup {
     color: white;
   }
+
   .ui.popup {
     border: 0;
     background-color: #292526;
@@ -495,12 +536,15 @@ export default createGlobalStyle`
       display: none;
     }
   }
+
   .ui.left.center.popup:before {
     box-shadow: 1px -1px 0 0 #eee;
   }
+
   .ui.top.center.popup:before {
     box-shadow: 1px 1px 0px 0px #eee;
   }
+
   .ui.bottom.right.popup:before {
     box-shadow: -1px -1px 0 0 #eee;
   }
@@ -511,6 +555,7 @@ export default createGlobalStyle`
       font-weight: 900;
       margin: 0px;
     }
+
     .box .column {
       padding: 16px 18px !important;
     }
@@ -628,7 +673,7 @@ export default createGlobalStyle`
 
   .bsw {
     &-l {
-      box-shadow: 0px 45px 56px 0px rgba(0,0,0,0.07), 0px 10.05px 12.51px 0px rgba(0,0,0,0.0417), 0px 2.99px 3.72px 0px rgba(0,0,0,0.0283);
+      box-shadow: 0px 45px 56px 0px rgba(0, 0, 0, 0.07), 0px 10.05px 12.51px 0px rgba(0, 0, 0, 0.0417), 0px 2.99px 3.72px 0px rgba(0, 0, 0, 0.0283);
     }
   }
 
@@ -638,7 +683,7 @@ export default createGlobalStyle`
     align-items: center;
   }
 
-  a{
-    text-decoration:none;
+  a {
+    text-decoration: none;
   }
 `;
