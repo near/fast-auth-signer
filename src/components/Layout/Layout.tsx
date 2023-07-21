@@ -18,6 +18,9 @@ function Layout() {
           <li>
             <Link to="/sign">Sign</Link>
           </li>
+          <li>
+            <Link to="/devices">Devices</Link>
+          </li>
         </ul>
       </div>
       <div>

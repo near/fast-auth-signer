@@ -9,6 +9,7 @@ import AddDevice from './components/AddDevice/AddDevice';
 import AuthCallbackPage from './components/AuthCallback/AuthCallback';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
+import Devices from './components/Devices/Devices';
 import Layout from './components/Layout/Layout';
 import Login from './components/Login/Login';
 import Sign from './components/Sign/Sign';
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="login" element={<Login controller={window.fastAuthController} />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
+            <Route path="devices" element={<Devices controller={window.fastAuthController} />} />
           </Route>
         </Routes>
       </Router>
