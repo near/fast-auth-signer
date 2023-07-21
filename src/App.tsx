@@ -1,11 +1,12 @@
 import debug from 'debug';
 import * as React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
+import Devices from './components/Devices/Devices';
 import Layout from './components/Layout/Layout';
 import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
@@ -41,9 +42,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
-            <Route path="add-device" element={<AddDevice />} />
+            <Route path="add-device" element={<AddDevice controller={window.fastAuthController} />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
+            <Route path="devices" element={<Devices controller={window.fastAuthController} />} />
           </Route>
         </Routes>
       </Router>

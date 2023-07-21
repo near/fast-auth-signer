@@ -3,7 +3,14 @@ import { createKey, getKeys } from '@near-js/biometric-ed25519';
 import { KeyPairEd25519 } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
 import { baseEncode } from 'borsh';
+import { initializeApp } from 'firebase/app';
+import { Auth, getAuth } from 'firebase/auth';
+import {
+  getFirestore, Firestore, collection, addDoc, getDocs, query, where, writeBatch, doc
+} from 'firebase/firestore';
+import UAParser from 'ua-parser-js';
 
+import firebaseParams from './firebaseParams';
 import networkParams from './networkParams';
 
 class FastAuthController {
@@ -14,6 +21,12 @@ class FastAuthController {
   private keyStore: InMemoryKeyStore;
 
   private connection: Connection;
+
+  private firebaseAuth: Auth;
+
+  private fireStore: Firestore;
+
+  private userUid: string; // should be filled when user is created/signedin through firebase
 
   constructor({ accountId, networkId }) {
     const config = networkParams[networkId];
@@ -31,6 +44,10 @@ class FastAuthController {
     this.accountId = accountId;
 
     this.keyStore = new InMemoryKeyStore();
+
+    const firebaseApp = initializeApp(firebaseParams[networkId]);
+    this.firebaseAuth = getAuth(firebaseApp);
+    this.fireStore = getFirestore(firebaseApp);
   }
 
   async createBiometricKey() {
@@ -117,6 +134,61 @@ class FastAuthController {
 
   async signTransaction(params) {
     return this.signDelegateAction(params);
+  }
+
+  setuserUid(uid: string) {
+    this.userUid = uid;
+  }
+
+  async addCollection() {
+    const parser = new UAParser();
+    const device = parser.getDevice();
+    const os = parser.getOS();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // TEST code, need to be remove when create account is ready
+    this.setuserUid('lJE0oCyHhRedt5KGF3oMemIuo433');
+
+    return addDoc(collection(this.fireStore, 'devices'), {
+      country:    timezone,
+      device:     `${device.vendor} ${device.model}`,
+      os:         `${os.name} ${os.version}`,
+      // TODO: replace test public keys with real ones when ready
+      publicKeys: [
+        'FAK',
+        'LAK'
+      ],
+      uid: this.userUid,
+    });
+  }
+
+  async listCollections() {
+    // TEST code, need to be remove when create account is ready
+    this.setuserUid('lJE0oCyHhRedt5KGF3oMemIuo433');
+
+    const q = query(collection(this.fireStore, 'devices'), where('uid', '==', this.userUid));
+    const querySnapshot = await getDocs(q);
+    const collections = [];
+
+    querySnapshot.forEach((document) => collections.push({
+      ...document.data(),
+      id: document.id,
+    }));
+    return collections;
+  }
+
+  // TODO: need to add logic to delete associated keys to object
+  async deleteCollections(docIds: string[]) {
+    const batch = writeBatch(this.fireStore);
+    docIds.forEach((docId) => {
+      const ref = doc(this.fireStore, 'devices', docId);
+      batch.delete(ref);
+    });
+    return batch.commit().then(() => {
+      console.log('Batch delete success');
+    }).catch((err) => {
+      console.log('Batch delete error', err);
+    });
   }
 }
 

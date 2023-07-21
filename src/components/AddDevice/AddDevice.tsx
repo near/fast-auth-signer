@@ -1,8 +1,13 @@
 import * as React from 'react';
 
-function AddDevice() {
+function AddDevice({ controller }) {
   return (
-    <div>AddDevice route</div>
+    <>
+      <div>AddDevice route</div>
+      <button type="button" onClick={() => controller.addCollection()}>
+        Click to add collection
+      </button>
+    </>
   );
 }
 
