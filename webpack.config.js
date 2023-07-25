@@ -36,7 +36,11 @@ module.exports = {
       {
         test: /\.css$/i,
         use:  ['style-loader', 'css-loader'],
-      }
+      },
+      {
+        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+        type: 'asset/resource',
+      },
     ],
   },
   // pass all js files through Babel

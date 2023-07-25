@@ -1,3 +1,5 @@
+import './styles/theme.css';
+import './styles/globals.css';
 import debug from 'debug';
 import * as React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
@@ -41,7 +43,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
-            <Route path="add-device" element={<AddDevice />} />
+            <Route path="add-device" element={<AddDevice controller={window.fastAuthController} />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
           </Route>

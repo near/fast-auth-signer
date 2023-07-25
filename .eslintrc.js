@@ -20,6 +20,7 @@ module.exports = {
     'react/require-default-props':  'off',
     'react/prop-types':             'off',
     'react/jsx-filename-extension': 'off',
+    'react/jsx-props-no-spreading': 'off',
     'prefer-destructuring':                [
       'error', {
         VariableDeclarator:   {
