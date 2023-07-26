@@ -4,9 +4,9 @@ import { KeyPairEd25519 } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
 import { baseEncode } from 'borsh';
 import { initializeApp } from 'firebase/app';
-import { Auth, getAuth } from 'firebase/auth';
+import { Auth, User, getAuth } from 'firebase/auth';
 import {
-  getFirestore, Firestore, collection, addDoc, getDocs, query, where, writeBatch, doc
+  getFirestore, Firestore, collection, addDoc, getDocs, query, writeBatch, doc
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
@@ -26,7 +26,7 @@ class FastAuthController {
 
   private fireStore: Firestore;
 
-  private userUid: string; // should be filled when user is created/signedin through firebase
+  public userUid: string;
 
   constructor({ accountId, networkId }) {
     const config = networkParams[networkId];
@@ -45,9 +45,15 @@ class FastAuthController {
 
     this.keyStore = new InMemoryKeyStore();
 
+    // TODO: Upon retrieving the user's details, will need to use token to authenticate with firebase
     const firebaseApp = initializeApp(firebaseParams[networkId]);
     this.firebaseAuth = getAuth(firebaseApp);
     this.fireStore = getFirestore(firebaseApp);
+
+    this.firebaseAuth.onIdTokenChanged((user: User) => {
+      this.userUid = user.uid;
+      window.fastAuthController.userUid = user.uid;
+    });
   }
 
   async createBiometricKey() {
@@ -144,13 +150,8 @@ class FastAuthController {
     const parser = new UAParser();
     const device = parser.getDevice();
     const os = parser.getOS();
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // TEST code, need to be remove when create account is ready
-    this.setuserUid('lJE0oCyHhRedt5KGF3oMemIuo433');
-
-    return addDoc(collection(this.fireStore, 'devices'), {
-      country:    timezone,
+    return addDoc(collection(this.fireStore, `/users/${this.userUid}/devices`), {
       device:     `${device.vendor} ${device.model}`,
       os:         `${os.name} ${os.version}`,
       // TODO: replace test public keys with real ones when ready
@@ -159,14 +160,19 @@ class FastAuthController {
         'LAK'
       ],
       uid: this.userUid,
+    }).catch((err) => {
+      console.log('fail to add collection, ', err);
     });
   }
 
   async listCollections() {
-    // TEST code, need to be remove when create account is ready
-    this.setuserUid('lJE0oCyHhRedt5KGF3oMemIuo433');
+    const account = new Account(this.connection, this.accountId);
+    const accessKeys = await account.getAccessKeys();
+    console.log('accessKeys', accessKeys);
 
-    const q = query(collection(this.fireStore, 'devices'), where('uid', '==', this.userUid));
+    // TODO: get public key from recovery service
+
+    const q = query(collection(this.fireStore, `/users/${this.userUid}/devices`));
     const querySnapshot = await getDocs(q);
     const collections = [];
 
@@ -174,6 +180,8 @@ class FastAuthController {
       ...document.data(),
       id: document.id,
     }));
+
+    // TODO: from the list, exclude record that has same public key from recovery service
     return collections;
   }
 
@@ -181,13 +189,14 @@ class FastAuthController {
   async deleteCollections(docIds: string[]) {
     const batch = writeBatch(this.fireStore);
     docIds.forEach((docId) => {
-      const ref = doc(this.fireStore, 'devices', docId);
+      const ref = doc(this.fireStore, `/users/${this.userUid}/devices`, docId);
       batch.delete(ref);
     });
     return batch.commit().then(() => {
       console.log('Batch delete success');
     }).catch((err) => {
       console.log('Batch delete error', err);
+      throw new Error(err);
     });
   }
 }

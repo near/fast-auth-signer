@@ -22,7 +22,6 @@ function Devices({ controller }) {
   const [deleteCollections, setDeleteCollections] = useState([]);
 
   const onClick = (id) => {
-    console.log('onClick', id);
     if (deleteCollections.includes(id)) {
       setDeleteCollections(deleteCollections.filter((item) => item !== id));
     } else {
@@ -37,8 +36,15 @@ function Devices({ controller }) {
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    getCollection();
+    // TODO: rewrite this, currently userUid change does not proppergate to this component
+    const interval = setInterval(() => {
+      if (controller.userUid) {
+        getCollection();
+        clearInterval(interval);
+      }
+    }, 500);
   }, []);
+
   const onDeleteCollections = () => {
     setisDeleted(true);
     return controller.deleteCollections(deleteCollections)
@@ -61,7 +67,7 @@ function Devices({ controller }) {
         collections.map((collection) => (
           <Row key={collection.id}>
             <StyledCheckbox type="checkbox" onClick={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
-            <div>{`${collection.device} - ${collection.os} (${collection.country})`}</div>
+            <div>{`${collection.device} - ${collection.os}`}</div>
           </Row>
         ))
       }
