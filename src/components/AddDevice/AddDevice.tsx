@@ -1,3 +1,5 @@
+import { createKey } from '@near-js/biometric-ed25519';
+import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -5,9 +7,26 @@ import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
-// import { handleCreateAccount } from '../utils/auth';
 
+const handleCreateAccount = async (accountId, email, isRecovery) => {
+  const keyPair = await createKey(email);
+  const publicKey = keyPair.getPublicKey().toString();
+
+  if (!publicKey) {
+    throw new Error('No public key found');
+  }
+
+  await sendSignInLinkToEmail(firebaseAuth, email, {
+    url: encodeURI(
+      `${window.location.origin}/auth-callback?publicKey=${publicKey}&email=${email}${accountId ? `&accountId=${accountId}` : ''
+      }${isRecovery ? '&isRecovery=true' : ''}`,
+    ),
+    handleCodeInApp: true,
+  });
+  return { email, publicKey, accountId };
+};
 
 function SignInPage({ controller }) {
   const { register, handleSubmit, setValue } = useForm();
@@ -25,9 +44,8 @@ function SignInPage({ controller }) {
     if (!data.email) return;
 
     try {
-      console.log(data.email, '<<<< email');
-      // const { publicKey, email } = await handleCreateAccount(null, data.email, true);
-      // navigate(`/verify-email?publicKey=${publicKey}&email=${email}&isRecovery=true`);
+      const { publicKey, email } = await handleCreateAccount(null, data.email, true);
+      navigate(`/verify-email?publicKey=${publicKey}&email=${email}&isRecovery=true`);
     } catch (error: any) {
       console.log(error);
 

@@ -12,6 +12,7 @@ import Layout from './components/Layout/Layout';
 import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
+import VerifyEmailPage from './components/VerifyEmail/verify-email';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'maximushaximus.testnet',
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="add-device" element={<AddDevice controller={window.fastAuthController} />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
+            <Route path="verify-email" element={<VerifyEmailPage />} />
           </Route>
         </Routes>
       </Router>
