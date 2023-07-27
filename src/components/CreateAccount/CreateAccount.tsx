@@ -275,7 +275,6 @@ function CreateAccount() {
             }}
             placeholder="user_name@email.com"
             type="email"
-            required
           />
           {/* shouldn't need to do a type check here but message is not resolving as a string for some reason */}
           {typeof errors.email?.message === 'string' && <ErrorText role="alert">{errors.email?.message}</ErrorText>}
@@ -295,7 +294,7 @@ function CreateAccount() {
                 if (!isAccountAvailable) {
                   return 'Please enter a valid account ID';
                 }
-                return '';
+                return null;
               },
             })}
             placeholder="user_name.near"
