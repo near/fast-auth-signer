@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable no-unused-vars */
 import { create } from 'zustand';
 
 export type ToastType = 'INFO' | 'ERROR' | 'SUCCESS';
@@ -28,56 +30,58 @@ interface ToasterStore {
   open: (options: OpenToastOptions) => void;
 }
 
-export const useToasterStore = create<ToasterStore>((set) => ({
-  toasts: [],
+export const useToasterStore = create<ToasterStore>((set) => {
+  return {
+    toasts: [],
 
-  close: (toast) => {
-    set((state) => {
-      const toasts = state.toasts.map((t) => {
-        if (t.id === toast.id) {
-          return {
-            ...t,
-            isOpen: false,
-          };
-        }
+    close: (toast) => {
+      set((state) => {
+        const toasts = state.toasts.map((t) => {
+          if (t.id === toast.id) {
+            return {
+              ...t,
+              isOpen: false,
+            };
+          }
 
-        return t;
+          return t;
+        });
+
+        setTimeout(() => {
+          state.destroy(toast);
+        }, 5000);
+
+        return {
+          toasts,
+        };
       });
+    },
 
-      setTimeout(() => {
-        state.destroy(toast);
-      }, 5000);
+    destroy: (toast) => {
+      set((state) => {
+        const toasts = state.toasts.filter((t) => t.id !== toast.id);
 
-      return {
-        toasts,
+        return {
+          toasts,
+        };
+      });
+    },
+
+    open: (options) => {
+      const newToast = {
+        ...options,
+        isOpen: true,
+        id:     options.id || Date.now().toString(),
+        type:   options.type || 'INFO',
       };
-    });
-  },
 
-  destroy: (toast) => {
-    set((state) => {
-      const toasts = state.toasts.filter((t) => t.id !== toast.id);
+      set((state) => {
+        const toasts = state.toasts.filter((t) => t.id !== newToast.id);
 
-      return {
-        toasts,
-      };
-    });
-  },
-
-  open: (options) => {
-    const newToast = {
-      ...options,
-      isOpen: true,
-      id: options.id || Date.now().toString(),
-      type: options.type || 'INFO',
-    };
-
-    set((state) => {
-      const toasts = state.toasts.filter((t) => t.id !== newToast.id);
-
-      return {
-        toasts: [...toasts, newToast],
-      };
-    });
-  },
-}));
+        return {
+          toasts: [...toasts, newToast],
+        };
+      });
+    },
+  };
+});

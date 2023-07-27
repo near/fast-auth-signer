@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 export const getEmailId = (email: string) => email
   .split('@')[0]
   .toLowerCase()

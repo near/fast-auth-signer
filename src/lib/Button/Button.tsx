@@ -1,6 +1,7 @@
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable import/prefer-default-export */
 import type { ButtonHTMLAttributes } from 'react';
-import React from 'react';
-import { forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import styled from 'styled-components';
 
 type Fill = 'solid' | 'outline' | 'ghost';
@@ -34,10 +35,10 @@ const variants: Record<Variant, any> = {
   primary: {
     outline: {
       background: 'var(--sand1)',
-      border: 'var(--sand6)',
-      color: 'var(--violet8)',
-      iconColor: 'var(--violet9)',
-      hover: {
+      border:     'var(--sand6)',
+      color:      'var(--violet8)',
+      iconColor:  'var(--violet9)',
+      hover:      {
         border: 'var(--violet6)',
       },
       focus: {
@@ -45,29 +46,29 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--violet2)',
-        border: 'var(--violet7)',
+        border:     'var(--violet7)',
       },
     },
     solid: {
       background: 'var(--sand12)',
-      border: 'var(--sand12)',
-      color: 'var(--sand1)',
-      iconColor: 'var(--sand9)',
-      hover: {
+      border:     'var(--sand12)',
+      color:      'var(--sand1)',
+      iconColor:  'var(--sand9)',
+      hover:      {
         background: 'var(--sand11)',
-        border: 'var(--sand11)',
+        border:     'var(--sand11)',
       },
-      focus: {},
+      focus:  {},
       active: {},
     },
   },
   secondary: {
     outline: {
       background: 'var(--sand1)',
-      border: 'var(--sand6)',
-      color: 'var(--sand12)',
-      iconColor: 'var(--sand10)',
-      hover: {
+      border:     'var(--sand6)',
+      color:      'var(--sand12)',
+      iconColor:  'var(--sand10)',
+      hover:      {
         border: 'var(--sand8)',
       },
       focus: {
@@ -75,15 +76,15 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--sand3)',
-        border: 'var(--sand8)',
+        border:     'var(--sand8)',
       },
     },
     solid: {
       background: 'var(--sand3)',
-      border: 'var(--sand6)',
-      color: 'var(--sand12)',
-      iconColor: 'var(--sand11)',
-      hover: {
+      border:     'var(--sand6)',
+      color:      'var(--sand12)',
+      iconColor:  'var(--sand11)',
+      hover:      {
         background: 'var(--sand4)',
       },
       focus: {
@@ -97,10 +98,10 @@ const variants: Record<Variant, any> = {
   destructive: {
     outline: {
       background: 'var(--sand1)',
-      border: 'var(--sand6)',
-      color: 'var(--red8)',
-      iconColor: 'var(--red9)',
-      hover: {
+      border:     'var(--sand6)',
+      color:      'var(--red8)',
+      iconColor:  'var(--red9)',
+      hover:      {
         border: 'var(--red6)',
       },
       focus: {
@@ -108,15 +109,15 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--red2)',
-        border: 'var(--red7)',
+        border:     'var(--red7)',
       },
     },
     solid: {
       background: 'var(--red9)',
-      border: 'var(--red8)',
-      color: 'var(--red12)',
-      iconColor: 'var(--red11)',
-      hover: {
+      border:     'var(--red8)',
+      color:      'var(--red12)',
+      iconColor:  'var(--red11)',
+      hover:      {
         background: 'var(--red10)',
       },
       focus: {
@@ -130,10 +131,10 @@ const variants: Record<Variant, any> = {
   affirmative: {
     outline: {
       background: 'var(--sand1)',
-      border: 'var(--sand6)',
-      color: 'var(--green11)',
-      iconColor: 'var(--green10)',
-      hover: {
+      border:     'var(--sand6)',
+      color:      'var(--green11)',
+      iconColor:  'var(--green10)',
+      hover:      {
         border: 'var(--green9)',
       },
       focus: {
@@ -141,15 +142,15 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--green2)',
-        border: 'var(--green8)',
+        border:     'var(--green8)',
       },
     },
     solid: {
       background: 'var(--green9)',
-      border: 'var(--green8)',
-      color: 'var(--green12)',
-      iconColor: 'var(--green11)',
-      hover: {
+      border:     'var(--green8)',
+      color:      'var(--green12)',
+      iconColor:  'var(--green11)',
+      hover:      {
         background: 'var(--green10)',
       },
       focus: {
@@ -163,45 +164,45 @@ const variants: Record<Variant, any> = {
 };
 variants.primary.ghost = {
   ...variants.primary.outline,
-  border: 'hsla(0, 0%, 100%, 0)',
+  border:     'hsla(0, 0%, 100%, 0)',
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.secondary.ghost = {
   ...variants.secondary.outline,
-  border: 'hsla(0, 0%, 100%, 0)',
+  border:     'hsla(0, 0%, 100%, 0)',
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.destructive.ghost = {
   ...variants.destructive.outline,
-  border: 'hsla(0, 0%, 100%, 0)',
+  border:     'hsla(0, 0%, 100%, 0)',
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.affirmative.ghost = {
   ...variants.affirmative.outline,
-  border: 'hsla(0, 0%, 100%, 0)',
+  border:     'hsla(0, 0%, 100%, 0)',
   background: 'hsla(0, 0%, 100%, 0)',
 };
 
 const sizes: Record<Size, any> = {
   small: {
-    font: 'var(--text-xs)',
-    gap: '6px',
-    height: '32px',
-    icon: '14px',
+    font:     'var(--text-xs)',
+    gap:      '6px',
+    height:   '32px',
+    icon:     '14px',
     paddingX: '16px',
   },
   default: {
-    font: 'var(--text-s)',
-    gap: '8px',
-    height: '40px',
-    icon: '18px',
+    font:     'var(--text-s)',
+    gap:      '8px',
+    height:   '40px',
+    icon:     '18px',
     paddingX: '20px',
   },
   large: {
-    font: 'var(--text-base)',
-    gap: '8px',
-    height: '48px',
-    icon: '18px',
+    font:     'var(--text-base)',
+    gap:      '8px',
+    height:   '48px',
+    icon:     '18px',
     paddingX: '24px',
   },
 };
@@ -251,15 +252,13 @@ const StyledButton = styled.button<StyledProps>`
     border: 1px solid ${(p) => returnColor(p.variant, p.fill, 'active', 'border')};
   }
 
-  ${(p) =>
-    p.loading &&
-    `
+  ${(p) => p.loading
+    && `
         pointer-events: none;
       `}
 
-  ${(p) =>
-    p.disabled &&
-    `
+  ${(p) => p.disabled
+    && `
         opacity: 1;
         background: ${p.fill === 'ghost' ? 'hsla(0, 0%, 100%, 0)' : 'var(--sand3)'};
         border-color: var(--sand3);
@@ -284,9 +283,8 @@ const Inner = styled.span<StyledProps>`
     color: ${(p) => (p.icon ? undefined : returnColor(p.variant, p.fill, 'default', 'iconColor'))};
   }
 
-  ${(p) =>
-    p.loading &&
-    `
+  ${(p) => p.loading
+    && `
         opacity: 0;
       `}
 `;
@@ -335,13 +333,13 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   ) => {
     const conditionalAttributes: Record<string, unknown> = href
       ? {
-          as: 'a',
-          href,
-        }
+        as: 'a',
+        href,
+      }
       : {
-          type,
-          disabled: disabled || loading,
-        };
+        type,
+        disabled: disabled || loading,
+      };
 
     if (icon) {
       conditionalAttributes['aria-label'] = label;
