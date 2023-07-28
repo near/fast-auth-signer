@@ -20,9 +20,31 @@ function VerifyEmailPage() {
       || !query.get('publicKey').length
     ) return;
 
+    const accountId = query.get('accountId');
+    const publicKey = query.get('publicKey');
+    const email = query.get('email');
+    const isRecovery = query.get('isRecovery');
+    const success_url = query.get('success_url');
+    const failure_url = query.get('failure_url');
+    const public_key =  query.get('public_key');
+    const contract_id = query.get('contract_id');
+    const methodNames = query.get('methodNames');
+
+    const searchParams = new URLSearchParams({
+      publicKey,
+      email,
+      ...(accountId ? { accountId } : {}),
+      ...(isRecovery ? { isRecovery: 'true' } : {}),
+      ...(success_url ? { success_url } : {}),
+      ...(failure_url ? { failure_url } : {}),
+      ...(public_key ? { public_key_lak: public_key } : {}),
+      ...(contract_id ? { contract_id } : {}),
+      ...(methodNames ? { methodNames } : {})
+    });
+
     try {
       await sendSignInLinkToEmail(firebaseAuth, query.get('email'), {
-        url:             `${window.location.origin}/auth-callback?publicKey=${query.get('publicKey')}&accountId=${query.get('accountId')}`,
+        url:             `${window.location.origin}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
       openToast({
@@ -66,7 +88,7 @@ function VerifyEmailPage() {
       </FormContainer>
     </StyledContainer>
   );
-};
+}
 
 export default VerifyEmailPage;
 

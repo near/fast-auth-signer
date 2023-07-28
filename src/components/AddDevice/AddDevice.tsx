@@ -2,7 +2,7 @@ import { createKey } from '@near-js/biometric-ed25519';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
@@ -10,26 +10,40 @@ import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
-const handleCreateAccount = async (accountId, email, isRecovery) => {
+const handleCreateAccount = async ({
+  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
+}) => {
   const keyPair = await createKey(email);
-  const publicKey = keyPair.getPublicKey().toString();
+  const publicKeyWebAuthn = keyPair.getPublicKey().toString();
 
-  if (!publicKey) {
+  if (!publicKeyWebAuthn) {
     throw new Error('No public key found');
   }
 
+  const searchParams = new URLSearchParams({
+    publicKey: publicKeyWebAuthn,
+    email,
+    ...(accountId ? { accountId } : {}),
+    ...(isRecovery ? { isRecovery: 'true' } : {}),
+    ...(success_url ? { success_url } : {}),
+    ...(failure_url ? { failure_url } : {}),
+    ...(public_key ? { public_key_lak: public_key } : {}),
+    ...(contract_id ? { contract_id } : {}),
+    ...(methodNames ? { methodNames } : {})
+  });
+
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}/auth-callback?publicKey=${publicKey}&email=${email}${accountId ? `&accountId=${accountId}` : ''
-      }${isRecovery ? '&isRecovery=true' : ''}`,
+      `${window.location.origin}/auth-callback?${searchParams.toString()}`,
     ),
     handleCodeInApp: true,
   });
-  return { email, publicKey, accountId };
+  return { email, publicKey: publicKeyWebAuthn, accountId };
 };
 
 function SignInPage({ controller }) {
   const { register, handleSubmit, setValue } = useForm();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,9 +57,34 @@ function SignInPage({ controller }) {
   const onSubmit = handleSubmit(async (data: any) => {
     if (!data.email) return;
 
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
+
     try {
-      const { publicKey, email } = await handleCreateAccount(null, data.email, true);
-      navigate(`/verify-email?publicKey=${publicKey}&email=${email}&isRecovery=true`);
+      const { publicKey, email } = await handleCreateAccount({
+        accountId:   null,
+        email:       data.email,
+        isRecovery:  true,
+        success_url,
+        failure_url,
+        public_key,
+        contract_id,
+        methodNames,
+      });
+      const newSearchParams = new URLSearchParams({
+        publicKey,
+        email,
+        isRecovery: 'true',
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
+        ...(public_key ? { public_key_lak: public_key } : {}),
+        ...(contract_id ? { contract_id } : {}),
+        ...(methodNames ? { methodNames } : {})
+      });
+      navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log(error);
 
