@@ -19,7 +19,6 @@ import { firebaseAuth } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
 } from '../../utils/form-validation';
-import './CreateAccount.css';
 
 const ErrorText = styled.p`
   color: hsla(8, 100%, 33%, 1);
