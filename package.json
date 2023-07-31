@@ -36,9 +36,13 @@
     "@near-js/iframe-rpc": "^0.0.2",
     "@near-js/keystores": "^0.0.4",
     "@radix-ui/react-toast": "^1.1.4",
+<<<<<<< HEAD
     "analytics-node": "^6.2.0",
     "big.js": "^6.2.1",
     "bootstrap": "^5.3.1",
+=======
+    "bootstrap": "^5.3.0",
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
     "borsh": "^0.7.0",
     "crypto-browserify": "^3.12.0",
     "debug": "^4.3.4",
@@ -47,17 +51,25 @@
     "i18next": "^23.2.8",
     "near-api-js": "^2.1.4",
     "process": "^0.11.10",
-    "react": "^16.13.1",
+    "react": "^18.2.0",
     "react-dom": "^16.13.1",
     "react-hook-form": "^7.45.2",
     "react-i18next": "^13.0.2",
     "react-router": "^6.14.1",
+<<<<<<< HEAD
     "react-router-dom": "^6.14.1",
     "rudder-sdk-js": "^2.37.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "style-loader": "^3.3.3",
     "styled-components": "^6.0.0-rc.1",
+=======
+    "react-router-dom": "^6.14.2",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "style-loader": "^3.3.3",
+    "styled-components": "^6.0.5",
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
     "url": "^0.11.0",
     "zustand": "^4.3.9"
   },

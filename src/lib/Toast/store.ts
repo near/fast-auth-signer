@@ -1,5 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-unused-vars */
 import { create } from 'zustand';
 
 export type ToastType = 'INFO' | 'ERROR' | 'SUCCESS';
@@ -30,58 +28,56 @@ interface ToasterStore {
   open: (options: OpenToastOptions) => void;
 }
 
-export const useToasterStore = create<ToasterStore>((set) => {
-  return {
-    toasts: [],
+export const useToasterStore = create<ToasterStore>((set) => ({
+  toasts: [],
 
-    close: (toast) => {
-      set((state) => {
-        const toasts = state.toasts.map((t) => {
-          if (t.id === toast.id) {
-            return {
-              ...t,
-              isOpen: false,
-            };
-          }
+  close: (toast) => {
+    set((state) => {
+      const toasts = state.toasts.map((t) => {
+        if (t.id === toast.id) {
+          return {
+            ...t,
+            isOpen: false,
+          };
+        }
 
-          return t;
-        });
-
-        setTimeout(() => {
-          state.destroy(toast);
-        }, 5000);
-
-        return {
-          toasts,
-        };
+        return t;
       });
-    },
 
-    destroy: (toast) => {
-      set((state) => {
-        const toasts = state.toasts.filter((t) => t.id !== toast.id);
+      setTimeout(() => {
+        state.destroy(toast);
+      }, 5000);
 
-        return {
-          toasts,
-        };
-      });
-    },
-
-    open: (options) => {
-      const newToast = {
-        ...options,
-        isOpen: true,
-        id:     options.id || Date.now().toString(),
-        type:   options.type || 'INFO',
+      return {
+        toasts,
       };
+    });
+  },
 
-      set((state) => {
-        const toasts = state.toasts.filter((t) => t.id !== newToast.id);
+  destroy: (toast) => {
+    set((state) => {
+      const toasts = state.toasts.filter((t) => t.id !== toast.id);
 
-        return {
-          toasts: [...toasts, newToast],
-        };
-      });
-    },
-  };
-});
+      return {
+        toasts,
+      };
+    });
+  },
+
+  open: (options) => {
+    const newToast = {
+      ...options,
+      isOpen: true,
+      id: options.id || Date.now().toString(),
+      type: options.type || 'INFO',
+    };
+
+    set((state) => {
+      const toasts = state.toasts.filter((t) => t.id !== newToast.id);
+
+      return {
+        toasts: [...toasts, newToast],
+      };
+    });
+  },
+}));

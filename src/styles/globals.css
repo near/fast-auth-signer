@@ -2,14 +2,24 @@
 
 @font-face {
   font-family: 'Mona Sans';
+<<<<<<< HEAD
   src: url('./fonts/Mona-Sans.woff2') format('woff2-variations');
+=======
+  src: url('../../public/fonts/Mona-Sans.woff2') format('woff2 supports variations'),
+    url('../../public/fonts/Mona-Sans.woff2') format('woff2-variations');
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   font-weight: 200 900;
   font-stretch: 75% 125%;
 }
 
 @font-face {
   font-family: 'FK Grotesk';
+<<<<<<< HEAD
   src: url('./fonts/FKGrotesk.woff2') format('woff2-variations');
+=======
+  src: url('../../public/fonts/FKGrotesk.woff2') format('woff2 supports variations'),
+    url('../../public/fonts/FKGrotesk.woff2') format('woff2-variations');
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   font-weight: 200 900;
   font-stretch: 75% 125%;
 }

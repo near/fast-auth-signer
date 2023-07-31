@@ -1,7 +1,6 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable import/prefer-default-export */
 import type { ButtonHTMLAttributes } from 'react';
-import React, { forwardRef } from 'react';
+import React from 'react';
+import { forwardRef } from 'react';
 import styled from 'styled-components';
 
 type Fill = 'solid' | 'outline' | 'ghost';
@@ -35,10 +34,17 @@ const variants: Record<Variant, any> = {
   primary: {
     outline: {
       background: 'var(--sand1)',
+<<<<<<< HEAD
       border:     'var(--sand6)',
       color:      'var(--violet8)',
       iconColor:  'var(--violet9)',
       hover:      {
+=======
+      border: 'var(--sand6)',
+      color: 'var(--violet8)',
+      iconColor: 'var(--violet9)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         border: 'var(--violet6)',
       },
       focus: {
@@ -46,11 +52,16 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--violet2)',
+<<<<<<< HEAD
         border:     'var(--violet7)',
+=======
+        border: 'var(--violet7)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
       },
     },
     solid: {
       background: 'var(--sand12)',
+<<<<<<< HEAD
       border:     'var(--sand12)',
       color:      'var(--sand1)',
       iconColor:  'var(--sand9)',
@@ -59,16 +70,33 @@ const variants: Record<Variant, any> = {
         border:     'var(--sand11)',
       },
       focus:  {},
+=======
+      border: 'var(--sand12)',
+      color: 'var(--sand1)',
+      iconColor: 'var(--sand9)',
+      hover: {
+        background: 'var(--sand11)',
+        border: 'var(--sand11)',
+      },
+      focus: {},
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
       active: {},
     },
   },
   secondary: {
     outline: {
       background: 'var(--sand1)',
+<<<<<<< HEAD
       border:     'var(--sand6)',
       color:      'var(--sand12)',
       iconColor:  'var(--sand10)',
       hover:      {
+=======
+      border: 'var(--sand6)',
+      color: 'var(--sand12)',
+      iconColor: 'var(--sand10)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         border: 'var(--sand8)',
       },
       focus: {
@@ -76,15 +104,26 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--sand3)',
+<<<<<<< HEAD
         border:     'var(--sand8)',
+=======
+        border: 'var(--sand8)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
       },
     },
     solid: {
       background: 'var(--sand3)',
+<<<<<<< HEAD
       border:     'var(--sand6)',
       color:      'var(--sand12)',
       iconColor:  'var(--sand11)',
       hover:      {
+=======
+      border: 'var(--sand6)',
+      color: 'var(--sand12)',
+      iconColor: 'var(--sand11)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         background: 'var(--sand4)',
       },
       focus: {
@@ -98,10 +137,17 @@ const variants: Record<Variant, any> = {
   destructive: {
     outline: {
       background: 'var(--sand1)',
+<<<<<<< HEAD
       border:     'var(--sand6)',
       color:      'var(--red8)',
       iconColor:  'var(--red9)',
       hover:      {
+=======
+      border: 'var(--sand6)',
+      color: 'var(--red8)',
+      iconColor: 'var(--red9)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         border: 'var(--red6)',
       },
       focus: {
@@ -109,15 +155,26 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--red2)',
+<<<<<<< HEAD
         border:     'var(--red7)',
+=======
+        border: 'var(--red7)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
       },
     },
     solid: {
       background: 'var(--red9)',
+<<<<<<< HEAD
       border:     'var(--red8)',
       color:      'var(--red12)',
       iconColor:  'var(--red11)',
       hover:      {
+=======
+      border: 'var(--red8)',
+      color: 'var(--red12)',
+      iconColor: 'var(--red11)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         background: 'var(--red10)',
       },
       focus: {
@@ -131,10 +188,17 @@ const variants: Record<Variant, any> = {
   affirmative: {
     outline: {
       background: 'var(--sand1)',
+<<<<<<< HEAD
       border:     'var(--sand6)',
       color:      'var(--green11)',
       iconColor:  'var(--green10)',
       hover:      {
+=======
+      border: 'var(--sand6)',
+      color: 'var(--green11)',
+      iconColor: 'var(--green10)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         border: 'var(--green9)',
       },
       focus: {
@@ -142,15 +206,26 @@ const variants: Record<Variant, any> = {
       },
       active: {
         background: 'var(--green2)',
+<<<<<<< HEAD
         border:     'var(--green8)',
+=======
+        border: 'var(--green8)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
       },
     },
     solid: {
       background: 'var(--green9)',
+<<<<<<< HEAD
       border:     'var(--green8)',
       color:      'var(--green12)',
       iconColor:  'var(--green11)',
       hover:      {
+=======
+      border: 'var(--green8)',
+      color: 'var(--green12)',
+      iconColor: 'var(--green11)',
+      hover: {
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         background: 'var(--green10)',
       },
       focus: {
@@ -164,27 +239,44 @@ const variants: Record<Variant, any> = {
 };
 variants.primary.ghost = {
   ...variants.primary.outline,
+<<<<<<< HEAD
   border:     'hsla(0, 0%, 100%, 0)',
+=======
+  border: 'hsla(0, 0%, 100%, 0)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.secondary.ghost = {
   ...variants.secondary.outline,
+<<<<<<< HEAD
   border:     'hsla(0, 0%, 100%, 0)',
+=======
+  border: 'hsla(0, 0%, 100%, 0)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.destructive.ghost = {
   ...variants.destructive.outline,
+<<<<<<< HEAD
   border:     'hsla(0, 0%, 100%, 0)',
+=======
+  border: 'hsla(0, 0%, 100%, 0)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   background: 'hsla(0, 0%, 100%, 0)',
 };
 variants.affirmative.ghost = {
   ...variants.affirmative.outline,
+<<<<<<< HEAD
   border:     'hsla(0, 0%, 100%, 0)',
+=======
+  border: 'hsla(0, 0%, 100%, 0)',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
   background: 'hsla(0, 0%, 100%, 0)',
 };
 
 const sizes: Record<Size, any> = {
   small: {
+<<<<<<< HEAD
     font:     'var(--text-xs)',
     gap:      '6px',
     height:   '32px',
@@ -203,6 +295,26 @@ const sizes: Record<Size, any> = {
     gap:      '8px',
     height:   '48px',
     icon:     '18px',
+=======
+    font: 'var(--text-xs)',
+    gap: '6px',
+    height: '32px',
+    icon: '14px',
+    paddingX: '16px',
+  },
+  default: {
+    font: 'var(--text-s)',
+    gap: '8px',
+    height: '40px',
+    icon: '18px',
+    paddingX: '20px',
+  },
+  large: {
+    font: 'var(--text-base)',
+    gap: '8px',
+    height: '48px',
+    icon: '18px',
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
     paddingX: '24px',
   },
 };
@@ -252,6 +364,7 @@ const StyledButton = styled.button<StyledProps>`
     border: 1px solid ${(p) => returnColor(p.variant, p.fill, 'active', 'border')};
   }
 
+<<<<<<< HEAD
   ${(p) => p.loading
     && `
         pointer-events: none;
@@ -259,6 +372,17 @@ const StyledButton = styled.button<StyledProps>`
 
   ${(p) => p.disabled
     && `
+=======
+  ${(p) =>
+    p.loading &&
+    `
+        pointer-events: none;
+      `}
+
+  ${(p) =>
+    p.disabled &&
+    `
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         opacity: 1;
         background: ${p.fill === 'ghost' ? 'hsla(0, 0%, 100%, 0)' : 'var(--sand3)'};
         border-color: var(--sand3);
@@ -283,8 +407,14 @@ const Inner = styled.span<StyledProps>`
     color: ${(p) => (p.icon ? undefined : returnColor(p.variant, p.fill, 'default', 'iconColor'))};
   }
 
+<<<<<<< HEAD
   ${(p) => p.loading
     && `
+=======
+  ${(p) =>
+    p.loading &&
+    `
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
         opacity: 0;
       `}
 `;
@@ -333,6 +463,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   ) => {
     const conditionalAttributes: Record<string, unknown> = href
       ? {
+<<<<<<< HEAD
         as: 'a',
         href,
       }
@@ -340,6 +471,15 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
         type,
         disabled: disabled || loading,
       };
+=======
+          as: 'a',
+          href,
+        }
+      : {
+          type,
+          disabled: disabled || loading,
+        };
+>>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
 
     if (icon) {
       conditionalAttributes['aria-label'] = label;
