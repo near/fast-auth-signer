@@ -1,15 +1,12 @@
+/* eslint-disable import/no-duplicates */
 import './styles/theme.css';
 import './styles/globals.css';
 import debug from 'debug';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-<<<<<<< HEAD
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-=======
 import {
   Navigate, Route, BrowserRouter as Router, Routes, useLocation
 } from 'react-router-dom';
->>>>>>> 610e893ac95751ba7462700a866cfa18f7d787a7
 
 import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
