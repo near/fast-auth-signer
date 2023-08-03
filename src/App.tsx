@@ -11,6 +11,9 @@ import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
 
+import './styles/theme.css';
+import './styles/globals.css';
+
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'maximushaximus.testnet',
   networkId: 'testnet'
