@@ -1,19 +1,13 @@
-/* eslint-disable import/extensions */
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, redirect, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { useAuthStore } from '../../stores/auth';
-import { useCurrentComponentStore } from '../../stores/current-component';
 import { network } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 import {
@@ -110,7 +104,6 @@ const handleCreateAccount = async (accountId, email, isRecovery) => {
 };
 
 function CreateAccount() {
-  const setComponentSrc = useCurrentComponentStore((store) => store.setSrc);
   const [isAccountAvailable, setIsAccountAvailable] = useState<boolean | null>(null);
   const [isAccountValid, setIsAccountValid] = useState<boolean | null>(null);
   const {
@@ -122,7 +115,6 @@ function CreateAccount() {
     clearErrors,
   } = useForm();
   const formValues = watch();
-  const signedIn = useAuthStore((store) => store.signedIn);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -140,17 +132,6 @@ function CreateAccount() {
     };
     checkPassKey();
   }, []);
-
-  // redirect to home upon signing in
-  useEffect(() => {
-    if (signedIn) {
-      redirect('/');
-    }
-  }, [signedIn]);
-
-  useEffect(() => {
-    setComponentSrc(null);
-  }, [setComponentSrc]);
 
   const checkIsAccountAvailable = useCallback(async (desiredUsername: string) => {
     // set to null to show loading
@@ -254,6 +235,7 @@ function CreateAccount() {
         </header>
 
         <InputContainer>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label htmlFor="email">Email</label>
 
           <input
@@ -274,12 +256,14 @@ function CreateAccount() {
             }}
             placeholder="user_name@email.com"
             type="email"
+            id="email"
           />
           {/* shouldn't need to do a type check here but message is not resolving as a string for some reason */}
           {typeof errors.email?.message === 'string' && <ErrorText role="alert">{errors.email?.message}</ErrorText>}
         </InputContainer>
 
         <InputContainer>
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label htmlFor="username">Account ID</label>
           <input
             autoComplete="webauthn username"

@@ -1,6 +1,3 @@
-/* eslint-disable import/no-duplicates */
-import './styles/theme.css';
-import './styles/globals.css';
 import debug from 'debug';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
