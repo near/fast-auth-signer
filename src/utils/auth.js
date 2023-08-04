@@ -1,7 +1,3 @@
-/* eslint-disable import/prefer-default-export */
-/* eslint-disable no-shadow */
-/* eslint-disable no-undef */
-/* eslint-disable import/no-extraneous-dependencies */
 import { createKey } from '@near-js/biometric-ed25519';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 // import { base_encode } from 'near-api-js/lib/utils/serialize';
@@ -48,3 +44,5 @@ export const handleCreateAccount = async (accountId, email, isRecovery) => {
   window.localStorage.setItem('emailForSignIn', email);
   return { email, publicKey, accountId };
 };
+
+export default handleCreateAccount;
