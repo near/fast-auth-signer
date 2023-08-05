@@ -21,7 +21,7 @@ const handleCreateAccount = async ({
   }
 
   const searchParams = new URLSearchParams({
-    publicKey: publicKeyWebAuthn,
+    publicKeyFak: publicKeyWebAuthn,
     email,
     ...(accountId ? { accountId } : {}),
     ...(isRecovery ? { isRecovery: 'true' } : {}),
@@ -32,13 +32,17 @@ const handleCreateAccount = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
+  window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
+
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
       `${window.location.origin}/auth-callback?${searchParams.toString()}`,
     ),
     handleCodeInApp: true,
   });
-  return { email, publicKey: publicKeyWebAuthn, accountId };
+  return {
+    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair.toString()
+  };
 };
 
 function SignInPage({ controller }) {
@@ -64,7 +68,7 @@ function SignInPage({ controller }) {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      const { publicKey, email } = await handleCreateAccount({
+      const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
         accountId:   null,
         email:       data.email,
         isRecovery:  true,
@@ -75,7 +79,7 @@ function SignInPage({ controller }) {
         methodNames,
       });
       const newSearchParams = new URLSearchParams({
-        publicKey,
+        publicKeyFak,
         email,
         isRecovery: 'true',
         ...(success_url ? { success_url } : {}),
@@ -84,7 +88,8 @@ function SignInPage({ controller }) {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}`);
+      const hashParams = new URLSearchParams({ privateKey });
+      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log(error);
 

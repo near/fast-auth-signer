@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 
 import AddDevice from './components/AddDevice/AddDevice';
+import AuthCallbackPage from './components/AuthCallback/AuthCallback';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Layout from './components/Layout/Layout';
@@ -71,7 +72,8 @@ export default function App() {
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
-            <Route path="login" element={<Login />} />
+            <Route path="login" element={<Login controller={window.fastAuthController} />} />
+            <Route path="auth-callback" element={<AuthCallbackPage />} />
           </Route>
         </Routes>
       </Router>
