@@ -24,7 +24,7 @@ const handleCreateAccount = async ({
     publicKeyFak: publicKeyWebAuthn,
     email,
     ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery: 'true' } : {}),
+    ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
     ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),

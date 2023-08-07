@@ -17,8 +17,8 @@ function VerifyEmailPage() {
       accountRequiredButNotThere
       || !query.get('email')
       || !query.get('email').length
-      || !query.get('publicKey')
-      || !query.get('publicKey').length
+      || !query.get('publicKeyFak')
+      || !query.get('publicKeyFak').length
     ) return;
 
     const hashParams = new URLSearchParams(hash.slice(1));
@@ -35,8 +35,8 @@ function VerifyEmailPage() {
     const privateKey = hashParams.get('privateKey');
 
     const searchParams = new URLSearchParams({
-      publicKeyFak,
-      email,
+      publicKeyFak: publicKeyFak as string,
+      email:        email as string,
       ...(accountId ? { accountId } : {}),
       ...(isRecovery ? { isRecovery } : {}),
       ...(success_url ? { success_url } : {}),
@@ -49,7 +49,7 @@ function VerifyEmailPage() {
     window.localStorage.setItem(`temp_fastauthflow_${publicKeyFak}`, privateKey);
 
     try {
-      await sendSignInLinkToEmail(firebaseAuth, query.get('email'), {
+      await sendSignInLinkToEmail(firebaseAuth, email as string, {
         url:             `${window.location.origin}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
