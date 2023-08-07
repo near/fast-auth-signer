@@ -25,6 +25,20 @@ function Login({ controller }) {
       Login route
       <AuthIndicator controller={window.fastAuthController} />
       <Button
+        label="New account"
+        variant="affirmative"
+        onClick={() => {
+          if (!isSignedIn && inIframe()) {
+            window.open(`${window.location.origin}/create-account?${currentSearchParams.toString()}`, '_parent');
+          } else {
+            navigate({
+              pathname: '/add-device',
+              search:   currentSearchParams.toString()
+            });
+          }
+        }}
+      />
+      <Button
         label="Existing account"
         variant="affirmative"
         onClick={() => {

@@ -3,16 +3,16 @@ import { sendSignInLinkToEmail } from 'firebase/auth';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { network } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
 } from '../../utils/form-validation';
+import { handleCreateAccount } from '../AddDevice/AddDevice';
 
 const ErrorText = styled.p`
   color: hsla(8, 100%, 33%, 1);
@@ -79,30 +79,6 @@ const InputContainer = styled.div`
   }
 `;
 
-const handleCreateAccount = async (accountId, email, isRecovery) => {
-  const keyPair = await createKey(email);
-  const publicKey = keyPair.getPublicKey().toString();
-
-  if (!publicKey) {
-    throw new Error('No public key found');
-  }
-
-  const accountDataStash = {
-    accountId,
-    isCreated: false,
-  };
-  window.localStorage.setItem('fast-auth:account-creation-data', JSON.stringify(accountDataStash));
-  await sendSignInLinkToEmail(firebaseAuth, email, {
-    url: encodeURI(
-      `${window.location.origin}/auth-callback?publicKey=${publicKey}&accountId=${accountId}${
-        isRecovery ? '&isRecovery=true' : ''}`,
-    ),
-    handleCodeInApp: true,
-  });
-  window.localStorage.setItem('emailForSignIn', email);
-  return { email, publicKey, accountId };
-};
-
 function CreateAccount() {
   const [isAccountAvailable, setIsAccountAvailable] = useState<boolean | null>(null);
   const [isAccountValid, setIsAccountValid] = useState<boolean | null>(null);
@@ -116,6 +92,7 @@ function CreateAccount() {
   } = useForm();
   const formValues = watch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const checkPassKey = async (): Promise<void> => {
@@ -173,14 +150,38 @@ function CreateAccount() {
 
   const onSubmit = handleSubmit(async (data: { email: string; username: string; }) => {
     if (!data || !data?.username || !data.email) return;
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const { publicKey, accountId, email } = await handleCreateAccount(fullAccountId, data.email, false);
-      navigate(
-        `/verify-email?publicKey=${encodeURIComponent(publicKey)}&accountId=${encodeURIComponent(
-          accountId,
-        )}&email=${encodeURIComponent(email)}`,
-      );
+      const {
+        publicKey: publicKeyFak, email, privateKey, accountId 
+      } = await handleCreateAccount({
+        accountId:   fullAccountId,
+        email:       data.email,
+        isRecovery:  false,
+        success_url,
+        failure_url,
+        public_key,
+        contract_id,
+        methodNames,
+      });
+      const newSearchParams = new URLSearchParams({
+        accountId,
+        publicKeyFak,
+        email,
+        isRecovery: 'false',
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
+        ...(public_key ? { public_key_lak: public_key } : {}),
+        ...(contract_id ? { contract_id } : {}),
+        ...(methodNames ? { methodNames } : {})
+      });
+      const hashParams = new URLSearchParams({ privateKey });
+      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       openToast({
         type:  'ERROR',

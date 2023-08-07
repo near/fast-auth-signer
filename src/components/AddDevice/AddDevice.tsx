@@ -10,7 +10,7 @@ import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
-const handleCreateAccount = async ({
+export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
   const keyPair = await createKey(email);
@@ -24,7 +24,7 @@ const handleCreateAccount = async ({
     publicKeyFak: publicKeyWebAuthn,
     email,
     ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery: 'true' } : {}),
+    ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
     ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),

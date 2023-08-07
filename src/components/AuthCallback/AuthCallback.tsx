@@ -8,7 +8,7 @@ import styled from 'styled-components';
 
 import FastAuthController from '../../lib/controller';
 import { openToast } from '../../lib/Toast';
-import { network } from '../../utils/config';
+import { network, networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 
 const decodeIfTruthy = (paramVal) => {
@@ -23,7 +23,6 @@ function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
   const pendingSignInRef: MutableRefObject<null | Promise<void>> = useRef(null);
-  const { hash = '' } = useLocation();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -109,12 +108,12 @@ function AuthCallbackPage() {
 
                 (window as any).fastAuthController = new FastAuthController({
                   accountId: accId,
-                  networkId: 'testnet'
+                  networkId
                 });
 
                 await window.fastAuthController.setKey(new KeyPairEd25519(privateKey.split(':')[1]));
 
-                window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`)
+                window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
                 setStatusMessage('Redirecting to app...');
 
