@@ -1,6 +1,7 @@
+import { ErrorMessage } from '@hookform/error-message';
 import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -12,10 +13,6 @@ import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
-
-const ErrorText = styled.p`
-  color: hsla(8, 100%, 33%, 1);
-`;
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -79,8 +76,6 @@ const InputContainer = styled.div`
 `;
 
 function CreateAccount() {
-  const [isAccountAvailable, setIsAccountAvailable] = useState<boolean | null>(null);
-  const [isAccountValid, setIsAccountValid] = useState<boolean | null>(null);
   const {
     register,
     handleSubmit,
@@ -110,8 +105,6 @@ function CreateAccount() {
   }, []);
 
   const checkIsAccountAvailable = useCallback(async (desiredUsername: string) => {
-    // set to null to show loading
-    setIsAccountAvailable(null);
     try {
       if (!desiredUsername) return;
 
@@ -134,21 +127,20 @@ function CreateAccount() {
       const data = await response.json();
       if (data?.error?.cause?.name === 'UNKNOWN_ACCOUNT') {
         // eslint-disable-next-line consistent-return
-        return setIsAccountAvailable(true);
+        return true;
       }
 
       if (data?.result?.code_hash) {
         // eslint-disable-next-line consistent-return
-        return setIsAccountAvailable(false);
+        return false;
       }
     } catch (error) {
       console.log(error);
-      setIsAccountAvailable(false);
+      alert(error);
     }
   }, []);
 
   const onSubmit = handleSubmit(async (data: { email: string; username: string; }) => {
-    if (!data || !data?.username || !data.email) return;
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
@@ -189,43 +181,6 @@ function CreateAccount() {
     }
   });
 
-  useEffect(() => {
-    clearErrors('username');
-    if (!formValues?.username?.length) {
-      setIsAccountValid(null);
-      setIsAccountAvailable(null);
-      return;
-    }
-
-    const isValid = accountAddressPatternNoSubaccount.test(formValues?.username);
-    setIsAccountValid(isValid);
-    if (!isValid) return;
-
-    checkIsAccountAvailable(formValues?.username);
-  }, [checkIsAccountAvailable, clearErrors, formValues?.username]);
-
-  // status message, doesn't need to be overoptimized with memoization
-  let accountStatusMessage = '';
-  let accountStatusState; // "error" or "success"
-  if (!formValues?.username?.length) {
-    accountStatusMessage = 'Use a suggested ID or customize your own.';
-  } else if (!isAccountValid) {
-    accountStatusMessage = 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.';
-    accountStatusState = 'error';
-  } else {
-    // valid account is entered, handle availability
-    // eslint-disable-next-line no-lonely-if
-    if (isAccountAvailable === null) {
-      accountStatusMessage = 'Checking availability...';
-    } else if (isAccountAvailable) {
-      accountStatusMessage = `${formValues?.username}.${network.fastAuth.accountIdSuffix} is available!`;
-      accountStatusState = 'success';
-    } else {
-      accountStatusMessage = `${formValues?.username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
-      accountStatusState = 'error';
-    }
-  }
-
   return (
     <StyledContainer>
       <FormContainer onSubmit={onSubmit}>
@@ -240,7 +195,7 @@ function CreateAccount() {
 
           <input
             {...register('email', {
-              required: 'Please enter a valid email address',
+              required: 'Email address is required',
               pattern:  {
                 value:   emailPattern,
                 message: 'Please enter a valid email address',
@@ -258,8 +213,15 @@ function CreateAccount() {
             type="email"
             id="email"
           />
-          {/* shouldn't need to do a type check here but message is not resolving as a string for some reason */}
-          {typeof errors.email?.message === 'string' && <ErrorText role="alert">{errors.email?.message}</ErrorText>}
+          <div className="subText">
+            <div className="error">
+              <ErrorMessage
+                errors={errors}
+                name="email"
+                render={({ message }) => <p>{message}</p>}
+              />
+            </div>
+          </div>
         </InputContainer>
 
         <InputContainer>
@@ -271,24 +233,36 @@ function CreateAccount() {
               required: 'Please enter a valid account ID',
               pattern:  {
                 value:   accountAddressPatternNoSubaccount,
-                message: 'Please enter a valid account ID',
+                message: 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.',
               },
-              validate: () => {
+              validate: async (username) => {
+                const isAccountAvailable = await checkIsAccountAvailable(username);
                 if (!isAccountAvailable) {
-                  return 'Please enter a valid account ID';
+                  let message = '';
+                  if (isAccountAvailable === null) {
+                    message = 'Checking availability...';
+                  } else if (isAccountAvailable) {
+                    message = `${username}.${network.fastAuth.accountIdSuffix} is available!`;
+                  } else {
+                    message = `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
+                  }
+
+                  return message;
                 }
                 return null;
               },
             })}
             placeholder="user_name.near"
           />
-          <p className="subText">
-            <span className={accountStatusState || ''}>{accountStatusMessage}</span>
-          </p>
-          {/* shouldn't need to do a type check here but message is not resolving as a string for some reason */}
-          {typeof errors.username?.message === 'string' && (
-            <ErrorText role="alert">{errors.username?.message}</ErrorText>
-          )}
+          <div className="subText">
+            <div className="error">
+              <ErrorMessage
+                errors={errors}
+                name="username"
+                render={({ message }) => <p>{message}</p>}
+              />
+            </div>
+          </div>
         </InputContainer>
 
         <Button label="Continue" variant="affirmative" type="submit" />
