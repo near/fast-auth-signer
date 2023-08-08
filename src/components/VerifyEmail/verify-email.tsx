@@ -1,6 +1,6 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
@@ -9,6 +9,7 @@ import { firebaseAuth } from '../../utils/firebase';
 
 function VerifyEmailPage() {
   const [query] = useSearchParams();
+  const { hash = '' } = useLocation();
 
   const handleResendEmail = async () => {
     const accountRequiredButNotThere = !query.get('accountId') && query.get('isRecovery') !== 'true';
@@ -16,34 +17,39 @@ function VerifyEmailPage() {
       accountRequiredButNotThere
       || !query.get('email')
       || !query.get('email').length
-      || !query.get('publicKey')
-      || !query.get('publicKey').length
+      || !query.get('publicKeyFak')
+      || !query.get('publicKeyFak').length
     ) return;
 
+    const hashParams = new URLSearchParams(hash.slice(1));
+
     const accountId = query.get('accountId');
-    const publicKey = query.get('publicKey');
+    const publicKeyFak = query.get('publicKeyFak');
     const email = query.get('email');
     const isRecovery = query.get('isRecovery');
     const success_url = query.get('success_url');
     const failure_url = query.get('failure_url');
-    const public_key =  query.get('public_key');
+    const public_key_lak =  query.get('public_key_lak');
     const contract_id = query.get('contract_id');
     const methodNames = query.get('methodNames');
+    const privateKey = hashParams.get('privateKey');
 
     const searchParams = new URLSearchParams({
-      publicKey,
-      email,
+      publicKeyFak: publicKeyFak as string,
+      email:        email as string,
       ...(accountId ? { accountId } : {}),
-      ...(isRecovery ? { isRecovery: 'true' } : {}),
+      ...(isRecovery ? { isRecovery } : {}),
       ...(success_url ? { success_url } : {}),
       ...(failure_url ? { failure_url } : {}),
-      ...(public_key ? { public_key_lak: public_key } : {}),
+      ...(public_key_lak ? { public_key_lak } : {}),
       ...(contract_id ? { contract_id } : {}),
       ...(methodNames ? { methodNames } : {})
     });
 
+    window.localStorage.setItem(`temp_fastauthflow_${publicKeyFak}`, privateKey);
+
     try {
-      await sendSignInLinkToEmail(firebaseAuth, query.get('email'), {
+      await sendSignInLinkToEmail(firebaseAuth, email as string, {
         url:             `${window.location.origin}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
