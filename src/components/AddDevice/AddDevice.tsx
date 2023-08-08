@@ -11,7 +11,7 @@ import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
 export const handleCreateAccount = async ({
-  accountId, email, isRecovery, callback_url, result, reason, public_key, contract_id, methodNames
+  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
   const keyPair = await createKey(email);
   const publicKeyWebAuthn = keyPair.getPublicKey().toString();
@@ -25,9 +25,8 @@ export const handleCreateAccount = async ({
     email,
     ...(accountId ? { accountId } : {}),
     ...(isRecovery ? { isRecovery: 'true' } : {}),
-    ...(callback_url ? { callback_url } : {}),
-    ...(result ? { result } : {}),
-    ...(reason ? { reason } : {}),
+    ...(success_url ? { success_url } : {}),
+    ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),
     ...(contract_id ? { contract_id } : {}),
     ...(methodNames ? { methodNames } : {})
@@ -62,9 +61,8 @@ function SignInPage({ controller }) {
   const onSubmit = handleSubmit(async (data: any) => {
     if (!data.email) return;
 
-    const callback_url = searchParams.get('callback_url');
-    const result = searchParams.get('result');
-    const reason = searchParams.get('reason');
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
     const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
@@ -74,9 +72,8 @@ function SignInPage({ controller }) {
         accountId:   null,
         email:       data.email,
         isRecovery:  true,
-        callback_url,
-        result,
-        reason,
+        success_url,
+        failure_url,
         public_key,
         contract_id,
         methodNames,
@@ -85,9 +82,8 @@ function SignInPage({ controller }) {
         publicKeyFak,
         email,
         isRecovery: 'true',
-        ...(callback_url ? { callback_url } : {}),
-        ...(result ? { result } : {}),
-        ...(reason ? { reason } : {}),
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})

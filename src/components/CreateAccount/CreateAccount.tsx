@@ -149,9 +149,8 @@ function CreateAccount() {
 
   const onSubmit = handleSubmit(async (data: { email: string; username: string; }) => {
     if (!data || !data?.username || !data.email) return;
-    const callback_url = searchParams.get('callback_url');
-    const result = searchParams.get('result');
-    const reason = searchParams.get('reason');
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
     const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
@@ -163,9 +162,8 @@ function CreateAccount() {
         accountId:   fullAccountId,
         email:       data.email,
         isRecovery:  false,
-        callback_url,
-        result,
-        reason,
+        success_url,
+        failure_url,
         public_key,
         contract_id,
         methodNames,
@@ -175,9 +173,8 @@ function CreateAccount() {
         publicKeyFak,
         email,
         isRecovery: 'false',
-        ...(callback_url ? { callback_url } : {}),
-        ...(result ? { result } : {}),
-        ...(reason ? { reason } : {}),
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
