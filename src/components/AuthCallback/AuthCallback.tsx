@@ -3,7 +3,7 @@ import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import type { MutableRefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import FastAuthController from '../../lib/controller';
