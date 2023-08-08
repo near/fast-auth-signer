@@ -134,9 +134,12 @@ function CreateAccount() {
         // eslint-disable-next-line consistent-return
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-      alert(error);
+      openToast({
+        title: error.message,
+        type:  'ERROR'
+      });
     }
   }, []);
 
