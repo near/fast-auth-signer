@@ -12,7 +12,7 @@ import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
 
 (window as any).fastAuthController = new FastAuthController({
-  accountId: 'harisvalj.testnet',
+  accountId: 'maximushaximus.testnet',
   networkId: 'testnet'
 });
 
@@ -34,7 +34,6 @@ export default function App() {
 
   const { t, i18n } = useTranslation('common');
 
-  // @ts-ignore
   return (
     <>
       <GlobalStyle />

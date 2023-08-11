@@ -6,9 +6,8 @@ const webpack = require('webpack');
 module.exports = {
   entry:  './src/index.tsx',
   output: {
-    filename:   'main.js',
-    path:       path.resolve(__dirname, 'dist'),
-    publicPath: '/',
+    filename: 'main.js',
+    path:     path.resolve(__dirname, 'dist'),
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -37,16 +36,12 @@ module.exports = {
       {
         test: /\.css$/i,
         use:  ['style-loader', 'css-loader'],
-      },
-      {
-        test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        type: 'asset/resource',
-      },
+      }
     ],
   },
   // pass all js files through Babel
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.css'],
+    extensions: ['.ts', '.tsx', '.js'],
     fallback:   {
       https:             require.resolve('https-browserify'),
       http:              require.resolve('stream-http'),

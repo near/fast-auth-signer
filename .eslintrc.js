@@ -16,12 +16,10 @@ module.exports = {
   ignorePatterns: ['dist'],
   extends:        ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
   rules:          {
-    'linebreak-style':                   0,
-    'react/require-default-props':       'off',
-    'react/prop-types':                  'off',
-    'react/jsx-filename-extension':      'off',
-    'react/jsx-props-no-spreading':      'off',
-    'import/no-extraneous-dependencies': 'off',
+    'linebreak-style':              0,
+    'react/require-default-props':  'off',
+    'react/prop-types':             'off',
+    'react/jsx-filename-extension': 'off',
     'prefer-destructuring':                [
       'error', {
         VariableDeclarator:   {
