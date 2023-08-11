@@ -47,6 +47,16 @@ function Devices({ controller }) {
 
   const onDeleteCollections = () => {
     setisDeleted(true);
+    const list = deleteCollections
+      .map((id) => {
+        const target = collections.find((collection) => collection.id === id);
+        return {
+          firebaseId: target.firebaseId,
+          publicKeys: target.publicKeys,
+        };
+      });
+    console.log('list', list);
+
     return controller.deleteCollections(deleteCollections)
       .then(() => {
         setisDeleted(false);
@@ -58,7 +68,7 @@ function Devices({ controller }) {
         console.log('Delete Failed', err);
       });
   };
-
+  console.log('collections', collections);
   return (
     <>
       <div>Devices route</div>
@@ -66,8 +76,8 @@ function Devices({ controller }) {
       {
         collections.map((collection) => (
           <Row key={collection.id}>
-            <StyledCheckbox type="checkbox" onClick={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
-            <div>{`${collection.device} - ${collection.os}`}</div>
+            <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
+            <label htmlFor={collection.id}>{collection.label}</label>
           </Row>
         ))
       }
