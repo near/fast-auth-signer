@@ -88,6 +88,47 @@ function CreateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const createAccount = async (data: { email: string; username: string; }) => {
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
+    try {
+      const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
+      const {
+        publicKey: publicKeyFak, email, privateKey, accountId
+      } = await handleCreateAccount({
+        accountId:   fullAccountId,
+        email:       data.email,
+        isRecovery:  false,
+        success_url,
+        failure_url,
+        public_key,
+        contract_id,
+        methodNames,
+      });
+      const newSearchParams = new URLSearchParams({
+        accountId,
+        publicKeyFak,
+        email,
+        isRecovery: 'false',
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
+        ...(public_key ? { public_key_lak: public_key } : {}),
+        ...(contract_id ? { contract_id } : {}),
+        ...(methodNames ? { methodNames } : {})
+      });
+      const hashParams = new URLSearchParams({ privateKey });
+      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+    } catch (error: any) {
+      openToast({
+        type:  'ERROR',
+        title: error.message,
+      });
+    }
+  };
+
   useEffect(() => {
     const checkPassKey = async (): Promise<void> => {
       const isPasskeyReady = await isPassKeyAvailable();
@@ -102,6 +143,15 @@ function CreateAccount() {
       }
     };
     checkPassKey();
+
+    const email = searchParams.get('email');
+    const username = getEmailId(email);
+
+    if (email) {
+      setValue('email', email);
+      setValue('username', username);
+      createAccount({ email, username });
+    }
   }, []);
 
   const checkIsAccountAvailable = useCallback(async (desiredUsername: string) => {
@@ -143,46 +193,7 @@ function CreateAccount() {
     }
   }, []);
 
-  const onSubmit = handleSubmit(async (data: { email: string; username: string; }) => {
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
-    const methodNames = searchParams.get('methodNames');
-    try {
-      const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const {
-        publicKey: publicKeyFak, email, privateKey, accountId
-      } = await handleCreateAccount({
-        accountId:   fullAccountId,
-        email:       data.email,
-        isRecovery:  false,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
-      });
-      const newSearchParams = new URLSearchParams({
-        accountId,
-        publicKeyFak,
-        email,
-        isRecovery: 'false',
-        ...(success_url ? { success_url } : {}),
-        ...(failure_url ? { failure_url } : {}),
-        ...(public_key ? { public_key_lak: public_key } : {}),
-        ...(contract_id ? { contract_id } : {}),
-        ...(methodNames ? { methodNames } : {})
-      });
-      const hashParams = new URLSearchParams({ privateKey });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
-    } catch (error: any) {
-      openToast({
-        type:  'ERROR',
-        title: error.message,
-      });
-    }
-  });
+  const onSubmit = handleSubmit(async (data) => createAccount(data));
 
   return (
     <StyledContainer>
