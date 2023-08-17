@@ -1,5 +1,3 @@
-import './styles/theme.css';
-import './styles/globals.css';
 import debug from 'debug';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +14,8 @@ import Login from './components/Login/Login';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
-import GlobalStyle from './styles';
+import './styles/theme.css';
+import './styles/globals.css';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'maximushaximus.testnet',
@@ -62,7 +61,7 @@ export default function App() {
 
   return (
     <>
-      <GlobalStyle />
+      {/* <GlobalStyle /> */}
       <Router>
         <RemoveTrailingSlash />
         <Routes>
