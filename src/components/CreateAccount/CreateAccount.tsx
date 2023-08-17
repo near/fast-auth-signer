@@ -1,13 +1,14 @@
 import { ErrorMessage } from '@hookform/error-message';
 import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { inIframe } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
@@ -87,6 +88,7 @@ function CreateAccount() {
   const formValues = watch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [isInIframe, setIsInIframe] = useState(false);
 
   const createAccount = async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');
@@ -130,6 +132,8 @@ function CreateAccount() {
   };
 
   useEffect(() => {
+    setIsInIframe(inIframe());
+
     const checkPassKey = async (): Promise<void> => {
       const isPasskeyReady = await isPassKeyAvailable();
       if (!isPasskeyReady) {
@@ -194,6 +198,17 @@ function CreateAccount() {
   }, []);
 
   const onSubmit = handleSubmit(async (data) => createAccount(data));
+
+  if (isInIframe) {
+    return (
+      <Button
+        label="Continue on fast auth"
+        onClick={() => {
+          window.open(`${window.location.origin}/create-account?${searchParams.toString()}`, '_parent');
+        }}
+      />
+    );
+  }
 
   return (
     <StyledContainer>
