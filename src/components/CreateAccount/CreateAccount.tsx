@@ -8,6 +8,7 @@ import styled from 'styled-components';
 
 import ErrorSvg from './icons/ErrorSvg';
 import SuccessSvg from './icons/SuccessSvg';
+import FormContainer from './styles/FormContainer';
 import InputContainer from './styles/InputContainer';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
