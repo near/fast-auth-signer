@@ -75,7 +75,7 @@ const InputContainer = styled.div`
   }
 `;
 
-function CreateAccount() {
+function CreateAccount({ controller }) {
   const {
     register,
     handleSubmit,
@@ -89,6 +89,14 @@ function CreateAccount() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const redirectIfSignedIn = async () => {
+      const currentlySignedIn = await controller.isSignedIn();
+      if (currentlySignedIn) {
+        navigate('/');
+      }
+    };
+    redirectIfSignedIn();
+
     const checkPassKey = async (): Promise<void> => {
       const isPasskeyReady = await isPassKeyAvailable();
       if (!isPasskeyReady) {

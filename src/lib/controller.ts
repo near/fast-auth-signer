@@ -1,9 +1,9 @@
 import { Account, Connection } from '@near-js/accounts';
 import { createKey, getKeys } from '@near-js/biometric-ed25519';
-import { KeyPairEd25519, KeyPair } from '@near-js/crypto';
+import { KeyPair, KeyPairEd25519 } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
 import { baseEncode, serialize } from 'borsh';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { Auth, User, getAuth } from 'firebase/auth';
 import {
   getFirestore, Firestore, collection, addDoc, getDocs, query, doc, deleteDoc, CollectionReference
@@ -14,6 +14,7 @@ import UAParser from 'ua-parser-js';
 import firebaseParams from './firebaseParams';
 import networkParams from './networkParams';
 import { DeleteDevice, Device } from '../types/firebase';
+import { network } from '../utils/config';
 
 class FastAuthController {
   private accountId: string;
@@ -32,7 +33,9 @@ class FastAuthController {
 
   private oidcToken: string;
 
-  constructor({ accountId, networkId, oidcToken, fullAccessKey }) {
+  private limitedAccessKey: KeyPair;
+
+  constructor({ networkId }) {
     const config = networkParams[networkId];
     if (!config) {
       throw new Error(`Invalid networkId ${networkId}`);
@@ -45,18 +48,15 @@ class FastAuthController {
     });
 
     this.networkId = networkId;
-    this.accountId = accountId;
-
     this.keyStore = new InMemoryKeyStore();
 
     // TODO: Upon retrieving the user's details, will need to use token to authenticate with firebase
-    const firebaseApp = initializeApp(firebaseParams[networkId]);
+    const firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseParams[networkId]);
     this.firebaseAuth = getAuth(firebaseApp);
     this.fireStore = getFirestore(firebaseApp);
 
-    this.setOidcToken(oidcToken);
-
-    this.firebaseAuth.onIdTokenChanged((user: User) => {
+    this.firebaseAuth.onIdTokenChanged(async (user: User) => {
+      console.log('user', user);
       if (!user) {
         return;
       }
@@ -64,11 +64,21 @@ class FastAuthController {
       if (window?.fastAuthController) {
         window.fastAuthController.userUid = user.uid;
       }
+      if (!this.oidcToken) {
+        const token = await user.getIdToken();
+        this.setOidcToken(token);
+      }
     });
 
-    // TODO: replace this code when create account is ready
-    console.log('fullAccessKey', fullAccessKey);
-    this.setKey(KeyPair.fromString(fullAccessKey));
+    const accountId = localStorage.getItem('near_account_id');
+    if (accountId) {
+      this.setAccountId(accountId);
+    }
+
+    const limitedAccessKey = localStorage.getItem('limitedAccessKey');
+    if (limitedAccessKey) {
+      this.setLimitedAccessKey(KeyPair.fromString(limitedAccessKey));
+    }
   }
 
   async createBiometricKey() {
@@ -111,8 +121,17 @@ class FastAuthController {
     return this.keyStore.setKey(this.networkId, this.accountId, keyPair);
   }
 
+  setLimitedAccessKey(keypair) {
+    this.limitedAccessKey = keypair;
+  }
+
+  setAccountId(accountId) {
+    this.accountId = accountId;
+  }
+
   async isSignedIn() {
-    return !!(await this.getKey());
+    // return !!(await this.getKey());
+    return !!this.limitedAccessKey;
   }
 
   assertValidSigner(signerId) {
@@ -183,14 +202,14 @@ class FastAuthController {
   async listCollections() {
     const account = new Account(this.connection, this.accountId);
     const accessKeys = await account.getAccessKeys();
-    console.log('accessKeys', accessKeys);
+    const recoveryKey = await this.getUserCredential();
 
-    // TODO: get public key from recovery service
+    const accessKeysWithoutRecoveryKey = accessKeys.filter((key) => key.public_key !== recoveryKey);
+
     const q = query(collection(this.fireStore, `/users/${this.userUid}/devices`) as CollectionReference<Device>);
     const querySnapshot = await getDocs(q);
     const collections = [];
 
-    // use internal loop function from QuerySnapshot
     querySnapshot.forEach((document) => {
       const data = document.data();
       collections.push({
@@ -202,11 +221,13 @@ class FastAuthController {
     });
 
     // TODO: from the list, exclude record that has same key from recovery service
-    return accessKeys.reduce((list, key) => {
+    return accessKeysWithoutRecoveryKey.reduce((list, key) => {
       const exist = list.find((c) => c.publicKeys.includes(key.public_key));
       if (exist) {
         return list;
       }
+
+      // If there are any keys that are absent from firestore, show them as unknown
       return [
         ...list,
         {
@@ -221,8 +242,6 @@ class FastAuthController {
 
   // TODO: need to add logic to delete associated keys to object
   async deleteCollections(list: DeleteDevice[]) {
-    const account = new Account(this.connection, this.accountId);
-
     return Promise.all(list.map(async ({ firebaseId, publicKeys }) => {
       if (firebaseId) {
         try {
@@ -234,7 +253,8 @@ class FastAuthController {
       }
       if (publicKeys.length) {
         try {
-          await Promise.all(publicKeys.map((key) => account.deleteKey(key)));
+          // await Promise.all(publicKeys.map((key) => account.deleteKey(key)));
+          // TODO: implement /sign endpoint to pass deletekey action
         } catch (err) {
           console.log('Fail to delete keys', err);
           throw new Error(err);
@@ -243,14 +263,23 @@ class FastAuthController {
     }));
   }
 
-  private async constructSignObj(salt) {
+  private hashToken = () => {
+    const tokenHash = sha256.create();
+    tokenHash.update(this.oidcToken);
+    return tokenHash.array();
+  };
+
+  private async constructSignObj(salt, hashOidcToken) {
     const value = ({ salt });
     const saltSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['salt', 'u32']] }]]), value);
 
-    const keyPair = await this.getKey();
+    const keyPair = this.limitedAccessKey;
     const tokenHash = sha256.create();
     tokenHash.update(this.oidcToken);
-    const tokenSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['oidc_token', [32]]] }]]), ({ oidc_token: tokenHash.array() }));
+
+    const token = hashOidcToken ? this.hashToken() : this.oidcToken;
+    const tokenType = hashOidcToken ? [32] : 'string';
+    const tokenSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['oidc_token', tokenType]] }]]), ({ oidc_token: token }));
     const publicKeySerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['public_key', [32]]] }]]), ({ public_key: Array.from(keyPair.getPublicKey().data) }));
 
     const mergeArray = new Uint8Array(saltSerialize.length + tokenSerialize.length + publicKeySerialize.length + 1);
@@ -268,31 +297,29 @@ class FastAuthController {
   // This call need to be called after user account is created to claim that given oidc token belong to the user
   // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
   async claimOidcToken() {
-    const currentKeyPair = await this.getKey();
     const CLAIM_SALT = 3177899144 + 0;
-    const signObj = await this.constructSignObj(CLAIM_SALT);
+    const signObj = await this.constructSignObj(CLAIM_SALT, true);
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
     const data = {
       oidc_token_hash: sha256(this.oidcToken),
       frp_signature: Buffer.from(signObj.signature).toString('hex'),
-      frp_public_key: currentKeyPair.getPublicKey().toString(),
+      frp_public_key: this.limitedAccessKey.getPublicKey().toString(),
     };
 
     // TODO: replace with proper node later
-    return fetch('https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app/claim_oidc', {
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
       method: 'POST',
       mode: 'cors' as const,
       body: JSON.stringify(data),
       headers,
     }).then(async (response) => {
       if (!response.ok) {
-        console.log('response', response);
         throw new Error('Unable to claim OIDC token');
       }
       const res = await response.json();
-      localStorage.setItem('mpc_signature', res.mpc_signature);
+      localStorage.setItem(`mpc_signature: ${this.limitedAccessKey.getPublicKey().toString()}`, res.mpc_signature);
       return res.mpc_signature;
     }).catch((err) => {
       console.log(err);
@@ -301,20 +328,18 @@ class FastAuthController {
   }
 
   async getUserCredential() {
-    const currentKeyPair = await this.getKey();
     const GET_USER_SALT = 3177899144 + 2;
-    const signObj = await this.constructSignObj(GET_USER_SALT);
+    const signObj = await this.constructSignObj(GET_USER_SALT, false);
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
 
     const data = {
       oidc_token: this.oidcToken,
       frp_signature: Buffer.from(signObj.signature).toString('hex'),
-      frp_public_key: currentKeyPair.getPublicKey().toString(),
+      frp_public_key: this.limitedAccessKey.getPublicKey().toString(),
     };
 
-    // TODO: replace with proper node later
-    return fetch('https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app/user_credentials', {
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/user_credentials`, {
       method: 'POST',
       mode: 'cors' as const,
       body: JSON.stringify(data),
@@ -325,13 +350,70 @@ class FastAuthController {
         throw new Error('Unable to get user credential');
       }
       const res = await response.json();
-      console.log('res', res);
-      // localStorage.setItem('mpc_signature', res.Ok.mpc_signature);
       return res.recovery_pk;
     }).catch((err) => {
       console.log(err);
       throw new Error('Unable to get user credential');
     });
+  }
+
+  async createAccount({
+    fak,
+    lak,
+    contract_id,
+    methodNames,
+  }) {
+    // First, claim the oidc token
+    await this.claimOidcToken();
+
+    // construct the sign obj
+    const currentKeyPair = this.limitedAccessKey;
+    const CLAIM_SALT = 3177899144 + 2;
+    const signObj = await this.constructSignObj(CLAIM_SALT, false);
+    const publicKey = currentKeyPair.getPublicKey().toString();
+    const data = {
+      near_account_id: this.accountId,
+      create_account_options: {
+        full_access_keys:    [fak],
+        limited_access_keys: [
+          {
+            public_key:   lak,
+            receiver_id:  contract_id,
+            allowance:    '250000000000000',
+            method_names: (methodNames && methodNames.split(',')) || '',
+          },
+        ],
+      },
+      oidc_token: this.oidcToken,
+      user_credentials_frp_signature: Buffer.from(signObj.signature).toString('hex'),
+      frp_public_key: publicKey,
+    };
+
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const options = {
+      method: 'POST',
+      mode:   'cors' as const,
+      body:   JSON.stringify(data),
+      headers,
+    };
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/new_account`, options)
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Unable to create user');
+        }
+        const res = await response.json();
+        // On success, register device
+        const publicKeyFromCreateAccount = res?.create_account_options?.full_access_keys?.[0];
+        await this.addCollection([publicKeyFromCreateAccount, lak]);
+        localStorage.setItem('near_account_id', res.near_account_id);
+        return res;
+      }).catch((err) => {
+        // TODO: implement redirect logic here to handle too many key error
+        console.log(err);
+        throw new Error('Unable to create user');
+      });
   }
 }
 

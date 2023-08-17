@@ -9,7 +9,7 @@ function AuthIndicator({ controller }) {
   useEffect(() => {
     async function fetchSignedInStatus() {
       const currentlySignedIn = await controller.isSignedIn();
-      setTimeout(() => setIsSignedIn(currentlySignedIn), 2000);
+      setTimeout(() => setIsSignedIn(currentlySignedIn), 300);
     }
 
     fetchSignedInStatus();

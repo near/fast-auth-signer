@@ -29,7 +29,7 @@ export const networks: Record<NetworkId, Network> = {
     walletUrl:     'https://wallet.testnet.near.org',
     helperUrl:     'https://helper.testnet.near.org',
     fastAuth:      {
-      mpcRecoveryUrl:  'https://mpc-recovery-leader-testnet-cg7nolnlpa-ue.a.run.app',
+      mpcRecoveryUrl:  'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
       accountIdSuffix: 'testnet',
       firebase:        {
@@ -52,6 +52,6 @@ export const networks: Record<NetworkId, Network> = {
   //   helperUrl: 'http://127.0.0.1:8330',
   // },
 };
-
-export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId) || 'mainnet';
+// TODO: replace fallback to mainnet later
+export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId) || 'testnet';
 export const network = networks[networkId];

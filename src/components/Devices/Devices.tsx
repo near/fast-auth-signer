@@ -21,6 +21,10 @@ function Devices({ controller }) {
   const [isDeleted, setisDeleted] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
 
+  if (!controller.accountId) {
+    return null;
+  }
+
   const onClick = (id) => {
     if (deleteCollections.includes(id)) {
       setDeleteCollections(deleteCollections.filter((item) => item !== id));
@@ -55,9 +59,8 @@ function Devices({ controller }) {
           publicKeys: target.publicKeys,
         };
       });
-    console.log('list', list);
 
-    return controller.deleteCollections(deleteCollections)
+    return controller.deleteCollections(list)
       .then(() => {
         setisDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
@@ -68,7 +71,7 @@ function Devices({ controller }) {
         console.log('Delete Failed', err);
       });
   };
-  console.log('collections', collections);
+
   return (
     <>
       <div>Devices route</div>
