@@ -145,7 +145,7 @@ function CreateAccount() {
     checkPassKey();
 
     const email = searchParams.get('email');
-    const username = searchParams.get('username');
+    const username = searchParams.get('accountId');
 
     if (email) {
       setValue('email', email);
