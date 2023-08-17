@@ -20,6 +20,23 @@ function Login({ controller }) {
     fetchSignedInStatus();
   }, [controller]);
 
+  useEffect(() => {
+    const isRecovery = currentSearchParams.get('isRecovery');
+    if (isRecovery) {
+      if (isRecovery === 'true') {
+        navigate({
+          pathname: '/add-device',
+          search:   currentSearchParams.toString()
+        });
+      } else {
+        navigate({
+          pathname: '/create-account',
+          search:   currentSearchParams.toString()
+        });
+      }
+    }
+  }, [currentSearchParams]);
+
   return (
     <div>
       Login route
@@ -32,7 +49,7 @@ function Login({ controller }) {
             window.open(`${window.location.origin}/create-account?${currentSearchParams.toString()}`, '_parent');
           } else {
             navigate({
-              pathname: '/add-device',
+              pathname: '/create-account',
               search:   currentSearchParams.toString()
             });
           }
