@@ -1,7 +1,7 @@
 import debug from 'debug';
 import * as React from 'react';
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import AddDevice from './components/AddDevice/AddDevice';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
@@ -11,11 +11,8 @@ import Sign from './components/Sign/Sign';
 import FastAuthController from './lib/controller';
 import GlobalStyle from './styles';
 
-import './styles/theme.css';
-import './styles/globals.css';
-
 (window as any).fastAuthController = new FastAuthController({
-  accountId: 'maximushaximus.testnet',
+  accountId: 'harisvalj.testnet',
   networkId: 'testnet'
 });
 
@@ -37,6 +34,7 @@ export default function App() {
 
   const { t, i18n } = useTranslation('common');
 
+  // @ts-ignore
   return (
     <>
       <GlobalStyle />

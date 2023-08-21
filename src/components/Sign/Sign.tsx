@@ -34,7 +34,7 @@ function Sign() {
           />
           <path d="M33.9839 9.29034L39.2097 14.5162V9.29034H33.9839Z" fill="#00C08B" />
         </svg>
-        <h4 className='--text-xl'>Confirm transaction</h4>
+        <h4>Confirm transaction</h4>
         <div className="transaction-details">
           <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path

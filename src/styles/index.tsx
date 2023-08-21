@@ -428,7 +428,7 @@ export default createGlobalStyle`
     display: flex;
     flex-direction: column;
     row-gap: 8px;
-    font-family: 'Mona Sans';
+
 
     .modal-top {
       display: flex;
@@ -444,7 +444,7 @@ export default createGlobalStyle`
         border-radius: 50px;
         border: 1px solid #E3E3E0;
         align-items: center;
-        font-family: 'Mona Sans';
+        font-family: Mona Sans;
         font-size: 12px;
         font-weight: 450;
         line-height: 17px;
@@ -543,7 +543,6 @@ export default createGlobalStyle`
         }
 
         .right-side {
-          font-family: Mona Sans;
           .function-call {
             display: inline-flex;
             flex-wrap: wrap;
@@ -561,7 +560,7 @@ export default createGlobalStyle`
               flex-direction: row;
               display: inline-flex;
               flex-wrap: wrap;
-              font-family: 'FK Grotesk';
+              font-family: FK Grotesk SemiMono Trial;
               font-size: 12px;
               font-weight: 500;
               line-height: 17px;

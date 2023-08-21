@@ -43,6 +43,7 @@
     "process": "^0.11.10",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-router-dom": "^6.14.1",
     "react-i18next": "^13.0.2",
     "react-router": "^6.14.1",
     "react-router-dom": "^6.14.1",
