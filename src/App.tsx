@@ -16,7 +16,6 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
-import { useAuthState } from './lib/useAuthState';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'maximushaximus.testnet',
