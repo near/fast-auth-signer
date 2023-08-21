@@ -30,6 +30,7 @@
     "last 1 Chrome version"
   ],
   "dependencies": {
+    "@hookform/error-message": "^2.0.1",
     "@near-js/accounts": "^0.1.4",
     "@near-js/biometric-ed25519": "^0.3.0",
     "@near-js/crypto": "^0.0.5",
@@ -47,7 +48,7 @@
     "i18next": "^23.2.8",
     "process": "^0.11.10",
     "react": "^18.2.0",
-    "react-dom": "^16.13.1",
+    "react-dom": "^18.2.0",
     "react-hook-form": "^7.45.2",
     "react-i18next": "^13.0.2",
     "react-router": "^6.14.1",

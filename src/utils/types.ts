@@ -1,3 +1,9 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
+import type { ReactElement, ReactNode } from 'react';
+
+export type NetworkId = ProductionNetwork['networkId'];
+export type Network = ProductionNetwork;
 // export type NetworkId = ProductionNetwork['networkId'] | DevelopmentNetwork['networkId'];
 // export type Network = ProductionNetwork | DevelopmentNetwork;
 
@@ -31,6 +37,3 @@ type ProductionNetwork = {
 //   walletUrl: string;
 //   helperUrl: string;
 // };
-
-export type NetworkId = ProductionNetwork['networkId'];
-export type Network = ProductionNetwork;

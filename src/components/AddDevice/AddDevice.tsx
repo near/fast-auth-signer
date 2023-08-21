@@ -14,7 +14,7 @@ import { inIframe } from '../../utils';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
-const handleCreateAccount = async ({
+export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
   const keyPair = await createKey(email);
