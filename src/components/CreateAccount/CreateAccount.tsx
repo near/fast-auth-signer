@@ -88,7 +88,6 @@ function CreateAccount() {
   const formValues = watch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [isInIframe, setIsInIframe] = useState(false);
 
   const createAccount = async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');
@@ -132,8 +131,6 @@ function CreateAccount() {
   };
 
   useEffect(() => {
-    setIsInIframe(inIframe());
-
     const checkPassKey = async (): Promise<void> => {
       const isPasskeyReady = await isPassKeyAvailable();
       if (!isPasskeyReady) {
@@ -199,7 +196,7 @@ function CreateAccount() {
 
   const onSubmit = handleSubmit(async (data) => createAccount(data));
 
-  if (isInIframe) {
+  if (inIframe()) {
     return (
       <Button
         label="Continue on fast auth"
