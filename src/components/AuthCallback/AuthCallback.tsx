@@ -70,14 +70,14 @@ function AuthCallbackPage() {
               ...(accountId && accountId.includes('.') ? { near_account_id: accountId } : {}),
               create_account_options: {
                 full_access_keys:    [publicKeyFak],
-                limited_access_keys: [
+                limited_access_keys: public_key_lak ? [
                   {
                     public_key:   public_key_lak,
                     receiver_id:  contract_id,
                     allowance:    '250000000000000',
                     method_names: (methodNames && methodNames.split(',')) || '',
                   },
-                ],
+                ] : [],
               },
               oidc_token: user.accessToken,
             };
@@ -112,12 +112,13 @@ function AuthCallbackPage() {
                 });
 
                 await window.fastAuthController.setKey(new KeyPairEd25519(privateKey.split(':')[1]));
+                window.localStorage.setItem('webauthn_username', email);
 
                 window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
                 setStatusMessage('Redirecting to app...');
 
-                const parsedUrl = new URL(success_url);
+                const parsedUrl = new URL(success_url || window.location.origin);
                 parsedUrl.searchParams.set('account_id', accId);
                 parsedUrl.searchParams.set('public_key', public_key_lak);
                 parsedUrl.searchParams.set('all_keys', public_key_lak);
@@ -137,7 +138,7 @@ function AuthCallbackPage() {
             'auth/missing-email':       'No email found, please try again.',
           };
           const message = errorMessages[error.code] || error.message;
-          const parsedUrl = new URL(failure_url || success_url);
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
           parsedUrl.searchParams.set('code', error.code);
           parsedUrl.searchParams.set('reason', message);
           window.location.replace(parsedUrl.href);
