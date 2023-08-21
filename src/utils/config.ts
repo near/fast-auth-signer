@@ -7,6 +7,7 @@ export const networks: Record<NetworkId, Network> = {
     nodeUrl:       'https://rpc.mainnet.near.org',
     walletUrl:     'https://wallet.near.org',
     helperUrl:     'https://helper.mainnet.near.org',
+    relayerUrl:    'https://near-relayer-mainnet.api.pagoda.co/relay',
     fastAuth:      {
       mpcRecoveryUrl:  'https://mpc-recovery-leader-mainnet-cg7nolnlpa-ue.a.run.app',
       authHelperUrl:   'https://api.kitwallet.app',
@@ -28,6 +29,7 @@ export const networks: Record<NetworkId, Network> = {
     nodeUrl:       'https://rpc.testnet.near.org',
     walletUrl:     'https://wallet.testnet.near.org',
     helperUrl:     'https://helper.testnet.near.org',
+    relayerUrl:    'http://34.70.226.83:3030/relay',
     fastAuth:      {
       mpcRecoveryUrl:  'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',

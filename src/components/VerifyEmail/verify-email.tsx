@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
+import EmailSvg from './icons/EmailSvg';
 
 function VerifyEmailPage() {
   const [query] = useSearchParams();
@@ -77,20 +78,15 @@ function VerifyEmailPage() {
   return (
     <StyledContainer>
       <FormContainer onSubmit={handleResendEmail}>
+        <EmailSvg />
         <header>
-          <a
-            href={query.get('isRecovery') === 'true' ? '/signin' : '/signup'}
-            style={{ textDecoration: 'underline', color: 'black' }}
-          >
-            <small>Go back</small>
-          </a>
-          <h1 style={{ marginTop: '12px' }}>Verify your email</h1>
-          <p style={{ fontWeight: 600, marginTop: '12px' }}>{query.get('email')}</p>
+          <h1>Verify Your Email</h1>
+          <p>{query.get('email')}</p>
         </header>
 
         <p>Check your inbox to activate your account.</p>
 
-        <Button label="Resend Email" variant="secondary" onClick={handleResendEmail} />
+        <Button label="Resend" onClick={handleResendEmail} />
       </FormContainer>
     </StyledContainer>
   );
@@ -109,13 +105,43 @@ const StyledContainer = styled.div`
 `;
 
 const FormContainer = styled.form`
+  box-shadow: 0px 4px 8px 0px #0000000F;
+  box-shadow: 0px 0px 0px 1px #0000000F;
   max-width: 450px;
   width: 100%;
   margin: 16px auto;
   background-color: #ffffff;
-  padding: 16px;
+  padding: 35px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+    width: 100px;
+  }
+
+  & > p {
+    color: #706F6C;
+    font-size: 14px;
+  }
+
+  header {
+    text-align: center;
+  }
+
+  header h1 {
+    font: var(--text-2xl);
+    font-weight: bold;
+  }
+
+  header p {
+    color: #604CC8;
+  }
+
+  button {
+    width: 100%;
+    padding: 25px;
+  }
 `;

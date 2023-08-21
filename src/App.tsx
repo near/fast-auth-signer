@@ -15,7 +15,6 @@ import Login from './components/Login/Login';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
-// import GlobalStyle from './styles';
 import './styles/theme.css';
 import './styles/globals.css';
 
@@ -68,8 +67,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
-            <Route path="add-device" element={<AddDevice controller={window.fastAuthController} />} />
-            <Route path="create-account" element={<CreateAccount controller={window.fastAuthController}/>} />
+            <Route path="add-device" element={<AddDevice />} />
+            <Route path="create-account" element={<CreateAccount />} />
             <Route path="sign" element={<Sign />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="login" element={<Login controller={window.fastAuthController} />} />

@@ -1,12 +1,16 @@
-import { createKey } from '@near-js/biometric-ed25519';
+import { createKey } from '@near-js/biometric-ed25519/lib';
+import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { useAuthState } from '../../lib/useAuthState';
+import { inIframe } from '../../utils';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
@@ -24,7 +28,7 @@ export const handleCreateAccount = async ({
     publicKeyFak: publicKeyWebAuthn,
     email,
     ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery: 'true' } : {}),
+    ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
     ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),
@@ -45,20 +49,14 @@ export const handleCreateAccount = async ({
   };
 };
 
-function SignInPage({ controller }) {
+function SignInPage() {
   const { register, handleSubmit, setValue } = useForm();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const authenticated = useAuthState();
+  const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
-  useEffect(() => {
-    controller.isSignedIn().then((signedIn: boolean) => {
-      if (signedIn) {
-        navigate('/');
-      }
-    });
-  }, []);
-
-  const onSubmit = handleSubmit(async (data: any) => {
+  const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
 
     const success_url = searchParams.get('success_url');
@@ -105,7 +103,81 @@ function SignInPage({ controller }) {
         });
       }
     }
-  });
+  }, [searchParams, navigate]);
+
+  useEffect(() => {
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
+    if (authenticated) {
+      (window as any).fastAuthController.signAndSendAddKey({
+        contractId: contract_id,
+        methodNames,
+        allowance:  new BN('250000000000000'),
+        publicKey:  public_key
+      }).then((res) => res.json()).then((res) => {
+        const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+        if (failure) {
+          throw new Error(JSON.stringify(failure));
+        }
+        const parsedUrl = new URL(success_url || window.location.origin);
+        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+        parsedUrl.searchParams.set('public_key', public_key);
+        parsedUrl.searchParams.set('all_keys', public_key);
+
+        if (inIframe()) {
+          setRenderRedirectButton(parsedUrl.href);
+        } else {
+          window.location.replace(parsedUrl.href);
+        }
+      }).catch((error) => {
+        console.log(error, '<<< err')
+        const { message } = error;
+        const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+        parsedUrl.searchParams.set('code', error.code);
+        parsedUrl.searchParams.set('reason', message);
+        if (inIframe()) {
+          setRenderRedirectButton(parsedUrl.href);
+        } else {
+          window.location.replace(parsedUrl.href);
+        }
+      });
+    }
+    const email = searchParams.get('email');
+
+    if (email) {
+      setValue('email', email);
+      addDevice({ email });
+    }
+  }, [authenticated, searchParams]);
+
+  if (authenticated) {
+    return renderRedirectButton ? (
+      <Button
+        label="Back to app"
+        onClick={() => {
+          window.open(renderRedirectButton, '_parent');
+        }}
+      />
+    ) : (
+      <div>Signing transaction</div>
+    );
+  }
+
+  if (inIframe()) {
+    return (
+      <Button
+        label="Continue on fast auth"
+        onClick={() => {
+          window.open(`${window.location.origin}/add-device?${searchParams.toString()}`, '_parent');
+        }}
+      />
+    );
+  }
+
+  const onSubmit = handleSubmit(addDevice);
 
   return (
     <StyledContainer>

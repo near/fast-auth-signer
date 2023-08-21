@@ -10,12 +10,15 @@ import {
 } from 'firebase/firestore';
 import { sha256 } from 'js-sha256';
 import UAParser from 'ua-parser-js';
+import { actionCreators, encodeSignedDelegate } from '@near-js/transactions';
+import { baseEncode } from 'borsh';
 
 import firebaseParams from './firebaseParams';
 import networkParams from './networkParams';
 import { DeleteDevice, Device } from '../types/firebase';
 import { network } from '../utils/config';
 
+const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
   private accountId: string;
 
@@ -40,6 +43,8 @@ class FastAuthController {
     if (!config) {
       throw new Error(`Invalid networkId ${networkId}`);
     }
+
+    this.keyStore = new InMemoryKeyStore();
 
     this.connection = Connection.fromConfig({
       networkId,
@@ -79,6 +84,7 @@ class FastAuthController {
     if (limitedAccessKey) {
       this.setLimitedAccessKey(KeyPair.fromString(limitedAccessKey));
     }
+    this.accountId = accountId;
   }
 
   async createBiometricKey() {
@@ -153,6 +159,10 @@ class FastAuthController {
     return keyPair.getPublicKey().toString();
   }
 
+  getAccountId() {
+    return this.accountId;
+  }
+
   async getAccounts() {
     if (this.accountId) {
       return [this.accountId];
@@ -169,6 +179,26 @@ class FastAuthController {
       actions,
       blockHeightTtl: 60,
       receiverId,
+    });
+  }
+
+  async signAndSendDelegateAction({ receiverId, actions }) {
+    const signedDelegate = await this.signDelegateAction({ receiverId, actions, signerId: this.accountId });
+
+    return fetch(network.relayerUrl, {
+      method:  'POST',
+      mode:    'cors',
+      body:    JSON.stringify(Array.from(encodeSignedDelegate(signedDelegate))),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    });
+  }
+
+  async signAndSendAddKey({
+    contractId, methodNames, allowance, publicKey
+  }) {
+    return this.signAndSendDelegateAction({
+      receiverId: this.accountId,
+      actions:    [addKey(PublicKey.from(publicKey), functionCallAccessKey(contractId, methodNames || [], allowance))]
     });
   }
 

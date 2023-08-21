@@ -1,13 +1,18 @@
 import { ErrorMessage } from '@hookform/error-message';
 import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import ErrorSvg from './icons/ErrorSvg';
+import SuccessSvg from './icons/SuccessSvg';
+import FormContainer from './styles/FormContainer';
+import InputContainer from './styles/InputContainer';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { inIframe } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
@@ -22,60 +27,16 @@ const StyledContainer = styled.div`
   justify-content: center;
   background-color: #f2f1ea;
   padding: 0 16px;
-`;
 
-const FormContainer = styled.form`
-  max-width: 450px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-
-  label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  input {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 4px;
-    min-height: 50px;
-    cursor: text;
-
-    &:focus {
-      outline: none;
-      border: 1px solid #e5e5e5;
-    }
-  }
-
-  .subText {
-    font-size: 0.75rem;
-    padding: 8px 0;
-
-    .error {
-      color: hsla(8, 100%, 33%, 1);
-    }
-
-    .success {
-      color: hsla(155, 66%, 32%, 1);
-    }
+  header {
+    text-align: center;
+    margin-top: 1em;
   }
 `;
 
-function CreateAccount({ controller }) {
+const emailProviders = ['gmail', 'yahoo', 'hotmail'];
+
+function CreateAccount() {
   const {
     register,
     handleSubmit,
@@ -84,9 +45,53 @@ function CreateAccount({ controller }) {
     formState: { errors, touchedFields },
     clearErrors,
   } = useForm();
+  const [emailProvider, setEmailProvider] = useState(null);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(null);
+
   const formValues = watch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const createAccount = async (data: { email: string; username: string; }) => {
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
+    try {
+      const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
+      const {
+        publicKey: publicKeyFak, email, privateKey, accountId
+      } = await handleCreateAccount({
+        accountId:   fullAccountId,
+        email:       data.email,
+        isRecovery:  false,
+        success_url,
+        failure_url,
+        public_key,
+        contract_id,
+        methodNames,
+      });
+      const newSearchParams = new URLSearchParams({
+        accountId,
+        publicKeyFak,
+        email,
+        isRecovery: 'false',
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
+        ...(public_key ? { public_key_lak: public_key } : {}),
+        ...(contract_id ? { contract_id } : {}),
+        ...(methodNames ? { methodNames } : {})
+      });
+      const hashParams = new URLSearchParams({ privateKey });
+      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+    } catch (error: any) {
+      openToast({
+        type:  'ERROR',
+        title: error.message,
+      });
+    }
+  };
 
   useEffect(() => {
     const redirectIfSignedIn = async () => {
@@ -110,6 +115,15 @@ function CreateAccount({ controller }) {
       }
     };
     checkPassKey();
+
+    const email = searchParams.get('email');
+    const username = searchParams.get('accountId');
+
+    if (email) {
+      setValue('email', email);
+      setValue('username', username);
+      createAccount({ email, username });
+    }
   }, []);
 
   const checkIsAccountAvailable = useCallback(async (desiredUsername: string) => {
@@ -151,53 +165,47 @@ function CreateAccount({ controller }) {
     }
   }, []);
 
-  const onSubmit = handleSubmit(async (data: { email: string; username: string; }) => {
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
-    const methodNames = searchParams.get('methodNames');
-    try {
-      const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const {
-        publicKey: publicKeyFak, email, privateKey, accountId
-      } = await handleCreateAccount({
-        accountId:   fullAccountId,
-        email:       data.email,
-        isRecovery:  false,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
-      });
-      const newSearchParams = new URLSearchParams({
-        accountId,
-        publicKeyFak,
-        email,
-        isRecovery: 'false',
-        ...(success_url ? { success_url } : {}),
-        ...(failure_url ? { failure_url } : {}),
-        ...(public_key ? { public_key_lak: public_key } : {}),
-        ...(contract_id ? { contract_id } : {}),
-        ...(methodNames ? { methodNames } : {})
-      });
-      const hashParams = new URLSearchParams({ privateKey });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
-    } catch (error: any) {
-      openToast({
-        type:  'ERROR',
-        title: error.message,
-      });
+  const onSubmit = handleSubmit(async (data) => createAccount(data));
+
+  if (inIframe()) {
+    return (
+      <Button
+        label="Continue on fast auth"
+        onClick={() => {
+          window.open(`${window.location.origin}/create-account?${searchParams.toString()}`, '_parent');
+        }}
+      />
+    );
+  }
+
+  const selectMailProvider = (provider: string) => {
+    if (!formValues.email) {
+      formValues.email = '';
     }
-  });
+    const emailId = getEmailId(formValues.email);
+    if (emailProvider === provider) {
+      setEmailProvider(null);
+      setValue('email', emailId);
+    } else {
+      setEmailProvider(provider);
+      setValue('email', `${emailId}@${provider}.com`);
+    }
+
+    if (!formValues?.username || !touchedFields?.username) {
+      setValue('username', emailId);
+    }
+  };
 
   return (
     <StyledContainer>
       <FormContainer onSubmit={onSubmit}>
         <header>
           <h1>Create account</h1>
-          <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
+          <p className="desc">
+            <span>Have an account?</span>
+            {' '}
+            <Link to="/login">Sign in</Link>
+          </p>
         </header>
 
         <InputContainer>
@@ -224,6 +232,20 @@ function CreateAccount({ controller }) {
             type="email"
             id="email"
           />
+          <div className="select-mail-provider">
+            {emailProviders.map((provider) => {
+              if (!emailProvider || emailProvider === provider) {
+                return (
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                  <div className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
+                    @
+                    {provider}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
           <div className="subText">
             <div className="error">
               <ErrorMessage
@@ -238,55 +260,63 @@ function CreateAccount({ controller }) {
         <InputContainer>
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label htmlFor="username">Account ID</label>
-          <input
-            autoComplete="webauthn username"
-            {...register('username', {
-              required: 'Please enter a valid account ID',
-              pattern:  {
-                value:   accountAddressPatternNoSubaccount,
-                message: 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.',
-              },
-              validate: async (username) => {
-                const isAccountAvailable = await checkIsAccountAvailable(username);
-                if (!isAccountAvailable) {
-                  let message = '';
-                  if (isAccountAvailable === null) {
-                    message = 'Checking availability...';
-                  } else if (isAccountAvailable) {
-                    message = `${username}.${network.fastAuth.accountIdSuffix} is available!`;
-                  } else {
-                    message = `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
+          <div className={`input-group-custom ${isUsernameAvailable === true && 'input-group-custom-success'} ${isUsernameAvailable === false && 'input-group-custom-failure'}`}>
+            <input
+              autoComplete="webauthn username"
+              {...register('username', {
+                required: 'Please enter a valid account ID',
+                pattern:  {
+                  value:   accountAddressPatternNoSubaccount,
+                  message: 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.',
+                },
+                validate: async (username) => {
+                  const isAccountAvailable = await checkIsAccountAvailable(username);
+                  setIsUsernameAvailable(isAccountAvailable);
+                  if (!isAccountAvailable) {
+                    return `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
                   }
-
-                  return message;
+                  return null;
+                },
+              })}
+              onChange={async (e) => {
+                clearErrors('username');
+                const isValidPattern = accountAddressPatternNoSubaccount.test(e.target.value);
+                if (!isValidPattern) {
+                  setIsUsernameAvailable(false);
+                  return null;
                 }
+                const isAccountAvailable = await checkIsAccountAvailable(e.target.value);
+                setIsUsernameAvailable(isAccountAvailable);
                 return null;
-              },
-            })}
-            placeholder="user_name.near"
-          />
-          <div className="subText">
-            <div className="error">
-              <ErrorMessage
-                errors={errors}
-                name="username"
-                render={({ message }) => <p>{message}</p>}
-              />
+              }}
+              placeholder="user_name"
+            />
+            <div className="input-group-right">
+              <span>.near</span>
             </div>
+          </div>
+          <div className="subText">
+            <div>Use a suggested ID or customize your own</div>
+            {isUsernameAvailable && (
+              <div className="success">
+                <SuccessSvg />
+                <span>Account ID available</span>
+              </div>
+            )}
+            <ErrorMessage
+              errors={errors}
+              name="username"
+              render={({ message }) => (
+                <div className="error">
+                  <ErrorSvg />
+                  <span>{message}</span>
+                </div>
+              )}
+            />
           </div>
         </InputContainer>
 
-        <Button label="Continue" variant="affirmative" type="submit" />
-
-        <hr style={{ borderColor: 'hsl(55, 1.7%, 51.9%)' }} />
-
-        <p>
-          Already have an account?
-          {' '}
-          <Link to="/signin" style={{ color: 'hsla(246, 57%, 61%, 1)', fontWeight: 500 }}>
-            Sign In
-          </Link>
-        </p>
+        <Button label="Continue" variant="affirmative" type="submit" size="large" />
       </FormContainer>
     </StyledContainer>
   );
