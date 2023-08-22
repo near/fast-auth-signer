@@ -171,7 +171,7 @@ function SignInPage() {
       <Button
         label="Continue on fast auth"
         onClick={() => {
-          window.open(`${window.location.origin}/add-device?${searchParams.toString()}`, '_parent');
+          window.open(window.location.href, '_parent');
         }}
       />
     );

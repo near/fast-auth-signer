@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '../../lib/Button';
 import { inIframe } from '../../utils';
@@ -8,6 +8,7 @@ import AuthIndicator from '../AuthIndicator/AuthIndicator';
 function Login({ controller }) {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
 
@@ -50,7 +51,7 @@ function Login({ controller }) {
             search:   currentSearchParams.toString()
           });
           if (!isSignedIn && inIframe()) {
-            window.open(window.location.href, '_parent');
+            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
           }
         }}
       />
@@ -63,7 +64,7 @@ function Login({ controller }) {
             search:   currentSearchParams.toString()
           });
           if (!isSignedIn && inIframe()) {
-            window.open(window.location.href, '_parent');
+            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
           }
         }}
       />
