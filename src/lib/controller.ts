@@ -1,11 +1,14 @@
 import { Account, Connection } from '@near-js/accounts';
 import { createKey, getKeys } from '@near-js/biometric-ed25519';
-import { KeyPairEd25519 } from '@near-js/crypto';
+import { KeyPairEd25519, PublicKey } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
+import { actionCreators, encodeSignedDelegate } from '@near-js/transactions';
 import { baseEncode } from 'borsh';
 
 import networkParams from './networkParams';
+import { network } from '../utils/config';
 
+const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
   private accountId: string;
 
@@ -21,6 +24,8 @@ class FastAuthController {
       throw new Error(`Invalid networkId ${networkId}`);
     }
 
+    this.keyStore = new InMemoryKeyStore();
+
     this.connection = Connection.fromConfig({
       networkId,
       provider: { type: 'JsonRpcProvider', args: { url: config.nodeUrl, headers: config.headers } },
@@ -29,8 +34,6 @@ class FastAuthController {
 
     this.networkId = networkId;
     this.accountId = accountId;
-
-    this.keyStore = new InMemoryKeyStore();
   }
 
   async createBiometricKey() {
@@ -96,6 +99,10 @@ class FastAuthController {
     return keyPair.getPublicKey().toString();
   }
 
+  getAccountId() {
+    return this.accountId;
+  }
+
   async getAccounts() {
     if (this.accountId) {
       return [this.accountId];
@@ -112,6 +119,26 @@ class FastAuthController {
       actions,
       blockHeightTtl: 60,
       receiverId,
+    });
+  }
+
+  async signAndSendDelegateAction({ receiverId, actions }) {
+    const signedDelegate = await this.signDelegateAction({ receiverId, actions, signerId: this.accountId });
+
+    return fetch(network.relayerUrl, {
+      method:  'POST',
+      mode:    'cors',
+      body:    JSON.stringify(Array.from(encodeSignedDelegate(signedDelegate))),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    });
+  }
+
+  async signAndSendAddKey({
+    contractId, methodNames, allowance, publicKey
+  }) {
+    return this.signAndSendDelegateAction({
+      receiverId: this.accountId,
+      actions:    [addKey(PublicKey.from(publicKey), functionCallAccessKey(contractId, methodNames || [], allowance))]
     });
   }
 
