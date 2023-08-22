@@ -58,7 +58,7 @@ export default function App() {
   return (
     <>
       {/* <GlobalStyle /> */}
-      <Router>
+      <Router basename="fastauth">
         <RemoveTrailingSlash />
         <Routes>
           <Route path="/">
