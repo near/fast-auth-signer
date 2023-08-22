@@ -45,13 +45,12 @@ function Login({ controller }) {
         label="New account"
         variant="affirmative"
         onClick={() => {
+          navigate({
+            pathname: '/create-account',
+            search:   currentSearchParams.toString()
+          });
           if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}/create-account?${currentSearchParams.toString()}`, '_parent');
-          } else {
-            navigate({
-              pathname: '/create-account',
-              search:   currentSearchParams.toString()
-            });
+            window.open(window.location.href, '_parent');
           }
         }}
       />
@@ -59,13 +58,12 @@ function Login({ controller }) {
         label="Existing account"
         variant="affirmative"
         onClick={() => {
+          navigate({
+            pathname: '/add-device',
+            search:   currentSearchParams.toString()
+          });
           if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}/add-device?${currentSearchParams.toString()}`, '_parent');
-          } else {
-            navigate({
-              pathname: '/add-device',
-              search:   currentSearchParams.toString()
-            });
+            window.open(window.location.href, '_parent');
           }
         }}
       />
