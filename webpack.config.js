@@ -18,7 +18,7 @@ module.exports = {
       process: 'process/browser',
       Buffer:  ['buffer', 'Buffer']
     }),
-    new webpack.EnvironmentPlugin({ DEBUG: true })
+    new webpack.EnvironmentPlugin(['DEBUG'])
   ],
   devServer: {
     static: {
