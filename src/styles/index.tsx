@@ -429,7 +429,6 @@ export default createGlobalStyle`
     flex-direction: column;
     row-gap: 8px;
 
-
     .modal-top {
       display: flex;
       flex-direction: column;
@@ -451,10 +450,9 @@ export default createGlobalStyle`
         letter-spacing: 0.02em;
         text-align: left;
 
-
         svg {
-          height: 13.5px;
-          width: 13.5px;
+          height: 16px;
+          width: 16px;
           vertical-align: middle;
           color: #868682;
         }
@@ -466,7 +464,6 @@ export default createGlobalStyle`
       flex-direction: column;
       gap: 12px;
       padding: 16px;
-
     }
 
     .table-wrapper {
@@ -566,11 +563,8 @@ export default createGlobalStyle`
               line-height: 17px;
               letter-spacing: 0.02em;
               text-align: left;
-
-
             }
           }
-
         }
 
         .function-desc {
@@ -698,11 +692,9 @@ export default createGlobalStyle`
     }
   }
 
-
   .transactions-block .item {
     margin-left: 10px !important;
   }
-
 
   .hide {
     display: none !important;
