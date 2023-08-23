@@ -52,7 +52,7 @@ function VerifyEmailPage() {
 
     try {
       await sendSignInLinkToEmail(firebaseAuth, email as string, {
-        url:             `${window.location.origin}${basePath ? `${basePath}/` : ''}/auth-callback?${searchParams.toString()}`,
+        url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
       openToast({

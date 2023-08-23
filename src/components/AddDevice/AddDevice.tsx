@@ -41,7 +41,7 @@ export const handleCreateAccount = async ({
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}${basePath ? `${basePath}/` : ''}/auth-callback?${searchParams.toString()}`,
+      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
     ),
     handleCodeInApp: true,
   });
