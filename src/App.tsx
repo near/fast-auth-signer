@@ -69,8 +69,8 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
             <Route path="add-device" element={<AddDevice controller={window.fastAuthController} />} />
-            <Route path="create-account" element={<CreateAccount controller={window.fastAuthController}/>} />
-            <Route path="sign" element={<Sign />} />
+            <Route path="create-account" element={<CreateAccount controller={window.fastAuthController} />} />
+            <Route path="sign" element={<Sign controller={window.fastAuthController} />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="login" element={<Login controller={window.fastAuthController} />} />
             <Route path="auth-callback" element={<AuthCallbackPage controller={window.fastAuthController} />} />
