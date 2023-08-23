@@ -11,6 +11,7 @@ import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import { inIframe } from '../../utils';
+import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
@@ -40,7 +41,7 @@ export const handleCreateAccount = async ({
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}/auth-callback?${searchParams.toString()}`,
+      `${window.location.origin}${basePath ? `${basePath}/` : ''}/auth-callback?${searchParams.toString()}`,
     ),
     handleCodeInApp: true,
   });

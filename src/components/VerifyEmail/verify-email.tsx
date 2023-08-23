@@ -3,10 +3,11 @@ import React from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
-import EmailSvg from './icons/EmailSvg';
 
 function VerifyEmailPage() {
   const [query] = useSearchParams();
@@ -51,7 +52,7 @@ function VerifyEmailPage() {
 
     try {
       await sendSignInLinkToEmail(firebaseAuth, email as string, {
-        url:             `${window.location.origin}/auth-callback?${searchParams.toString()}`,
+        url:             `${window.location.origin}${basePath ? `${basePath}/` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
       openToast({

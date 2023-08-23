@@ -57,3 +57,4 @@ export const networks: Record<NetworkId, Network> = {
 
 export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId) || 'mainnet';
 export const network = networks[networkId];
+export const basePath = process.env.REACT_APP_BASE_PATH || 'fastauth';

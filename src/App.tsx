@@ -14,6 +14,7 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
+import { basePath } from './utils/config';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'maximushaximus.testnet',
@@ -58,7 +59,7 @@ export default function App() {
   return (
     <>
       {/* <GlobalStyle /> */}
-      <Router basename="fastauth">
+      <Router basename={basePath || ''}>
         <RemoveTrailingSlash />
         <Routes>
           <Route path="/">
