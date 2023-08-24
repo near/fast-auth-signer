@@ -1,10 +1,10 @@
 import * as React from 'react';
-import ArrowDownIcon from '../../Images/arrow-down.svg';
-import ArrowUpIcon from '../../Images/arrow-up.svg';
-import InfoIcon from '../../Images/info.svg';
 
+import ArrowDownSvg from '../../Images/arrow-down';
+import ArrowUpSvg from '../../Images/arrow-up';
+import InfoSvg from '../../Images/info';
 
-const TableContent = (props) => {
+function TableContent(props) {
   let classes = '';
   if (props.hasFunctionCall) {
     classes += '-action';
@@ -15,7 +15,7 @@ const TableContent = (props) => {
         {props.leftSide}
         {props.hasInfo
           ? (
-           <InfoIcon/>
+            <InfoSvg />
           ) : null}
       </div>
       <div className="right-side">
@@ -25,8 +25,8 @@ const TableContent = (props) => {
               <button type="button">
                 {props.rightSide}
                 {props.isFunctionCallOpen
-                  ?  <ArrowDownIcon/>
-                  :  <ArrowUpIcon/>}
+                  ? <ArrowDownSvg />
+                  : <ArrowUpSvg />}
               </button>
             </div>
           )
@@ -45,6 +45,6 @@ const TableContent = (props) => {
         ) : null}
     </div>
   );
-};
+}
 
 export default TableContent;

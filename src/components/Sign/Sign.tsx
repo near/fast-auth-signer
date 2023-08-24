@@ -1,12 +1,10 @@
 import * as React from 'react';
 
 import TableContent from './TableContent';
-import Logo from '../../Images/ref-logo.svg';
-import InternetIcon from '../../Images/Internet.svg'
-import ArrowDownIcon from '../../Images/arrow-down.svg';
-import ArrowUpIcon from '../../Images/arrow-up.svg';
-
-
+import ArrowDownSvg from '../../Images/arrow-down';
+import ArrowUpSvg from '../../Images/arrow-up';
+import InternetSvg from '../../Images/Internet';
+import RefLogoSvg from '../../Images/ref-logo';
 
 /* const mockupData = [
   {
@@ -32,11 +30,12 @@ function Sign() {
   return (
     <div className="modal-sign">
       <div className="modal-top">
-        <Logo/>
+        <RefLogoSvg />
         <h4>Confirm transaction</h4>
-      
+
         <div className="transaction-details">
-        <InternetIcon/>app.ref.finance
+          <InternetSvg />
+          app.ref.finance
         </div>
       </div>
       <div className="modal-middle">
@@ -56,7 +55,7 @@ function Sign() {
       <div className="more-details" onClick={() => setShowDetails(!showDetails)}>
         More details
         <span>
-          { showDetails ? <ArrowUpIcon/> : <ArrowDownIcon /> }
+          { showDetails ? <ArrowUpSvg /> : <ArrowDownSvg /> }
         </span>
       </div>
       {showDetails
