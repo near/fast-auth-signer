@@ -14,6 +14,7 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
+import GlobalStyle from './styles/index';
 import { basePath } from './utils/config';
 
 (window as any).fastAuthController = new FastAuthController({
@@ -59,7 +60,7 @@ export default function App() {
   // @ts-ignore
   return (
     <>
-      {/* <GlobalStyle /> */}
+      <GlobalStyle />
       <Router basename={basePath || ''}>
         <RemoveTrailingSlash />
         <Routes>

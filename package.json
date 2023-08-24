@@ -35,15 +35,6 @@
     "@near-js/biometric-ed25519": "^0.3.0",
     "@near-js/crypto": "^0.0.5",
     "@near-js/iframe-rpc": "^0.0.2",
-<<<<<<< HEAD
-    "@near-js/keystores": "^0.0.4",
-    "@radix-ui/react-toast": "^1.1.4",
-    "bn.js": "^5.2.1",
-    "borsh": "^0.7.0",
-    "crypto-browserify": "^3.12.0",
-    "debug": "^4.3.4",
-    "firebase": "^10.2.0",
-=======
     "@near-js/keystores": "^0.0.5",
     "@near-js/transactions": "^0.2.1",
     "@radix-ui/react-toast": "^1.1.4",
@@ -53,34 +44,22 @@
     "crypto-browserify": "^3.12.0",
     "debug": "^4.3.4",
     "firebase": "^10.1.0",
->>>>>>> a958997f7acef59a35f366efbf998d559abbb15b
     "https-browserify": "^1.0.0",
     "i18next": "^23.2.8",
     "near-api-js": "^2.1.4",
     "process": "^0.11.10",
-<<<<<<< HEAD
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-=======
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hook-form": "^7.45.2",
->>>>>>> a958997f7acef59a35f366efbf998d559abbb15b
+    "react-hook-form": "^7.45.4",
     "react-i18next": "^13.0.2",
     "react-router": "^6.14.1",
     "react-router-dom": "^6.14.2",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-<<<<<<< HEAD
-    "styled-components": "^6.0.0-rc.1",
-    "url": "^0.11.0",
-    "zustand": "^4.4.1"
-=======
     "style-loader": "^3.3.3",
     "styled-components": "^6.0.5",
     "url": "^0.11.0",
     "zustand": "^4.3.9"
->>>>>>> a958997f7acef59a35f366efbf998d559abbb15b
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",
