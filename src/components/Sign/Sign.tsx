@@ -8,6 +8,7 @@ import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import RefLogoSvg from '../../Images/ref-logo';
+import { useAuthState } from '../../lib/useAuthState';
 
 const deserializeTransactionsFromString = (transactionsString: string) => transactionsString.split(',')
   .map((str) => Buffer.from(str, 'base64'))
@@ -47,13 +48,12 @@ function Sign() {
     transactions: [],
     actions: [],
   });
+  const authenticated = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
   React.useEffect(() => {
-    console.log(searchParams.get('transactions'));
     const transactionHashes = searchParams.get('transactions');
     const deserializedTransactions = deserializeTransactionsFromString(transactionHashes);
-    console.log('transactions', deserializedTransactions);
     const allActions = deserializedTransactions.flatMap((t) => t.actions);
     setTransactionDetails({
       signerId:    deserializedTransactions[0].signerId,
@@ -71,6 +71,13 @@ function Sign() {
       actions: allActions
     });
   }, []);
+
+  const onConfirm = () => {
+    console.log("authenticated", authenticated);
+    if (authenticated) {
+      
+    }
+  };
 
   return (
     <div className="modal-sign">
@@ -136,7 +143,7 @@ function Sign() {
         )
         : null}
       <div className="modal-footer">
-        <button type="button" className="button primary">Confirm</button>
+        <button type="button" className="button primary" onClick={onConfirm}>Confirm</button>
         <button type="button" className="button secondary">Cancel</button>
       </div>
     </div>
