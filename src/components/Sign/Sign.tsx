@@ -1,4 +1,7 @@
+import BN from 'bn.js';
+import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import TableContent from './TableContent';
 import ArrowDownSvg from '../../Images/arrow-down';
@@ -6,27 +9,69 @@ import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import RefLogoSvg from '../../Images/ref-logo';
 
-/* const mockupData = [
-  {
-    username:     'perpul.near',
-    total:        20.0000,
-    usdTotal:     0.0001,
-    feeLimit:     500,
-    feeEstimated: 0.0001,
-    actions:      [
-      {
-        id:           1,
-        title:        'v2.ref-finance.near',
-        url:          'near.com',
-        functionName: 'swap',
-        actionCode:   '{  "actions": [    {      "amount_in": "3872854309082031250000000",      "min_amount_out": "0",      "pool_id": 1395,      "token_in": "wrap.near",      "token_out": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near"    },    {      "min_amount_out": "0",      "pool_id": 3042,      "token_in": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near",      "token_out": "marmaj.tkn.near"    },    {      "min_amount_out": "0",      "pool_id": 553,      "token_in": "marmaj.tkn.near",      "token_out": "meta-pool.near"    },    {      "min_amount_out": "3872854309082031250000000",      "pool_id": 3514,      "token_in": "meta-pool.near",      "token_out": "wrap.near"    }  ]}'
-      }
-    ]
-  }
-];
-*/
+const deserializeTransactionsFromString = (transactionsString: string) => transactionsString.split(',')
+  .map((str) => Buffer.from(str, 'base64'))
+  .map((buffer) => utils.serialize.deserialize(transaction.SCHEMA, transaction.Transaction, buffer));
+
+interface TransactionDetails {
+  signerId: string;
+  receiverId: string;
+  totalAmount: string;
+  fees: {
+    transactionFees: string;
+    gasLimit: string;
+    gasPrice: string;
+  };
+  transactions: transaction.Transaction[];
+  actions: transaction.Action[];
+}
+
+export const calculateGasLimit = (actions) => actions
+  .filter((a) => Object.keys(a)[0] === 'functionCall')
+  .map((a) => a.functionCall.gas)
+  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0)).toString();
+
+console.log(deserializeTransactionsFromString('FAAAAGFtaXJzYXJhbjY2Ni50ZXN0bmV0AAYUlk7TEdgnnkxgrOl0GnJH62x0KVyG+6rEYXeDkNDhQQQPNAb/JwASAAAAZ3Vlc3QtYm9vay50ZXN0bmV0D9601sPAVp/dhtbYoAtzqgqxWEcrrhgwg5Eol1Mo57QBAAAAAgoAAABhZGRNZXNzYWdlJAAAAHsidGV4dCI6InRoaXMgaXMgdGhlIG1lc3NhZ2UgKDEvMikifQDgV+tIGwAAAACAvzUIS2qlHQAAAAAAAA==,FAAAAGFtaXJzYXJhbjY2Ni50ZXN0bmV0AAYUlk7TEdgnnkxgrOl0GnJH62x0KVyG+6rEYXeDkNDhSwQPNAb/JwASAAAAZ3Vlc3QtYm9vay50ZXN0bmV0D9601sPAVp/dhtbYoAtzqgqxWEcrrhgwg5Eol1Mo57QBAAAAAgoAAABhZGRNZXNzYWdlJAAAAHsidGV4dCI6InRoaXMgaXMgdGhlIG1lc3NhZ2UgKDIvMikifQDgV+tIGwAAAACAvzUIS2qlHQAAAAAAAA=='));
+
 function Sign() {
+  const [searchParams] = useSearchParams();
+  const [transactionDetails, setTransactionDetails] = React.useState<TransactionDetails>({
+    signerId:    '',
+    receiverId:   '',
+    totalAmount: '0',
+    fees:         {
+      transactionFees: '',
+      gasLimit:        '',
+      gasPrice:        '',
+    },
+    transactions: [],
+    actions: [],
+  });
   const [showDetails, setShowDetails] = React.useState(false);
+
+  React.useEffect(() => {
+    console.log(searchParams.get('transactions'));
+    const transactionHashes = searchParams.get('transactions');
+    const deserializedTransactions = deserializeTransactionsFromString(transactionHashes);
+    console.log('transactions', deserializedTransactions);
+    const allActions = deserializedTransactions.flatMap((t) => t.actions);
+    setTransactionDetails({
+      signerId:    deserializedTransactions[0].signerId,
+      receiverId:  deserializedTransactions[0].receiverId,
+      totalAmount: allActions
+        .map((a) => (a.transfer && a.transfer.deposit) || (a.functionCall && a.functionCall.deposit) || 0)
+        .filter((a) => a !== 0)
+        .reduce((totalAmount: BN, amount) => totalAmount.add(new BN(amount)), new BN(0)).toString(),
+      fees: {
+        transactionFees: '',
+        gasLimit:        calculateGasLimit(allActions),
+        gasPrice:        '',
+      },
+      transactions: deserializedTransactions,
+      actions: allActions
+    });
+  }, []);
+
   return (
     <div className="modal-sign">
       <div className="modal-top">
@@ -42,12 +87,12 @@ function Sign() {
         <div className="table-wrapper">
           <TableContent
             leftSide="From"
-            rightSide="perpul.near"
+            rightSide={transactionDetails.signerId}
           />
           <TableContent
             leftSide="Total"
             hasInfo
-            rightSide="20 NEAR"
+            rightSide={`${utils.format.formatNearAmount(transactionDetails.totalAmount)} NEAR`}
             currencyValue="$38.92"
           />
         </div>
@@ -65,7 +110,7 @@ function Sign() {
               <h4>Network fees</h4>
               <TableContent
                 leftSide="Fee limit"
-                rightSide="500 Tgas"
+                rightSide={`${transactionDetails.fees.gasLimit} Tgas`}
               />
               <TableContent
                 leftSide="Estimated Fees"
@@ -76,13 +121,16 @@ function Sign() {
             </div>
             <div className="table-wrapper">
               <h4>Actions</h4>
-              <TableContent
-                leftSide="v2.ref-finance.near"
-                hasFunctionCall
-                isFunctionCallOpen
-                rightSide="function name"
-                functionDesc={'{ "actions": [ { "amount_in": "3872854309082031250000000", "min_amount_out": "0", "pool_id": 1395, "token_in": "wrap.near", "token_out": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near" }, { "min_amount_out": "0", "pool_id": 3042, "token_in": "aaaaaa20d9e0e2461697782ef11675f668207961.factory.bridge.near", "token_out": "marmaj.tkn.near" }, { "min_amount_out": "0", "pool_id": 553, "token_in": "marmaj.tkn.near", "token_out": "meta-pool.near" }, { "min_amount_out": "3872854309082031250000000", "pool_id": 3514, "token_in": "meta-pool.near", "token_out": "wrap.near" } ] }'}
-              />
+              {transactionDetails.actions.map((action, i) => (
+                <TableContent
+                  key={i}
+                  leftSide={transactionDetails.receiverId}
+                  hasFunctionCall
+                  isFunctionCallOpen
+                  rightSide={action.functionCall.methodName}
+                  functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
+                />
+              ))}
             </div>
           </div>
         )
