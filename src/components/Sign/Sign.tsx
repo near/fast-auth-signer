@@ -75,7 +75,12 @@ function Sign() {
   const onConfirm = () => {
     console.log("authenticated", authenticated);
     if (authenticated) {
-      
+      (window as any).fastAuthController.signAndSendDelegateAction({
+        receiverId: transactionDetails.receiverId,
+        actions:    transactionDetails.actions,
+      }).then((res: any) => {
+        console.log("res", res);
+      });
     }
   };
 
