@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '../../lib/Button';
 import { inIframe } from '../../utils';
@@ -8,6 +8,7 @@ import AuthIndicator from '../AuthIndicator/AuthIndicator';
 function Login({ controller }) {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isSignedIn, setIsSignedIn] = useState<boolean>();
 
@@ -20,6 +21,23 @@ function Login({ controller }) {
     fetchSignedInStatus();
   }, [controller]);
 
+  useEffect(() => {
+    const isRecovery = currentSearchParams.get('isRecovery');
+    if (isRecovery) {
+      if (isRecovery === 'true') {
+        navigate({
+          pathname: '/add-device',
+          search:   currentSearchParams.toString()
+        });
+      } else {
+        navigate({
+          pathname: '/create-account',
+          search:   currentSearchParams.toString()
+        });
+      }
+    }
+  }, [currentSearchParams]);
+
   return (
     <div>
       Login route
@@ -28,13 +46,12 @@ function Login({ controller }) {
         label="New account"
         variant="affirmative"
         onClick={() => {
+          navigate({
+            pathname: '/create-account',
+            search:   currentSearchParams.toString()
+          });
           if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}/create-account?${currentSearchParams.toString()}`, '_parent');
-          } else {
-            navigate({
-              pathname: '/add-device',
-              search:   currentSearchParams.toString()
-            });
+            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
           }
         }}
       />
@@ -42,13 +59,12 @@ function Login({ controller }) {
         label="Existing account"
         variant="affirmative"
         onClick={() => {
+          navigate({
+            pathname: '/add-device',
+            search:   currentSearchParams.toString()
+          });
           if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}/add-device?${currentSearchParams.toString()}`, '_parent');
-          } else {
-            navigate({
-              pathname: '/add-device',
-              search:   currentSearchParams.toString()
-            });
+            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
           }
         }}
       />
