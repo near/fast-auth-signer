@@ -26,6 +26,7 @@ module.exports = {
     },
     port: 3000,
   },
+  devtool: 'eval-source-map',
   module: {
     // exclude node_modules
     rules: [
