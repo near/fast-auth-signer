@@ -3,6 +3,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import React, { forwardRef } from 'react';
 import styled from 'styled-components';
 
+
 type Fill = 'solid' | 'outline' | 'ghost';
 type Size = 'small' | 'default' | 'large';
 type Variant = 'primary' | 'secondary' | 'affirmative' | 'destructive';
@@ -14,7 +15,7 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> & {
   icon?: string;
   iconLeft?: string;
   iconRight?: string;
-  label: string;
+  label?: string;
   loading?: boolean;
   size?: Size;
   type?: 'button' | 'submit';
@@ -314,7 +315,8 @@ const Spinner = styled.i<StyledProps>`
 
 export const Button = forwardRef<HTMLButtonElement, Props>(
   (
-    {
+    { 
+      children,
       disabled,
       fill = 'solid',
       href,
@@ -364,10 +366,13 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
               <>
                 {iconLeft && <i className={iconLeft} />}
                 <Label>{label}</Label>
+                {children}
                 {iconRight && <i className={iconRight} />}
               </>
+              
             )}
           </Inner>
+         
         </>
       </StyledButton>
     );
