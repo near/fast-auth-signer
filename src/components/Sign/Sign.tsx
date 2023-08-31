@@ -44,27 +44,21 @@ export const calculateGasLimit = (actions) =>
     .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
     .toString();
 
-console.log(
-  deserializeTransactionsFromString(
-    'FAAAAGFtaXJzYXJhbjY2Ni50ZXN0bmV0AAYUlk7TEdgnnkxgrOl0GnJH62x0KVyG+6rEYXeDkNDhQQQPNAb/JwASAAAAZ3Vlc3QtYm9vay50ZXN0bmV0D9601sPAVp/dhtbYoAtzqgqxWEcrrhgwg5Eol1Mo57QBAAAAAgoAAABhZGRNZXNzYWdlJAAAAHsidGV4dCI6InRoaXMgaXMgdGhlIG1lc3NhZ2UgKDEvMikifQDgV+tIGwAAAACAvzUIS2qlHQAAAAAAAA==,FAAAAGFtaXJzYXJhbjY2Ni50ZXN0bmV0AAYUlk7TEdgnnkxgrOl0GnJH62x0KVyG+6rEYXeDkNDhSwQPNAb/JwASAAAAZ3Vlc3QtYm9vay50ZXN0bmV0D9601sPAVp/dhtbYoAtzqgqxWEcrrhgwg5Eol1Mo57QBAAAAAgoAAABhZGRNZXNzYWdlJAAAAHsidGV4dCI6InRoaXMgaXMgdGhlIG1lc3NhZ2UgKDIvMikifQDgV+tIGwAAAACAvzUIS2qlHQAAAAAAAA=='
-  )
-);
-
 function Sign() {
   const [searchParams] = useSearchParams();
-  const [transactionDetails, setTransactionDetails] =
-    React.useState<TransactionDetails>({
-      signerId: '',
-      receiverId: '',
-      totalAmount: '0',
-      fees: {
-        transactionFees: '',
-        gasLimit: '',
-        gasPrice: '',
-      },
-      transactions: [],
-      actions: [],
-    });
+  const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
+  const [transactionDetails, setTransactionDetails] = React.useState<TransactionDetails>({
+    signerId:    '',
+    receiverId:   '',
+    totalAmount: '0',
+    fees:         {
+      transactionFees: '',
+      gasLimit:        '',
+      gasPrice:        '',
+    },
+    transactions: [],
+    actions:      [],
+  });
   const authenticated = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
@@ -100,16 +94,32 @@ function Sign() {
   }, []);
 
   const onConfirm = () => {
-    console.log('authenticated', authenticated);
     if (authenticated) {
-      (window as any).fastAuthController
-        .signAndSendDelegateAction({
-          receiverId: transactionDetails.receiverId,
-          actions: transactionDetails.actions,
-        })
-        .then((res: any) => {
-          console.log('res', res);
-        });
+      (window as any).fastAuthController.signAndSendDelegateAction({
+        receiverId: transactionDetails.receiverId,
+        actions:    transactionDetails.actions,
+      }).then(async (res: Response) => {
+        try {
+          const url = new URL(callbackUrl);
+          if (!res.ok) {
+            const error = await res.text();
+            url.searchParams.append('error', error);
+          }
+          window.location.replace(url);
+        } catch (error) {
+          alert('Invalid callback URL');
+        }
+      });
+    }
+  };
+
+  const onCancel = () => {
+    try {
+      const url = new URL(callbackUrl);
+      url.searchParams.append('error', 'User cancelled action');
+      window.location.replace(url);
+    } catch (error) {
+      alert('Invalid callback URL');
     }
   };
 
@@ -121,7 +131,7 @@ function Sign() {
 
         <div className="transaction-details">
           <InternetSvg />
-          app.ref.finance
+          {callbackUrl || 'Unknown App'}
         </div>
       </div>
       <div className="modal-middle">
@@ -180,17 +190,8 @@ function Sign() {
       )}
 
       <div className="modal-footer">
-        <Button
-          variant="primary"
-          size="large"
-          label="Confirm"
-          onClick={onConfirm}
-        />
-        <Button 
-          variant="secondary" 
-          size="large" 
-          label="Cancel" 
-          fill="ghost" />
+        <button type="button" className="button primary" onClick={onConfirm}>Confirm</button>
+        <button type="button" className="button secondary" onClick={onCancel}>Cancel</button>
       </div>
     </ModalSignWrapper>
   );
