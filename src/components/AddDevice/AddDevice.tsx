@@ -136,7 +136,7 @@ function SignInPage() {
       }).catch((error) => {
         console.log(error, '<<< err')
         const { message } = error;
-        const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+        const parsedUrl = new URL(failure_url || success_url || `${window.location.origin}/${basePath || ''}`);
         parsedUrl.searchParams.set('code', error.code);
         parsedUrl.searchParams.set('reason', message);
         if (inIframe()) {
