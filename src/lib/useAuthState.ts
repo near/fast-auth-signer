@@ -67,7 +67,7 @@ export const useAuthState = (): boolean | Error => {
 
   try {
     window.localStorage.getItem('webauthn_username');
-    return authenticated
+    return authenticated;
   } catch (error) {
     return new Error('Please allow third party cookies');
   }
