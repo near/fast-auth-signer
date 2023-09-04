@@ -123,7 +123,7 @@ function SignInPage() {
         if (failure) {
           throw new Error(JSON.stringify(failure));
         }
-        const parsedUrl = new URL(success_url || window.location.origin);
+        const parsedUrl = new URL(success_url || `${window.location.origin}/${basePath || ''}`);
         parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
         parsedUrl.searchParams.set('public_key', public_key);
         parsedUrl.searchParams.set('all_keys', public_key);
