@@ -7,9 +7,9 @@ import { useSearchParams } from "react-router-dom/dist";
 import FastAuthController from "./controller";
 import { network, networkId } from "../utils/config";
 
-export const useAuthState = () => {
+export const useAuthState = (): boolean | Error => {
   const [authenticated, setAuthenticated] = useState(false);
-  const webauthnUsername = useMemo(() => window.localStorage.getItem('webauthn_username'), []);
+  const webauthnUsername = useMemo(() => typeof window.localStorage !== 'undefined' && window.localStorage.getItem('webauthn_username'), []);
   const [controllerState, setControllerState] = useState<'loading' | boolean>('loading');
   const [query] = useSearchParams();
 
@@ -59,5 +59,5 @@ export const useAuthState = () => {
     }
   }, [controllerState]);
 
-  return authenticated;
+  return typeof window.localStorage !== 'undefined' ? authenticated : new Error('Please allow third party cookies');
 };

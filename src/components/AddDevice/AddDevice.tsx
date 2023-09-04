@@ -154,7 +154,7 @@ function SignInPage() {
     }
   }, [authenticated, searchParams]);
 
-  if (authenticated) {
+  if (authenticated === true) {
     return renderRedirectButton ? (
       <Button
         label="Back to app"
@@ -165,6 +165,10 @@ function SignInPage() {
     ) : (
       <div>Signing transaction</div>
     );
+  }
+
+  if (authenticated instanceof Error) {
+    return <div>{authenticated.message}</div>;
   }
 
   if (inIframe()) {
