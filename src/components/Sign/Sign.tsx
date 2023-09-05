@@ -190,8 +190,19 @@ function Sign() {
       )}
 
       <div className="modal-footer">
-        <button type="button" className="button primary" onClick={onConfirm}>Confirm</button>
-        <button type="button" className="button secondary" onClick={onCancel}>Cancel</button>
+        <Button
+          variant="primary"
+          size="large"
+          label="Confirm"
+          onClick={onConfirm}
+        />
+        <Button 
+          variant="secondary" 
+          size="large" 
+          label="Cancel" 
+          fill="ghost"
+          onClick={onCancel}
+           />
       </div>
     </ModalSignWrapper>
   );
