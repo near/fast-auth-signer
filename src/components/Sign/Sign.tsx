@@ -95,21 +95,9 @@ function Sign() {
 
   const onConfirm = () => {
     if (authenticated) {
-      (window as any).fastAuthController.signAndSendDelegateAction({
-        receiverId: transactionDetails.receiverId,
-        actions:    transactionDetails.actions,
-      }).then(async (res: Response) => {
-        try {
-          const url = new URL(callbackUrl);
-          if (!res.ok) {
-            const error = await res.text();
-            url.searchParams.append('error', error);
-          }
-          window.location.replace(url);
-        } catch (error) {
-          alert('Invalid callback URL');
-        }
-      });
+      const success_url = searchParams.get('success_url');
+      const parsedUrl = new URL(success_url || window.location.origin);
+      parsedUrl.searchParams.set('transactions', searchParams.get('transactions'));
     }
   };
 
