@@ -93,7 +93,7 @@ function Sign() {
       const signedTransactions = [];
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
-          const signed = await (window as any).fastAuthController.signTransaction(transactionDetails.transactions[i]);
+          const signed = await (window as any).fastAuthController.signDelegateAction(transactionDetails.transactions[i]);
           const serialized = serialize(transaction.SCHEMA, signed);
           const base64 =  Buffer.from(serialized).toString('base64');
           signedTransactions.push(base64);
