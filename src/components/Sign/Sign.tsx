@@ -1,5 +1,4 @@
 import BN from 'bn.js';
-import { serialize } from 'borsh';
 import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -12,6 +11,7 @@ import RefLogoSvg from '../../Images/ref-logo';
 import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
 import TableContent from '../TableContent/TableContent';
+import { encodeSignedDelegate } from '@near-js/transactions';
 
 const deserializeTransactionsFromString = (transactionsString: string) => transactionsString
   .split(',')
@@ -94,8 +94,7 @@ function Sign() {
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
           const signed = await (window as any).fastAuthController.signDelegateAction(transactionDetails.transactions[i]);
-          const serialized = serialize(transaction.SCHEMA, signed);
-          const base64 =  Buffer.from(serialized).toString('base64');
+          const base64 =  Buffer.from(encodeSignedDelegate(signed)).toString('base64');
           signedTransactions.push(base64);
         } catch (err) {
           console.error(err);
