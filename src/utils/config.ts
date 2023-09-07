@@ -34,6 +34,8 @@ export const networks: Record<NetworkId, Network> = {
     explorerUrl:    'https://explorer.testnet.near.org',
     fastAuth:      {
       mpcRecoveryUrl:  'https://mpc-recovery-leader-testnet-cg7nolnlpa-ue.a.run.app',
+      // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
+      newMpcRecoveryUrl: 'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
       accountIdSuffix: 'testnet',
       firebase:        {
