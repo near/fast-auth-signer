@@ -32,6 +32,8 @@ export const networks: Record<NetworkId, Network> = {
     relayerUrl:    'http://34.70.226.83:3030/relay',
     fastAuth:      {
       mpcRecoveryUrl:  'https://mpc-recovery-leader-testnet-cg7nolnlpa-ue.a.run.app',
+      // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
+      newMpcRecoveryUrl: 'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
       accountIdSuffix: 'testnet',
       firebase:        {
@@ -55,6 +57,6 @@ export const networks: Record<NetworkId, Network> = {
   // },
 };
 
-export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId) || 'mainnet';
+export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId) || 'testnet';
 export const network = networks[networkId];
 export const basePath = process.env.REACT_APP_BASE_PATH || 'fastauth';

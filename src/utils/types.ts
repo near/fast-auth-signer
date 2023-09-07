@@ -1,5 +1,6 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-unused-vars */
+import { KeyPair } from '@near-js/crypto';
 import type { ReactElement, ReactNode } from 'react';
 
 export type NetworkId = ProductionNetwork['networkId'];
@@ -16,6 +17,7 @@ type ProductionNetwork = {
   relayerUrl: string;
   fastAuth: {
     mpcRecoveryUrl: string;
+    newMpcRecoveryUrl?: string;
     authHelperUrl: string; // TODO refactor: review by fastauth team
     accountIdSuffix: string;
     firebase: {
@@ -28,6 +30,13 @@ type ProductionNetwork = {
       measurementId: string;
     };
   };
+};
+
+export type ConstructSignature = {
+  salt: number;
+  oidcToken: string;
+  shouldHashToken: boolean;
+  keypair: KeyPair;
 };
 
 // type DevelopmentNetwork = {

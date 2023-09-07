@@ -1,14 +1,17 @@
 import { Account, Connection } from '@near-js/accounts';
+import BN from 'bn.js';
 import { createKey, getKeys } from '@near-js/biometric-ed25519';
-import { KeyPairEd25519, PublicKey } from '@near-js/crypto';
+import { KeyPairEd25519, KeyType, PublicKey } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
-import { actionCreators, encodeSignedDelegate } from '@near-js/transactions';
-import { baseEncode } from 'borsh';
+import { SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate } from '@near-js/transactions';
+import { baseEncode, serialize } from 'borsh';
+import { sha256 } from 'js-sha256';
 
 import networkParams from './networkParams';
 import { network } from '../utils/config';
+import { getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
 
-const { addKey, functionCallAccessKey } = actionCreators;
+const { addKey, functionCallAccessKey, fullAccessKey } = actionCreators;
 class FastAuthController {
   private accountId: string;
 
@@ -99,6 +102,18 @@ class FastAuthController {
     return keyPair.getPublicKey().toString();
   }
 
+  async fetchNonce({ accountId, publicKey }) {
+    const rawAccessKey = await this.connection.provider.query({
+      request_type: 'view_access_key',
+      account_id: accountId,
+      public_key: publicKey,
+      finality: 'optimistic',
+    });
+    // @ts-ignore
+    const nonce = rawAccessKey?.nonce;
+    return new BN(nonce).add(new BN(1));
+  }
+
   getAccountId() {
     return this.accountId;
   }
@@ -144,6 +159,170 @@ class FastAuthController {
 
   async signTransaction(params) {
     return this.signDelegateAction(params);
+  }
+
+  // This call need to be called after new oidc token is generated
+  // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
+  async claimOidcToken(oidcToken) {
+    const CLAIM_SALT = 3177899144 + 0;
+    const keypair = await this.getKey();
+    const signObj = getUserCredentialsFrpSignature({
+      salt: CLAIM_SALT,
+      oidcToken,
+      shouldHashToken: true,
+      keypair,
+    });
+
+    const data = {
+      oidc_token_hash: sha256(oidcToken),
+      frp_signature: Buffer.from(signObj.signature).toString('hex'),
+      frp_public_key: keypair.getPublicKey().toString(),
+    };
+
+    // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
+    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
+    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/claim_oidc`, {
+      method: 'POST',
+      mode: 'cors' as const,
+      body: JSON.stringify(data),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        throw new Error('Unable to claim OIDC token');
+      }
+      const res = await response.json();
+      return res.mpc_signature;
+    }).catch((err) => {
+      console.log(err);
+      throw new Error('Unable to claim OIDC token');
+    });
+  }
+
+  async getUserCredential(oidcToken) {
+    const GET_USER_SALT = 3177899144 + 2;
+    const keypair = await this.getKey();
+    const signObj = getUserCredentialsFrpSignature({
+      salt: GET_USER_SALT,
+      oidcToken,
+      shouldHashToken: false,
+      keypair,
+    });
+
+    const data = {
+      oidc_token: oidcToken,
+      frp_signature: Buffer.from(signObj.signature).toString('hex'),
+      frp_public_key: keypair.getPublicKey().toString(),
+    };
+
+    // https://github.com/near/mpc-recovery#user-credentials
+    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
+    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/user_credentials`, {
+      method: 'POST',
+      mode: 'cors' as const,
+      body: JSON.stringify(data),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        console.log('response', response);
+        throw new Error('Unable to get user credential');
+      }
+      const res = await response.json();
+      return res.recovery_pk;
+    }).catch((err) => {
+      console.log(err);
+      throw new Error('Unable to get user credential');
+    });
+  }
+
+  async getBlock() {
+    return this.connection.provider.block({ finality: 'final' });
+  }
+
+  async signAndSendAddKeyWithRecoveryKey({
+    oidcToken,
+    allowance,
+    contractId,
+    methodNames,
+    publicKeyLak,
+    webAuthNPublicKey,
+    accountId,
+    recoveryPK,
+  }) {
+    const GET_SIGNATURE_SALT = 3177899144 + 3;
+    const GET_USER_SALT = 3177899144 + 2;
+    const localKey = await this.getKey();
+    const actions = [
+      addKey(
+        PublicKey.from(publicKeyLak),
+        functionCallAccessKey(contractId, methodNames || [], allowance)
+      ),
+      addKey(PublicKey.from(webAuthNPublicKey), fullAccessKey())
+    ];
+    const { header } = await this.getBlock();
+    const delegateAction = buildDelegateAction({
+      actions,
+      maxBlockHeight: new BN(header.height).add(new BN(60)),
+      nonce: await this.fetchNonce({ accountId, publicKey: recoveryPK }),
+      publicKey: PublicKey.from(recoveryPK),
+      receiverId: accountId,
+      senderId: accountId,
+    });
+    const encodedDelegateAction = Buffer.from(serialize(SCHEMA, delegateAction)).toString('base64');
+    const userCredentialsFrpSignature = getUserCredentialsFrpSignature({
+      salt: GET_USER_SALT,
+      oidcToken,
+      shouldHashToken: false,
+      keypair: localKey,
+    });
+    const signRequestFrpSignature = getSignRequestFrpSignature({
+      salt: GET_SIGNATURE_SALT,
+      oidcToken,
+      keypair: localKey,
+      delegateAction,
+    });
+
+    const payload = {
+      delegate_action: encodedDelegateAction,
+      oidc_token: oidcToken,
+      frp_signature: Buffer.from(signRequestFrpSignature.signature).toString('hex'),
+      user_credentials_frp_signature: Buffer.from(userCredentialsFrpSignature.signature).toString('hex'),
+      frp_public_key: localKey.getPublicKey().toString(),
+    };
+
+    // https://github.com/near/mpc-recovery#sign
+    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
+    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/sign`, {
+      method: 'POST',
+      mode: 'cors' as const,
+      body: JSON.stringify(payload),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        console.log('response', response);
+        throw new Error('Unable to get signature');
+      }
+      const res = await response.json();
+      return res.signature;
+    }).then((signature) => {
+      const signatureObj = new Signature({
+        keyType: KeyType.ED25519,
+        data:    Buffer.from(signature, 'hex'),
+      });
+      const signedDelegate = new SignedDelegate({
+        delegateAction,
+        signature: signatureObj,
+      });
+      const encodedSignedDelegate = encodeSignedDelegate(signedDelegate);
+      return fetch(network.relayerUrl, {
+        method:  'POST',
+        mode:    'cors',
+        body:    JSON.stringify(Array.from(encodedSignedDelegate)),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+      });
+    }).catch((err) => {
+      console.log(err);
+      throw new Error('Unable to send delegate action');
+    });
   }
 }
 
