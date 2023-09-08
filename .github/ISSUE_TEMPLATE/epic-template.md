@@ -16,10 +16,6 @@ assignees: ''
 - Item 2
 - Item 3
 
-
 ```[tasklist]
 ### Related Issues
-- [ ] https://github.com/near/github-project-test/issues/1
-- [ ] https://github.com/near/github-project-test/issues/2
-- [ ] https://github.com/near/github-project-test/issues/3
 ```
