@@ -2,7 +2,7 @@
 name: Epic Template
 about: Epics are milestones or groups of alike issues
 title: "\U0001F537 [Epic] Template"
-labels: Epic
+labels: Emerging Tech, Epic, Near BOS
 assignees: ''
 
 ---

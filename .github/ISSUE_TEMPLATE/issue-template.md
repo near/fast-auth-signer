@@ -2,7 +2,7 @@
 name: Issue Template
 about: Regular Issues (tasks, defects)
 title: ''
-labels: ''
+labels: Emerging Tech, Near BOS
 assignees: ''
 
 ---
