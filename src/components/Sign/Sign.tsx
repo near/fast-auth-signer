@@ -11,6 +11,12 @@ import RefLogoSvg from '../../Images/ref-logo';
 import { useAuthState } from '../../lib/useAuthState';
 import { ModalSignWrapper } from './Sign.styles';
 import { Button } from '../../lib/Button';
+import {
+  fetchGeckoPrices,
+  fetchRefFinancePrices,
+} from './Values/fiatValueManager';
+import fiatValuesStore from './Values/store';
+import { formatNearAmount } from './Values/formatNearAmount';
 
 const deserializeTransactionsFromString = (transactionsString: string) =>
   transactionsString
@@ -48,17 +54,17 @@ function Sign() {
   const [searchParams] = useSearchParams();
   const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
   const [transactionDetails, setTransactionDetails] = React.useState<TransactionDetails>({
-    signerId:    '',
-    receiverId:   '',
-    totalAmount: '0',
-    fees:         {
-      transactionFees: '',
-      gasLimit:        '',
-      gasPrice:        '',
-    },
-    transactions: [],
-    actions:      [],
-  });
+      signerId: '',
+      receiverId: '',
+      totalAmount: '0',
+      fees: {
+        transactionFees: '',
+        gasLimit: '',
+        gasPrice: '',
+      },
+      transactions: [],
+      actions: [],
+    });
   const authenticated = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
@@ -71,12 +77,7 @@ function Sign() {
       signerId: deserializedTransactions[0].signerId,
       receiverId: deserializedTransactions[0].receiverId,
       totalAmount: allActions
-        .map(
-          (a) =>
-            (a.transfer && a.transfer.deposit) ||
-            (a.functionCall && a.functionCall.deposit) ||
-            0
-        )
+        .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
         .filter((a) => a !== 0)
         .reduce(
           (totalAmount: BN, amount) => totalAmount.add(new BN(amount)),
@@ -92,6 +93,52 @@ function Sign() {
       actions: allActions,
     });
   }, []);
+
+
+  const storeFetchedUsdValues = fiatValuesStore(
+    (state) => state.storeFetchedUsdValues
+  );
+  const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
+
+  React.useEffect(() => {
+    new Promise(() => {
+      fetchRefFinancePrices()
+        .then((res) => {
+          storeFetchedUsdValues(res.near.usd);
+        })
+        .catch(() => {
+          console.warn('Ref Finance Error');
+        });
+
+      fetchGeckoPrices('near')
+        .then((res) => {
+          storeFetchedUsdValues(res.near.usd);
+        })
+        .catch(() => {
+          console.warn('Coin Gecko Error');
+        });
+    });
+  }, []);
+
+  
+
+  const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
+
+  const totalUsdAmount = (
+    Number(totalNearAmount()) * Number(fiatValueUsd)
+  ).toString();
+
+  const estimatedNearFees = formatNearAmount(transactionDetails.fees.gasPrice);
+
+  const estimatedUsdFees = () => {
+    let usdFees: string;
+    estimatedNearFees.includes('<')
+      ? (usdFees = '< $0.01')
+      : (usdFees = (
+          Number(estimatedNearFees) * Number(fiatValueUsd)
+        ).toString());
+    return usdFees;
+  };
 
   const onConfirm = () => {
     if (authenticated) {
@@ -142,11 +189,9 @@ function Sign() {
           />
           <TableContent
             leftSide="Total"
-            infoText="First Info Text example"
-            rightSide={`${utils.format.formatNearAmount(
-              transactionDetails.totalAmount
-            )} NEAR`}
-            currencyValue="$38.92"
+            infoText="The estimated total of your transaction including fees."
+            rightSide={`${totalNearAmount()} NEAR`}
+            currencyValue={totalUsdAmount}
           />
         </div>
       </div>
@@ -167,9 +212,9 @@ function Sign() {
             />
             <TableContent
               leftSide="Estimated Fees"
-              infoText="Second Info Text example"
-              rightSide="< 0.0001 NEAR"
-              currencyValue="< $0.01"
+              infoText="The estimated cost of processing your transaction."
+              rightSide={`${estimatedNearFees} NEAR`}
+              currencyValue={`${estimatedUsdFees()}`}
             />
           </div>
           <div className="table-wrapper">
@@ -178,9 +223,8 @@ function Sign() {
               <TableContent
                 key={i}
                 leftSide={transactionDetails.receiverId}
-                hasFunctionCall
                 isFunctionCallOpen
-                rightSide={action.functionCall.methodName}
+                rightSide={action.enum}
                 functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
                 openLink={`add links ${i}`}
               />
@@ -202,7 +246,7 @@ function Sign() {
           label="Cancel" 
           fill="ghost"
           onClick={onCancel}
-           />
+        />
       </div>
     </ModalSignWrapper>
   );
