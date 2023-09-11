@@ -3,13 +3,11 @@ import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import TableContent from '../TableContent/TableContent';
+import { ModalSignWrapper } from './Sign.styles';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import RefLogoSvg from '../../Images/ref-logo';
-import { useAuthState } from '../../lib/useAuthState';
-import { ModalSignWrapper } from './Sign.styles';
 import { Button } from '../../lib/Button';
 import {
   fetchGeckoPrices,
@@ -17,18 +15,18 @@ import {
 } from './Values/fiatValueManager';
 import fiatValuesStore from './Values/store';
 import { formatNearAmount } from './Values/formatNearAmount';
+import { useAuthState } from '../../lib/useAuthState';
+import TableContent from '../TableContent/TableContent';
+import { encodeSignedDelegate } from '@near-js/transactions';
 
-const deserializeTransactionsFromString = (transactionsString: string) =>
-  transactionsString
-    .split(',')
-    .map((str) => Buffer.from(str, 'base64'))
-    .map((buffer) =>
-      utils.serialize.deserialize(
-        transaction.SCHEMA,
-        transaction.Transaction,
-        buffer
-      )
-    );
+const deserializeTransactionsFromString = (transactionsString: string) => transactionsString
+  .split(',')
+  .map((str) => Buffer.from(str, 'base64'))
+  .map((buffer) => utils.serialize.deserialize(
+    transaction.SCHEMA,
+    transaction.Transaction,
+    buffer
+  ));
 
 interface TransactionDetails {
   signerId: string;
@@ -43,12 +41,11 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-export const calculateGasLimit = (actions) =>
-  actions
-    .filter((a) => Object.keys(a)[0] === 'functionCall')
-    .map((a) => a.functionCall.gas)
-    .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
-    .toString();
+export const calculateGasLimit = (actions) => actions
+  .filter((a) => Object.keys(a)[0] === 'functionCall')
+  .map((a) => a.functionCall.gas)
+  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
+  .toString();
 
 function Sign() {
   const [searchParams] = useSearchParams();
@@ -70,12 +67,11 @@ function Sign() {
 
   React.useEffect(() => {
     const transactionHashes = searchParams.get('transactions');
-    const deserializedTransactions =
-      deserializeTransactionsFromString(transactionHashes);
+    const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
     const allActions = deserializedTransactions.flatMap((t) => t.actions);
     setTransactionDetails({
-      signerId: deserializedTransactions[0].signerId,
-      receiverId: deserializedTransactions[0].receiverId,
+      signerId:    deserializedTransactions[0].signerId,
+      receiverId:  deserializedTransactions[0].receiverId,
       totalAmount: allActions
         .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
         .filter((a) => a !== 0)
@@ -86,13 +82,14 @@ function Sign() {
         .toString(),
       fees: {
         transactionFees: '',
-        gasLimit: calculateGasLimit(allActions),
-        gasPrice: '',
+        gasLimit:        calculateGasLimit(allActions),
+        gasPrice:        '',
       },
       transactions: deserializedTransactions,
-      actions: allActions,
+      actions:      allActions,
     });
   }, []);
+
 
 
   const storeFetchedUsdValues = fiatValuesStore(
@@ -121,7 +118,6 @@ function Sign() {
   }, []);
 
   
-
   const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
 
   const totalUsdAmount = (
@@ -140,23 +136,22 @@ function Sign() {
     return usdFees;
   };
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (authenticated) {
-      (window as any).fastAuthController.signAndSendDelegateAction({
-        receiverId: transactionDetails.receiverId,
-        actions:    transactionDetails.actions,
-      }).then(async (res: Response) => {
+      const signedTransactions = [];
+      for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
-          const url = new URL(callbackUrl);
-          if (!res.ok) {
-            const error = await res.text();
-            url.searchParams.append('error', error);
-          }
-          window.location.replace(url);
-        } catch (error) {
-          alert('Invalid callback URL');
+          const signed = await (window as any).fastAuthController.signDelegateAction(transactionDetails.transactions[i]);
+          const base64 =  Buffer.from(encodeSignedDelegate(signed)).toString('base64');
+          signedTransactions.push(base64);
+        } catch (err) {
+          console.error(err);
         }
-      });
+      }
+      const success_url = searchParams.get('success_url');
+      const parsedUrl = new URL(success_url || window.location.origin);
+      parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
+      window.location.replace(parsedUrl.href);
     }
   };
 
@@ -240,10 +235,10 @@ function Sign() {
           label="Confirm"
           onClick={onConfirm}
         />
-        <Button 
-          variant="secondary" 
-          size="large" 
-          label="Cancel" 
+        <Button
+          variant="secondary"
+          size="large"
+          label="Cancel"
           fill="ghost"
           onClick={onCancel}
         />
