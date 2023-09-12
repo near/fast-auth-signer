@@ -186,7 +186,7 @@ function Sign() {
             leftSide="Total"
             infoText="The estimated total of your transaction including fees."
             rightSide={`${totalNearAmount()} NEAR`}
-            currencyValue={`${totalUsdAmount}`}
+            currencyValue={`$${totalUsdAmount}`}
           />
         </div>
       </div>
