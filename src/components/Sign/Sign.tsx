@@ -122,7 +122,7 @@ function Sign() {
 
   const totalUsdAmount = (
     Number(totalNearAmount()) * Number(fiatValueUsd)
-  ).toString();
+  ).toFixed(2).toString();
 
   const estimatedNearFees = formatNearAmount(transactionDetails.fees.gasPrice);
 
@@ -186,7 +186,7 @@ function Sign() {
             leftSide="Total"
             infoText="The estimated total of your transaction including fees."
             rightSide={`${totalNearAmount()} NEAR`}
-            currencyValue={totalUsdAmount}
+            currencyValue={`${totalUsdAmount}`}
           />
         </div>
       </div>
@@ -218,6 +218,7 @@ function Sign() {
               <TableContent
                 key={i}
                 leftSide={transactionDetails.receiverId}
+                hasFunctionCall
                 isFunctionCallOpen
                 rightSide={action.enum}
                 functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
