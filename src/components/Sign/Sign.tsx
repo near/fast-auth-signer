@@ -19,14 +19,17 @@ import { useAuthState } from '../../lib/useAuthState';
 import TableContent from '../TableContent/TableContent';
 import { encodeSignedDelegate } from '@near-js/transactions';
 
-const deserializeTransactionsFromString = (transactionsString: string) => transactionsString
-  .split(',')
-  .map((str) => Buffer.from(str, 'base64'))
-  .map((buffer) => utils.serialize.deserialize(
-    transaction.SCHEMA,
-    transaction.Transaction,
-    buffer
-  ));
+const deserializeTransactionsFromString = (transactionsString: string) =>
+  transactionsString
+    .split(',')
+    .map((str) => Buffer.from(str, 'base64'))
+    .map((buffer) =>
+      utils.serialize.deserialize(
+        transaction.SCHEMA,
+        transaction.Transaction,
+        buffer
+      )
+    );
 
 interface TransactionDetails {
   signerId: string;
@@ -41,16 +44,18 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-export const calculateGasLimit = (actions) => actions
-  .filter((a) => Object.keys(a)[0] === 'functionCall')
-  .map((a) => a.functionCall.gas)
-  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
-  .toString();
+export const calculateGasLimit = (actions) =>
+  actions
+    .filter((a) => Object.keys(a)[0] === 'functionCall')
+    .map((a) => a.functionCall.gas)
+    .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
+    .toString();
 
 function Sign() {
   const [searchParams] = useSearchParams();
   const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
-  const [transactionDetails, setTransactionDetails] = React.useState<TransactionDetails>({
+  const [transactionDetails, setTransactionDetails] =
+    React.useState<TransactionDetails>({
       signerId: '',
       receiverId: '',
       totalAmount: '0',
@@ -67,11 +72,12 @@ function Sign() {
 
   React.useEffect(() => {
     const transactionHashes = searchParams.get('transactions');
-    const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
+    const deserializedTransactions =
+      deserializeTransactionsFromString(transactionHashes);
     const allActions = deserializedTransactions.flatMap((t) => t.actions);
     setTransactionDetails({
-      signerId:    deserializedTransactions[0].signerId,
-      receiverId:  deserializedTransactions[0].receiverId,
+      signerId: deserializedTransactions[0].signerId,
+      receiverId: deserializedTransactions[0].receiverId,
       totalAmount: allActions
         .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
         .filter((a) => a !== 0)
@@ -82,15 +88,13 @@ function Sign() {
         .toString(),
       fees: {
         transactionFees: '',
-        gasLimit:        calculateGasLimit(allActions),
-        gasPrice:        '',
+        gasLimit: calculateGasLimit(allActions),
+        gasPrice: '',
       },
       transactions: deserializedTransactions,
-      actions:      allActions,
+      actions: allActions,
     });
   }, []);
-
-
 
   const storeFetchedUsdValues = fiatValuesStore(
     (state) => state.storeFetchedUsdValues
@@ -117,22 +121,27 @@ function Sign() {
     });
   }, []);
 
-  
-  const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
+  const totalNearAmount = () =>
+    formatNearAmount(transactionDetails.totalAmount);
 
-  const totalUsdAmount = (
-    Number(totalNearAmount()) * Number(fiatValueUsd)
-  ).toFixed(2).toString();
+  const totalUsdAmount = (Number(totalNearAmount()) * Number(fiatValueUsd))
+    .toFixed(2)
+    .toString();
 
   const estimatedNearFees = formatNearAmount(transactionDetails.fees.gasPrice);
 
   const estimatedUsdFees = () => {
     let usdFees: string;
-    estimatedNearFees.includes('<')
-      ? (usdFees = '< $0.01')
-      : (usdFees = (
-          Number(estimatedNearFees) * Number(fiatValueUsd)
-        ).toString());
+    if (estimatedNearFees.includes('<')) usdFees = '< $0.01';
+    else if (Number(estimatedNearFees) * Number(fiatValueUsd) < 0.01)
+      usdFees = '< $0.01';
+    else
+      usdFees =
+        '$' +
+        (Number(estimatedNearFees) * Number(fiatValueUsd))
+          .toFixed(2)
+          .toString();
+
     return usdFees;
   };
 
@@ -141,8 +150,14 @@ function Sign() {
       const signedTransactions = [];
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
-          const signed = await (window as any).fastAuthController.signDelegateAction(transactionDetails.transactions[i]);
-          const base64 =  Buffer.from(encodeSignedDelegate(signed)).toString('base64');
+          const signed = await (
+            window as any
+          ).fastAuthController.signDelegateAction(
+            transactionDetails.transactions[i]
+          );
+          const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
+            'base64'
+          );
           signedTransactions.push(base64);
         } catch (err) {
           console.error(err);
