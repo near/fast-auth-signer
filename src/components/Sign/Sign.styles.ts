@@ -18,7 +18,10 @@ export const ModalSignWrapper = styled.div`
     gap: 12px;
     align-items: center;
     line-height: 17px;
-
+    svg {
+      height: 48px;
+      width:48px;
+    }
     .transaction-details {
       display: inline-flex;
       gap: 6px;

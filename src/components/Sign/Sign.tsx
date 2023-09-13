@@ -7,20 +7,29 @@ import { ModalSignWrapper } from './Sign.styles';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
-import RefLogoSvg from '../../Images/ref-logo';
+import NearLogo from '../../Images/near-logo';
 import { Button } from '../../lib/Button';
+import {
+  fetchGeckoPrices,
+  fetchRefFinancePrices,
+} from './Values/fiatValueManager';
+import fiatValuesStore from './Values/store';
+import { formatNearAmount } from './Values/formatNearAmount';
 import { useAuthState } from '../../lib/useAuthState';
 import TableContent from '../TableContent/TableContent';
 import { encodeSignedDelegate } from '@near-js/transactions';
 
-const deserializeTransactionsFromString = (transactionsString: string) => transactionsString
-  .split(',')
-  .map((str) => Buffer.from(str, 'base64'))
-  .map((buffer) => utils.serialize.deserialize(
-    transaction.SCHEMA,
-    transaction.Transaction,
-    buffer
-  ));
+const deserializeTransactionsFromString = (transactionsString: string) =>
+  transactionsString
+    .split(',')
+    .map((str) => Buffer.from(str, 'base64'))
+    .map((buffer) =>
+      utils.serialize.deserialize(
+        transaction.SCHEMA,
+        transaction.Transaction,
+        buffer
+      )
+    );
 
 interface TransactionDetails {
   signerId: string;
@@ -35,43 +44,42 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-export const calculateGasLimit = (actions) => actions
-  .filter((a) => Object.keys(a)[0] === 'functionCall')
-  .map((a) => a.functionCall.gas)
-  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
-  .toString();
+export const calculateGasLimit = (actions) =>
+  actions
+    .filter((a) => Object.keys(a)[0] === 'functionCall')
+    .map((a) => a.functionCall.gas)
+    .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
+    .toString();
 
 function Sign() {
   const [searchParams] = useSearchParams();
   const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
-  const [transactionDetails, setTransactionDetails] = React.useState<TransactionDetails>({
-    signerId:    '',
-    receiverId:   '',
-    totalAmount: '0',
-    fees:         {
-      transactionFees: '',
-      gasLimit:        '',
-      gasPrice:        '',
-    },
-    transactions: [],
-    actions:      [],
-  });
+  const [transactionDetails, setTransactionDetails] =
+    React.useState<TransactionDetails>({
+      signerId: '',
+      receiverId: '',
+      totalAmount: '0',
+      fees: {
+        transactionFees: '',
+        gasLimit: '',
+        gasPrice: '',
+      },
+      transactions: [],
+      actions: [],
+    });
   const authenticated = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
   React.useEffect(() => {
     const transactionHashes = searchParams.get('transactions');
-    const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
+    const deserializedTransactions =
+      deserializeTransactionsFromString(transactionHashes);
     const allActions = deserializedTransactions.flatMap((t) => t.actions);
     setTransactionDetails({
-      signerId:    deserializedTransactions[0].signerId,
-      receiverId:  deserializedTransactions[0].receiverId,
+      signerId: deserializedTransactions[0].signerId,
+      receiverId: deserializedTransactions[0].receiverId,
       totalAmount: allActions
-        .map(
-          (a) => (a.transfer && a.transfer.deposit)
-            || (a.functionCall && a.functionCall.deposit)
-            || 0
-        )
+        .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
         .filter((a) => a !== 0)
         .reduce(
           (totalAmount: BN, amount) => totalAmount.add(new BN(amount)),
@@ -80,21 +88,76 @@ function Sign() {
         .toString(),
       fees: {
         transactionFees: '',
-        gasLimit:        calculateGasLimit(allActions),
-        gasPrice:        '',
+        gasLimit: calculateGasLimit(allActions),
+        gasPrice: '',
       },
       transactions: deserializedTransactions,
-      actions:      allActions,
+      actions: allActions,
     });
   }, []);
+
+  const storeFetchedUsdValues = fiatValuesStore(
+    (state) => state.storeFetchedUsdValues
+  );
+  const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
+
+  React.useEffect(() => {
+    new Promise(() => {
+      fetchRefFinancePrices()
+        .then((res) => {
+          storeFetchedUsdValues(res.near.usd);
+        })
+        .catch(() => {
+          console.warn('Ref Finance Error');
+        });
+
+      fetchGeckoPrices('near')
+        .then((res) => {
+          storeFetchedUsdValues(res.near.usd);
+        })
+        .catch(() => {
+          console.warn('Coin Gecko Error');
+        });
+    });
+  }, []);
+
+  const totalNearAmount = () =>
+    formatNearAmount(transactionDetails.totalAmount);
+
+  const totalUsdAmount = (Number(totalNearAmount()) * Number(fiatValueUsd))
+    .toFixed(2)
+    .toString();
+
+  const estimatedNearFees = formatNearAmount(transactionDetails.fees.gasPrice);
+
+  const estimatedUsdFees = () => {
+    let usdFees: string;
+    if (estimatedNearFees.includes('<')) usdFees = '< $0.01';
+    else if (Number(estimatedNearFees) * Number(fiatValueUsd) < 0.01)
+      usdFees = '< $0.01';
+    else
+      usdFees =
+        '$' +
+        (Number(estimatedNearFees) * Number(fiatValueUsd))
+          .toFixed(2)
+          .toString();
+
+    return usdFees;
+  };
 
   const onConfirm = async () => {
     if (authenticated) {
       const signedTransactions = [];
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
-          const signed = await (window as any).fastAuthController.signDelegateAction(transactionDetails.transactions[i]);
-          const base64 =  Buffer.from(encodeSignedDelegate(signed)).toString('base64');
+          const signed = await (
+            window as any
+          ).fastAuthController.signDelegateAction(
+            transactionDetails.transactions[i]
+          );
+          const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
+            'base64'
+          );
           signedTransactions.push(base64);
         } catch (err) {
           console.error(err);
@@ -120,7 +183,7 @@ function Sign() {
   return (
     <ModalSignWrapper>
       <div className="modal-top">
-        <RefLogoSvg />
+        <NearLogo />
         <h4>Confirm transaction</h4>
 
         <div className="transaction-details">
@@ -136,11 +199,9 @@ function Sign() {
           />
           <TableContent
             leftSide="Total"
-            infoText="First Info Text example"
-            rightSide={`${utils.format.formatNearAmount(
-              transactionDetails.totalAmount
-            )} NEAR`}
-            currencyValue="$38.92"
+            infoText="The estimated total of your transaction including fees."
+            rightSide={`${totalNearAmount()} NEAR`}
+            currencyValue={`$${totalUsdAmount}`}
           />
         </div>
       </div>
@@ -161,9 +222,9 @@ function Sign() {
             />
             <TableContent
               leftSide="Estimated Fees"
-              infoText="Second Info Text example"
-              rightSide="< 0.0001 NEAR"
-              currencyValue="< $0.01"
+              infoText="The estimated cost of processing your transaction."
+              rightSide={`${estimatedNearFees} NEAR`}
+              currencyValue={`${estimatedUsdFees()}`}
             />
           </div>
           <div className="table-wrapper">
@@ -174,7 +235,7 @@ function Sign() {
                 leftSide={transactionDetails.receiverId}
                 hasFunctionCall
                 isFunctionCallOpen
-                rightSide={action.functionCall.methodName}
+                rightSide={action.enum}
                 functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
                 openLink={`add links ${i}`}
               />
