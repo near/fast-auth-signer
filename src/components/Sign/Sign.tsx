@@ -7,7 +7,7 @@ import { ModalSignWrapper } from './Sign.styles';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
-import RefLogoSvg from '../../Images/ref-logo';
+import NearLogo from '../../Images/near-logo';
 import { Button } from '../../lib/Button';
 import {
   fetchGeckoPrices,
@@ -183,7 +183,7 @@ function Sign() {
   return (
     <ModalSignWrapper>
       <div className="modal-top">
-        <RefLogoSvg />
+        <NearLogo />
         <h4>Confirm transaction</h4>
 
         <div className="transaction-details">
