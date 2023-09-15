@@ -58,6 +58,6 @@ export const useAuthState = () => {
       setControllerState(false);
     }
   }, [controllerState]);
-
+  console.log(authenticated, "=====")
   return authenticated;
 };

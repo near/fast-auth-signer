@@ -1,35 +1,52 @@
+import { encodeSignedDelegate } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ModalSignWrapper } from './Sign.styles';
+import {
+  fetchGeckoPrices,
+} from './Values/fiatValueManager';
+import { formatNearAmount } from './Values/formatNearAmount';
+import fiatValuesStore from './Values/store';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
-import NearLogo from '../../Images/near-logo';
 import { Button } from '../../lib/Button';
-import {
-  fetchGeckoPrices,
-  fetchRefFinancePrices,
-} from './Values/fiatValueManager';
-import fiatValuesStore from './Values/store';
-import { formatNearAmount } from './Values/formatNearAmount';
 import { useAuthState } from '../../lib/useAuthState';
+import { network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
-import { encodeSignedDelegate } from '@near-js/transactions';
 
-const deserializeTransactionsFromString = (transactionsString: string) =>
-  transactionsString
-    .split(',')
-    .map((str) => Buffer.from(str, 'base64'))
-    .map((buffer) =>
-      utils.serialize.deserialize(
-        transaction.SCHEMA,
-        transaction.Transaction,
-        buffer
-      )
-    );
+const formatActionType = (action: string) => {
+  switch (action) {
+    case 'createAccount':
+      return 'create_account';
+    case 'deployContract':
+      return 'deploy_contract';
+    case 'functionCall':
+      return 'function_call';
+    case 'addKey':
+      return 'add_key';
+    case 'deleteKey':
+      return 'delete_key';
+    case 'deleteAccount':
+      return 'delete_account';
+    case 'signedDelegate':
+      return 'signed_delegate';
+    default:
+      return action;
+  }
+};
+
+const deserializeTransactionsFromString = (transactionsString: string) => transactionsString
+  .split(',')
+  .map((str) => Buffer.from(str, 'base64'))
+  .map((buffer) => utils.serialize.deserialize(
+    transaction.SCHEMA,
+    transaction.Transaction,
+    buffer
+  ));
 
 interface TransactionDetails {
   signerId: string;
@@ -44,40 +61,48 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-export const calculateGasLimit = (actions) =>
-  actions
-    .filter((a) => Object.keys(a)[0] === 'functionCall')
-    .map((a) => a.functionCall.gas)
-    .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
-    .toString();
+export const calculateGasLimit = (actions) => actions
+  .filter((a) => Object.keys(a)[0] === 'functionCall')
+  .map((a) => a.functionCall.gas)
+  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
+  .toString();
 
 function Sign() {
   const [searchParams] = useSearchParams();
   const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
-  const [transactionDetails, setTransactionDetails] =
-    React.useState<TransactionDetails>({
-      signerId: '',
-      receiverId: '',
-      totalAmount: '0',
-      fees: {
-        transactionFees: '',
-        gasLimit: '',
-        gasPrice: '',
-      },
-      transactions: [],
-      actions: [],
-    });
+  const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
+    signerId:    '',
+    receiverId:  '',
+    totalAmount: '0',
+    fees:        {
+      transactionFees: '',
+      gasLimit:        '',
+      gasPrice:        '',
+    },
+    transactions: [],
+    actions:      [],
+  });
   const authenticated = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
+  const storeFetchedUsdValues = fiatValuesStore(
+    (state) => state.storeFetchedUsdValues
+  );
+
   React.useEffect(() => {
+    if (!authenticated) {
+      const parsedUrl = new URL(`${window.location.origin}/fastauth/login`);
+      parsedUrl.searchParams.set('success_url', window.location.href);
+      window.location.replace(parsedUrl.href);
+      // navigate(`/add-device${parsedUrl.search}`);
+    }
+
     const transactionHashes = searchParams.get('transactions');
-    const deserializedTransactions =
-      deserializeTransactionsFromString(transactionHashes);
+    const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
     const allActions = deserializedTransactions.flatMap((t) => t.actions);
     setTransactionDetails({
-      signerId: deserializedTransactions[0].signerId,
-      receiverId: deserializedTransactions[0].receiverId,
+      signerId:    deserializedTransactions[0].signerId,
+      receiverId:  deserializedTransactions[0].receiverId,
       totalAmount: allActions
         .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
         .filter((a) => a !== 0)
@@ -88,41 +113,25 @@ function Sign() {
         .toString(),
       fees: {
         transactionFees: '',
-        gasLimit: calculateGasLimit(allActions),
-        gasPrice: '',
+        gasLimit:        calculateGasLimit(allActions),
+        gasPrice:        '',
       },
       transactions: deserializedTransactions,
-      actions: allActions,
+      actions:      allActions,
     });
+
+    fetchGeckoPrices('near')
+      .then((res) => {
+        storeFetchedUsdValues(res.near.usd);
+      })
+      .catch(() => {
+        console.warn('Coin Gecko Error');
+      });
   }, []);
 
-  const storeFetchedUsdValues = fiatValuesStore(
-    (state) => state.storeFetchedUsdValues
-  );
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
-  React.useEffect(() => {
-    new Promise(() => {
-      fetchRefFinancePrices()
-        .then((res) => {
-          storeFetchedUsdValues(res.near.usd);
-        })
-        .catch(() => {
-          console.warn('Ref Finance Error');
-        });
-
-      fetchGeckoPrices('near')
-        .then((res) => {
-          storeFetchedUsdValues(res.near.usd);
-        })
-        .catch(() => {
-          console.warn('Coin Gecko Error');
-        });
-    });
-  }, []);
-
-  const totalNearAmount = () =>
-    formatNearAmount(transactionDetails.totalAmount);
+  const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
 
   const totalUsdAmount = (Number(totalNearAmount()) * Number(fiatValueUsd))
     .toFixed(2)
@@ -133,14 +142,12 @@ function Sign() {
   const estimatedUsdFees = () => {
     let usdFees: string;
     if (estimatedNearFees.includes('<')) usdFees = '< $0.01';
-    else if (Number(estimatedNearFees) * Number(fiatValueUsd) < 0.01)
-      usdFees = '< $0.01';
-    else
-      usdFees =
-        '$' +
+    else if (Number(estimatedNearFees) * Number(fiatValueUsd) < 0.01) { usdFees = '< $0.01'; } else {
+      usdFees =        `$${
         (Number(estimatedNearFees) * Number(fiatValueUsd))
           .toFixed(2)
-          .toString();
+          .toString()}`;
+    }
 
     return usdFees;
   };
@@ -160,7 +167,11 @@ function Sign() {
           );
           signedTransactions.push(base64);
         } catch (err) {
-          console.error(err);
+          const failure_url = searchParams.get('failure_url');
+          const parsedUrl = new URL(failure_url || window.location.origin);
+          parsedUrl.searchParams.set('message', err);
+          window.location.replace(parsedUrl.href);
+          return;
         }
       }
       const success_url = searchParams.get('success_url');
@@ -183,7 +194,7 @@ function Sign() {
   return (
     <ModalSignWrapper>
       <div className="modal-top">
-        <NearLogo />
+        {callbackUrl && <img width="48" height="48" src={`${callbackUrl}/favicon.ico`} alt={callbackUrl} />}
         <h4>Confirm transaction</h4>
 
         <div className="transaction-details">
@@ -235,9 +246,9 @@ function Sign() {
                 leftSide={transactionDetails.receiverId}
                 hasFunctionCall
                 isFunctionCallOpen
-                rightSide={action.enum}
+                rightSide={formatActionType(action.enum)}
                 functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
-                openLink={`add links ${i}`}
+                openLink={`${network.explorerUrl}/accounts/${transactionDetails.receiverId}`}
               />
             ))}
           </div>

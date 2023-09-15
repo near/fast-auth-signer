@@ -229,7 +229,7 @@ function CreateAccount() {
               if (!emailProvider || emailProvider === provider) {
                 return (
                   // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <div className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
+                  <div key={provider} className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
                     @
                     {provider}
                   </div>

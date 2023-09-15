@@ -14,6 +14,7 @@ type ProductionNetwork = {
   walletUrl: string;
   helperUrl: string;
   relayerUrl: string;
+  explorerUrl: string;
   fastAuth: {
     mpcRecoveryUrl: string;
     authHelperUrl: string; // TODO refactor: review by fastauth team

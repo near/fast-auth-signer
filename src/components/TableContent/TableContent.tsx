@@ -38,7 +38,7 @@ function TableContent({
             <InfoSvg />
           </Tooltip>
         )}
-        {openLink && <a href = {openLink} ><OpenLinkSvg /></a>}
+        {openLink && <a href={openLink} target="_blank" rel="noreferrer"><OpenLinkSvg /></a>}
       </div>
 
       <div className="right-side">
