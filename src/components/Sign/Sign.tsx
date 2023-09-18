@@ -94,7 +94,6 @@ function Sign() {
       const parsedUrl = new URL(`${window.location.origin}/fastauth/login`);
       parsedUrl.searchParams.set('success_url', window.location.href);
       window.location.replace(parsedUrl.href);
-      // navigate(`/add-device${parsedUrl.search}`);
     }
 
     const transactionHashes = searchParams.get('transactions');

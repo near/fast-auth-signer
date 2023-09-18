@@ -131,8 +131,7 @@ function SignInPage() {
         if (inIframe()) {
           setRenderRedirectButton(parsedUrl.href);
         } else {
-          navigate(parsedUrl.pathname.replace('/fastauth', '') + parsedUrl.search);
-          // window.location.replace(parsedUrl.href);
+          window.location.replace(parsedUrl.href);
         }
       }).catch((error) => {
         console.log(error, '<<< err')
@@ -143,10 +142,7 @@ function SignInPage() {
         if (inIframe()) {
           setRenderRedirectButton(parsedUrl.href);
         } else {
-          console.log(parsedUrl)
-          navigate(parsedUrl.pathname.replace('/fastauth', '') + parsedUrl.search);
-          // navigate(parsedUrl.href);
-          // window.location.replace(parsedUrl.href);
+          window.location.replace(parsedUrl.href);
         }
       });
     }
