@@ -177,7 +177,7 @@ function Sign() {
       const parsedUrl = new URL(success_url || window.location.origin);
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
-      window.parent.postMessage(signedTransactions.join(','), '*');
+      window.parent.postMessage({ signedDelegates: signedTransactions.join(',') }, '*');
     }
   };
 
