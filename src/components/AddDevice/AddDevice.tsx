@@ -4,7 +4,7 @@ import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
@@ -16,11 +16,17 @@ import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
 export const handleCreateAccount = async ({
-  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
+  accountId,
+  email,
+  isRecovery,
+  success_url,
+  failure_url,
+  public_key,
+  contract_id,
+  methodNames,
 }) => {
   const keyPair = await createKey(email);
   const publicKeyWebAuthn = keyPair.getPublicKey().toString();
-
   if (!publicKeyWebAuthn) {
     throw new Error('No public key found');
   }
@@ -34,19 +40,30 @@ export const handleCreateAccount = async ({
     ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),
     ...(contract_id ? { contract_id } : {}),
-    ...(methodNames ? { methodNames } : {})
+    ...(methodNames ? { methodNames } : {}),
   });
 
-  window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
+  window.localStorage.setItem(
+    `temp_fastauthflow_${publicKeyWebAuthn}`,
+    keyPair.toString()
+  );
+
+  // TODO: THIS ADDED FROM EXAMPLE
+  window.localStorage.setItem('emailForSignIn', email);
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
+      `${window.location.origin}${
+        basePath ? `/${basePath}` : ''
+      }/auth-callback?${searchParams.toString()}`
     ),
     handleCodeInApp: true,
   });
   return {
-    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair.toString()
+    email,
+    publicKey: publicKeyWebAuthn,
+    accountId,
+    privateKey: keyPair.toString(),
   };
 };
 
@@ -57,94 +74,135 @@ function SignInPage() {
   const authenticated = useAuthState();
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
-  const addDevice = useCallback(async (data: any) => {
-    if (!data.email) return;
+  // TODO:
+  const location = useLocation();
+  const userEmail = location?.state?.email;
 
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
-    const methodNames = searchParams.get('methodNames');
+  const user = firebaseAuth.currentUser;
 
-    try {
-      const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
-        accountId:   null,
-        email:       data.email,
-        isRecovery:  true,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
-      });
-      const newSearchParams = new URLSearchParams({
-        publicKeyFak,
-        email,
-        isRecovery: 'true',
-        ...(success_url ? { success_url } : {}),
-        ...(failure_url ? { failure_url } : {}),
-        ...(public_key ? { public_key_lak: public_key } : {}),
-        ...(contract_id ? { contract_id } : {}),
-        ...(methodNames ? { methodNames } : {})
-      });
-      const hashParams = new URLSearchParams({ privateKey });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
-    } catch (error: any) {
-      console.log(error);
+  if (user !== null) {
+    user.providerData.forEach((profile) => {
+      console.log('Sign-in provider: ' + profile.providerId);
+      console.log('  Provider-specific UID: ' + profile.uid);
+      console.log('  Name: ' + profile.displayName);
+      console.log('  Email: ' + profile.email);
+      console.log('  Photo URL: ' + profile.photoURL);
+    });
+  }
 
-      if (typeof error?.message === 'string') {
-        openToast({
-          type:  'ERROR',
-          title: error.message,
+  const addDevice = useCallback(
+    async (data: any) => {
+      if (!data.email) return;
+
+      const success_url = searchParams.get('success_url');
+      const failure_url = searchParams.get('failure_url');
+      const public_key = searchParams.get('public_key');
+      const contract_id = searchParams.get('contract_id');
+      const methodNames = searchParams.get('methodNames');
+
+      try {
+        const {
+          publicKey: publicKeyFak,
+          email,
+          privateKey,
+        } = await handleCreateAccount({
+          accountId: null,
+          email: data.email,
+          isRecovery: true,
+          success_url,
+          failure_url,
+          public_key,
+          contract_id,
+          methodNames,
         });
-      } else {
-        openToast({
-          type:  'ERROR',
-          title: 'Something went wrong',
+        const newSearchParams = new URLSearchParams({
+          publicKeyFak,
+          email,
+          isRecovery: 'true',
+          ...(success_url ? { success_url } : {}),
+          ...(failure_url ? { failure_url } : {}),
+          ...(public_key ? { public_key_lak: public_key } : {}),
+          ...(contract_id ? { contract_id } : {}),
+          ...(methodNames ? { methodNames } : {}),
         });
+        const hashParams = new URLSearchParams({ privateKey });
+        navigate(
+          `/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`
+        );
+      } catch (error: any) {
+        console.log(error);
+
+        if (typeof error?.message === 'string') {
+          openToast({
+            type: 'ERROR',
+            title: error.message,
+          });
+        } else {
+          openToast({
+            type: 'ERROR',
+            title: 'Something went wrong',
+          });
+        }
       }
-    }
-  }, [searchParams, navigate]);
+    },
+    [searchParams, navigate]
+  );
 
   useEffect(() => {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
-    const public_key =  searchParams.get('public_key');
+    const public_key = searchParams.get('public_key');
     const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
     if (authenticated) {
-      (window as any).fastAuthController.signAndSendAddKey({
-        contractId: contract_id,
-        methodNames,
-        allowance:  new BN('250000000000000'),
-        publicKey:  public_key
-      }).then((res) => res.json()).then((res) => {
-        const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-        if (failure) {
-          throw new Error(JSON.stringify(failure));
-        }
-        const parsedUrl = new URL(success_url || `${window.location.origin}/${basePath || ''}`);
-        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
-        parsedUrl.searchParams.set('public_key', public_key);
-        parsedUrl.searchParams.set('all_keys', public_key);
+      (window as any).fastAuthController
+        .signAndSendAddKey({
+          contractId: contract_id,
+          methodNames,
+          allowance: new BN('250000000000000'),
+          publicKey: public_key,
+        })
+        .then((res) => res.json())
+        .then((res) => {
+          const failure = res['Receipts Outcome'].find(
+            ({ outcome: { status } }) =>
+              Object.keys(status).some((k) => k === 'Failure')
+          )?.outcome?.status?.Failure;
+          if (failure) {
+            throw new Error(JSON.stringify(failure));
+          }
+          const parsedUrl = new URL(
+            success_url || `${window.location.origin}/${basePath || ''}`
+          );
+          parsedUrl.searchParams.set(
+            'account_id',
+            (window as any).fastAuthController.getAccountId()
+          );
+          parsedUrl.searchParams.set('public_key', public_key);
+          parsedUrl.searchParams.set('all_keys', public_key);
 
-        if (inIframe()) {
-          setRenderRedirectButton(parsedUrl.href);
-        } else {
-          window.location.replace(parsedUrl.href);
-        }
-      }).catch((error) => {
-        console.log(error, '<<< err')
-        const { message } = error;
-        const parsedUrl = new URL(failure_url || success_url || `${window.location.origin}/${basePath || ''}`);
-        parsedUrl.searchParams.set('code', error.code);
-        parsedUrl.searchParams.set('reason', message);
-        if (inIframe()) {
-          setRenderRedirectButton(parsedUrl.href);
-        } else {
-          window.location.replace(parsedUrl.href);
-        }
-      });
+          if (inIframe()) {
+            setRenderRedirectButton(parsedUrl.href);
+          } else {
+            window.location.replace(parsedUrl.href);
+          }
+        })
+        .catch((error) => {
+          console.log(error, '<<< err');
+          const { message } = error;
+          const parsedUrl = new URL(
+            failure_url ||
+              success_url ||
+              `${window.location.origin}/${basePath || ''}`
+          );
+          parsedUrl.searchParams.set('code', error.code);
+          parsedUrl.searchParams.set('reason', message);
+          if (inIframe()) {
+            setRenderRedirectButton(parsedUrl.href);
+          } else {
+            window.location.replace(parsedUrl.href);
+          }
+        });
     }
     const email = searchParams.get('email');
 
@@ -189,7 +247,10 @@ function SignInPage() {
       <FormContainer onSubmit={onSubmit}>
         <header>
           <h1>Sign In</h1>
-          <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
+          <p className="desc">
+            Use this account to sign in everywhere on NEAR, no password
+            required.
+          </p>
         </header>
 
         <InputContainer>
@@ -206,14 +267,20 @@ function SignInPage() {
             placeholder="user_name@email.com"
             type="email"
             required
+            value={userEmail ? userEmail : null}
           />
         </InputContainer>
 
-        <Button type="submit" label="Continue" variant="affirmative" onClick={onSubmit} />
+        <Button
+          type="submit"
+          label="Continue"
+          variant="affirmative"
+          onClick={onSubmit}
+        />
       </FormContainer>
     </StyledContainer>
   );
-};
+}
 
 export default SignInPage;
 

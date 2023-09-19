@@ -4,6 +4,12 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../lib/Button';
 import { inIframe } from '../../utils';
 import AuthIndicator from '../AuthIndicator/AuthIndicator';
+import { LoginWrapper, InputContainer, ButtonsContainer } from './Login.style';
+import { useForm } from 'react-hook-form';
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { firebaseAuth } from '../../utils/firebase';
+import { isValidEmail } from '../../utils/form-validation';
+import { openToast } from '../../lib/Toast';
 
 function Login({ controller }) {
   const [currentSearchParams] = useSearchParams();
@@ -27,48 +33,107 @@ function Login({ controller }) {
       if (isRecovery === 'true') {
         navigate({
           pathname: '/add-device',
-          search:   currentSearchParams.toString()
+          search: currentSearchParams.toString(),
         });
       } else {
         navigate({
           pathname: '/create-account',
-          search:   currentSearchParams.toString()
+          search: currentSearchParams.toString(),
         });
       }
     }
   }, [currentSearchParams]);
 
+  const { handleSubmit, setValue } = useForm();
+
+  const emailCheck = async (params: any) => {
+    // TODO: Update with real response
+    fetchSignInMethodsForEmail(firebaseAuth, params.email).then((result) => {
+      const exists = false;
+      console.log('is exists?', result[0]);
+
+      result.length === 0 &&
+        navigate('/create-account', { state: { email: params['email'] } });
+
+      result[0] == 'emailLink' &&
+        // Toast not showingBUH
+        openToast({
+          type: 'ERROR',
+          title: 'Email link already sent',
+        });
+
+      exists && navigate('/add-device', { state: { email: params['email'] } });
+    });
+  };
+
+  const onSubmit = handleSubmit(emailCheck);
+
   return (
-    <div>
-      Login route
-      <AuthIndicator controller={window.fastAuthController} />
-      <Button
-        label="New account"
-        variant="affirmative"
-        onClick={() => {
-          navigate({
-            pathname: '/create-account',
-            search:   currentSearchParams.toString()
-          });
-          if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
-          }
-        }}
-      />
-      <Button
-        label="Existing account"
-        variant="affirmative"
-        onClick={() => {
-          navigate({
-            pathname: '/add-device',
-            search:   currentSearchParams.toString()
-          });
-          if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
-          }
-        }}
-      />
-    </div>
+    <LoginWrapper>
+      <h1> Login route </h1>
+      <form onSubmit={onSubmit}>
+        <header>
+          <h1>Log In</h1>
+          <p className="desc">Please enter your email</p>
+        </header>
+
+        <InputContainer>
+          <label htmlFor="email">Email</label>
+          <input
+            onChange={(e) => {
+              setValue('email', e.target.value);
+              if (!isValidEmail(e.target.value)) return;
+            }}
+            placeholder="user_name@email.com"
+            type="email"
+            required
+          />
+        </InputContainer>
+
+        <Button
+          type="submit"
+          label="Continue"
+          variant="affirmative"
+          onClick={onSubmit}
+        />
+      </form>
+
+      <ButtonsContainer>
+        <AuthIndicator controller={window.fastAuthController} />
+        <Button
+          label="New account"
+          variant="affirmative"
+          onClick={() => {
+            navigate({
+              pathname: '/create-account',
+              search: currentSearchParams.toString(),
+            });
+            if (!isSignedIn && inIframe()) {
+              window.open(
+                `${window.location.origin}${location.pathname}${location.search}`,
+                '_parent'
+              );
+            }
+          }}
+        />
+        <Button
+          label="Existing account"
+          variant="affirmative"
+          onClick={() => {
+            navigate({
+              pathname: '/add-device',
+              search: currentSearchParams.toString(),
+            });
+            if (!isSignedIn && inIframe()) {
+              window.open(
+                `${window.location.origin}${location.pathname}${location.search}`,
+                '_parent'
+              );
+            }
+          }}
+        />
+      </ButtonsContainer>
+    </LoginWrapper>
   );
 }
 
