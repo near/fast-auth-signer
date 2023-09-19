@@ -124,7 +124,7 @@ function SignInPage() {
         if (failure) {
           throw new Error(JSON.stringify(failure));
         }
-        const parsedUrl = new URL(success_url || window.location.origin);
+        const parsedUrl = new URL(success_url || `${window.location.origin}/${basePath || ''}`);
         parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
         parsedUrl.searchParams.set('public_key', public_key);
         parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak.getPublicKey().toString()].join(','));
@@ -137,7 +137,7 @@ function SignInPage() {
       }).catch((error) => {
         console.log(error, '<<< err')
         const { message } = error;
-        const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+        const parsedUrl = new URL(failure_url || success_url || `${window.location.origin}/${basePath || ''}`);
         parsedUrl.searchParams.set('code', error.code);
         parsedUrl.searchParams.set('reason', message);
         if (inIframe()) {
@@ -155,7 +155,7 @@ function SignInPage() {
     }
   }, [authenticated, searchParams]);
 
-  if (authenticated) {
+  if (authenticated === true) {
     return renderRedirectButton ? (
       <Button
         label="Back to app"
@@ -166,6 +166,10 @@ function SignInPage() {
     ) : (
       <div>Signing transaction</div>
     );
+  }
+
+  if (authenticated instanceof Error) {
+    return <div>{authenticated.message}</div>;
   }
 
   if (inIframe()) {

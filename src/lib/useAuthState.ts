@@ -9,7 +9,14 @@ import { network, networkId } from "../utils/config";
 
 export const useAuthState = () => {
   const [authenticated, setAuthenticated] = useState(undefined);
-  const webauthnUsername = useMemo(() => window.localStorage.getItem('webauthn_username'), []);
+  const webauthnUsername = useMemo(() => {
+    try {
+      return window.localStorage.getItem('webauthn_username');
+    } catch (error) {
+      return null;
+    }
+  }, []);
+
   const [controllerState, setControllerState] = useState<'loading' | boolean>('loading');
   const [query] = useSearchParams();
 
@@ -58,5 +65,11 @@ export const useAuthState = () => {
       setControllerState(false);
     }
   }, [controllerState]);
-  return authenticated;
+
+  try {
+    window.localStorage.getItem('webauthn_username');
+    return authenticated;
+  } catch (error) {
+    return new Error('Please allow third party cookies');
+  }
 };
