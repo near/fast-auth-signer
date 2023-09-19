@@ -121,7 +121,7 @@ function AuthCallbackPage() {
                 const parsedUrl = new URL(success_url || window.location.origin);
                 parsedUrl.searchParams.set('account_id', accId);
                 parsedUrl.searchParams.set('public_key', public_key_lak);
-                parsedUrl.searchParams.set('all_keys', public_key_lak);
+                parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
 
                 window.location.replace(parsedUrl.href);
               },
