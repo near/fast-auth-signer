@@ -90,7 +90,7 @@ function Sign() {
   );
 
   React.useEffect(() => {
-    if (!authenticated) {
+    if (authenticated === false) {
       const parsedUrl = new URL(`${window.location.origin}/fastauth/login`);
       parsedUrl.searchParams.set('success_url', window.location.href);
       window.location.replace(parsedUrl.href);
@@ -177,6 +177,7 @@ function Sign() {
       const parsedUrl = new URL(success_url || window.location.origin);
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
+      window.parent.postMessage(signedTransactions.join(','), '*');
     }
   };
 

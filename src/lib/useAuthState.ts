@@ -8,7 +8,7 @@ import FastAuthController from "./controller";
 import { network, networkId } from "../utils/config";
 
 export const useAuthState = () => {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(undefined);
   const webauthnUsername = useMemo(() => window.localStorage.getItem('webauthn_username'), []);
   const [controllerState, setControllerState] = useState<'loading' | boolean>('loading');
   const [query] = useSearchParams();

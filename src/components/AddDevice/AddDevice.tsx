@@ -118,7 +118,8 @@ function SignInPage() {
         methodNames,
         allowance:  new BN('250000000000000'),
         publicKey:  public_key
-      }).then((res) => res.json()).then((res) => {
+      }).then((res) => res.json()).then(async (res) => {
+        const publicKeyFak = await (window as any).fastAuthController.getKey()
         const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
         if (failure) {
           throw new Error(JSON.stringify(failure));
@@ -126,7 +127,7 @@ function SignInPage() {
         const parsedUrl = new URL(success_url || window.location.origin);
         parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
         parsedUrl.searchParams.set('public_key', public_key);
-        parsedUrl.searchParams.set('all_keys', public_key);
+        parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak.getPublicKey().toString()].join(','));
 
         if (inIframe()) {
           setRenderRedirectButton(parsedUrl.href);
