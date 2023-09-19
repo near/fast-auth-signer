@@ -86,10 +86,20 @@ function CreateAccount() {
       const hashParams = new URLSearchParams({ privateKey });
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
-      openToast({
-        type:  'ERROR',
-        title: error.message,
-      });
+      console.log('error', error);
+      // currently running handleCreateAccount() will throw an error as:
+      // error DOMException: The following credential operations can only occur in a document which is same-origin with all of its ancestors: storage/retrieval of 'PasswordCredential' and 'FederatedCredential', storage of 'PublicKeyCredential'.
+
+      // TODO: Need to either fix the logic above or handle a different way
+      // const message = errorMessages[error.code] || error.message;
+      // const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+      // parsedUrl.searchParams.set('code', error.code);
+      // parsedUrl.searchParams.set('reason', message);
+      // window.location.replace(parsedUrl.href);
+      // openToast({
+      //   type:  'ERROR',
+      //   title: message,
+      // });
     }
   };
 

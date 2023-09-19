@@ -9,6 +9,58 @@ import { openToast } from '../../lib/Toast';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 
+const StyledContainer = styled.div`
+  width: 100%;
+  height: calc(100vh - 66px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f2f1ea;
+  padding: 0 16px;
+`;
+
+const FormContainer = styled.form`
+  box-shadow: 0px 4px 8px 0px #0000000F;
+  box-shadow: 0px 0px 0px 1px #0000000F;
+  max-width: 450px;
+  width: 100%;
+  margin: 16px auto;
+  background-color: #ffffff;
+  padding: 35px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+    width: 100px;
+  }
+
+  & > p {
+    color: #706F6C;
+    font-size: 14px;
+  }
+
+  header {
+    text-align: center;
+  }
+
+  header h1 {
+    font: var(--text-2xl);
+    font-weight: bold;
+  }
+
+  header p {
+    color: #604CC8;
+  }
+
+  button {
+    width: 100%;
+    padding: 25px;
+  }
+`;
+
 function VerifyEmailPage() {
   const [query] = useSearchParams();
   const { hash = '' } = useLocation();
@@ -94,55 +146,3 @@ function VerifyEmailPage() {
 }
 
 export default VerifyEmailPage;
-
-const StyledContainer = styled.div`
-  width: 100%;
-  height: calc(100vh - 66px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-`;
-
-const FormContainer = styled.form`
-  box-shadow: 0px 4px 8px 0px #0000000F;
-  box-shadow: 0px 0px 0px 1px #0000000F;
-  max-width: 450px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 35px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-
-  svg {
-    width: 100px;
-  }
-
-  & > p {
-    color: #706F6C;
-    font-size: 14px;
-  }
-
-  header {
-    text-align: center;
-  }
-
-  header h1 {
-    font: var(--text-2xl);
-    font-weight: bold;
-  }
-
-  header p {
-    color: #604CC8;
-  }
-
-  button {
-    width: 100%;
-    padding: 25px;
-  }
-`;

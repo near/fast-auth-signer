@@ -7,18 +7,23 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import FastAuthController from '../../lib/controller';
+import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
+import { decodeIfTruthy } from '../../utils';
 import { network, networkId } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
-import { getUserCredentialsFrpSignature } from '../../utils/mpc-service';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import {
+  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getDeleteKeysAction
+} from '../../utils/mpc-service';
 
-const decodeIfTruthy = (paramVal) => {
-  if (paramVal) {
-    return decodeURIComponent(paramVal);
-  }
-
-  return paramVal;
-};
+const StyledStatusMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  width: 100%;
+`;
 
 const onCreateAccount = async ({
   keypair,
@@ -29,19 +34,18 @@ const onCreateAccount = async ({
   contract_id,
   methodNames,
   success_url,
-  failure_url,
   setStatusMessage,
   email,
 }) => {
-  const CLAIM_SALT = 3177899144 + 2;
-  const signatureObject = getUserCredentialsFrpSignature({
-    salt: CLAIM_SALT,
-    oidcToken: accessToken,
+  const CLAIM_SALT = CLAIM + 2;
+  const signature = getUserCredentialsFrpSignature({
+    salt:            CLAIM_SALT,
+    oidcToken:       accessToken,
     shouldHashToken: false,
     keypair,
   });
   const data = {
-    ...(accountId && accountId.includes('.') ? { near_account_id: accountId } : {}),
+    near_account_id:        accountId,
     create_account_options: {
       full_access_keys:    [publicKeyFak],
       limited_access_keys: public_key_lak ? [
@@ -53,9 +57,9 @@ const onCreateAccount = async ({
         },
       ] : [],
     },
-    oidc_token: accessToken,
-    user_credentials_frp_signature: Buffer.from(signatureObject.signature).toString('hex'),
-    frp_public_key: keypair.getPublicKey().toString(),
+    oidc_token:                     accessToken,
+    user_credentials_frp_signature: signature,
+    frp_public_key:                 keypair.getPublicKey().toString(),
   };
 
   const headers = new Headers();
@@ -72,9 +76,14 @@ const onCreateAccount = async ({
     .then(
       async (response) => {
         if (!response?.ok) {
-          console.log(response, JSON.stringify(response));
           throw new Error('Network response was not ok');
         }
+        // Add device
+        await window.firestoreController.addDeviceCollection({
+          fakPublicKey: publicKeyFak,
+          lakPublicKey: public_key_lak,
+        });
+
         setStatusMessage('Account created successfully!');
         const res = await response.json();
         const accId = res.near_account_id;
@@ -84,7 +93,6 @@ const onCreateAccount = async ({
         }
 
         window.localStorage.setItem('webauthn_username', email);
-
         window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
@@ -96,28 +104,10 @@ const onCreateAccount = async ({
 
         window.location.replace(parsedUrl.href);
       },
-    ).catch((error) => {
-      console.log(error);
-      const errorMessages: Record<string, string> = {
-        'auth/expired-action-code': 'Link expired, please try again.',
-        'auth/invalid-action-code': 'Link expired, please try again.',
-        'auth/invalid-email':       'Invalid email address.',
-        'auth/user-disabled':       'User disabled',
-        'auth/missing-email':       'No email found, please try again.',
-      };
-      const message = errorMessages[error.code] || error.message;
-      const parsedUrl = new URL(failure_url || success_url || window.location.origin);
-      parsedUrl.searchParams.set('code', error.code);
-      parsedUrl.searchParams.set('reason', message);
-      window.location.replace(parsedUrl.href);
-      openToast({
-        type:  'ERROR',
-        title: message,
-      });
-    });
+    );
 };
 
-const onSignIn = async ({
+export const onSignIn = async ({
   accessToken,
   publicKeyFak,
   public_key_lak,
@@ -126,10 +116,10 @@ const onSignIn = async ({
   setStatusMessage,
   success_url,
   email,
-  failure_url,
+  searchParams,
+  navigate,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-
   const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
     .then((res) => res.json())
     .catch((err) => {
@@ -137,54 +127,54 @@ const onSignIn = async ({
       throw new Error('Unable to retrieve account Id');
     });
 
-  return (window as any).fastAuthController.signAndSendAddKeyWithRecoveryKey({
-    oidcToken: accessToken,
-    allowance:  new BN('250000000000000'),
-    contractId: contract_id,
-    methodNames,
-    publicKeyLak: public_key_lak,
+  const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+
+  // delete old lak key attached to webAuthN public Key
+  const deleteKeyActions = existingDevice
+    ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
+
+  const addKeyActions = getAddKeyAction({
+    publicKeyLak:      public_key_lak,
     webAuthNPublicKey: publicKeyFak,
+    contractId:        contract_id,
+    methodNames,
+    allowance:         new BN('250000000000000'),
+  });
+
+  return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
+    oidcToken: accessToken,
     accountId: accountIds[0],
     recoveryPK,
-  }).then(
-    async (response) => {
-      if (!response?.ok) {
-        console.log(response, JSON.stringify(response));
-        throw new Error('Network response was not ok');
+    actions:   [...deleteKeyActions, ...addKeyActions]
+  })
+    .then((res) => res.json())
+    .then(async (res) => {
+      const failure = res['Receipts Outcome']
+        .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+      if (failure?.ActionError?.kind?.LackBalanceForState) {
+        navigate(`/devices?${searchParams.toString()}`);
+      } else {
+        await checkFirestoreReady();
+        await window.firestoreController.addDeviceCollection({
+          fakPublicKey: publicKeyFak,
+          lakPublicKey: public_key_lak,
+        });
+
+        setStatusMessage('Account recovered successfully!');
+
+        window.localStorage.setItem('webauthn_username', email);
+        window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
+
+        setStatusMessage('Redirecting to app...');
+
+        const parsedUrl = new URL(success_url || window.location.origin);
+        parsedUrl.searchParams.set('account_id', accountIds[0]);
+        parsedUrl.searchParams.set('public_key', public_key_lak);
+        parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
+
+        window.location.replace(parsedUrl.href);
       }
-      setStatusMessage('Account recovered successfully!');
-
-      window.localStorage.setItem('webauthn_username', email);
-      window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
-
-      setStatusMessage('Redirecting to app...');
-
-      const parsedUrl = new URL(success_url || window.location.origin);
-      parsedUrl.searchParams.set('account_id', accountIds[0]);
-      parsedUrl.searchParams.set('public_key', public_key_lak);
-      parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
-
-      window.location.replace(parsedUrl.href);
-    },
-  ).catch((error) => {
-    console.log(error);
-    const errorMessages: Record<string, string> = {
-      'auth/expired-action-code': 'Link expired, please try again.',
-      'auth/invalid-action-code': 'Link expired, please try again.',
-      'auth/invalid-email':       'Invalid email address.',
-      'auth/user-disabled':       'User disabled',
-      'auth/missing-email':       'No email found, please try again.',
-    };
-    const message = errorMessages[error.code] || error.message;
-    const parsedUrl = new URL(failure_url || success_url || window.location.origin);
-    parsedUrl.searchParams.set('code', error.code);
-    parsedUrl.searchParams.set('reason', message);
-    window.location.replace(parsedUrl.href);
-    openToast({
-      type:  'ERROR',
-      title: message,
     });
-  });
 };
 
 function AuthCallbackPage() {
@@ -206,11 +196,10 @@ function AuthCallbackPage() {
       const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
-      const public_key_lak =  decodeIfTruthy(searchParams.get('public_key_lak'));
+      const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
-
 
       while (!email) {
         // TODO refactor: review
@@ -242,34 +231,38 @@ function AuthCallbackPage() {
 
             await window.fastAuthController.setKey(keypair);
             await window.fastAuthController.claimOidcToken(user.accessToken);
+            (window as any).firestoreController = new FirestoreController();
+            window.firestoreController.updateUser({
+              userUid:   user.uid,
+              oidcToken: user.accessToken,
+            });
 
-            if (isRecovery) {
-              await onSignIn({
-                accessToken: user.accessToken,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                setStatusMessage,
-                success_url,
-                failure_url,
-                email,
+            const callback = isRecovery ? onSignIn : onCreateAccount;
+            await callback({
+              keypair,
+              accessToken: user.accessToken,
+              accountId,
+              publicKeyFak,
+              public_key_lak,
+              contract_id,
+              methodNames,
+              success_url,
+              setStatusMessage,
+              email,
+              navigate,
+              searchParams,
+            }).catch((error) => {
+              console.log('error', error);
+              const { message } = error;
+              const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+              parsedUrl.searchParams.set('code', error.code);
+              parsedUrl.searchParams.set('reason', message);
+              window.location.replace(parsedUrl.href);
+              openToast({
+                type:  'ERROR',
+                title: message,
               });
-            } else {
-              await onCreateAccount({
-                keypair,
-                accessToken: user.accessToken,
-                accountId,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                success_url,
-                failure_url,
-                setStatusMessage,
-                email,
-              });
-            }
+            });
           }
         });
     } else {
@@ -278,15 +271,6 @@ function AuthCallbackPage() {
   }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once
 
   return <StyledStatusMessage>{statusMessage}</StyledStatusMessage>;
-};
+}
 
 export default AuthCallbackPage;
-
-const StyledStatusMessage = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 80vh;
-  width: 100%;
-`;

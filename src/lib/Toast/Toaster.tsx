@@ -9,8 +9,8 @@ export function Toaster() {
   const toaster = useToasterStore();
 
   const iconsByType: Record<ToastType, string> = {
-    INFO: 'ph ph-info',
-    ERROR: 'ph ph-warning-circle',
+    INFO:    'ph ph-info',
+    ERROR:   'ph ph-warning-circle',
     SUCCESS: 'ph ph-check-circle',
   };
 
