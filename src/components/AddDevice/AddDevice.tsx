@@ -314,20 +314,20 @@ function SignInPage() {
         <InputContainer>
           <label htmlFor="email">
             Email
-            <input
-              {...register('email', {
-                required: 'Please enter a valid email address',
-              })}
-              onChange={(e) => {
-                setValue('email', e.target.value);
-                if (!isValidEmail(e.target.value)) return;
-              }}
-              placeholder="user_name@email.com"
-              type="email"
-              id="email"
-              required
-            />
           </label>
+          <input
+            {...register('email', {
+              required: 'Please enter a valid email address',
+            })}
+            onChange={(e) => {
+              setValue('email', e.target.value);
+              if (!isValidEmail(e.target.value)) return;
+            }}
+            placeholder="user_name@email.com"
+            type="email"
+            id="email"
+            required
+          />
         </InputContainer>
 
         <Button type="submit" label="Continue" variant="affirmative" onClick={onSubmit} />
