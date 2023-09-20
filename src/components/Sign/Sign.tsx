@@ -82,7 +82,7 @@ function Sign() {
     transactions: [],
     actions:      [],
   });
-  const authenticated = useAuthState();
+  const { authenticated } = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
   const storeFetchedUsdValues = fiatValuesStore(
