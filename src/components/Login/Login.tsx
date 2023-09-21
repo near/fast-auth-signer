@@ -9,7 +9,6 @@ import { useForm } from 'react-hook-form';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
-import { openToast } from '../../lib/Toast';
 
 function Login({ controller }) {
   const [currentSearchParams] = useSearchParams();
@@ -47,22 +46,11 @@ function Login({ controller }) {
   const { handleSubmit, setValue } = useForm();
 
   const emailCheck = async (params: any) => {
-    // TODO: Update with real response
     fetchSignInMethodsForEmail(firebaseAuth, params.email).then((result) => {
-      const exists = false;
-      console.log('is exists?', result[0]);
-
       result.length === 0 &&
         navigate('/create-account', { state: { email: params['email'] } });
-
       result[0] == 'emailLink' &&
-        // Toast not showingBUH
-        openToast({
-          type: 'ERROR',
-          title: 'Email link already sent',
-        });
-
-      exists && navigate('/add-device', { state: { email: params['email'] } });
+        navigate('/add-device', { state: { email: params['email'] } });
     });
   };
 
@@ -70,7 +58,6 @@ function Login({ controller }) {
 
   return (
     <LoginWrapper>
-      <h1> Login route </h1>
       <form onSubmit={onSubmit}>
         <header>
           <h1>Log In</h1>
