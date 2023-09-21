@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
+import { openToast } from '../../lib/Toast';
 
 function Login({ controller }) {
   const [currentSearchParams] = useSearchParams();
@@ -46,12 +47,20 @@ function Login({ controller }) {
   const { handleSubmit, setValue } = useForm();
 
   const emailCheck = async (params: any) => {
-    fetchSignInMethodsForEmail(firebaseAuth, params.email).then((result) => {
-      result.length === 0 &&
-        navigate('/create-account', { state: { email: params['email'] } });
-      result[0] == 'emailLink' &&
-        navigate('/add-device', { state: { email: params['email'] } });
-    });
+    fetchSignInMethodsForEmail(firebaseAuth, params.email)
+      .then((result) => {
+        result.length === 0 &&
+          navigate('/create-account', { state: { email: params['email'] } });
+        result[0] == 'emailLink' &&
+          navigate('/add-device', { state: { email: params['email'] } });
+      })
+      .catch((error: any) => {
+        console.error('error', error);
+        openToast({
+          type: 'ERROR',
+          title: error.message,
+        });
+      });
   };
 
   const onSubmit = handleSubmit(emailCheck);
