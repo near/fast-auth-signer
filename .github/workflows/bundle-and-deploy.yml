@@ -7,6 +7,10 @@ on:
         required: true
         type: string
 
+env: 
+  REACT_APP_BASE_PATH: 'fastauth'
+  NETWORK_ID: ${{ inputs.environment == 'staging' && 'testnet' || inputs.environment }}
+
 jobs:
   bundle-frontend:
     runs-on: ubuntu-latest
