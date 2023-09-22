@@ -94,7 +94,7 @@ function Login({ controller }) {
         />
       </form>
 
-      <ButtonsContainer>
+      {/* <ButtonsContainer>
         <AuthIndicator controller={window.fastAuthController} />
         <Button
           label="New account"
@@ -128,7 +128,7 @@ function Login({ controller }) {
             }
           }}
         />
-      </ButtonsContainer>
+      </ButtonsContainer> */}
     </LoginWrapper>
   );
 }

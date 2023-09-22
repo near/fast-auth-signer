@@ -4,8 +4,10 @@ export const LoginWrapper = styled.div`
   width: 100%;
   height: calc(100vh - 66px);
   background-color: #f2f1ea;
-  padding: 30px 16px;
-  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
 
   form {
     max-width: 450px;

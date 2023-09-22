@@ -48,9 +48,6 @@ export const handleCreateAccount = async ({
     keyPair.toString()
   );
 
-  // TODO: THIS ADDED FROM EXAMPLE
-  window.localStorage.setItem('emailForSignIn', email);
-
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
       `${window.location.origin}${
@@ -74,21 +71,8 @@ function SignInPage() {
   const authenticated = useAuthState();
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
-  // TODO:
   const location = useLocation();
   const userEmail = location?.state?.email;
-
-  const user = firebaseAuth.currentUser;
-
-  if (user !== null) {
-    user.providerData.forEach((profile) => {
-      console.log('Sign-in provider: ' + profile.providerId);
-      console.log('  Provider-specific UID: ' + profile.uid);
-      console.log('  Name: ' + profile.displayName);
-      console.log('  Email: ' + profile.email);
-      console.log('  Photo URL: ' + profile.photoURL);
-    });
-  }
 
   const addDevice = useCallback(
     async (data: any) => {
