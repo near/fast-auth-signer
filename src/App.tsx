@@ -14,10 +14,11 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
+import GlobalStyle from './styles/index';
 import { basePath } from './utils/config';
 
 (window as any).fastAuthController = new FastAuthController({
-  accountId: 'maximushaximus.testnet',
+  accountId: 'harisvalj.testnet',
   networkId: 'testnet'
 });
 
@@ -56,9 +57,10 @@ export default function App() {
   log('faLog');
   log2('faLogzzzzz');
 
+  // @ts-ignore
   return (
     <>
-      {/* <GlobalStyle /> */}
+      <GlobalStyle />
       <Router basename={basePath || ''}>
         <RemoveTrailingSlash />
         <Routes>

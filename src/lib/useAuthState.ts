@@ -7,8 +7,8 @@ import { useSearchParams } from "react-router-dom/dist";
 import FastAuthController from "./controller";
 import { network, networkId } from "../utils/config";
 
-export const useAuthState = (): boolean | Error => {
-  const [authenticated, setAuthenticated] = useState(false);
+export const useAuthState = () => {
+  const [authenticated, setAuthenticated] = useState(undefined);
   const webauthnUsername = useMemo(() => {
     try {
       return window.localStorage.getItem('webauthn_username');
@@ -16,6 +16,7 @@ export const useAuthState = (): boolean | Error => {
       return null;
     }
   }, []);
+
   const [controllerState, setControllerState] = useState<'loading' | boolean>('loading');
   const [query] = useSearchParams();
 

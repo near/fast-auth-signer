@@ -18,7 +18,27 @@ module.exports = {
       process: 'process/browser',
       Buffer:  ['buffer', 'Buffer']
     }),
-    new webpack.EnvironmentPlugin({ DEBUG: true })
+    new webpack.EnvironmentPlugin({ 
+      DEBUG:                                true,
+      REACT_APP_BASE_PATH:                  '',
+      NETWORK_ID:                           'mainnet',
+      RELAYER_URL:                          'https://near-relayer-mainnet.api.pagoda.co/relay',
+      FIREBASE_API_KEY:                     'AIzaSyDhxTQVeoWdnbpYTocBAABbLULGf6H5khQ',
+      FIREBASE_AUTH_DOMAIN:                 'near-fastauth-prod.firebaseapp.com',
+      FIREBASE_PROJECT_ID:                  'near-fastauth-prod',
+      FIREBASE_STORAGE_BUCKET:              'near-fastauth-prod.appspot.com',
+      FIREBASE_MESSAGING_SENDER_ID:         '829449955812',
+      FIREBASE_APP_ID:                      '1:829449955812:web:532436aa35572be60abff1',
+      FIREBASE_MEASUREMENT_ID:              'G-T2PPJ8QRYY',
+      RELAYER_URL_TESTNET:                  'http://34.70.226.83:3030/relay',
+      FIREBASE_API_KEY_TESTNET:             'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU',
+      FIREBASE_AUTH_DOMAIN_TESTNET:         'pagoda-oboarding-dev.firebaseapp.com',
+      FIREBASE_PROJECT_ID_TESTNET:          'pagoda-oboarding-dev',
+      FIREBASE_STORAGE_BUCKET_TESTNET:      'pagoda-oboarding-dev.appspot.com',
+      FIREBASE_MESSAGING_SENDER_ID_TESTNET: '116526963563',
+      FIREBASE_APP_ID_TESTNET:              '1:116526963563:web:053cb0c425bf514007ca2e',
+      FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S'
+    })
   ],
   devServer: {
     static: {
@@ -26,6 +46,7 @@ module.exports = {
     },
     port: 3000,
   },
+  devtool: 'eval-source-map',
   module: {
     // exclude node_modules
     rules: [
@@ -40,13 +61,6 @@ module.exports = {
       },
       {
         test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
-        use:  [{
-          loader:  'file-loader',
-          options: {
-            name:       '[name].[ext]',
-            outputPath: './fonts/'
-          }
-        }],
         type: 'asset/resource',
       },
     ],
