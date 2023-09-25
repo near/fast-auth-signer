@@ -141,7 +141,9 @@ Then run
 docker compose up
 #+end_src
 
-On a server VM of your choice
+On a server VM of your choice.
+
+We will refer to the URL of this VM as ~$RELAYER_URL~ from now on.
 
 * Setup the frontend
 
@@ -222,4 +224,4 @@ And call that onClick when the user tries to login
 
 * Getting added to the MPC recovery service
 
-Send ~$FIREBASE_PROJECT_ID~, ~$RELAYER_API_KEY~ and ~RELAYER_URL~ to this form.
+Send ~$FIREBASE_PROJECT_ID~, ~$RELAYER_API_KEY~ and ~$RELAYER_URL~ to this form.
