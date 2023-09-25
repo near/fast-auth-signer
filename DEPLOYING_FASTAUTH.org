@@ -1,34 +1,32 @@
-#+title: Deploying_fastauth
-
 * Setting up Firebase
 
 ** Create a project
 
-go to [[https://firebase.com][firebase.com]]
-create/sign in to an account
-click "Get started"
-click "Add project"
-Call this project "my-fastauth-issuer"
-Don't enable google analytics, because big tech
-Click create project
+- go to [[https://firebase.com][firebase.com]]
+- create/sign in to an account
+- click "Get started"
+- click "Add project"
+- Call this project "my-fastauth-issuer"
+- Don't enable google analytics, because big tech
+- Click create project
 
 ** Set up passwordless authentication
 
-Click authentication
-Click get started
-Click email/password and
-Enable "Email link (passwordless sign-in)"
+- Click authentication
+- Click get started
+- Click email/password and
+- Enable "Email link (passwordless sign-in)"
 
 ** Add user device information to firestore
 
-Return to project overview
-Click Cloud firestore
-Click create database
-Select "Start in production mode"
-Press next
-Pick a nearby location and press enable
-Go to the rules tab
-Change the rules to the following
+- Return to project overview
+- Click Cloud firestore
+- Click create database
+- Select "Start in production mode"
+- Press next
+- Pick a nearby location and press enable
+- Go to the rules tab
+- Change the rules to the following
 
 #+begin_src
 rules_version = '2';
@@ -43,18 +41,18 @@ service cloud.firestore {
 #+end_src
 And click publish
 
-Go to the data Tab
-Press start collection
-Set the collection ID to "users" and press next
-Add a document ID of "root" and press finish
+- Go to the data Tab
+- Press start collection
+- Set the collection ID to "users" and press next
+- Add a document ID of "root" and press finish
 
 ** Get application credentials
 
-Press the gear button
-Go to "Project settings"
-In the "Your apps" section press the </> button
-Set the app nickname as issuer-gcp and click register app
-You should see some values like the following
+- Press the gear button
+- Go to "Project settings"
+- In the "Your apps" section press the </> button
+- Set the app nickname as issuer-gcp and click register app
+- You should see some values like the following
 #+begin_src javascript
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
@@ -89,6 +87,7 @@ near account create-account fund-later use-auto-generation save-to-folder ~/.nea
 #+end_src
 
 This should output something like
+
 #+begin_src
 The file "~/.near-credentials/implicit/275f14eecb0afcb1f46f2b71b7933afd2de6d4ae8b08e9b11fc538a5a81406b7.json" was saved successfully
 #+end_src
@@ -145,13 +144,10 @@ Open cloud.google.com
 
 ** Deploying the signer app
 
-Go to GCPs cloud run console and press "Create Service".
-
-In the field "Container image URL" paste ~gcr.io/fa-signer/signer-app:version2~.
-
-Go to the "Container, Networking, Security" fold out and go to "Environment Variables" and press "Add Variable"
-
-Set the following environment variables from the ~firebaseConfig~ you generated earlier.
+- Go to GCPs cloud run console and press "Create Service".
+- In the field "Container image URL" paste ~gcr.io/fa-signer/signer-app:version2~.
+- Go to the "Container, Networking, Security" fold out and go to "Environment Variables" and press "Add Variable"
+- Set the following environment variables from the ~firebaseConfig~ you generated earlier.
 
 #+begin_src yaml
 NETWORK_ID:                           'mainnet',
@@ -177,9 +173,8 @@ FIREBASE_MESSAGING_SENDER_ID_TESTNET: '904415128612',
 FIREBASE_APP_ID_TESTNET:              '1:904415128612:web:5c7424258e1ee4a91dfcb1',
 #+end_src
 
-Press Create Application
-
-Then inside your apps control panel copy the apps URL, which my case was "https://signer-app-dxh3azyqkq-uc.a.run.app". We will refer to the deploy URL as $WALLET_URL.
+- Press Create Application
+- Then inside your apps control panel copy the apps URL, which my case was "https://signer-app-dxh3azyqkq-uc.a.run.app". We will refer to the deploy URL as $WALLET_URL.
 
 ** Deploying your application frontend
 
