@@ -74,6 +74,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 #+end_src
 
+** Authorising Domains
+
+In authentication go to the settings tab
+
+Go to the "Authorised domain" menu item
+
+Add $WALLET_URL to the list
+
 * Setup the relayer
 
 ** Setting up a near account
@@ -92,7 +100,7 @@ This should output something like
 The file "~/.near-credentials/implicit/275f14eecb0afcb1f46f2b71b7933afd2de6d4ae8b08e9b11fc538a5a81406b7.json" was saved successfully
 #+end_src
 
-In this instance 275f14eecb0afcb1f46f2b71b7933afd2de6d4ae8b08e9b11fc538a5a81406b7 is your funded account. I'll refer to this as $FUNDED_ACCOUNT from now on.
+In this instance 275f14eecb0afcb1f46f2b71b7933afd2de6d4ae8b08e9b11fc538a5a81406b7 is your funded account. I'll refer to this as ~$FUNDED_ACCOUNT~ from now on.
 
 Send some near to this address.
 
@@ -110,8 +118,7 @@ near account add-key $FUNDED_ACCOUNT grant-full-access autogenerate-new-keypair 
 FIXME replace this with a cloud run
 
 #+begin_src bash
-git clone https://github.com/near/pagoda-relayer-rs-fastauth
-git checkout feature/better_error_msgs
+git clone https://github.com/near/pagoda-relayer-rs
 #+end_src
 
 go to config.toml and change
@@ -130,15 +137,11 @@ keys_filenames = [
 ]
 #+end_src
 
+Then run
+
 #+begin_src bash
-docker build . -t fastauth-relayer
+docker compose up
 #+end_src
-
-(After we create domain)
-In authentication go to the settings tab
-Go to the "Authorised domain" menu item
-
-Open cloud.google.com
 
 * Setup the frontend
 
@@ -174,7 +177,7 @@ FIREBASE_APP_ID_TESTNET:              '1:904415128612:web:5c7424258e1ee4a91dfcb1
 #+end_src
 
 - Press Create Application
-- Then inside your apps control panel copy the apps URL, which my case was "https://signer-app-dxh3azyqkq-uc.a.run.app". We will refer to the deploy URL as $WALLET_URL.
+- Then inside your apps control panel copy the apps URL, which my case was "https://signer-app-dxh3azyqkq-uc.a.run.app". We will refer to the deploy URL as ~$WALLET_URL~.
 
 ** Deploying your application frontend
 
@@ -219,4 +222,4 @@ And call that onClick when the user tries to login
 
 * Getting added to the MPC recovery service
 
-Send "my-fastauth-issuer", RELAYER_API_KEY and RELAYER_URL to FastAuthSDK@near.org.
+Send ~$FIREBASE_PROJECT_ID~, ~$RELAYER_API_KEY~ and ~RELAYER_URL~ to this form.
