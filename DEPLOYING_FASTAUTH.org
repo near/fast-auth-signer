@@ -122,10 +122,10 @@ num_keys = 1
 relayer_account_id = "$FUNDED_ACCOUNT"
 keys_filenames = [
     # The original account
-    "~/.near-credentials/mainnet/$FUNDED_ACCOUNT.json"
+    "~/.near-credentials/mainnet/$FUNDED_ACCOUNT.json",
 
     # Other keys you've optionally created
-    "~/.near-credentials/mainnet/$FUNDED_ACCOUNT/ed25519_4ryLkp4AuzBD8yuyRJKb91hvHZ4zgqouWcJzu1gNEvLv.json"
+    "~/.near-credentials/mainnet/$FUNDED_ACCOUNT/ed25519_4ryLkp4AuzBD8yuyRJKb91hvHZ4zgqouWcJzu1gNEvLv.json",
     "~/.near-credentials/mainnet/$FUNDED_ACCOUNT/ed25519_7K3jF8Ft5dKFEPYRH1T4mncvsZGgSoGKsvsnnKEmqubT.json"
 ]
 #+end_src
