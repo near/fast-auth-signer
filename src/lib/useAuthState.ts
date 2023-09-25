@@ -13,7 +13,7 @@ type AuthState = {
 }
 
 export const useAuthState = (skipGetKeys = false): AuthState => {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(undefined);
   const webauthnUsername = useMemo(() => {
     try {
       return window.localStorage.getItem('webauthn_username');
@@ -57,13 +57,13 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
           if (accountsList.length === 0) {
             setAuthenticated(false);
           } else {
-            setAuthenticated(true);
             (window as any).fastAuthController = new FastAuthController({
               accountId: accountsList[0].accId,
               networkId
             });
 
             await window.fastAuthController.setKey(new KeyPairEd25519(accountsList[0].keyPair.toString().split(':')[1]));
+            setAuthenticated(true);
           }
         }).catch(() => setAuthenticated(false));
     }
