@@ -115,8 +115,6 @@ near account add-key $FUNDED_ACCOUNT grant-full-access autogenerate-new-keypair 
 
 ** Deploying the relayer
 
-FIXME replace this with a cloud run
-
 #+begin_src bash
 git clone https://github.com/near/pagoda-relayer-rs
 #+end_src
@@ -142,6 +140,8 @@ Then run
 #+begin_src bash
 docker compose up
 #+end_src
+
+On a server VM of your choice
 
 * Setup the frontend
 
