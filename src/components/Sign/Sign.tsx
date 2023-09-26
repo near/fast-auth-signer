@@ -97,27 +97,35 @@ function Sign() {
     }
 
     const transactionHashes = searchParams.get('transactions');
-    const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
-    const allActions = deserializedTransactions.flatMap((t) => t.actions);
-    setTransactionDetails({
-      signerId:    deserializedTransactions[0].signerId,
-      receiverId:  deserializedTransactions[0].receiverId,
-      totalAmount: allActions
-        .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
-        .filter((a) => a !== 0)
-        .reduce(
-          (totalAmount: BN, amount) => totalAmount.add(new BN(amount)),
-          new BN(0)
-        )
-        .toString(),
-      fees: {
-        transactionFees: '',
-        gasLimit:        calculateGasLimit(allActions),
-        gasPrice:        '',
-      },
-      transactions: deserializedTransactions,
-      actions:      allActions,
-    });
+    try {
+      const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
+      const allActions = deserializedTransactions.flatMap((t) => t.actions);
+      setTransactionDetails({
+        signerId:    deserializedTransactions[0].signerId,
+        receiverId:  deserializedTransactions[0].receiverId,
+        totalAmount: allActions
+          .map((a) => a?.transfer?.deposit || a?.functionCall?.deposit || 0)
+          .filter((a) => a !== 0)
+          .reduce(
+            (totalAmount: BN, amount) => totalAmount.add(new BN(amount)),
+            new BN(0)
+          )
+          .toString(),
+        fees: {
+          transactionFees: '',
+          gasLimit:        calculateGasLimit(allActions),
+          gasPrice:        '',
+        },
+        transactions: deserializedTransactions,
+        actions:      allActions,
+      });
+    } catch (err) {
+      const parsedUrl = new URL(searchParams.get('failure_url'));
+      parsedUrl.searchParams.set('code', err.code);
+      parsedUrl.searchParams.set('reason', err.message);
+      window.location.replace(parsedUrl.href);
+      return;
+    }
 
     fetchGeckoPrices('near')
       .then((res) => {
