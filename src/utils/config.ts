@@ -10,7 +10,7 @@ export const networks: Record<NetworkId, Network> = {
     relayerUrl:    process.env.RELAYER_URL,
     explorerUrl:   'https://explorer.near.org',
     fastAuth:      {
-      mpcRecoveryUrl:  'https://mpc-recovery-leader-mainnet-cg7nolnlpa-ue.a.run.app',
+      mpcRecoveryUrl:  'https://mpc-recovery-leader-mainnet-tmp-cg7nolnlpa-ue.a.run.app',
       authHelperUrl:   'https://api.kitwallet.app',
       accountIdSuffix: 'near',
       firebase:        {
@@ -33,9 +33,7 @@ export const networks: Record<NetworkId, Network> = {
     relayerUrl:    process.env.RELAYER_URL_TESTNET,
     explorerUrl:    'https://explorer.testnet.near.org',
     fastAuth:      {
-      mpcRecoveryUrl:    'https://mpc-recovery-leader-testnet-cg7nolnlpa-ue.a.run.app',
-      // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
-      newMpcRecoveryUrl: 'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
+      mpcRecoveryUrl:    'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
       accountIdSuffix: 'testnet',
       firebase:        {

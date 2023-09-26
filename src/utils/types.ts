@@ -19,7 +19,6 @@ type ProductionNetwork = {
   explorerUrl: string;
   fastAuth: {
     mpcRecoveryUrl: string;
-    newMpcRecoveryUrl?: string;
     authHelperUrl: string; // TODO refactor: review by fastauth team
     accountIdSuffix: string;
     firebase: {

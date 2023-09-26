@@ -72,7 +72,7 @@ const onCreateAccount = async ({
     headers,
   };
 
-  return fetch(`${network.fastAuth.newMpcRecoveryUrl}/new_account`, options)
+  return fetch(`${network.fastAuth.mpcRecoveryUrl}/new_account`, options)
     .then(
       async (response) => {
         if (!response?.ok) {
