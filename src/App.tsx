@@ -66,11 +66,11 @@ export default function App() {
         <Routes>
           <Route path="/">
             <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
-            <Route path="add-device" element={<AddDevice />} />
+            <Route path="login" element={<Login />} />
             <Route path="create-account" element={<CreateAccount />} />
+            <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
-            <Route path="login" element={<Login controller={window.fastAuthController} />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
           </Route>
         </Routes>

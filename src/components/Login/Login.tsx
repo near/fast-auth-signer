@@ -1,31 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '../../lib/Button';
-import { inIframe } from '../../utils';
-import AuthIndicator from '../AuthIndicator/AuthIndicator';
-import { LoginWrapper, InputContainer, ButtonsContainer } from './Login.style';
+import { LoginWrapper, InputContainer } from './Login.style';
 import { useForm } from 'react-hook-form';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 import { openToast } from '../../lib/Toast';
 
-function Login({ controller }) {
+function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const [isSignedIn, setIsSignedIn] = useState<boolean>();
-
-  useEffect(() => {
-    async function fetchSignedInStatus() {
-      const currentlySignedIn = await controller.isSignedIn();
-      setTimeout(() => setIsSignedIn(currentlySignedIn), 2000);
-    }
-
-    fetchSignedInStatus();
-  }, [controller]);
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
@@ -93,42 +79,6 @@ function Login({ controller }) {
           onClick={onSubmit}
         />
       </form>
-
-      {/* <ButtonsContainer>
-        <AuthIndicator controller={window.fastAuthController} />
-        <Button
-          label="New account"
-          variant="affirmative"
-          onClick={() => {
-            navigate({
-              pathname: '/create-account',
-              search: currentSearchParams.toString(),
-            });
-            if (!isSignedIn && inIframe()) {
-              window.open(
-                `${window.location.origin}${location.pathname}${location.search}`,
-                '_parent'
-              );
-            }
-          }}
-        />
-        <Button
-          label="Existing account"
-          variant="affirmative"
-          onClick={() => {
-            navigate({
-              pathname: '/add-device',
-              search: currentSearchParams.toString(),
-            });
-            if (!isSignedIn && inIframe()) {
-              window.open(
-                `${window.location.origin}${location.pathname}${location.search}`,
-                '_parent'
-              );
-            }
-          }}
-        />
-      </ButtonsContainer> */}
     </LoginWrapper>
   );
 }
