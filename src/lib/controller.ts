@@ -292,8 +292,7 @@ class FastAuthController {
     };
 
     // https://github.com/near/mpc-recovery#sign
-    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
-    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/sign`, {
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/sign`, {
       method:  'POST',
       mode:    'cors' as const,
       body:    JSON.stringify(payload),
