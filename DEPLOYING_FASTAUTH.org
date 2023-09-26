@@ -123,16 +123,23 @@ go to config.toml and change
 
 #+begin_src toml
 network = "mainnet"
-num_keys = 1
+num_keys = 3  # correlates to the number of keys in `keys_filenames`. Will be optional in the future.
 relayer_account_id = "$FUNDED_ACCOUNT"
 keys_filenames = [
     # The original account
     "~/.near-credentials/mainnet/$FUNDED_ACCOUNT.json",
 
-    # Other keys you've optionally created
+    # Other keys you've optionally created. This will allow rotating through each key as to avoid nonce races.
     "~/.near-credentials/mainnet/$FUNDED_ACCOUNT/ed25519_4ryLkp4AuzBD8yuyRJKb91hvHZ4zgqouWcJzu1gNEvLv.json",
     "~/.near-credentials/mainnet/$FUNDED_ACCOUNT/ed25519_7K3jF8Ft5dKFEPYRH1T4mncvsZGgSoGKsvsnnKEmqubT.json"
 ]
+#+end_src
+
+Optionally if we need to generate further FUNDED_ACCOUNT access keys, run the following command N times. Note, that these generate keys for implicit accounts, but we'll tie them to our `example.near` account anyways.
+
+#+begin_src bash
+near generate-key
+near add-key example.near exampleImplicitPublicKeyCxg2wgFYrdLTEkMu6j5D6aEZqTb3kXbmJygS48ZKbo1S
 #+end_src
 
 Then run
@@ -141,7 +148,7 @@ Then run
 docker compose up
 #+end_src
 
-On a server VM of your choice.
+On a VM server of your choice.
 
 We will refer to the URL of this VM as ~$RELAYER_URL~ from now on.
 
