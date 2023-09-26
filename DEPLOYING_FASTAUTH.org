@@ -125,11 +125,11 @@ keys_filenames = [
 ]
 #+end_src
 
-Optionally, if we need to generate additional access keys for the ~$FUNDED_ACCOUNT~, run the following command N times. Note that this will generate keys for implicit accounts, but we'll then tie them to our ~example.near~ account.
+Optionally, if we need to generate additional access keys for the ~$FUNDED_ACCOUNT~, run the following command N times. Note that this will generate keys for implicit accounts, but we'll then tie them to ~$FUNDED_ACCOUNT~.
 
 #+begin_src bash
 near generate-key
-near add-key example.near exampleImplicitPublicKeyCxg2wgFYrdLTEkMu6j5D6aEZqTb3kXbmJygS48ZKbo1S
+near add-key $FUNDED_ACCOUNT exampleImplicitPublicKeyCxg2wgFYrdLTEkMu6j5D6aEZqTb3kXbmJygS48ZKbo1S
 #+end_src
 
 Then run:
