@@ -6,3 +6,11 @@ export function inIframe() {
     return true;
   }
 }
+
+export const decodeIfTruthy = (paramVal) => {
+  if (paramVal) {
+    return decodeURIComponent(paramVal);
+  }
+
+  return paramVal;
+};

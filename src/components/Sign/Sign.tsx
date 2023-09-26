@@ -82,7 +82,7 @@ function Sign() {
     transactions: [],
     actions:      [],
   });
-  const authenticated = useAuthState();
+  const { authenticated, controllerState } = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
   const storeFetchedUsdValues = fiatValuesStore(
@@ -90,7 +90,7 @@ function Sign() {
   );
 
   React.useEffect(() => {
-    if (authenticated === false) {
+    if (controllerState !== 'loading' && !authenticated) {
       const parsedUrl = new URL(`${window.location.origin}/fastauth/login`);
       parsedUrl.searchParams.set('success_url', window.location.href);
       window.location.replace(parsedUrl.href);

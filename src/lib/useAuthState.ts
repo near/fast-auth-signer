@@ -1,13 +1,18 @@
 /* eslint-disable import/prefer-default-export */
-import { getKeys } from "@near-js/biometric-ed25519/lib";
+import { getKeys } from '@near-js/biometric-ed25519/lib';
 import { KeyPairEd25519 } from '@near-js/crypto';
-import { useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "react-router-dom/dist";
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom/dist';
 
-import FastAuthController from "./controller";
-import { network, networkId } from "../utils/config";
+import FastAuthController from './controller';
+import { network, networkId } from '../utils/config';
 
-export const useAuthState = () => {
+type AuthState = {
+  authenticated: boolean | Error
+  controllerState: 'loading' | boolean
+}
+
+export const useAuthState = (skipGetKeys = false): AuthState => {
   const [authenticated, setAuthenticated] = useState(undefined);
   const webauthnUsername = useMemo(() => {
     try {
@@ -30,6 +35,11 @@ export const useAuthState = () => {
     } else if (query.get('email') && query.get('email') !== webauthnUsername) {
       setAuthenticated(false);
     } else {
+      if (skipGetKeys) {
+        setAuthenticated(false);
+        setControllerState(false);
+        return;
+      }
       getKeys(webauthnUsername)
         .then((keypairs) => Promise.allSettled(
           keypairs.map((k) => fetch(`${network.fastAuth.authHelperUrl}/publicKey/${k.getPublicKey().toString()}/accounts`)
@@ -37,22 +47,23 @@ export const useAuthState = () => {
             .then((accIds) => accIds.map((accId) => { return { accId, keyPair: k }; })))
         ))
         .then(async (accounts) => {
-          const accountsList = accounts
-            .reduce((acc, curr) =>
+          const accountsList = accounts.reduce((acc, curr) => (
+            // eslint-disable-next-line no-undef
+            curr && (curr as PromiseFulfilledResult<any>).value
               // eslint-disable-next-line no-undef
-              (curr && (curr as PromiseFulfilledResult<any>).value
-                // eslint-disable-next-line no-undef
-                ? acc.concat(...(curr as PromiseFulfilledResult<any>).value) : acc), []);
+              ? acc.concat(...(curr as PromiseFulfilledResult<any>).value)
+              : acc
+          ), []);
           if (accountsList.length === 0) {
             setAuthenticated(false);
           } else {
-            setAuthenticated(true);
             (window as any).fastAuthController = new FastAuthController({
               accountId: accountsList[0].accId,
               networkId
             });
 
             await window.fastAuthController.setKey(new KeyPairEd25519(accountsList[0].keyPair.toString().split(':')[1]));
+            setAuthenticated(true);
           }
         }).catch(() => setAuthenticated(false));
     }
@@ -60,16 +71,18 @@ export const useAuthState = () => {
 
   useEffect(() => {
     if (window.fastAuthController) {
-      window.fastAuthController.isSignedIn().then(b => setControllerState(b))
+      window.fastAuthController.isSignedIn().then((isReady) => {
+        setControllerState(isReady);
+      });
     } else {
       setControllerState(false);
     }
-  }, [controllerState]);
+  }, [controllerState, authenticated]);
 
   try {
     window.localStorage.getItem('webauthn_username');
-    return authenticated;
+    return { controllerState, authenticated };
   } catch (error) {
-    return new Error('Please allow third party cookies');
+    return { controllerState, authenticated: new Error('Please allow third party cookies') };
   }
 };
