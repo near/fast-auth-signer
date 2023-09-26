@@ -196,8 +196,7 @@ class FastAuthController {
     };
 
     // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
-    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
-    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/claim_oidc`, {
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
       method:  'POST',
       mode:    'cors' as const,
       body:    JSON.stringify(data),
@@ -231,8 +230,7 @@ class FastAuthController {
     };
 
     // https://github.com/near/mpc-recovery#user-credentials
-    // TODO: replace newMpcRecoveryUrl to mpcRecovery when all endpoint is implemented
-    return fetch(`${network.fastAuth.newMpcRecoveryUrl}/user_credentials`, {
+    return fetch(`${network.fastAuth.mpcRecoveryUrl}/user_credentials`, {
       method:  'POST',
       mode:    'cors' as const,
       body:    JSON.stringify(data),
