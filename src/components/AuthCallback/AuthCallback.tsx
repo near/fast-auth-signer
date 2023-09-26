@@ -229,40 +229,42 @@ function AuthCallbackPage() {
               networkId
             });
 
-            await window.fastAuthController.setKey(keypair);
-            await window.fastAuthController.claimOidcToken(user.accessToken);
-            (window as any).firestoreController = new FirestoreController();
-            window.firestoreController.updateUser({
-              userUid:   user.uid,
-              oidcToken: user.accessToken,
-            });
+            try {
+              await window.fastAuthController.setKey(keypair);
+              await window.fastAuthController.claimOidcToken(user.accessToken);
+              (window as any).firestoreController = new FirestoreController();
+              window.firestoreController.updateUser({
+                userUid:   user.uid,
+                oidcToken: user.accessToken,
+              });
 
-            const callback = isRecovery ? onSignIn : onCreateAccount;
-            await callback({
-              keypair,
-              accessToken: user.accessToken,
-              accountId,
-              publicKeyFak,
-              public_key_lak,
-              contract_id,
-              methodNames,
-              success_url,
-              setStatusMessage,
-              email,
-              navigate,
-              searchParams,
-            }).catch((error) => {
-              console.log('error', error);
-              const { message } = error;
+              const callback = isRecovery ? onSignIn : onCreateAccount;
+              await callback({
+                keypair,
+                accessToken: user.accessToken,
+                accountId,
+                publicKeyFak,
+                public_key_lak,
+                contract_id,
+                methodNames,
+                success_url,
+                setStatusMessage,
+                email,
+                navigate,
+                searchParams,
+              });
+            } catch (e) {
+              console.log('error:', e);
+              const { message } = e;
               const parsedUrl = new URL(failure_url || success_url || window.location.origin);
-              parsedUrl.searchParams.set('code', error.code);
+              parsedUrl.searchParams.set('code', e.code);
               parsedUrl.searchParams.set('reason', message);
               window.location.replace(parsedUrl.href);
               openToast({
                 type:  'ERROR',
                 title: message,
               });
-            });
+            }
           }
         });
     } else {
