@@ -1,19 +1,72 @@
 import { createKey } from '@near-js/biometric-ed25519/lib';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useCallback, useEffect } from 'react';
-import { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
+import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
-import { inIframe } from '../../utils';
+import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
+import { getDeleteKeysAction } from '../../utils/mpc-service';
+
+const StyledContainer = styled.div`
+  width: 100%;
+  height: calc(100vh - 66px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f2f1ea;
+  padding: 0 16px;
+`;
+
+const FormContainer = styled.form`
+  max-width: 450px;
+  width: 100%;
+  margin: 16px auto;
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const InputContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  input {
+    padding: 8px 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-top: 4px;
+    min-height: 50px;
+    cursor: text;
+
+    &:focus {
+      outline: none;
+      border: 1px solid #e5e5e5;
+    }
+  }
+
+  .subText {
+    font-size: 12px;
+  }
+`;
 
 export const handleCreateAccount = async ({
   accountId,
@@ -68,11 +121,29 @@ function SignInPage() {
   const { register, handleSubmit, setValue } = useForm();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const authenticated = useAuthState();
+
+  const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
+  const { authenticated, controllerState } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
   const location = useLocation();
   const userEmail = location?.state?.email;
+
+  if (!window.firestoreController) {
+    (window as any).firestoreController = new FirestoreController();
+  }
+  const [isFirestoreReady, setIsFirestoreReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isFirestoreReady === null && controllerState !== 'loading') {
+      checkFirestoreReady().then((isReady) => {
+        setIsFirestoreReady(isReady);
+      });
+    }
+  }, [controllerState]);
+
+  const addDevice = useCallback(async (data: any) => {
+    if (!data.email) return;
 
   const addDevice = useCallback(
     async (data: any) => {
@@ -133,58 +204,104 @@ function SignInPage() {
   );
 
   useEffect(() => {
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const public_key = searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
-    const methodNames = searchParams.get('methodNames');
-    if (authenticated) {
-      (window as any).fastAuthController.signAndSendAddKey({
-        contractId: contract_id,
-        methodNames,
-        allowance:  new BN('250000000000000'),
-        publicKey:  public_key
-      }).then((res) => res.json()).then(async (res) => {
-        const publicKeyFak = await (window as any).fastAuthController.getKey()
-        const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-        if (failure) {
-          throw new Error(JSON.stringify(failure));
-        }
-        const parsedUrl = new URL(success_url || `${window.location.origin}/${basePath || ''}`);
-        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
-        parsedUrl.searchParams.set('public_key', public_key);
-        parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak.getPublicKey().toString()].join(','));
+    if (controllerState === 'loading' || isFirestoreReady === null) return;
+    const handleAuthCallback = async () => {
+      const success_url = decodeIfTruthy(searchParams.get('success_url'));
+      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
+      const public_key =  decodeIfTruthy(searchParams.get('public_key'));
+      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
+      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+
+      const email = decodeIfTruthy(searchParams.get('email'));
+      if (controllerState && isFirestoreReady) {
+        const publicKeyFak = await window.fastAuthController.getPublicKey();
+        const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+        const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
+        // if given lak key is already attached to webAuthN public key, no need to add it again
+        const noNeedToAddKey = existingDeviceLakKey === public_key;
+        if (noNeedToAddKey) {
+          const parsedUrl = new URL(success_url || window.location.origin);
+          parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+          parsedUrl.searchParams.set('public_key', public_key);
+          parsedUrl.searchParams.set('all_keys', public_key);
 
           if (inIframe()) {
             setRenderRedirectButton(parsedUrl.href);
           } else {
             window.location.replace(parsedUrl.href);
+          }                    
+            
+          return;
+        }
+        // delete previous lak key attached to webAuthN public Key
+        const deleteKeyActions = (existingDevice && !noNeedToAddKey)
+          ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak))
+          : [];
+
+        (window as any).fastAuthController.signAndSendAddKey({
+          contractId: contract_id,
+          methodNames,
+          allowance:  new BN('250000000000000'),
+          publicKey:  public_key,
+          actions:    deleteKeyActions,
+        }).then((res) => res.json()).then((res) => {
+          const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+          if (failure?.ActionError?.kind?.LackBalanceForState) {
+            navigate(`/devices?${searchParams.toString()}`);
+            return null;
           }
-        })
-        .catch((error) => {
-          console.log(error, '<<< err');
+
+          // Add device
+          const user = firebaseAuth.currentUser;
+          window.firestoreController.updateUser({
+            userUid:   user.uid,
+            // User type is missing accessToken but it exist
+            // @ts-ignore
+            oidcToken: user.accessToken,
+          });
+          return window.firestoreController.addDeviceCollection({
+            fakPublicKey: publicKeyFak,
+            lakPublicKey: public_key,
+          })
+            .then(() => {
+              const parsedUrl = new URL(success_url || window.location.origin);
+              parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+              parsedUrl.searchParams.set('public_key', public_key);
+              parsedUrl.searchParams.set('all_keys', public_key);
+
+              if (inIframe()) {
+                setRenderRedirectButton(parsedUrl.href);
+              } else {
+                window.location.replace(parsedUrl.href);
+              }
+            }).catch((err) => {
+              console.log('Failed to add device collection', err);
+              throw new Error('Failed to add device collection');
+            });
+        }).catch((error) => {
+          console.log('error', error);
           const { message } = error;
-          const parsedUrl = new URL(
-            failure_url ||
-              success_url ||
-              `${window.location.origin}/${basePath || ''}`
-          );
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
           parsedUrl.searchParams.set('code', error.code);
           parsedUrl.searchParams.set('reason', message);
-          if (inIframe()) {
-            setRenderRedirectButton(parsedUrl.href);
-          } else {
-            window.location.replace(parsedUrl.href);
-          }
+          window.location.replace(parsedUrl.href);
+          openToast({
+            type:  'ERROR',
+            title: message,
+          });
         });
-    }
-    const email = searchParams.get('email');
+      } else if (email && !authenticated) {
+        if (controllerState) {
+          // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+          window.localStorage.removeItem('webauthn_username');
+        }
+        setValue('email', email);
+        addDevice({ email });
+      }
+    };
 
-    if (email) {
-      setValue('email', email);
-      addDevice({ email });
-    }
-  }, [authenticated, searchParams]);
+    handleAuthCallback();
+  }, [isFirestoreReady, controllerState]);
 
   if (authenticated === true) {
     return renderRedirectButton ? (
@@ -208,7 +325,8 @@ function SignInPage() {
       <Button
         label="Continue on fast auth"
         onClick={() => {
-          window.open(window.location.href, '_parent');
+          const url = !authenticated ? `${window.location.href}&skipGetKey=true` : window.location.href;
+          window.open(url, '_parent');
         }}
       />
     );
@@ -228,8 +346,9 @@ function SignInPage() {
         </header>
 
         <InputContainer>
-          <label htmlFor="email">Email</label>
-
+          <label htmlFor="email">
+            Email
+          </label>
           <input
             {...register('email', {
               required: 'Please enter a valid email address',
@@ -240,6 +359,7 @@ function SignInPage() {
             }}
             placeholder="user_name@email.com"
             type="email"
+            id="email"
             required
             value={userEmail ? userEmail : null}
           />
@@ -257,55 +377,3 @@ function SignInPage() {
 }
 
 export default SignInPage;
-
-const StyledContainer = styled.div`
-  width: 100%;
-  height: calc(100vh - 66px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-`;
-
-const FormContainer = styled.form`
-  max-width: 450px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-
-  label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  input {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 4px;
-    min-height: 50px;
-    cursor: text;
-
-    &:focus {
-      outline: none;
-      border: 1px solid #e5e5e5;
-    }
-  }
-
-  .subText {
-    font-size: 12px;
-  }
-`;

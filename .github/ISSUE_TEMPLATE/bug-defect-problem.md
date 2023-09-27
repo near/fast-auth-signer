@@ -1,5 +1,5 @@
 ---
-name: Bug Defect Problem
+name: Bug / Defect / Problem
 about: Find a problem? Something not working? Please fill out as much info as possible.
 title: "[Defect] "
 labels: bug, Emerging Tech, Near BOS
@@ -9,7 +9,7 @@ assignees: ''
 
 **Describe the bug**
 
-_A clear and concise description of what the bug is._
+<!-- A clear and concise description of what the bug is. -->
 
 **Steps To Reproduce**
 
@@ -23,23 +23,23 @@ _Error description_
 
 **Expected behavior**
 
-_A clear and concise description of what you expected to happen._
+<!-- A clear and concise description of what you expected to happen. -->
 
 **Screenshots**
 
-_If applicable, add screenshots or videos to help explain your problem._
+<!-- _If applicable, add screenshots or videos to help explain your problem._ -->
 
-**Desktop** (please complete the following information):
-* OS: [e.g. iOS]
-* Browser [e.g. chrome, safari]
-* Version [e.g. 22]
+**Desktop**: <!-- please complete the following information -->
+* OS <!-- e.g. iOS -->: 
+* Browser <!-- e.g. chrome, safari -->: 
+* Browser Version <!-- e.g. 22 -->: 
 
-**Smartphone** (please complete the following information):
-* Device: [e.g. iPhone6]
-* OS: [e.g. iOS8.1]
-* Browser [e.g. stock browser, safari]
-* Version [e.g. 22]
+**Smartphone**: <!-- please complete the following information -->
+* Device <!-- e.g. iPhone6 -->: 
+* OS <1-- e.g. iOS8.1 -->: 
+* Browser <!-- e.g. stock browser, safari -->: 
+* Browser Version <!-- e.g. 22 -->: 
 
 **Additional Context**
 
-_Add any other context about the problem here._
+<!-- Add any other context about the problem here. -->
