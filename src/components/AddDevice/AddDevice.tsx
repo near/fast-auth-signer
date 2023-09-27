@@ -69,14 +69,7 @@ const InputContainer = styled.div`
 `;
 
 export const handleCreateAccount = async ({
-  accountId,
-  email,
-  isRecovery,
-  success_url,
-  failure_url,
-  public_key,
-  contract_id,
-  methodNames,
+  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
   const keyPair = await createKey(email);
   const publicKeyWebAuthn = keyPair.getPublicKey().toString();
@@ -93,27 +86,19 @@ export const handleCreateAccount = async ({
     ...(failure_url ? { failure_url } : {}),
     ...(public_key ? { public_key_lak: public_key } : {}),
     ...(contract_id ? { contract_id } : {}),
-    ...(methodNames ? { methodNames } : {}),
+    ...(methodNames ? { methodNames } : {})
   });
 
-  window.localStorage.setItem(
-    `temp_fastauthflow_${publicKeyWebAuthn}`,
-    keyPair.toString()
-  );
+  window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}${
-        basePath ? `/${basePath}` : ''
-      }/auth-callback?${searchParams.toString()}`
+      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
     ),
     handleCodeInApp: true,
   });
   return {
-    email,
-    publicKey: publicKeyWebAuthn,
-    accountId,
-    privateKey: keyPair.toString(),
+    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair.toString()
   };
 };
 
@@ -145,63 +130,51 @@ function SignInPage() {
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
 
-  const addDevice = useCallback(
-    async (data: any) => {
-      if (!data.email) return;
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const public_key =  searchParams.get('public_key');
+    const contract_id = searchParams.get('contract_id');
+    const methodNames = searchParams.get('methodNames');
 
-      const success_url = searchParams.get('success_url');
-      const failure_url = searchParams.get('failure_url');
-      const public_key = searchParams.get('public_key');
-      const contract_id = searchParams.get('contract_id');
-      const methodNames = searchParams.get('methodNames');
+    try {
+      const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
+        accountId:   null,
+        email:       data.email,
+        isRecovery:  true,
+        success_url,
+        failure_url,
+        public_key,
+        contract_id,
+        methodNames,
+      });
+      const newSearchParams = new URLSearchParams({
+        publicKeyFak,
+        email,
+        isRecovery: 'true',
+        ...(success_url ? { success_url } : {}),
+        ...(failure_url ? { failure_url } : {}),
+        ...(public_key ? { public_key_lak: public_key } : {}),
+        ...(contract_id ? { contract_id } : {}),
+        ...(methodNames ? { methodNames } : {})
+      });
+      const hashParams = new URLSearchParams({ privateKey });
+      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+    } catch (error: any) {
+      console.log(error);
 
-      try {
-        const {
-          publicKey: publicKeyFak,
-          email,
-          privateKey,
-        } = await handleCreateAccount({
-          accountId: null,
-          email: data.email,
-          isRecovery: true,
-          success_url,
-          failure_url,
-          public_key,
-          contract_id,
-          methodNames,
+      if (typeof error?.message === 'string') {
+        openToast({
+          type:  'ERROR',
+          title: error.message,
         });
-        const newSearchParams = new URLSearchParams({
-          publicKeyFak,
-          email,
-          isRecovery: 'true',
-          ...(success_url ? { success_url } : {}),
-          ...(failure_url ? { failure_url } : {}),
-          ...(public_key ? { public_key_lak: public_key } : {}),
-          ...(contract_id ? { contract_id } : {}),
-          ...(methodNames ? { methodNames } : {}),
+      } else {
+        openToast({
+          type:  'ERROR',
+          title: 'Something went wrong',
         });
-        const hashParams = new URLSearchParams({ privateKey });
-        navigate(
-          `/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`
-        );
-      } catch (error: any) {
-        console.log(error);
-
-        if (typeof error?.message === 'string') {
-          openToast({
-            type: 'ERROR',
-            title: error.message,
-          });
-        } else {
-          openToast({
-            type: 'ERROR',
-            title: 'Something went wrong',
-          });
-        }
       }
-    },
-    [searchParams, navigate]
-  );
+    }
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (controllerState === 'loading' || isFirestoreReady === null) return;
@@ -229,8 +202,7 @@ function SignInPage() {
             setRenderRedirectButton(parsedUrl.href);
           } else {
             window.location.replace(parsedUrl.href);
-          }                    
-            
+          }
           return;
         }
         // delete previous lak key attached to webAuthN public Key
@@ -339,10 +311,7 @@ function SignInPage() {
       <FormContainer onSubmit={onSubmit}>
         <header>
           <h1>Sign In</h1>
-          <p className="desc">
-            Use this account to sign in everywhere on NEAR, no password
-            required.
-          </p>
+          <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
         </header>
 
         <InputContainer>
@@ -365,12 +334,7 @@ function SignInPage() {
           />
         </InputContainer>
 
-        <Button
-          type="submit"
-          label="Continue"
-          variant="affirmative"
-          onClick={onSubmit}
-        />
+        <Button type="submit" label="Continue" variant="affirmative" onClick={onSubmit} />
       </FormContainer>
     </StyledContainer>
   );
