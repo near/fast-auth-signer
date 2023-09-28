@@ -3,7 +3,7 @@ import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import ErrorSvg from './icons/ErrorSvg';
@@ -52,8 +52,6 @@ function CreateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  const location = useLocation();
-  const userEmail = location?.state?.email
 
   const createAccount = async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');
@@ -127,7 +125,6 @@ function CreateAccount() {
     if (email) {
       setValue('email', email);
       setValue('username', username);
-      createAccount({ email, username });
     }
   }, []);
 
@@ -236,7 +233,6 @@ function CreateAccount() {
             placeholder="user_name@email.com"
             type="email"
             id="email"
-            value = {userEmail ? userEmail : null}
           />
           <div className="select-mail-provider">
             {emailProviders.map((provider) => {

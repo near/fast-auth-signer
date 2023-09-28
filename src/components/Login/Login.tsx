@@ -36,9 +36,17 @@ function Login() {
     fetchSignInMethodsForEmail(firebaseAuth, params.email)
       .then((result) => {
         result.length === 0 &&
-          navigate('/create-account', { state: { email: params['email'] } });
+          navigate({
+            pathname: '/create-account',
+            search: `email=${params.email}&accountId=${
+              params.email.split('@')[0]
+            }`,
+          });
         result[0] == 'emailLink' &&
-          navigate('/add-device', { state: { email: params['email'] } });
+          navigate({
+            pathname: '/add-device',
+            search: `email=${params.email}`,
+          });
       })
       .catch((error: any) => {
         console.error('error', error);

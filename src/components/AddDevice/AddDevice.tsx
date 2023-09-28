@@ -3,7 +3,7 @@ import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { Button } from '../../lib/Button';
@@ -111,8 +111,6 @@ function SignInPage() {
   const { authenticated, controllerState } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
-  const location = useLocation();
-  const userEmail = location?.state?.email;
 
   if (!window.firestoreController) {
     (window as any).firestoreController = new FirestoreController();
@@ -330,7 +328,6 @@ function SignInPage() {
             type="email"
             id="email"
             required
-            value={userEmail ? userEmail : null}
           />
         </InputContainer>
 
