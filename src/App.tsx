@@ -66,7 +66,7 @@ export default function App() {
         <RemoveTrailingSlash />
         <Routes>
           <Route path="/">
-            <Route index element={<AuthIndicator controller={window.fastAuthController} />} />
+            <Route index element={<AuthIndicator />} />
             <Route path="login" element={<Login />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />

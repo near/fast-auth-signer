@@ -1,23 +1,22 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 
 import AuthIndicatorButton from './AuthIndicatorButton';
+import { useAuthState } from '../../lib/useAuthState';
 
-function AuthIndicator({ controller }) {
-  const [isSignedIn, setIsSignedIn] = useState<boolean>(false);
+function AuthIndicator() {
+  const { authenticated, controllerState } = useAuthState();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchSignedInStatus() {
-      const currentlySignedIn = await controller.isSignedIn();
-      setTimeout(() => setIsSignedIn(currentlySignedIn), 2000);
+    if (controllerState !== 'loading' && authenticated === false) {
+      navigate('/login');
     }
-
-    fetchSignedInStatus();
-  }, [controller]);
+  }, [authenticated, controllerState]);
 
   return (
-    <AuthIndicatorButton $buttonType="secondary" $isSignedIn={isSignedIn}>
-      {isSignedIn ? <p>signed in</p>
+    <AuthIndicatorButton $buttonType="secondary" $isSignedIn={authenticated && controllerState !== 'loading'}>
+      {authenticated ? <p>signed in</p>
         : <p>not signed in</p>}
     </AuthIndicatorButton>
   );
