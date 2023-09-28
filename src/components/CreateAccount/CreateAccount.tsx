@@ -124,7 +124,10 @@ function CreateAccount() {
 
     if (email) {
       setValue('email', email);
-      setValue('username', username);
+      setValue('username', username || getEmailId(email));
+      if (username) {
+        createAccount({ email, username });
+      }
     }
   }, []);
 

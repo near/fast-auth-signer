@@ -38,9 +38,7 @@ function Login() {
         result.length === 0 &&
           navigate({
             pathname: '/create-account',
-            search: `email=${params.email}&accountId=${
-              params.email.split('@')[0]
-            }`,
+            search: `email=${params.email}`,
           });
         result[0] == 'emailLink' &&
           navigate({
