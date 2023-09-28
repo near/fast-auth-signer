@@ -111,6 +111,7 @@ function SignInPage() {
   const { authenticated, controllerState } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
+
   if (!window.firestoreController) {
     (window as any).firestoreController = new FirestoreController();
   }
@@ -184,6 +185,10 @@ function SignInPage() {
 
       const email = decodeIfTruthy(searchParams.get('email'));
       if (controllerState && isFirestoreReady) {
+        if (!public_key || !contract_id) {
+          window.location.replace(success_url || window.location.origin);
+          return;
+        }
         const publicKeyFak = await window.fastAuthController.getPublicKey();
         const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
@@ -193,7 +198,7 @@ function SignInPage() {
           const parsedUrl = new URL(success_url || window.location.origin);
           parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
           parsedUrl.searchParams.set('public_key', public_key);
-          parsedUrl.searchParams.set('all_keys', public_key);
+          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
 
           if (inIframe()) {
             setRenderRedirectButton(parsedUrl.href);
@@ -236,7 +241,7 @@ function SignInPage() {
               const parsedUrl = new URL(success_url || window.location.origin);
               parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
-              parsedUrl.searchParams.set('all_keys', public_key);
+              parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
 
               if (inIframe()) {
                 setRenderRedirectButton(parsedUrl.href);

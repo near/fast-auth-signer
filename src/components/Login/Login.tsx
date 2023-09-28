@@ -1,25 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '../../lib/Button';
-import { inIframe } from '../../utils';
-import AuthIndicator from '../AuthIndicator/AuthIndicator';
+import { LoginWrapper, InputContainer } from './Login.style';
+import { useForm } from 'react-hook-form';
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { firebaseAuth } from '../../utils/firebase';
+import { isValidEmail } from '../../utils/form-validation';
+import { openToast } from '../../lib/Toast';
 
-function Login({ controller }) {
+function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const [isSignedIn, setIsSignedIn] = useState<boolean>();
-
-  useEffect(() => {
-    async function fetchSignedInStatus() {
-      const currentlySignedIn = await controller.isSignedIn();
-      setTimeout(() => setIsSignedIn(currentlySignedIn), 2000);
-    }
-
-    fetchSignedInStatus();
-  }, [controller]);
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
@@ -27,48 +19,73 @@ function Login({ controller }) {
       if (isRecovery === 'true') {
         navigate({
           pathname: '/add-device',
-          search:   currentSearchParams.toString()
+          search: currentSearchParams.toString(),
         });
       } else {
         navigate({
           pathname: '/create-account',
-          search:   currentSearchParams.toString()
+          search: currentSearchParams.toString(),
         });
       }
     }
   }, [currentSearchParams]);
 
-  return (
-    <div>
-      Login route
-      <AuthIndicator controller={window.fastAuthController} />
-      <Button
-        label="New account"
-        variant="affirmative"
-        onClick={() => {
+  const { handleSubmit, setValue } = useForm();
+
+  const emailCheck = async (params: any) => {
+    fetchSignInMethodsForEmail(firebaseAuth, params.email)
+      .then((result) => {
+        result.length === 0 &&
           navigate({
             pathname: '/create-account',
-            search:   currentSearchParams.toString()
+            search: `email=${params.email}`,
           });
-          if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
-          }
-        }}
-      />
-      <Button
-        label="Existing account"
-        variant="affirmative"
-        onClick={() => {
+        result[0] == 'emailLink' &&
           navigate({
             pathname: '/add-device',
-            search:   currentSearchParams.toString()
+            search: `email=${params.email}`,
           });
-          if (!isSignedIn && inIframe()) {
-            window.open(`${window.location.origin}${location.pathname}${location.search}`, '_parent');
-          }
-        }}
-      />
-    </div>
+      })
+      .catch((error: any) => {
+        console.error('error', error);
+        openToast({
+          type: 'ERROR',
+          title: error.message,
+        });
+      });
+  };
+
+  const onSubmit = handleSubmit(emailCheck);
+
+  return (
+    <LoginWrapper>
+      <form onSubmit={onSubmit}>
+        <header>
+          <h1>Log In</h1>
+          <p className="desc">Please enter your email</p>
+        </header>
+
+        <InputContainer>
+          <label htmlFor="email">Email</label>
+          <input
+            onChange={(e) => {
+              setValue('email', e.target.value);
+              if (!isValidEmail(e.target.value)) return;
+            }}
+            placeholder="user_name@email.com"
+            type="email"
+            required
+          />
+        </InputContainer>
+
+        <Button
+          type="submit"
+          label="Continue"
+          variant="affirmative"
+          onClick={onSubmit}
+        />
+      </form>
+    </LoginWrapper>
   );
 }
 

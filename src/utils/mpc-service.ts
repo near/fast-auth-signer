@@ -72,13 +72,16 @@ export const getAddKeyAction = ({
   contractId,
   methodNames,
   allowance,
-}): [Action, Action] => [
-  addKey(PublicKey.from(webAuthNPublicKey), fullAccessKey()),
-  addKey(
-    PublicKey.from(publicKeyLak),
-    functionCallAccessKey(contractId, methodNames || [], allowance)
-  )
-];
+}): Action[] => [
+  addKey(PublicKey.from(webAuthNPublicKey), fullAccessKey())
+].concat(
+  publicKeyLak
+    ? addKey(
+      PublicKey.from(publicKeyLak),
+      functionCallAccessKey(contractId, methodNames || [], allowance)
+    )
+    : []
+);
 
 export const getAddLAKAction = ({
   publicKeyLak,
