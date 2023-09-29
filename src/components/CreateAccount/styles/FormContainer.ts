@@ -46,6 +46,9 @@ const FormContainer = styled.form`
     background-color: #E3E1F9;
     border-color: #928BE4;
   }
+  button {
+    margin-top: 30px;
+  } 
 `;
 
 export default FormContainer;

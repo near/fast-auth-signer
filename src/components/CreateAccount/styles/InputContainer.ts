@@ -64,6 +64,7 @@ const InputContainer = styled.div`
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-left: 0;
+    margin-top: 8px;
   }
 
   .input-group-custom .input-group-right span {

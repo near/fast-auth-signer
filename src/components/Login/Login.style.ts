@@ -2,12 +2,13 @@ import styled from 'styled-components';
 
 export const LoginWrapper = styled.div`
   width: 100%;
-  height: calc(100vh - 66px);
+  height: 100vh;
   background-color: #f2f1ea;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 16px;
+  padding-bottom: 60px;
 
   form {
     max-width: 450px;
