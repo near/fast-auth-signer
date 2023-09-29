@@ -69,7 +69,7 @@ export const calculateGasLimit = (actions) => actions
 
 function Sign() {
   const [searchParams] = useSearchParams();
-  const [callbackUrl] = React.useState(searchParams.get('callbackUrl'));
+  const callbackUrl = React.useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
   const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
     signerId:    '',
     receiverId:  '',
@@ -91,9 +91,12 @@ function Sign() {
 
   React.useEffect(() => {
     if (controllerState !== 'loading' && !authenticated) {
-      const parsedUrl = new URL(`${window.location.origin}/fastauth/login`);
-      parsedUrl.searchParams.set('success_url', window.location.href);
-      window.location.replace(parsedUrl.href);
+      const success_url = searchParams.get('success_url');
+      const failure_url = searchParams.get('failure_url');
+      const url = new URL(success_url || failure_url || window.location.origin);
+      url.searchParams.append('error', 'User not authenticated');
+      window.location.replace(url);
+      window.parent.postMessage({ signedDelegates: '', error: 'User not authenticated' }, '*');
     }
 
     const transactionHashes = searchParams.get('transactions');
@@ -124,6 +127,7 @@ function Sign() {
       parsedUrl.searchParams.set('code', err.code);
       parsedUrl.searchParams.set('reason', err.message);
       window.location.replace(parsedUrl.href);
+      window.parent.postMessage({ signedDelegates: '', error: err.message, code: err.code }, '*');
       return;
     }
 
@@ -162,6 +166,7 @@ function Sign() {
   const onConfirm = async () => {
     if (authenticated) {
       const signedTransactions = [];
+      const success_url = searchParams.get('success_url');
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
           const signed = await (
@@ -175,13 +180,13 @@ function Sign() {
           signedTransactions.push(base64);
         } catch (err) {
           const failure_url = searchParams.get('failure_url');
-          const parsedUrl = new URL(failure_url || window.location.origin);
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
           parsedUrl.searchParams.set('message', err);
           window.location.replace(parsedUrl.href);
+          window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
           return;
         }
       }
-      const success_url = searchParams.get('success_url');
       const parsedUrl = new URL(success_url || window.location.origin);
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
@@ -195,7 +200,7 @@ function Sign() {
     const url = new URL(success_url || failure_url || window.location.origin);
     url.searchParams.append('error', 'User cancelled action');
     window.location.replace(url);
-    window.parent.postMessage({ signedDelegates: '' }, '*');
+    window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
   };
 
   return (
