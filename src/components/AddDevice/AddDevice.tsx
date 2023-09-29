@@ -14,7 +14,6 @@ import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
-import { getDeleteKeysAction } from '../../utils/mpc-service';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -111,7 +110,6 @@ function SignInPage() {
   const { authenticated, controllerState } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
-
   if (!window.firestoreController) {
     (window as any).firestoreController = new FirestoreController();
   }
@@ -207,17 +205,12 @@ function SignInPage() {
           }
           return;
         }
-        // delete previous lak key attached to webAuthN public Key
-        const deleteKeyActions = (existingDevice && !noNeedToAddKey)
-          ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak))
-          : [];
 
         (window as any).fastAuthController.signAndSendAddKey({
           contractId: contract_id,
           methodNames,
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
-          actions:    deleteKeyActions,
         }).then((res) => res.json()).then((res) => {
           const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
           if (failure?.ActionError?.kind?.LackBalanceForState) {
@@ -242,7 +235,17 @@ function SignInPage() {
               parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
               parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
-
+              window.parent.postMessage({
+                type:   'method',
+                method: 'query',
+                id:     1234,
+                params: {
+                  request_type: 'complete_sign_in',
+                  publicKey:    public_key,
+                  allKeys:      [public_key, publicKeyFak].join(','),
+                  accountId:    (window as any).fastAuthController.getAccountId()
+                }
+              }, '*');
               if (inIframe()) {
                 setRenderRedirectButton(parsedUrl.href);
               } else {
