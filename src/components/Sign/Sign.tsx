@@ -190,13 +190,12 @@ function Sign() {
   };
 
   const onCancel = () => {
-    try {
-      const url = new URL(callbackUrl);
-      url.searchParams.append('error', 'User cancelled action');
-      window.location.replace(url);
-    } catch (error) {
-      alert('Invalid callback URL');
-    }
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const url = new URL(success_url || failure_url || window.location.origin);
+    url.searchParams.append('error', 'User cancelled action');
+    window.location.replace(url);
+    window.parent.postMessage({ signedDelegates: '' }, '*');
   };
 
   return (
