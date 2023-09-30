@@ -31,6 +31,10 @@ function RpcRoute() {
       }
     };
     window.addEventListener('message', listener);
+    window.parent.postMessage({
+      type:   'method',
+      method: 'ready'
+    }, '*');
     return () => window.removeEventListener('message', listener);
   }, []);
 
