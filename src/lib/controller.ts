@@ -154,12 +154,11 @@ class FastAuthController {
   }
 
   async signAndSendAddKey({
-    contractId, methodNames, allowance, publicKey, actions,
+    contractId, methodNames, allowance, publicKey,
   }) {
     return this.signAndSendDelegateAction({
       receiverId: this.accountId,
       actions:    [
-        ...actions,
         addKey(PublicKey.from(publicKey), functionCallAccessKey(contractId, methodNames || [], allowance))
       ]
     });

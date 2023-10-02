@@ -1,5 +1,5 @@
 import debug from 'debug';
-import * as React from 'react';
+import React from 'react';
 import {
   Navigate, Route, BrowserRouter as Router, Routes, useLocation
 } from 'react-router-dom';
@@ -10,6 +10,7 @@ import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Devices from './components/Devices/Devices';
 import Login from './components/Login/Login';
+import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/">
             <Route index element={<AuthIndicator />} />
             <Route path="login" element={<Login />} />
+            <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
