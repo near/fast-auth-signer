@@ -78,7 +78,6 @@ export const handleCreateAccount = async ({
 
   const searchParams = new URLSearchParams({
     publicKeyFak: publicKeyWebAuthn,
-    email,
     ...(accountId ? { accountId } : {}),
     ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
@@ -96,6 +95,7 @@ export const handleCreateAccount = async ({
     ),
     handleCodeInApp: true,
   });
+  window.localStorage.setItem('emailForSignIn', email);
   return {
     email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair.toString()
   };

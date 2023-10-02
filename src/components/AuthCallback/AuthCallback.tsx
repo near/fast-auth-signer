@@ -192,7 +192,7 @@ function AuthCallbackPage() {
     if (isSignInWithEmailLink(firebaseAuth, locationUrl)) {
       const accountId = decodeIfTruthy(searchParams.get('accountId'));
       const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-      let email = decodeIfTruthy(searchParams.get('email'));
+      let email = window.localStorage.getItem('emailForSignIn');
       const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));

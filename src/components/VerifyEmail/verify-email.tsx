@@ -90,7 +90,6 @@ function VerifyEmailPage() {
 
     const searchParams = new URLSearchParams({
       publicKeyFak: publicKeyFak as string,
-      email:        email as string,
       ...(accountId ? { accountId } : {}),
       ...(isRecovery ? { isRecovery } : {}),
       ...(success_url ? { success_url } : {}),
@@ -107,6 +106,7 @@ function VerifyEmailPage() {
         url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
+      window.localStorage.setItem('emailForSignIn', email);
       openToast({
         type:  'SUCCESS',
         title: 'Email resent successfully!',
