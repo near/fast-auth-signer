@@ -11,26 +11,18 @@ export const LoginWrapper = styled.div`
   padding-bottom: 60px;
 
   form {
-    max-width: 450px;
+    max-width: 360px;
     width: 100%;
     margin: 16px auto;
     background-color: #ffffff;
-    padding: 16px;
+    padding: 25px;
     border-radius: 12px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
   }
-  .buttonsContainer {
-  }
-`;
-
-export const ButtonsContainer = styled.div`
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
   button {
-    margin: 5px;
+    margin-top: 20px;
   }
 `;
 

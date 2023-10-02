@@ -35,7 +35,7 @@ const StyledContainer = styled.div`
   }
 `;
 
-const emailProviders = ['gmail', 'yahoo', 'hotmail'];
+const emailProviders = ['gmail', 'yahoo', 'outlook'];
 
 function CreateAccount() {
   const {

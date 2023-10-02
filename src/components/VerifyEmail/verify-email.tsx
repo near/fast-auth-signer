@@ -22,11 +22,11 @@ const StyledContainer = styled.div`
 const FormContainer = styled.form`
   box-shadow: 0px 4px 8px 0px #0000000F;
   box-shadow: 0px 0px 0px 1px #0000000F;
-  max-width: 450px;
+  max-width: 360px;
   width: 100%;
   margin: 16px auto;
   background-color: #ffffff;
-  padding: 35px;
+  padding: 25px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -47,7 +47,7 @@ const FormContainer = styled.form`
   }
 
   header h1 {
-    font: var(--text-2xl);
+    font: var(--text-xl);
     font-weight: bold;
   }
 
@@ -57,7 +57,6 @@ const FormContainer = styled.form`
 
   button {
     width: 100%;
-    padding: 25px;
   }
 `;
 
@@ -139,7 +138,7 @@ function VerifyEmailPage() {
 
         <p>Check your inbox to activate your account.</p>
 
-        <Button label="Resend" onClick={handleResendEmail} />
+        <Button size="large" label="Resend" onClick={handleResendEmail} />
       </FormContainer>
     </StyledContainer>
   );

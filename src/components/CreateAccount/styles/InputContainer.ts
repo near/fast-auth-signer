@@ -4,41 +4,41 @@ const InputContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  margin-bottom: 20px;
 
   label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
   }
 
   input {
     padding: 8px 12px;
-    border: 1px solid #E3E3E0;
+    border: 1px solid #e3e3e0;
     border-radius: 10px;
-    min-height: 50px;
+    height: 40px;
     cursor: text;
-
-   
+    margin-top: 2px;
   }
 
   .input-group-custom {
-    margin-top: 4px;
     display: flex;
+    align-items: end;
 
     &:focus {
-      box-shadow: 0px 0px 0px 4px #CBC7F4;
+      box-shadow: 0px 0px 0px 4px #cbc7f4;
     }
   }
 
   .input-group-custom.input-group-custom-success {
     input {
-      background-color: #F5FFFA;
+      background-color: #f5fffa;
       color: #197650;
-      border-color: #7AF5B8;
+      border-color: #7af5b8;
     }
 
     .input-group-right {
-      background-color: #DCFEED;
-      border-color: #7AF5B8;
+      background-color: #dcfeed;
+      border-color: #7af5b8;
 
       span {
         color: #197650;
@@ -57,31 +57,31 @@ const InputContainer = styled.div`
   }
 
   .input-group-custom .input-group-right {
-    background-color: #F9F9F8;
-    border: 1px solid #E3E3E0;
+    background-color: #f9f9f8;
+    border: 1px solid #e3e3e0;
     display: flex;
     padding: 0 1em;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-left: 0;
-    margin-top: 8px;
+    height: 40px;
   }
 
   .input-group-custom .input-group-right span {
     display: block;
     margin: auto;
-    font-size: 22px;
-    color: #706F6C;
+    font-size: 16px;
+    color: #706f6c;
   }
 
   .subText {
-    font-size: 0.85rem;
-    padding: 8px 0;
+    font-size: 12px;
+    padding: 2px;
 
     .error {
       display: flex;
       align-items: center;
-      color: #A81500;
+      color: #a81500;
 
       svg {
         margin-right: 5px;
@@ -91,12 +91,12 @@ const InputContainer = styled.div`
         flex: 1;
       }
     }
-    
+
     .success {
       display: flex;
       align-items: center;
       color: #197650;
-      
+
       svg {
         margin-right: 5px;
       }

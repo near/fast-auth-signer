@@ -1,15 +1,14 @@
 import { styled } from 'styled-components';
 
 const FormContainer = styled.form`
-  max-width: 450px;
+  max-width: 360px;
   width: 100%;
   margin: 16px auto;
   background-color: #ffffff;
-  padding: 30px;
+  padding: 20px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 
   header h1 {
     font: var(--text-2xl);
@@ -29,7 +28,7 @@ const FormContainer = styled.form`
     border: 1px solid #E3E3E0;
     border-radius: 50px;
     padding: 3px 8px;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     box-shadow: 0px 1px 2px 0px #0000000F;
   }
@@ -47,7 +46,7 @@ const FormContainer = styled.form`
     border-color: #928BE4;
   }
   button {
-    margin-top: 30px;
+    margin-top: 15px;
   } 
 `;
 

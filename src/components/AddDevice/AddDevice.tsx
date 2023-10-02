@@ -28,7 +28,7 @@ const StyledContainer = styled.div`
 `;
 
 const FormContainer = styled.form`
-  max-width: 450px;
+  max-width: 360px;
   width: 100%;
   margin: 16px auto;
   background-color: #ffffff;
@@ -43,6 +43,7 @@ const InputContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px;
 
   label {
     font-size: 12px;
@@ -336,7 +337,7 @@ function SignInPage() {
           />
         </InputContainer>
 
-        <Button type="submit" label="Continue" variant="affirmative" onClick={onSubmit} />
+        <Button type="submit" size="large" label="Continue" variant="affirmative" onClick={onSubmit} />
       </FormContainer>
     </StyledContainer>
   );

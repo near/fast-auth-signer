@@ -79,6 +79,7 @@ function Login() {
         </InputContainer>
 
         <Button
+          size="large"
           type="submit"
           label="Continue"
           variant="affirmative"
