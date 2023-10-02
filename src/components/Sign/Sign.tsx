@@ -82,7 +82,7 @@ function Sign() {
     transactions: [],
     actions:      [],
   });
-  const { authenticated, controllerState } = useAuthState();
+  const { authenticated } = useAuthState();
   const [showDetails, setShowDetails] = React.useState(false);
 
   const storeFetchedUsdValues = fiatValuesStore(
@@ -90,7 +90,7 @@ function Sign() {
   );
 
   React.useEffect(() => {
-    if (controllerState !== 'loading' && !authenticated) {
+    if (!authenticated) {
       const success_url = searchParams.get('success_url');
       const failure_url = searchParams.get('failure_url');
       const url = new URL(success_url || failure_url || window.location.origin);

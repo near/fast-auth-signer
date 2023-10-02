@@ -8,12 +8,11 @@ import FastAuthController from './controller';
 import { network, networkId } from '../utils/config';
 
 type AuthState = {
-  authenticated: boolean | Error
-  controllerState: 'loading' | boolean
+  authenticated: 'loading' | boolean | Error
 }
 
 export const useAuthState = (skipGetKeys = false): AuthState => {
-  const [authenticated, setAuthenticated] = useState(undefined);
+  const [authenticated, setAuthenticated] = useState<AuthState['authenticated']>('loading');
   const webauthnUsername = useMemo(() => {
     try {
       return window.localStorage.getItem('webauthn_username');
@@ -81,8 +80,8 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
 
   try {
     window.localStorage.getItem('webauthn_username');
-    return { controllerState, authenticated };
+    return { authenticated };
   } catch (error) {
-    return { controllerState, authenticated: new Error('Please allow third party cookies') };
+    return { authenticated: new Error('Please allow third party cookies') };
   }
 };

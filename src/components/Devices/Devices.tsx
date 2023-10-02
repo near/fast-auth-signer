@@ -63,7 +63,7 @@ function Devices() {
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    if (authenticated) {
+    if (authenticated === true) {
       getCollection();
     }
   }, [authenticated]);
