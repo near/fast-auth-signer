@@ -1,3 +1,4 @@
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
@@ -72,16 +73,18 @@ export const getAddKeyAction = ({
   contractId,
   methodNames,
   allowance,
-}): Action[] => [
-  addKey(PublicKey.from(webAuthNPublicKey), fullAccessKey())
-].concat(
-  publicKeyLak
-    ? addKey(
-      PublicKey.from(publicKeyLak),
-      functionCallAccessKey(contractId, methodNames || [], allowance)
-    )
-    : []
-);
+}): Action[] => []
+  .concat(
+    isPassKeyAvailable()
+      ? addKey(PublicKey.from(webAuthNPublicKey), fullAccessKey())
+      : [],
+    publicKeyLak
+      ? addKey(
+        PublicKey.from(publicKeyLak),
+        functionCallAccessKey(contractId, methodNames || [], allowance)
+      )
+      : []
+  );
 
 export const getAddLAKAction = ({
   publicKeyLak,
