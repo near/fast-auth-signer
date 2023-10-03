@@ -206,7 +206,7 @@ function Sign() {
   return (
     <ModalSignWrapper>
       <div className="modal-top">
-        {callbackUrl && <img width="48" height="48" src={`${callbackUrl}/favicon.ico`} alt={callbackUrl} />}
+        <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
         <h4>Confirm transaction</h4>
 
         <div className="transaction-details">
