@@ -5,17 +5,17 @@ import AuthIndicatorButton from './AuthIndicatorButton';
 import { useAuthState } from '../../lib/useAuthState';
 
 function AuthIndicator() {
-  const { authenticated, controllerState } = useAuthState();
+  const { authenticated } = useAuthState();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (controllerState !== 'loading' && authenticated === false) {
+    if (authenticated !== 'loading' && authenticated === false) {
       navigate('/login');
     }
-  }, [authenticated, controllerState]);
+  }, [authenticated]);
 
   return (
-    <AuthIndicatorButton $buttonType="secondary" $isSignedIn={authenticated && controllerState !== 'loading'}>
+    <AuthIndicatorButton $buttonType="secondary" $isSignedIn={authenticated && authenticated !== 'loading'}>
       {authenticated ? <p>signed in</p>
         : <p>not signed in</p>}
     </AuthIndicatorButton>
