@@ -15,3 +15,13 @@ export const checkFirestoreReady = async () => firebaseAuth.authStateReady()
     }
     return false;
   });
+
+export const getDomain = (url) => {
+  let urlObj;
+  try {
+    urlObj = new URL(url);
+  } catch {
+    return false;
+  }
+  return urlObj.hostname.replace('www.', '');
+};

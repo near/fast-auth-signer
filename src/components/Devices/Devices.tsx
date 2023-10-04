@@ -9,6 +9,7 @@ import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
 import { networkId } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
+import { getDomain } from '../../utils/firebase';
 
 const Title = styled.h1`
   padding-bottom: 20px;
@@ -111,7 +112,7 @@ function Devices() {
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const gateway = decodeIfTruthy(searchParams.get('gateway')) || contract_id;
+        const gateway = getDomain(success_url) || contract_id;
         const oidcToken = await controller.getUserOidcToken();
 
         await onSignIn({

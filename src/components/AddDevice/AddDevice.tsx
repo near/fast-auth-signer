@@ -12,7 +12,7 @@ import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth, getDomain } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
@@ -182,7 +182,7 @@ function SignInPage() {
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-      const gateway = decodeIfTruthy(searchParams.get('gateway'));
+      const gateway = getDomain(success_url) || contract_id;
 
       const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
@@ -234,7 +234,7 @@ function SignInPage() {
           return window.firestoreController.addDeviceCollection({
             fakPublicKey:  null,
             lakPublicKey: public_key,
-            gateway:      gateway || contract_id,
+            gateway,
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin);
