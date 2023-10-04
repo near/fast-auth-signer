@@ -182,6 +182,7 @@ function SignInPage() {
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+      const gateway = decodeIfTruthy(searchParams.get('gateway'));
 
       const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
@@ -228,9 +229,12 @@ function SignInPage() {
             // @ts-ignore
             oidcToken: user.accessToken,
           });
+
+          // Since FAK is already added, we only add LAK
           return window.firestoreController.addDeviceCollection({
-            fakPublicKey: publicKeyFak,
+            fakPublicKey:  null,
             lakPublicKey: public_key,
+            gateway:      gateway || contract_id,
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin);

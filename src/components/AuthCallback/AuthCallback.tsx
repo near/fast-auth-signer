@@ -9,11 +9,11 @@ import styled from 'styled-components';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
-import { decodeIfTruthy } from '../../utils';
+import { decodeIfTruthy, inIframe } from '../../utils';
 import { network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
-  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getDeleteKeysAction
+  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getDeleteKeysAction, getAddLAKAction
 } from '../../utils/mpc-service';
 
 const StyledStatusMessage = styled.div`
@@ -36,6 +36,7 @@ const onCreateAccount = async ({
   success_url,
   setStatusMessage,
   email,
+  gateway,
 }) => {
   const CLAIM_SALT = CLAIM + 2;
   const signature = getUserCredentialsFrpSignature({
@@ -78,10 +79,14 @@ const onCreateAccount = async ({
         if (!response?.ok) {
           throw new Error('Network response was not ok');
         }
+        if (!window.firestoreController) {
+          (window as any).firestoreController = new FirestoreController();
+        }
         // Add device
         await window.firestoreController.addDeviceCollection({
           fakPublicKey: publicKeyFak,
           lakPublicKey: public_key_lak,
+          gateway,
         });
 
         setStatusMessage('Account created successfully!');
@@ -118,6 +123,8 @@ export const onSignIn = async ({
   email,
   searchParams,
   navigate,
+  onlyAddLak = false,
+  gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
@@ -127,25 +134,32 @@ export const onSignIn = async ({
       throw new Error('Unable to retrieve account Id');
     });
 
-  const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+  // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
+  // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+  // // delete old lak key attached to webAuthN public Key
+  // const deleteKeyActions = existingDevice
+  //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
 
-  // delete old lak key attached to webAuthN public Key
-  const deleteKeyActions = existingDevice
-    ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
-
-  const addKeyActions = getAddKeyAction({
-    publicKeyLak:      public_key_lak,
-    webAuthNPublicKey: publicKeyFak,
-    contractId:        contract_id,
-    methodNames,
-    allowance:         new BN('250000000000000'),
-  });
+  // onlyAddLak will be true if current browser already has a FAK with passkey
+  const addKeyActions = onlyAddLak
+    ? getAddLAKAction({
+      publicKeyLak: public_key_lak,
+      contractId:   contract_id,
+      methodNames,
+      allowance:    new BN('250000000000000'),
+    }) : getAddKeyAction({
+      publicKeyLak:      public_key_lak,
+      webAuthNPublicKey: publicKeyFak,
+      contractId:        contract_id,
+      methodNames,
+      allowance:         new BN('250000000000000'),
+    });
 
   return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
     oidcToken: accessToken,
     accountId: accountIds[0],
     recoveryPK,
-    actions:   [...deleteKeyActions, ...addKeyActions]
+    actions:   addKeyActions
   })
     .then((res) => res.json())
     .then(async (res) => {
@@ -155,9 +169,13 @@ export const onSignIn = async ({
         navigate(`/devices?${searchParams.toString()}`);
       } else {
         await checkFirestoreReady();
+        if (!window.firestoreController) {
+          (window as any).firestoreController = new FirestoreController();
+        }
         await window.firestoreController.addDeviceCollection({
-          fakPublicKey: publicKeyFak,
+          fakPublicKey: onlyAddLak ? null : publicKeyFak,
           lakPublicKey: public_key_lak,
+          gateway,
         });
 
         setStatusMessage('Account recovered successfully!');
@@ -172,7 +190,11 @@ export const onSignIn = async ({
         parsedUrl.searchParams.set('public_key', public_key_lak);
         parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
 
-        window.location.replace(parsedUrl.href);
+        if (inIframe()) {
+          window.open(parsedUrl.href, '_parent');
+        } else {
+          window.location.replace(parsedUrl.href);
+        }
       }
     });
 };
@@ -200,6 +222,7 @@ function AuthCallbackPage() {
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
+      const gateway  = decodeIfTruthy(searchParams.get('gateway')) || contract_id;
 
       while (!email) {
         // TODO refactor: review
@@ -252,6 +275,7 @@ function AuthCallbackPage() {
                 email,
                 navigate,
                 searchParams,
+                gateway,
               });
             } catch (e) {
               console.log('error:', e);
