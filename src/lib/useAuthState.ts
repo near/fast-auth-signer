@@ -25,7 +25,10 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
   const [query] = useSearchParams();
 
   useEffect(() => {
-    if (controllerState !== false) {
+    if (skipGetKeys) {
+      setAuthenticated(false);
+      setControllerState(false);
+    } else if (controllerState !== false) {
       if (controllerState === true) {
         setAuthenticated(true);
       }
@@ -34,11 +37,6 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
     } else if (query.get('email') && query.get('email') !== webauthnUsername) {
       setAuthenticated(false);
     } else {
-      if (skipGetKeys) {
-        setAuthenticated(false);
-        setControllerState(false);
-        return;
-      }
       getKeys(webauthnUsername)
         .then((keypairs) => Promise.allSettled(
           keypairs.map((k) => fetch(`${network.fastAuth.authHelperUrl}/publicKey/${k.getPublicKey().toString()}/accounts`)
