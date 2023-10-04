@@ -17,16 +17,17 @@ import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
   width: 100%;
-  height: calc(100vh - 66px);
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f2f1ea;
   padding: 0 16px;
+  padding-bottom: 60px;
 `;
 
 const FormContainer = styled.form`
-  max-width: 450px;
+  max-width: 360px;
   width: 100%;
   margin: 16px auto;
   background-color: #ffffff;
@@ -41,6 +42,7 @@ const InputContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px;
 
   label {
     font-size: 12px;
@@ -338,7 +340,7 @@ function SignInPage() {
           />
         </InputContainer>
 
-        <Button type="submit" label="Continue" variant="affirmative" onClick={onSubmit} />
+        <Button type="submit" size="large" label="Continue" variant="affirmative" onClick={onSubmit} />
       </FormContainer>
     </StyledContainer>
   );

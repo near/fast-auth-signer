@@ -21,12 +21,13 @@ import { handleCreateAccount } from '../AddDevice/AddDevice';
 
 const StyledContainer = styled.div`
   width: 100%;
-  height: calc(100vh - 66px);
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #f2f1ea;
   padding: 0 16px;
+  padding-bottom: 60px;
 
   header {
     text-align: center;
@@ -34,7 +35,7 @@ const StyledContainer = styled.div`
   }
 `;
 
-const emailProviders = ['gmail', 'yahoo', 'hotmail'];
+const emailProviders = ['gmail', 'yahoo', 'outlook'];
 
 function CreateAccount() {
   const {
