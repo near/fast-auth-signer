@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 concurrency:
   group: 'fast-auth-signer-deployment'
   cancel-in-progress: true
@@ -26,4 +30,8 @@ jobs:
     uses: ./.github/workflows/bundle-and-deploy.yml
     with:
       environment: mainnet
+    secrets: inherit
+
+  deploy-docker-image-to-gcr:
+    uses: ./.github/workflows/push-to-gcr.yml
     secrets: inherit
