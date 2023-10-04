@@ -109,7 +109,7 @@ function SignInPage() {
   const navigate = useNavigate();
 
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
-  const { authenticated, controllerState } = useAuthState(skipGetKey);
+  const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
   if (!window.firestoreController) {
@@ -118,12 +118,12 @@ function SignInPage() {
   const [isFirestoreReady, setIsFirestoreReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (isFirestoreReady === null && controllerState !== 'loading') {
+    if (isFirestoreReady === null && authenticated !== 'loading') {
       checkFirestoreReady().then((isReady) => {
-        setIsFirestoreReady(isReady);
+        setIsFirestoreReady(isReady as boolean);
       });
     }
-  }, [controllerState]);
+  }, [authenticated]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -175,7 +175,7 @@ function SignInPage() {
   }, [searchParams, navigate]);
 
   useEffect(() => {
-    if (controllerState === 'loading' || isFirestoreReady === null) return;
+    if (authenticated === 'loading' || isFirestoreReady === null) return;
     const handleAuthCallback = async () => {
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
@@ -184,7 +184,7 @@ function SignInPage() {
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
       const email = decodeIfTruthy(searchParams.get('email'));
-      if (controllerState && isFirestoreReady) {
+      if (authenticated === true && isFirestoreReady) {
         if (!public_key || !contract_id) {
           window.location.replace(success_url || window.location.origin);
           return;
@@ -270,17 +270,15 @@ function SignInPage() {
           });
         });
       } else if (email && !authenticated) {
-        if (controllerState) {
-          // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-          window.localStorage.removeItem('webauthn_username');
-        }
+        // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+        window.localStorage.removeItem('webauthn_username');
         setValue('email', email);
         addDevice({ email });
       }
     };
 
     handleAuthCallback();
-  }, [isFirestoreReady, controllerState]);
+  }, [isFirestoreReady, authenticated]);
 
   if (authenticated === true) {
     return renderRedirectButton ? (
