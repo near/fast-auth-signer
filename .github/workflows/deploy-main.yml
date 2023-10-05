@@ -31,7 +31,3 @@ jobs:
     with:
       environment: mainnet
     secrets: inherit
-
-  deploy-docker-image-to-artifact-registry:
-    uses: ./.github/workflows/push-to-artifact-registry.yml
-    secrets: inherit
