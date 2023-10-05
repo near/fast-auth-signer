@@ -13,20 +13,13 @@ jobs:
     environment: mainnet
     steps:      
       - uses: actions/checkout@v3
-      
-      - id: auth
-        name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          token_format: access_token
-          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}
 
       - name: Login to Artifact Registry
         uses: docker/login-action@v3
         with:
           registry: us-central1-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+          username: _json_key
+          password: ${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}
 
       - name: Get tag
         id: get-tag
