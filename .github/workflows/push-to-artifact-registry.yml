@@ -1,0 +1,41 @@
+name: Push to Artifact Registry GitHub Action
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push-to-artifact-registry:
+    runs-on: ubuntu-latest
+    environment: mainnet
+    steps:      
+      - uses: actions/checkout@v3
+      
+      - id: auth
+        name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY_JSON }}
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v1
+        with:
+          registry: us-west2-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Get tag
+        id: get-tag
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+
+      - id: docker-push-tagged
+        name: Tag Docker image and push to Google Artifact Registry
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: |
+             us-central1-docker.pkg.dev/pagoda-discovery-platform-prod/cloud-run-source-deploy/fast-auth-sdk-frontend:${{ steps.get-tag.outputs.short_ref }}
+             us-central1-docker.pkg.dev/pagoda-discovery-platform-prod/cloud-run-source-deploy/fast-auth-sdk-frontend:latest
