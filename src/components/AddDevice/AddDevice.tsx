@@ -182,7 +182,6 @@ function SignInPage() {
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-      const gateway = getDomain(success_url) || 'Unknown Gateway';
 
       const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
@@ -234,7 +233,7 @@ function SignInPage() {
           return window.firestoreController.addDeviceCollection({
             fakPublicKey:  null,
             lakPublicKey: public_key,
-            gateway,
+            gateway: success_url,
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin);

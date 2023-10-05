@@ -53,7 +53,7 @@ export type Device = {
   browser: string;
   publicKeys: string[];
   uid: string;
-  gateway: string;
+  gateway: string | null;
   dateTime: Date;
   keyType: string;
 };

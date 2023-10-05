@@ -222,7 +222,6 @@ function AuthCallbackPage() {
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
-      const gateway  = getDomain(success_url) || 'Unknown Gateway';
 
       while (!email) {
         // TODO refactor: review
@@ -275,7 +274,7 @@ function AuthCallbackPage() {
                 email,
                 navigate,
                 searchParams,
-                gateway,
+                gateway:      success_url,
               });
             } catch (e) {
               console.log('error:', e);
