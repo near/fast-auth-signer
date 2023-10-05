@@ -12,7 +12,7 @@ import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth, getDomain } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
@@ -228,9 +228,12 @@ function SignInPage() {
             // @ts-ignore
             oidcToken: user.accessToken,
           });
+
+          // Since FAK is already added, we only add LAK
           return window.firestoreController.addDeviceCollection({
-            fakPublicKey: publicKeyFak,
+            fakPublicKey:  null,
             lakPublicKey: public_key,
+            gateway: success_url,
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin);

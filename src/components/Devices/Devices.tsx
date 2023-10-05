@@ -9,6 +9,16 @@ import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
 import { networkId } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
+import { getDomain } from '../../utils/firebase';
+
+const Title = styled.h1`
+  padding-bottom: 20px;
+`;
+
+const Description = styled.p`
+  font-size: 16px;
+  font-weight: bold;
+`;
 
 const StyledCheckbox = styled.input`
   width: 20px;
@@ -17,11 +27,21 @@ const StyledCheckbox = styled.input`
   border: initial;
   appearance: auto;
   cursor: pointer;
+  margin-top: 0;
+  margin-right: 10px;
 `;
 
 const Row = styled.div`
   display: flex;
   align-items: center;
+  padding-bottom: 10px;
+`;
+
+const DeleteButton = styled.button`
+  width: 100%;
+  margin-top: 30px;
+  outline: none;
+  font-size: 20px;
 `;
 
 function Devices() {
@@ -49,15 +69,17 @@ function Devices() {
     const getCollection = async () => {
       setIsLoaded(true);
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
-      const accountId = await controller.getAccountIdFromOidcToken();
+      if (privateKey) {
+        const accountId = await controller.getAccountIdFromOidcToken();
 
-      // claim the oidc token
-      (window as any).fastAuthController = new FastAuthController({
-        accountId,
-        networkId
-      });
-      const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
-      await window.fastAuthController.setKey(keypair);
+        // claim the oidc token
+        (window as any).fastAuthController = new FastAuthController({
+          accountId,
+          networkId
+        });
+        const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
+        await window.fastAuthController.setKey(keypair);
+      }
 
       const deviceCollections = await controller.listDevices();
       setIsLoaded(false);
@@ -94,8 +116,8 @@ function Devices() {
 
         await onSignIn({
           accessToken:      oidcToken,
-          publicKeyFak,
-          public_key_lak,
+          publicKeyFak:     publicKeyFak !== 'null' ? publicKeyFak : await window.fastAuthController.getPublicKey(),
+          public_key_lak:   public_key_lak !== 'null' ? public_key_lak : decodeIfTruthy(searchParams.get('public_key')),
           contract_id,
           methodNames,
           setStatusMessage: () => null,
@@ -103,6 +125,8 @@ function Devices() {
           email,
           searchParams,
           navigate,
+          onlyAddLak:       publicKeyFak === 'null',
+          gateway:          success_url,
         });
         setIsAddingKey(false);
       }).catch((err) => {
@@ -113,21 +137,28 @@ function Devices() {
 
   return (
     <>
-      <div>Devices route</div>
+      <Title>Devices with Keys</Title>
+
       {isLoaded && <div>Loading...</div>}
+
+      {collections.length > 0 && (
+        <Description>
+          You have reached maximum number of keys. Please delete some keys to add new keys.
+        </Description>
+      )}
       {
         collections.map((collection) => (
           <Row key={collection.id}>
             <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
-            <label htmlFor={collection.id}>{collection.label}</label>
+            <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
           </Row>
         ))
       }
       {
         collections.length > 0 && (
-          <button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
-            Delete collections
-          </button>
+          <DeleteButton type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
+            {`Delete key${deleteCollections.length > 1 ? 's' : ''}`}
+          </DeleteButton>
         )
       }
       {isDeleted && <div>Deleting...</div>}

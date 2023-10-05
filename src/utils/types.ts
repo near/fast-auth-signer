@@ -53,6 +53,9 @@ export type Device = {
   browser: string;
   publicKeys: string[];
   uid: string;
+  gateway: string | null;
+  dateTime: Date;
+  keyType: string;
 };
 
 export type DeleteDevice = {

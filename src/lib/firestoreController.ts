@@ -51,20 +51,40 @@ class FirestoreController {
   async addDeviceCollection({
     fakPublicKey,
     lakPublicKey,
+    gateway,
   }) {
     const parser = new UAParser();
     const device = parser.getDevice();
     const os = parser.getOS();
     const browser = parser.getBrowser();
-
+    const dateTime = new Date().toISOString();
     // setDoc will overwrite existing document or create new if not exist
-    return setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
-      device:     `${device.vendor} ${device.model}`,
-      os:         `${os.name} ${os.version}`,
-      browser:    `${browser.name} ${browser.version}`,
-      publicKeys: [fakPublicKey, lakPublicKey],
-      uid:        this.userUid,
-    }, { merge: true }).catch((err) => {
+    return Promise.all([
+      ...(fakPublicKey ? [
+        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
+          device:     `${device.vendor} ${device.model}`,
+          os:         `${os.name} ${os.version}`,
+          browser:    `${browser.name} ${browser.version}`,
+          publicKeys: [fakPublicKey],
+          uid:        this.userUid,
+          gateway:    gateway || 'Unknown Gateway',
+          dateTime,
+          keyType:    'fak',
+        }, { merge: true })
+      ] : []),
+      ...(lakPublicKey ? [
+        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
+          device:     `${device.vendor} ${device.model}`,
+          os:         `${os.name} ${os.version}`,
+          browser:    `${browser.name} ${browser.version}`,
+          publicKeys: [lakPublicKey],
+          uid:        this.userUid,
+          gateway:    gateway || 'Unknown Gateway',
+          dateTime,
+          keyType:    'lak',
+        }, { merge: true })
+      ] : [])
+    ]).catch((err) => {
       console.log('fail to add device collection, ', err);
       throw new Error('fail to add device collection');
     });
@@ -92,7 +112,8 @@ class FirestoreController {
         ...data,
         firebaseId: document.id,
         id:         data.publicKeys[0],
-        label:      `${data.device} - ${data.browser} - ${data.os}`,
+        label:      `${data.gateway || 'Unknown Gateway'} (${data.keyType || 'Unknown Key Type'}) ${data.device} - ${data.browser} - ${data.os}`,
+        createdAt:  data.dateTime ? new Date(data.dateTime) : 'Unknown',
       });
     });
     // claim oidc token before getting all access keys
@@ -123,6 +144,7 @@ class FirestoreController {
           id:         key,
           firebaseId: null,
           label:      'Unknown Device',
+          createdAt:  'Unknown',
           publicKeys: [key],
         }
       ];
@@ -143,11 +165,13 @@ class FirestoreController {
       const firestoreIds = list
         .map(({ firebaseId }) => firebaseId)
         .filter((id) => id);
-      // delete all records except the one that has LAK
-      firestoreIds.forEach((id) => {
-        batch.delete(doc(this.firestore, `/users/${this.userUid}/devices`, id));
-      });
-      await batch.commit();
+      if (firestoreIds.length) {
+        // delete all records except the one that has LAK
+        firestoreIds.forEach((id) => {
+          batch.delete(doc(this.firestore, `/users/${this.userUid}/devices`, id));
+        });
+        await batch.commit();
+      }
     } catch (err) {
       console.log('Fail to delete firestore records', err);
       throw new Error(err);
