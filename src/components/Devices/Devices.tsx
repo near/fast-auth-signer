@@ -112,7 +112,7 @@ function Devices() {
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const gateway = getDomain(success_url) || contract_id;
+        const gateway = getDomain(success_url) || 'Unknown Gateway';
         const oidcToken = await controller.getUserOidcToken();
 
         await onSignIn({

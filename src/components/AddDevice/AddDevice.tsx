@@ -182,7 +182,7 @@ function SignInPage() {
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-      const gateway = getDomain(success_url) || contract_id;
+      const gateway = getDomain(success_url) || 'Unknown Gateway';
 
       const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
