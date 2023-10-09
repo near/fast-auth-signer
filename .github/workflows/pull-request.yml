@@ -1,0 +1,28 @@
+name: PR Actions
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v3
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          cache: 'yarn'
+
+      - name: Install NPM Dependencies
+        run: yarn install
+
+      - name: Run Linting
+        run: yarn lint
