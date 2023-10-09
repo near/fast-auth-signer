@@ -169,6 +169,7 @@ function Sign() {
       const success_url = searchParams.get('success_url');
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
+          // eslint-disable-next-line
           const signed = await (
             window as any
           ).fastAuthController.signDelegateAction(
@@ -228,6 +229,7 @@ function Sign() {
           />
         </div>
       </div>
+      {/* eslint-disable-next-line */}
       <div
         className="more-details"
         onClick={() => setShowDetails(!showDetails)}

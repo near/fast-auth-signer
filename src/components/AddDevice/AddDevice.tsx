@@ -12,7 +12,7 @@ import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth, getDomain } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
@@ -233,7 +233,7 @@ function SignInPage() {
           return window.firestoreController.addDeviceCollection({
             fakPublicKey:  null,
             lakPublicKey: public_key,
-            gateway: success_url,
+            gateway:      success_url,
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin);
@@ -325,20 +325,22 @@ function SignInPage() {
         <InputContainer>
           <label htmlFor="email">
             Email
-          </label>
-          <input
-            {...register('email', {
-              required: 'Please enter a valid email address',
-            })}
-            onChange={(e) => {
-              setValue('email', e.target.value);
+            <input
+              {...register('email', {
+                required: 'Please enter a valid email address',
+              })}
+              onChange={(e) => {
+                setValue('email', e.target.value);
+                // eslint-disable-next-line
               if (!isValidEmail(e.target.value)) return;
-            }}
-            placeholder="user_name@email.com"
-            type="email"
-            id="email"
-            required
-          />
+              }}
+              placeholder="user_name@email.com"
+              type="email"
+              id="email"
+              required
+            />
+          </label>
+
         </InputContainer>
 
         <Button type="submit" size="large" label="Continue" variant="affirmative" onClick={onSubmit} />

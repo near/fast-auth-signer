@@ -1,107 +1,107 @@
-import styled from "styled-components";
+import styled from 'styled-components';
 
-/******************************************/
+/** *************************************** */
 // THERE IS ANOTHER <Button /> COMPONENT  //
 // THAT PROBABLY SHOULD BE USED INSTEAD ! //
-//****************************************/
-// 
+//* ***************************************/
+//
 interface myButton {
   $buttonType?: string;
-  size?: "s" | "m" | "l";
+  size?: 's' | 'm' | 'l';
 }
 
 const handleButtonSize = (size: string) => {
   switch (size) {
-    case "s":
-      return "32px";
-    case "m":
-      return "48px";
-    case "l":
-      return "56px";
+    case 's':
+      return '32px';
+    case 'm':
+      return '48px';
+    case 'l':
+      return '56px';
     default:
-      return "56px";
+      return '56px';
   }
 };
 
 const handleBgColor = (color: string) => {
   switch (color) {
-    case "primary":
-      return "#0072CE";
-    case "secondary":
-      return "#ffffff";
-    case "third":
-      return "#161615";
-    case "fourth":
-      return "#FDFDFC";;
+    case 'primary':
+      return '#0072CE';
+    case 'secondary':
+      return '#ffffff';
+    case 'third':
+      return '#161615';
+    case 'fourth':
+      return '#FDFDFC';
     default:
-      return "#ffffff";
+      return '#ffffff';
   }
 };
 
 const handleBorder = (color: string) => {
   switch (color) {
-    case "primary":
-      return "#0072CE";
-    case "secondary":
-      return "#cccccc";
-    case "third":
-      return "#161615";
+    case 'primary':
+      return '#0072CE';
+    case 'secondary':
+      return '#cccccc';
+    case 'third':
+      return '#161615';
     default:
-      return "#ffffff";
+      return '#ffffff';
   }
 };
 
 const handleColor = (color: string) => {
   switch (color) {
-    case "primary":
-      return "#ffffff";
-    case "secondary":
-      return "#888888";
-    case "third":
-      return "#ffffff";
-    case "fourth":
-      return "black";
+    case 'primary':
+      return '#ffffff';
+    case 'secondary':
+      return '#888888';
+    case 'third':
+      return '#ffffff';
+    case 'fourth':
+      return 'black';
     default:
-      return "#ffffff";
+      return '#ffffff';
   }
 };
 
 const hoverBgColor = (color: string) => {
   switch (color) {
-    case "primary":
-      return "#007fe6";
-    case "secondary":
-      return "#cccccc";
-    case "third":
-      return "#252523";
-    case "fourth":
-      return "#f3f3f3";
+    case 'primary':
+      return '#007fe6';
+    case 'secondary':
+      return '#cccccc';
+    case 'third':
+      return '#252523';
+    case 'fourth':
+      return '#f3f3f3';
     default:
-      return "#ffffff";
+      return '#ffffff';
   }
 };
 
 const hoverColor = (color: string) => {
   switch (color) {
-    case "primary":
-      return "#007fe6";
-    case "secondary":
-      return "#cccccc";
-    case "third":
-      return "#e5e5e5";
-    case "fourth":
-      return "black";
+    case 'primary':
+      return '#007fe6';
+    case 'secondary':
+      return '#cccccc';
+    case 'third':
+      return '#e5e5e5';
+    case 'fourth':
+      return 'black';
     default:
-      return "#ffffff";
+      return '#ffffff';
   }
 };
 
 const StyledButton = styled.button.attrs<myButton>(
   ({
-    type = "button",
-    $buttonType = "primary",
+    type = 'button',
+    $buttonType = 'primary',
     disabled = false,
-    size = "l",
+    size = 'l',
   }) => {
     return {
       type,

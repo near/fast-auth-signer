@@ -9,7 +9,6 @@ import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
 import { networkId } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
-import { getDomain } from '../../utils/firebase';
 
 const Title = styled.h1`
   padding-bottom: 20px;

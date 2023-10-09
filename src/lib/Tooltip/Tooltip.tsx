@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
 const Wrapper = styled.div`
   position: relative;
@@ -42,11 +42,11 @@ const Wrapper = styled.div`
   }
 `;
 
-export function Tooltip({children, infoText}:{ children: React.ReactNode,  infoText: string}) {
+export function Tooltip({ children, infoText }:{ children: React.ReactNode, infoText: string}) {
   return (
     <Wrapper>
-     {children}
-     <span className="info-text">{infoText}</span>
+      {children}
+      <span className="info-text">{infoText}</span>
     </Wrapper>
   );
 }

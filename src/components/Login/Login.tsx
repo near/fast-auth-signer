@@ -1,13 +1,13 @@
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Button } from '../../lib/Button';
 import { LoginWrapper, InputContainer } from './Login.style';
-import { useForm } from 'react-hook-form';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
+import { Button } from '../../lib/Button';
+import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
-import { openToast } from '../../lib/Toast';
 
 function Login() {
   const [currentSearchParams] = useSearchParams();
@@ -19,12 +19,12 @@ function Login() {
       if (isRecovery === 'true') {
         navigate({
           pathname: '/add-device',
-          search: currentSearchParams.toString(),
+          search:   currentSearchParams.toString(),
         });
       } else {
         navigate({
           pathname: '/create-account',
-          search: currentSearchParams.toString(),
+          search:   currentSearchParams.toString(),
         });
       }
     }
@@ -35,21 +35,22 @@ function Login() {
   const emailCheck = async (params: any) => {
     fetchSignInMethodsForEmail(firebaseAuth, params.email)
       .then((result) => {
-        result.length === 0 &&
+        if (result.length === 0) {
           navigate({
             pathname: '/create-account',
-            search: `email=${params.email}`,
+            search:   `email=${params.email}`,
           });
-        result[0] == 'emailLink' &&
+        } else if (result[0] === 'emailLink') {
           navigate({
             pathname: '/add-device',
-            search: `email=${params.email}`,
+            search:   `email=${params.email}`,
           });
+        }
       })
       .catch((error: any) => {
         console.error('error', error);
         openToast({
-          type: 'ERROR',
+          type:  'ERROR',
           title: error.message,
         });
       });
@@ -66,16 +67,19 @@ function Login() {
         </header>
 
         <InputContainer>
-          <label htmlFor="email">Email</label>
-          <input
-            onChange={(e) => {
-              setValue('email', e.target.value);
-              if (!isValidEmail(e.target.value)) return;
-            }}
-            placeholder="user_name@email.com"
-            type="email"
-            required
-          />
+          <label htmlFor="email">
+            Email
+            <input
+              onChange={(e) => {
+                setValue('email', e.target.value);
+                // eslint-disable-next-line
+                if (!isValidEmail(e.target.value)) return;
+              }}
+              placeholder="user_name@email.com"
+              type="email"
+              required
+            />
+          </label>
         </InputContainer>
 
         <Button

@@ -1,11 +1,12 @@
 import * as React from 'react';
+
+import TableContentWrapper from './TableContent.styles';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InfoSvg from '../../Images/info';
-import TableContentWrapper from './TableContent.styles';
-import { Tooltip } from '../../lib/Tooltip';
-import { Button } from '../../lib/Button';
 import OpenLinkSvg from '../../Images/open-link';
+import { Button } from '../../lib/Button';
+import { Tooltip } from '../../lib/Tooltip';
 
 interface TableContentProps {
   hasFunctionCall?: boolean;
@@ -38,6 +39,7 @@ function TableContent({
             <InfoSvg />
           </Tooltip>
         )}
+        {/* eslint-disable-next-line */}
         {openLink && <a href={openLink} target="_blank" rel="noreferrer"><OpenLinkSvg /></a>}
       </div>
 
@@ -49,7 +51,8 @@ function TableContent({
               size="small"
               onClick={() => setMethodDetails(!methodDetails)}
             >
-              {rightSide}{' '}
+              {rightSide}
+              {' '}
               {isFunctionCallOpen && methodDetails ? (
                 <ArrowUpSvg />
               ) : (
