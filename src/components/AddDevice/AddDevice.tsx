@@ -70,10 +70,17 @@ const InputContainer = styled.div`
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
-  const keyPair = await createKey(email);
-  const publicKeyWebAuthn = keyPair.getPublicKey().toString();
-  if (!publicKeyWebAuthn) {
-    throw new Error('No public key found');
+  let publicKeyWebAuthn = null;
+  let keyPair = null;
+
+  try {
+    keyPair = await createKey(email);
+    publicKeyWebAuthn = keyPair.getPublicKey().toString();
+    if (!publicKeyWebAuthn) {
+      throw new Error('No public key found');
+    }
+  } catch (err) {
+    console.error(err);
   }
 
   const searchParams = new URLSearchParams({

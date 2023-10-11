@@ -42,8 +42,13 @@ class FastAuthController {
   }
 
   async createBiometricKey() {
-    const keyPair = await createKey(this.accountId);
-    await this.setKey(keyPair);
+    let keyPair = null;
+    try {
+      keyPair = await createKey(this.accountId);
+      await this.setKey(keyPair);
+    } catch (err) {
+      console.error(err);
+    }
 
     return keyPair;
   }
@@ -67,10 +72,16 @@ class FastAuthController {
   }
 
   private async getBiometricKey() {
-    const [firstKeyPair, secondKeyPair] = await getKeys(this.accountId);
-    const privKeyStr = await this.getCorrectAccessKey(this.accountId, firstKeyPair, secondKeyPair);
+    let privKeyStr = null;
 
-    return new KeyPairEd25519(privKeyStr.split(':')[1]);
+    try {
+      const [firstKeyPair, secondKeyPair] = await getKeys(this.accountId);
+      privKeyStr = await this.getCorrectAccessKey(this.accountId, firstKeyPair, secondKeyPair);
+    } catch (err) {
+      console.error(err);
+    }
+
+    return privKeyStr ? new KeyPairEd25519(privKeyStr.split(':')[1]) : null;
   }
 
   async getKey() {
