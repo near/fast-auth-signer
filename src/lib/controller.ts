@@ -1,6 +1,8 @@
 import { Account, Connection } from '@near-js/accounts';
 import { createKey, getKeys } from '@near-js/biometric-ed25519';
-import { KeyPairEd25519, KeyType, PublicKey } from '@near-js/crypto';
+import {
+  KeyPair, KeyPairEd25519, KeyType, PublicKey
+} from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
 import {
   SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate
@@ -73,8 +75,8 @@ class FastAuthController {
     return new KeyPairEd25519(privKeyStr.split(':')[1]);
   }
 
-  async getKey() {
-    return this.keyStore.getKey(this.networkId, this.accountId);
+  async getKey(accountId?: string) {
+    return this.keyStore.getKey(this.networkId, accountId || this.accountId);
   }
 
   async setKey(keyPair) {
@@ -180,7 +182,8 @@ class FastAuthController {
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken) {
     const CLAIM_SALT = CLAIM + 0;
-    const keypair = await this.getKey();
+    const keypair = KeyPair.fromRandom('ED25519')
+    await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
       oidcToken,
@@ -214,7 +217,7 @@ class FastAuthController {
 
   async getUserCredential(oidcToken) {
     const GET_USER_SALT = CLAIM + 2;
-    const keypair = await this.getKey();
+    const keypair = await this.getKey('oidc_keypair');
     const signature = getUserCredentialsFrpSignature({
       salt:            GET_USER_SALT,
       oidcToken,
@@ -258,7 +261,7 @@ class FastAuthController {
   }) {
     const GET_SIGNATURE_SALT = CLAIM + 3;
     const GET_USER_SALT = CLAIM + 2;
-    const localKey = await this.getKey();
+    const localKey = await this.getKey('oidc_keypair');
     const { header } = await this.getBlock();
     const delegateAction = buildDelegateAction({
       actions,

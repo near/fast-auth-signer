@@ -48,7 +48,7 @@ const onCreateAccount = async ({
   const data = {
     near_account_id:        accountId,
     create_account_options: {
-      full_access_keys:    [publicKeyFak],
+      full_access_keys:    publicKeyFak ? [publicKeyFak] : [],
       limited_access_keys: public_key_lak ? [
         {
           public_key:   public_key_lak,
@@ -105,7 +105,7 @@ const onCreateAccount = async ({
         const parsedUrl = new URL(success_url || window.location.origin);
         parsedUrl.searchParams.set('account_id', accId);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
 
         window.location.replace(parsedUrl.href);
       },
@@ -188,7 +188,7 @@ export const onSignIn = async ({
         const parsedUrl = new URL(success_url || window.location.origin);
         parsedUrl.searchParams.set('account_id', accountIds[0]);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
 
         if (inIframe()) {
           window.open(parsedUrl.href, '_parent');
@@ -241,7 +241,7 @@ function AuthCallbackPage() {
           const { user } = result;
           if (user.emailVerified) {
             setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-            const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
+            const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
             // claim the oidc token
             (window as any).fastAuthController = new FastAuthController({
@@ -249,7 +249,9 @@ function AuthCallbackPage() {
               networkId
             });
 
-            await window.fastAuthController.setKey(keypair);
+            if (keypair) {
+              await window.fastAuthController.setKey(keypair);
+            }
             await window.fastAuthController.claimOidcToken(user.accessToken);
             (window as any).firestoreController = new FirestoreController();
             window.firestoreController.updateUser({
