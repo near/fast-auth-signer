@@ -26,7 +26,7 @@ const StyledStatusMessage = styled.div`
 `;
 
 const onCreateAccount = async ({
-  keypair,
+  oidcKeypair,
   accessToken,
   accountId,
   publicKeyFak,
@@ -43,7 +43,7 @@ const onCreateAccount = async ({
     salt:            CLAIM_SALT,
     oidcToken:       accessToken,
     shouldHashToken: false,
-    keypair,
+    keypair: oidcKeypair,
   });
   const data = {
     near_account_id:        accountId,
@@ -60,7 +60,7 @@ const onCreateAccount = async ({
     },
     oidc_token:                     accessToken,
     user_credentials_frp_signature: signature,
-    frp_public_key:                 keypair.getPublicKey().toString(),
+    frp_public_key:                 oidcKeypair.getPublicKey().toString(),
   };
 
   const headers = new Headers();
@@ -256,6 +256,7 @@ function AuthCallbackPage() {
                 await window.fastAuthController.setKey(keypair);
               }
               await window.fastAuthController.claimOidcToken(user.accessToken);
+              const oidcKeypair = await window.fastAuthController.getKey('oidc_keypair');
               (window as any).firestoreController = new FirestoreController();
               window.firestoreController.updateUser({
                 userUid:   user.uid,
@@ -264,7 +265,7 @@ function AuthCallbackPage() {
 
               const callback = isRecovery ? onSignIn : onCreateAccount;
               await callback({
-                keypair: keypair || await window.fastAuthController.getKey('oidc_keypair'),
+                oidcKeypair,
                 accessToken: user.accessToken,
                 accountId,
                 publicKeyFak,
