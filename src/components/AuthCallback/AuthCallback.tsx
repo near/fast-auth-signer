@@ -264,7 +264,7 @@ function AuthCallbackPage() {
 
               const callback = isRecovery ? onSignIn : onCreateAccount;
               await callback({
-                keypair,
+                keypair: keypair || await window.fastAuthController.getKey('oidc_keypair'),
                 accessToken: user.accessToken,
                 accountId,
                 publicKeyFak,
