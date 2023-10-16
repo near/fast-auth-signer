@@ -97,7 +97,9 @@ const onCreateAccount = async ({
           throw new Error('Could not find account creation data');
         }
 
-        window.localStorage.setItem('webauthn_username', email);
+        if (publicKeyFak) {
+          window.localStorage.setItem('webauthn_username', email);
+        }
         window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
@@ -180,7 +182,9 @@ export const onSignIn = async ({
 
         setStatusMessage('Account recovered successfully!');
 
-        window.localStorage.setItem('webauthn_username', email);
+        if (publicKeyFak) {
+          window.localStorage.setItem('webauthn_username', email);
+        }
         window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
