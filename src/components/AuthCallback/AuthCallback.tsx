@@ -143,7 +143,7 @@ export const onSignIn = async ({
   //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
 
   // onlyAddLak will be true if current browser already has a FAK with passkey
-  const addKeyActions = onlyAddLak
+  const addKeyActions = onlyAddLak || !publicKeyFak
     ? getAddLAKAction({
       publicKeyLak: public_key_lak,
       contractId:   contract_id,
