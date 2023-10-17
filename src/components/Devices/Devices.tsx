@@ -124,7 +124,6 @@ function Devices() {
           email,
           searchParams,
           navigate,
-          onlyAddLak:       publicKeyFak === 'null',
           gateway:          success_url,
         });
         setIsAddingKey(false);
