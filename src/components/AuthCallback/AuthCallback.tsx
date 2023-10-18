@@ -214,7 +214,7 @@ function AuthCallbackPage() {
     if (isSignInWithEmailLink(firebaseAuth, locationUrl)) {
       const accountId = decodeIfTruthy(searchParams.get('accountId'));
       const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-      let email = window.localStorage.getItem('emailForSignIn');
+      const email = window.localStorage.getItem('emailForSignIn');
       const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
@@ -224,12 +224,10 @@ function AuthCallbackPage() {
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
       while (!email) {
-        // TODO refactor: review
-        // User opened the link on a different device. To prevent session fixation
-        // attacks, ask the user to provide the associated email again. For example:
-
-        // TODO: replace window.prompt with regular form with one input
-        email = window.prompt('Please provide your email for confirmation');
+        const parsedUrl = new URL(failure_url || window.location.origin);
+        parsedUrl.searchParams.set('code', '500');
+        parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
+        window.location.replace(parsedUrl.href);
       }
 
       setStatusMessage('Verifying email...');
