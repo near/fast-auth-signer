@@ -256,6 +256,7 @@ function Sign() {
             <h4>Actions</h4>
             {transactionDetails.actions.map((action, i) => (
               <TableContent
+              // eslint-disable-next-line
                 key={i}
                 leftSide={transactionDetails.receiverId}
                 hasFunctionCall
