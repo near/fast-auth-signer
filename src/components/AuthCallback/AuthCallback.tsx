@@ -115,8 +115,9 @@ const onCreateAccount = async ({
 };
 
 export const onSignIn = async ({
+  oidcKeypair,
   accessToken,
-  publicKeyFak,
+  publicKeyFak: publicKeyFakRaw,
   public_key_lak,
   contract_id,
   methodNames,
@@ -135,6 +136,7 @@ export const onSignIn = async ({
       throw new Error('Unable to retrieve account Id');
     });
 
+  const publicKeyFak = publicKeyFakRaw || oidcKeypair.getPublicKey().toString();
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -181,7 +183,6 @@ export const onSignIn = async ({
         });
 
         setStatusMessage('Account recovered successfully!');
-
         if (publicKeyFak) {
           window.localStorage.setItem('webauthn_username', email);
         }

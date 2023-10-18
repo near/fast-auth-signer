@@ -192,7 +192,15 @@ function SignInPage() {
           window.location.replace(success_url || window.location.origin);
           return;
         }
-        const publicKeyFak = await window.fastAuthController.getPublicKey();
+
+        let publicKeyFak;
+        if (await isPassKeyAvailable()) {
+          publicKeyFak = await window.fastAuthController.getPublicKey();
+        } else {
+          const keypair = await window.fastAuthController.getKey('oidc_keypair');
+          publicKeyFak = keypair.getPublicKey().toString();
+        }
+
         const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
         // if given lak key is already attached to webAuthN public key, no need to add it again

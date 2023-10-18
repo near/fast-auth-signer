@@ -9,7 +9,7 @@ import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
 import { networkId } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
-import { getDomain } from '../../utils/firebase';
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 
 const Title = styled.h1`
   padding-bottom: 20px;
@@ -71,12 +71,12 @@ function Devices() {
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
       if (privateKey) {
         const accountId = await controller.getAccountIdFromOidcToken();
-
-        // claim the oidc token
-        (window as any).fastAuthController = new FastAuthController({
-          accountId,
-          networkId
-        });
+        if (!window.fastAuthController) {
+          (window as any).fastAuthController = new FastAuthController({
+            accountId,
+            networkId
+          });
+        }
         const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
         await window.fastAuthController.setKey(keypair);
       }
@@ -85,7 +85,7 @@ function Devices() {
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    if (authenticated === true) {
+    if (authenticated !== 'loading') {
       getCollection();
     }
   }, [authenticated]);
@@ -101,6 +101,18 @@ function Devices() {
         };
       });
 
+    const getPublicKeyFak = async (existingPublicKeyFak) => {
+      if (existingPublicKeyFak !== 'null') return existingPublicKeyFak;
+      if (await isPassKeyAvailable()) {
+        const publicKey = await window.fastAuthController.getPublicKey();
+        return publicKey;
+      }
+      // Non WebAuthN supported browser
+      const keypair = await window.fastAuthController.getKey('oidc_keypair')
+        || await window.fastAuthController.getKey(window.fastAuthController.getAccountId());
+      return keypair.getPublicKey().toString();
+    };
+
     return controller.deleteDeviceCollections(list)
       .then(async () => {
         setisDeleted(false);
@@ -108,15 +120,17 @@ function Devices() {
         setDeleteCollections([]);
         setIsAddingKey(true);
 
-        const email = decodeIfTruthy(searchParams.get('email'));
+        const email = decodeIfTruthy(searchParams.get('email')) || window.localStorage.getItem('emailForSignIn');
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
         const oidcToken = await controller.getUserOidcToken();
+        const oidcKeypair = await window.fastAuthController.getKey('oidc_keypair');
 
         await onSignIn({
+          oidcKeypair,
           accessToken:      oidcToken,
-          publicKeyFak:     publicKeyFak !== 'null' ? publicKeyFak : await window.fastAuthController.getPublicKey(),
+          publicKeyFak:     await getPublicKeyFak(publicKeyFak),
           public_key_lak:   public_key_lak !== 'null' ? public_key_lak : decodeIfTruthy(searchParams.get('public_key')),
           contract_id,
           methodNames,

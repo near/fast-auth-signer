@@ -121,10 +121,14 @@ class FirestoreController {
     // if account id is not set, retrieve and reinitialize fastAuthController
     if (!window.fastAuthController.getAccountId()) {
       const accountId = await this.getAccountIdFromOidcToken();
-      (window as any).fastAuthController = new FastAuthController({
-        accountId,
-        networkId
-      });
+      if (window.fastAuthController) {
+        window.fastAuthController.setAccountId(accountId);
+      } else {
+        (window as any).fastAuthController = new FastAuthController({
+          accountId,
+          networkId
+        });
+      }
     }
 
     const accessKeysWithoutRecoveryKey = await window.fastAuthController

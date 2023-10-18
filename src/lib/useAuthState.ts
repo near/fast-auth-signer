@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { getKeys } from '@near-js/biometric-ed25519/lib';
+import { getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { KeyPairEd25519 } from '@near-js/crypto';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
@@ -13,6 +13,7 @@ type AuthState = {
 
 export const useAuthState = (skipGetKeys = false): AuthState => {
   const [authenticated, setAuthenticated] = useState<AuthState['authenticated']>('loading');
+  const [passKeyAvailable, setPassKeyAvailable] = useState<boolean>(null);
   const webauthnUsername = useMemo(() => {
     try {
       return window.localStorage.getItem('webauthn_username');
@@ -21,10 +22,21 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
     }
   }, []);
 
+  useEffect(() => {
+    const checkPassKey = async () => {
+      setPassKeyAvailable(await isPassKeyAvailable());
+    };
+    checkPassKey();
+  }, []);
+
   const [controllerState, setControllerState] = useState<'loading' | boolean>('loading');
   const [query] = useSearchParams();
 
   useEffect(() => {
+    // wait until passkey check is completed
+    if (passKeyAvailable === null) {
+      return;
+    }
     if (skipGetKeys) {
       setAuthenticated(false);
       setControllerState(false);
@@ -34,9 +46,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
       }
     } else if (!webauthnUsername) {
       setAuthenticated(false);
-    } else if (query.get('email') && query.get('email') !== webauthnUsername) {
-      setAuthenticated(false);
-    } else {
+    } else if (passKeyAvailable) {
       getKeys(webauthnUsername)
         .then((keypairs) => Promise.allSettled(
           keypairs.map((k) => fetch(`${network.fastAuth.authHelperUrl}/publicKey/${k.getPublicKey().toString()}/accounts`)
@@ -63,8 +73,10 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
             setAuthenticated(true);
           }
         }).catch(() => setAuthenticated(false));
+    } else {
+      setAuthenticated(false);
     }
-  }, [webauthnUsername, controllerState, query]);
+  }, [webauthnUsername, controllerState, query, passKeyAvailable]);
 
   useEffect(() => {
     if (window.fastAuthController) {

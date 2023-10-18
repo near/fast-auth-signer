@@ -1,5 +1,5 @@
 import { Account, Connection } from '@near-js/accounts';
-import { createKey, getKeys } from '@near-js/biometric-ed25519';
+import { createKey, getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import {
   KeyPair, KeyPairEd25519, KeyType, PublicKey
 } from '@near-js/crypto';
@@ -122,6 +122,10 @@ class FastAuthController {
     return new BN(nonce).add(new BN(1));
   }
 
+  setAccountId(accountId) {
+    this.accountId = accountId;
+  }
+
   getAccountId() {
     return this.accountId;
   }
@@ -182,7 +186,12 @@ class FastAuthController {
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken) {
     const CLAIM_SALT = CLAIM + 0;
-    const keypair = KeyPair.fromRandom('ED25519')
+    const isWebAuthnSupported = await isPassKeyAvailable();
+    const existingKeyPair = isWebAuthnSupported
+      ? await this.getKey()
+      : await this.getKey('oidc_keypair');
+
+    const keypair = existingKeyPair || KeyPair.fromRandom('ED25519');
     await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
