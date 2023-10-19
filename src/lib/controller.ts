@@ -185,9 +185,12 @@ class FastAuthController {
 
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken) {
+    let keypair = await this.getKey('oidc_keypair');
     const CLAIM_SALT = CLAIM + 0;
-    const keypair = KeyPair.fromRandom('ED25519');
-    await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
+    if (!keypair) {
+      keypair = KeyPair.fromRandom('ED25519');
+      await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
+    }
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
       oidcToken,

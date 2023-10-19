@@ -4,7 +4,6 @@ import {
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
-import FastAuthController from './controller';
 import { network, networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
