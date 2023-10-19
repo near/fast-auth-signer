@@ -51,7 +51,6 @@ function Devices() {
   const navigate = useNavigate();
   const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak')) || decodeIfTruthy(searchParams.get('public_key'));
   const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-  const { authenticated } = useAuthState();
 
   const onClick = (id) => {
     if (deleteCollections.includes(id)) {
@@ -71,12 +70,18 @@ function Devices() {
     if (controller.getUserOidcToken()) {
       getCollection();
     } else {
-      navigate({
-        pathname: '/login',
-        search:   searchParams.toString(),
+      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
+        if (!token) {
+          navigate({
+            pathname: '/login',
+            search:   searchParams.toString(),
+          });
+        } else {
+          getCollection();
+        }
       });
     }
-  }, [authenticated]);
+  }, []);
 
   const onDeleteCollections = () => {
     setisDeleted(true);
