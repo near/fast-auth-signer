@@ -1,4 +1,3 @@
-import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
