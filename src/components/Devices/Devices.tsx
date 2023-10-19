@@ -1,16 +1,12 @@
-import { KeyPairEd25519 } from '@near-js/crypto';
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
-import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
-import { networkId } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
-import { getDomain } from '../../utils/firebase';
-import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 
 const Title = styled.h1`
   padding-bottom: 20px;
@@ -54,8 +50,8 @@ function Devices() {
   const controller = useMemo(() => new FirestoreController(), []);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const public_key_lak = decodeURIComponent(searchParams.get('public_key_lak'));
-  const publicKeyFak = decodeURIComponent(searchParams.get('publicKeyFak'));
+  const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak')) || decodeIfTruthy(searchParams.get('public_key'));
+  const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
   const { authenticated } = useAuthState();
 
   const onClick = (id) => {
@@ -69,26 +65,17 @@ function Devices() {
   useEffect(() => {
     const getCollection = async () => {
       setIsLoaded(true);
-      const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
-      if (privateKey) {
-        const accountId = await controller.getAccountIdFromOidcToken();
-
-        if (!window.fastAuthController) {
-          (window as any).fastAuthController = new FastAuthController({
-            accountId,
-            networkId
-          });
-        }
-        const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
-        await window.fastAuthController.setKey(keypair);
-      }
-
       const deviceCollections = await controller.listDevices();
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    if (authenticated !== 'loading') {
+    if (controller.getUserOidcToken()) {
       getCollection();
+    } else {
+      navigate({
+        pathname: '/login',
+        search:   searchParams.toString(),
+      });
     }
   }, [authenticated]);
 
@@ -103,45 +90,35 @@ function Devices() {
         };
       });
 
-    const getPublicKeyFak = async (existingPublicKeyFak) => {
-      if (existingPublicKeyFak !== 'null') return existingPublicKeyFak;
-      if (await isPassKeyAvailable()) {
-        const publicKey = await window.fastAuthController.getPublicKey();
-        return publicKey;
-      }
-      // Non WebAuthN supported browser
-      const keypair = await window.fastAuthController.getKey('oidc_keypair')
-        || await window.fastAuthController.getKey(window.fastAuthController.getAccountId());
-      return keypair.getPublicKey().toString();
-    };
-
     return controller.deleteDeviceCollections(list)
       .then(async () => {
         setisDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
         setDeleteCollections([]);
-        setIsAddingKey(true);
-
-        const email = decodeIfTruthy(searchParams.get('email'));
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-        const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const oidcToken = await controller.getUserOidcToken();
 
-        await onSignIn({
-          accessToken:      oidcToken,
-          publicKeyFak:     await getPublicKeyFak(publicKeyFak),
-          public_key_lak:   public_key_lak !== 'null' ? public_key_lak : decodeIfTruthy(searchParams.get('public_key')),
-          contract_id,
-          methodNames,
-          setStatusMessage: () => null,
-          success_url,
-          email,
-          searchParams,
-          navigate,
-          gateway:          success_url,
-        });
-        setIsAddingKey(false);
+        if (contract_id && public_key_lak) {
+          setIsAddingKey(true);
+
+          const email = decodeIfTruthy(searchParams.get('email'));
+          const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+          const success_url = decodeIfTruthy(searchParams.get('success_url'));
+          const oidcToken = await controller.getUserOidcToken();
+          await onSignIn({
+            accessToken:      oidcToken,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            setStatusMessage: () => null,
+            success_url,
+            email,
+            searchParams,
+            navigate,
+            gateway:          success_url,
+          });
+          setIsAddingKey(false);
+        }
       }).catch((err) => {
         setisDeleted(false);
         console.log('Delete Failed', err);
