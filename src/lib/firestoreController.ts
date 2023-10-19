@@ -116,15 +116,10 @@ class FirestoreController {
         createdAt:  data.dateTime ? new Date(data.dateTime) : 'Unknown',
       });
     });
-    // claim oidc token before getting all access keys
-    await (window as any).fastAuthController.claimOidcToken(this.oidcToken);
-    // if account id is not set, retrieve and reinitialize fastAuthController
+
     if (!window.fastAuthController.getAccountId()) {
       const accountId = await this.getAccountIdFromOidcToken();
-      (window as any).fastAuthController = new FastAuthController({
-        accountId,
-        networkId
-      });
+      window.fastAuthController.setAccountId(accountId);
     }
 
     const accessKeysWithoutRecoveryKey = await window.fastAuthController

@@ -1,3 +1,4 @@
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { KeyPairEd25519 } from '@near-js/crypto';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -71,11 +72,12 @@ function Devices() {
       if (privateKey) {
         const accountId = await controller.getAccountIdFromOidcToken();
 
-        // claim the oidc token
-        (window as any).fastAuthController = new FastAuthController({
-          accountId,
-          networkId
-        });
+        if (!window.fastAuthController) {
+          (window as any).fastAuthController = new FastAuthController({
+            accountId,
+            networkId
+          });
+        }
         const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
         await window.fastAuthController.setKey(keypair);
       }
@@ -84,7 +86,7 @@ function Devices() {
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    if (authenticated === true) {
+    if (authenticated !== 'loading') {
       getCollection();
     }
   }, [authenticated]);
@@ -99,6 +101,18 @@ function Devices() {
           publicKeys: target.publicKeys,
         };
       });
+
+    const getPublicKeyFak = async (existingPublicKeyFak) => {
+      if (existingPublicKeyFak !== 'null') return existingPublicKeyFak;
+      if (await isPassKeyAvailable()) {
+        const publicKey = await window.fastAuthController.getPublicKey();
+        return publicKey;
+      }
+      // Non WebAuthN supported browser
+      const keypair = await window.fastAuthController.getKey('oidc_keypair')
+        || await window.fastAuthController.getKey(window.fastAuthController.getAccountId());
+      return keypair.getPublicKey().toString();
+    };
 
     return controller.deleteDeviceCollections(list)
       .then(async () => {
@@ -115,7 +129,7 @@ function Devices() {
 
         await onSignIn({
           accessToken:      oidcToken,
-          publicKeyFak:     publicKeyFak !== 'null' ? publicKeyFak : await window.fastAuthController.getPublicKey(),
+          publicKeyFak:     await getPublicKeyFak(publicKeyFak),
           public_key_lak:   public_key_lak !== 'null' ? public_key_lak : decodeIfTruthy(searchParams.get('public_key')),
           contract_id,
           methodNames,

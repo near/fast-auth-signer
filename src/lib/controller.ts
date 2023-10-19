@@ -43,6 +43,10 @@ class FastAuthController {
     this.accountId = accountId;
   }
 
+  setAccountId = (accountId) => {
+    this.accountId = accountId;
+  };
+
   async createBiometricKey() {
     const keyPair = await createKey(this.accountId);
     await this.setKey(keyPair);
@@ -182,7 +186,7 @@ class FastAuthController {
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken) {
     const CLAIM_SALT = CLAIM + 0;
-    const keypair = KeyPair.fromRandom('ED25519')
+    const keypair = KeyPair.fromRandom('ED25519');
     await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
