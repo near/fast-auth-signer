@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
-import { network, networkId } from '../utils/config';
+import { network } from '../utils/config';
 import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
@@ -115,6 +115,8 @@ class FirestoreController {
         createdAt:  data.dateTime ? new Date(data.dateTime) : 'Unknown',
       });
     });
+
+    await (window as any).fastAuthController.claimOidcToken(this.oidcToken);
 
     if (!window.fastAuthController.getAccountId()) {
       const accountId = await this.getAccountIdFromOidcToken();
