@@ -15,7 +15,7 @@ import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
-import { network } from '../../utils/config';
+import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
 const formatActionType = (action: string) => {
@@ -93,7 +93,7 @@ function Sign() {
     if (!authenticated) {
       const success_url = searchParams.get('success_url');
       const failure_url = searchParams.get('failure_url');
-      const url = new URL(success_url || failure_url || window.location.origin);
+      const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       url.searchParams.append('error', 'User not authenticated');
       window.location.replace(url);
       window.parent.postMessage({ signedDelegates: '', error: 'User not authenticated' }, '*');
@@ -181,14 +181,14 @@ function Sign() {
           signedTransactions.push(base64);
         } catch (err) {
           const failure_url = searchParams.get('failure_url');
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           parsedUrl.searchParams.set('message', err);
           window.location.replace(parsedUrl.href);
           window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
           return;
         }
       }
-      const parsedUrl = new URL(success_url || window.location.origin);
+      const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
       window.parent.postMessage({ signedDelegates: signedTransactions.join(',') }, '*');
@@ -198,7 +198,7 @@ function Sign() {
   const onCancel = () => {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
-    const url = new URL(success_url || failure_url || window.location.origin);
+    const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
     url.searchParams.append('error', 'User cancelled action');
     window.location.replace(url);
     window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
