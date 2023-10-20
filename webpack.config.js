@@ -18,7 +18,7 @@ module.exports = {
       process: 'process/browser',
       Buffer:  ['buffer', 'Buffer']
     }),
-    new webpack.EnvironmentPlugin({ 
+    new webpack.EnvironmentPlugin({
       DEBUG:                                true,
       REACT_APP_BASE_PATH:                  '',
       NETWORK_ID:                           'mainnet',
@@ -47,7 +47,7 @@ module.exports = {
     port: 3000,
   },
   devtool: 'eval-source-map',
-  module: {
+  module:  {
     // exclude node_modules
     rules: [
       {

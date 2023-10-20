@@ -1,5 +1,4 @@
 import styled from 'styled-components';
-import ArrowDownSvg from '../../Images/arrow-down';
 
 interface check {
   hasFunctionCall?: boolean;

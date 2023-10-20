@@ -11,9 +11,9 @@ import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { network, networkId } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth, getDomain } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
-  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getDeleteKeysAction, getAddLAKAction
+  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getAddLAKAction
 } from '../../utils/mpc-service';
 
 const StyledStatusMessage = styled.div`

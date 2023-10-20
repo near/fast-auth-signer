@@ -52,7 +52,6 @@ function CreateAccount() {
   const formValues = watch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
 
   const createAccount = async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');

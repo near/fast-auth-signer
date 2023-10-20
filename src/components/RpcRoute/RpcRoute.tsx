@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-
 function RpcRoute() {
   useEffect(() => {
     const listener = (e: MessageEvent) => {
