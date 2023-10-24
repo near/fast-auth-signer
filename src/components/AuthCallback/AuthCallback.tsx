@@ -43,7 +43,7 @@ const onCreateAccount = async ({
     salt:            CLAIM_SALT,
     oidcToken:       accessToken,
     shouldHashToken: false,
-    keypair: oidcKeypair,
+    keypair:         oidcKeypair,
   });
   const data = {
     near_account_id:        accountId,

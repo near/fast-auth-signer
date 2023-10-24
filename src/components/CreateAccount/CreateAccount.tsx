@@ -1,5 +1,4 @@
 import { ErrorMessage } from '@hookform/error-message';
-import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
