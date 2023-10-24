@@ -257,7 +257,7 @@ function AuthCallbackPage() {
               await window.fastAuthController.setKey(keypair);
             }
             await window.fastAuthController.claimOidcToken(user.accessToken);
-            const oidcKeypair = await window.fastAuthController.getKey('oidc_keypair');
+            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${user.accessToken}`);
             (window as any).firestoreController = new FirestoreController();
             window.firestoreController.updateUser({
               userUid:   user.uid,

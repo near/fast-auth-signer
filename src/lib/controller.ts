@@ -91,6 +91,11 @@ class FastAuthController {
     return this.keyStore.clear();
   }
 
+  async clearUser() {
+    await this.keyStore.clear();
+    window.localStorage.removeItem('webauthn_username');
+  }
+
   async isSignedIn() {
     return !!(await this.getKey());
   }
@@ -185,11 +190,11 @@ class FastAuthController {
 
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken) {
-    let keypair = await this.getKey('oidc_keypair');
+    let keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
     const CLAIM_SALT = CLAIM + 0;
     if (!keypair) {
       keypair = KeyPair.fromRandom('ED25519');
-      await this.keyStore.setKey(this.networkId, 'oidc_keypair', keypair);
+      await this.keyStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
     }
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
@@ -224,7 +229,7 @@ class FastAuthController {
 
   async getUserCredential(oidcToken) {
     const GET_USER_SALT = CLAIM + 2;
-    const keypair = await this.getKey('oidc_keypair');
+    const keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
     const signature = getUserCredentialsFrpSignature({
       salt:            GET_USER_SALT,
       oidcToken,
@@ -268,7 +273,7 @@ class FastAuthController {
   }) {
     const GET_SIGNATURE_SALT = CLAIM + 3;
     const GET_USER_SALT = CLAIM + 2;
-    const localKey = await this.getKey('oidc_keypair');
+    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`);
     const { header } = await this.getBlock();
     const delegateAction = buildDelegateAction({
       actions,

@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
 import FirestoreController from '../../lib/firestoreController';
-import { useAuthState } from '../../lib/useAuthState';
 import { decodeIfTruthy } from '../../utils';
 import { onSignIn } from '../AuthCallback/AuthCallback';
 
@@ -67,8 +66,19 @@ function Devices() {
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
+
+    const getKeypairOrLogout = () => window.fastAuthController.getKey(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
+      if (keypair) {
+        getCollection();
+      } else {
+        window.fastAuthController.clearUser().then(() => navigate({
+          pathname: '/login',
+          search:   searchParams.toString(),
+        }));
+      }
+    });
     if (controller.getUserOidcToken()) {
-      getCollection();
+      getKeypairOrLogout();
     } else {
       (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
         if (!token) {
@@ -77,7 +87,7 @@ function Devices() {
             search:   searchParams.toString(),
           });
         } else {
-          getCollection();
+          getKeypairOrLogout();
         }
       });
     }
@@ -104,7 +114,7 @@ function Devices() {
         if (contract_id && public_key_lak) {
           setIsAddingKey(true);
 
-          const email = decodeIfTruthy(searchParams.get('email'));
+          const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
           const oidcToken = await controller.getUserOidcToken();
