@@ -32,7 +32,7 @@ const Row = styled.div`
   padding-bottom: 10px;
 `;
 
-const DeleteButton = styled.button`
+const Button = styled.button`
   width: 100%;
   margin-top: 30px;
   outline: none;
@@ -44,6 +44,7 @@ function Devices() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isDeleted, setisDeleted] = useState(false);
   const [isAddingKey, setIsAddingKey] = useState(false);
+  const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
   const controller = useMemo(() => new FirestoreController(), []);
   const [searchParams] = useSearchParams();
@@ -61,7 +62,6 @@ function Devices() {
 
   useEffect(() => {
     const getCollection = async () => {
-      setIsLoaded(true);
       const deviceCollections = await controller.listDevices();
       setIsLoaded(false);
       setCollections(deviceCollections);
@@ -71,27 +71,32 @@ function Devices() {
       if (keypair) {
         getCollection();
       } else {
-        window.fastAuthController.clearUser().then(() => navigate({
-          pathname: '/login',
-          search:   searchParams.toString(),
-        }));
+        window.fastAuthController.clearUser().then(() => {
+          setVerifyEmailRequired(true);
+          setIsLoaded(false);
+        });
       }
     });
+    setIsLoaded(true);
     if (controller.getUserOidcToken()) {
       getKeypairOrLogout();
     } else {
       (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
         if (!token) {
-          navigate({
-            pathname: '/login',
-            search:   searchParams.toString(),
-          });
+          setVerifyEmailRequired(true);
         } else {
           getKeypairOrLogout();
         }
       });
     }
   }, []);
+
+  const redirectToSignin = () => {
+    navigate({
+      pathname: '/login',
+      search:   searchParams.toString(),
+    });
+  };
 
   const onDeleteCollections = () => {
     setisDeleted(true);
@@ -150,6 +155,14 @@ function Devices() {
           You have reached maximum number of keys. Please delete some keys to add new keys.
         </Description>
       )}
+
+      {
+        isVerifyEmailRequired && (
+          <Description>
+            You need to verify your email address to use this feature
+          </Description>
+        )
+      }
       {
         collections.map((collection) => (
           <Row key={collection.id}>
@@ -160,9 +173,16 @@ function Devices() {
       }
       {
         collections.length > 0 && (
-          <DeleteButton type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
+          <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
             {`Delete key${deleteCollections.length > 1 ? 's' : ''}`}
-          </DeleteButton>
+          </Button>
+        )
+      }
+      {
+        isVerifyEmailRequired && (
+          <Button type="button" onClick={redirectToSignin}>
+            Redirect
+          </Button>
         )
       }
       {isDeleted && <div>Deleting...</div>}
