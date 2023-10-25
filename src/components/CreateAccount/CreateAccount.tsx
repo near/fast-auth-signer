@@ -1,5 +1,4 @@
 import { ErrorMessage } from '@hookform/error-message';
-import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import * as React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -75,16 +74,16 @@ function CreateAccount() {
       });
       const newSearchParams = new URLSearchParams({
         accountId,
-        publicKeyFak,
         email,
         isRecovery: 'false',
+        ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      const hashParams = new URLSearchParams({ privateKey });
+      const hashParams = new URLSearchParams({ ...(privateKey ? { privateKey } : {}) });
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
@@ -105,20 +104,6 @@ function CreateAccount() {
   };
 
   useEffect(() => {
-    const checkPassKey = async (): Promise<void> => {
-      const isPasskeyReady = await isPassKeyAvailable();
-      if (!isPasskeyReady) {
-        openToast({
-          title: '',
-          type:  'INFO',
-          description:
-            'Passkey support is required for account creation. Try using an updated version of Chrome or Safari to create an account.',
-          duration: 5000,
-        });
-      }
-    };
-    checkPassKey();
-
     const email = searchParams.get('email');
     const username = searchParams.get('accountId');
 

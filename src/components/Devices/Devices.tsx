@@ -1,13 +1,10 @@
-import { KeyPairEd25519 } from '@near-js/crypto';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
-import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { useAuthState } from '../../lib/useAuthState';
-import { decodeIfTruthy } from '../../utils';
-import { networkId } from '../../utils/config';
+import { decodeIfTruthy, inIframe } from '../../utils';
+import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
 
 const Title = styled.h1`
@@ -36,7 +33,7 @@ const Row = styled.div`
   padding-bottom: 10px;
 `;
 
-const DeleteButton = styled.button`
+const Button = styled.button`
   width: 100%;
   margin-top: 30px;
   outline: none;
@@ -48,13 +45,13 @@ function Devices() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isDeleted, setisDeleted] = useState(false);
   const [isAddingKey, setIsAddingKey] = useState(false);
+  const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
   const controller = useMemo(() => new FirestoreController(), []);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const public_key_lak = decodeURIComponent(searchParams.get('public_key_lak'));
-  const publicKeyFak = decodeURIComponent(searchParams.get('publicKeyFak'));
-  const { authenticated } = useAuthState();
+  const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak')) || decodeIfTruthy(searchParams.get('public_key'));
+  const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
 
   const onClick = (id) => {
     if (deleteCollections.includes(id)) {
@@ -66,28 +63,45 @@ function Devices() {
 
   useEffect(() => {
     const getCollection = async () => {
-      setIsLoaded(true);
-      const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
-      if (privateKey) {
-        const accountId = await controller.getAccountIdFromOidcToken();
-
-        // claim the oidc token
-        (window as any).fastAuthController = new FastAuthController({
-          accountId,
-          networkId
-        });
-        const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
-        await window.fastAuthController.setKey(keypair);
-      }
-
       const deviceCollections = await controller.listDevices();
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
-    if (authenticated === true) {
-      getCollection();
+
+    const getKeypairOrLogout = () => window.fastAuthController.getKey(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
+      if (keypair) {
+        getCollection();
+      } else {
+        window.fastAuthController.clearUser().then(() => {
+          setVerifyEmailRequired(true);
+          setIsLoaded(false);
+        });
+      }
+    });
+    setIsLoaded(true);
+    if (controller.getUserOidcToken()) {
+      getKeypairOrLogout();
+    } else {
+      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
+        if (!token) {
+          setVerifyEmailRequired(true);
+        } else {
+          getKeypairOrLogout();
+        }
+      });
     }
-  }, [authenticated]);
+  }, []);
+
+  const redirectToSignin = () => {
+    if (inIframe()) {
+      window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
+    } else {
+      navigate({
+        pathname: '/login',
+        search:   searchParams.toString(),
+      });
+    }
+  };
 
   const onDeleteCollections = () => {
     setisDeleted(true);
@@ -105,29 +119,30 @@ function Devices() {
         setisDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
         setDeleteCollections([]);
-        setIsAddingKey(true);
-
-        const email = decodeIfTruthy(searchParams.get('email'));
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-        const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const oidcToken = await controller.getUserOidcToken();
 
-        await onSignIn({
-          accessToken:      oidcToken,
-          publicKeyFak:     publicKeyFak !== 'null' ? publicKeyFak : await window.fastAuthController.getPublicKey(),
-          public_key_lak:   public_key_lak !== 'null' ? public_key_lak : decodeIfTruthy(searchParams.get('public_key')),
-          contract_id,
-          methodNames,
-          setStatusMessage: () => null,
-          success_url,
-          email,
-          searchParams,
-          navigate,
-          onlyAddLak:       publicKeyFak === 'null',
-          gateway:          success_url,
-        });
-        setIsAddingKey(false);
+        if (contract_id && public_key_lak) {
+          setIsAddingKey(true);
+
+          const email = window.localStorage.getItem('emailForSignIn');
+          const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+          const success_url = decodeIfTruthy(searchParams.get('success_url'));
+          const oidcToken = await controller.getUserOidcToken();
+          await onSignIn({
+            accessToken:      oidcToken,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            setStatusMessage: () => null,
+            success_url,
+            email,
+            searchParams,
+            navigate,
+            gateway:          success_url,
+          });
+          setIsAddingKey(false);
+        }
       }).catch((err) => {
         setisDeleted(false);
         console.log('Delete Failed', err);
@@ -145,6 +160,14 @@ function Devices() {
           You have reached maximum number of keys. Please delete some keys to add new keys.
         </Description>
       )}
+
+      {
+        isVerifyEmailRequired && (
+          <Description>
+            You need to verify your email address to use this feature
+          </Description>
+        )
+      }
       {
         collections.map((collection) => (
           <Row key={collection.id}>
@@ -155,9 +178,16 @@ function Devices() {
       }
       {
         collections.length > 0 && (
-          <DeleteButton type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
+          <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
             {`Delete key${deleteCollections.length > 1 ? 's' : ''}`}
-          </DeleteButton>
+          </Button>
+        )
+      }
+      {
+        isVerifyEmailRequired && (
+          <Button type="button" onClick={redirectToSignin}>
+            Redirect
+          </Button>
         )
       }
       {isDeleted && <div>Deleting...</div>}

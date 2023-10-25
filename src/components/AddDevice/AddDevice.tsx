@@ -1,4 +1,4 @@
-import { createKey } from '@near-js/biometric-ed25519/lib';
+import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -72,14 +72,15 @@ const InputContainer = styled.div`
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
-  const keyPair = await createKey(email);
-  const publicKeyWebAuthn = keyPair.getPublicKey().toString();
-  if (!publicKeyWebAuthn) {
-    throw new Error('No public key found');
+  const passkeyAvailable = await isPassKeyAvailable();
+  let publicKeyWebAuthn; let keyPair;
+  if (passkeyAvailable) {
+    keyPair = await createKey(email);
+    publicKeyWebAuthn = keyPair.getPublicKey().toString();
   }
 
   const searchParams = new URLSearchParams({
-    publicKeyFak: publicKeyWebAuthn,
+    ...(publicKeyWebAuthn ? { publicKeyFak: publicKeyWebAuthn } : {}),
     ...(accountId ? { accountId } : {}),
     ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
@@ -89,7 +90,9 @@ export const handleCreateAccount = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
-  window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
+  if (publicKeyWebAuthn) {
+    window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
+  }
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
@@ -99,7 +102,7 @@ export const handleCreateAccount = async ({
   });
   window.localStorage.setItem('emailForSignIn', email);
   return {
-    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair.toString()
+    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
   };
 };
 
@@ -146,16 +149,16 @@ function SignInPage() {
         methodNames,
       });
       const newSearchParams = new URLSearchParams({
-        publicKeyFak,
         email,
         isRecovery: 'true',
+        ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      const hashParams = new URLSearchParams({ privateKey });
+      const hashParams = new URLSearchParams({ ...(privateKey ? { privateKey } : {}) });
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log(error);

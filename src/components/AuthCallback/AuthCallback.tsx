@@ -26,7 +26,7 @@ const StyledStatusMessage = styled.div`
 `;
 
 const onCreateAccount = async ({
-  keypair,
+  oidcKeypair,
   accessToken,
   accountId,
   publicKeyFak,
@@ -43,12 +43,12 @@ const onCreateAccount = async ({
     salt:            CLAIM_SALT,
     oidcToken:       accessToken,
     shouldHashToken: false,
-    keypair,
+    keypair:         oidcKeypair,
   });
   const data = {
     near_account_id:        accountId,
     create_account_options: {
-      full_access_keys:    [publicKeyFak],
+      full_access_keys:    publicKeyFak ? [publicKeyFak] : [],
       limited_access_keys: public_key_lak ? [
         {
           public_key:   public_key_lak,
@@ -60,7 +60,7 @@ const onCreateAccount = async ({
     },
     oidc_token:                     accessToken,
     user_credentials_frp_signature: signature,
-    frp_public_key:                 keypair.getPublicKey().toString(),
+    frp_public_key:                 oidcKeypair.getPublicKey().toString(),
   };
 
   const headers = new Headers();
@@ -97,7 +97,9 @@ const onCreateAccount = async ({
           throw new Error('Could not find account creation data');
         }
 
-        window.localStorage.setItem('webauthn_username', email);
+        if (publicKeyFak) {
+          window.localStorage.setItem('webauthn_username', email);
+        }
         window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
@@ -105,7 +107,7 @@ const onCreateAccount = async ({
         const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accId);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
 
         window.location.replace(parsedUrl.href);
       },
@@ -123,7 +125,6 @@ export const onSignIn = async ({
   email,
   searchParams,
   navigate,
-  onlyAddLak = false,
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -141,6 +142,7 @@ export const onSignIn = async ({
   //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
 
   // onlyAddLak will be true if current browser already has a FAK with passkey
+  const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
   const addKeyActions = onlyAddLak
     ? getAddLAKAction({
       publicKeyLak: public_key_lak,
@@ -180,7 +182,9 @@ export const onSignIn = async ({
 
         setStatusMessage('Account recovered successfully!');
 
-        window.localStorage.setItem('webauthn_username', email);
+        if (publicKeyFak) {
+          window.localStorage.setItem('webauthn_username', email);
+        }
         window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
@@ -188,7 +192,7 @@ export const onSignIn = async ({
         const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accountIds[0]);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', [public_key_lak, publicKeyFak].join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
 
         if (inIframe()) {
           window.open(parsedUrl.href, '_parent');
@@ -241,7 +245,7 @@ function AuthCallbackPage() {
           const { user } = result;
           if (user.emailVerified) {
             setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-            const keypair = new KeyPairEd25519(privateKey.split(':')[1]);
+            const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
             // claim the oidc token
             (window as any).fastAuthController = new FastAuthController({
@@ -249,44 +253,45 @@ function AuthCallbackPage() {
               networkId
             });
 
-            try {
+            if (keypair) {
               await window.fastAuthController.setKey(keypair);
-              await window.fastAuthController.claimOidcToken(user.accessToken);
-              (window as any).firestoreController = new FirestoreController();
-              window.firestoreController.updateUser({
-                userUid:   user.uid,
-                oidcToken: user.accessToken,
-              });
-
-              const callback = isRecovery ? onSignIn : onCreateAccount;
-              await callback({
-                keypair,
-                accessToken: user.accessToken,
-                accountId,
-                publicKeyFak,
-                public_key_lak,
-                contract_id,
-                methodNames,
-                success_url,
-                setStatusMessage,
-                email,
-                navigate,
-                searchParams,
-                gateway:      success_url,
-              });
-            } catch (e) {
-              console.log('error:', e);
-              const { message } = e;
-              const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-              parsedUrl.searchParams.set('code', e.code);
-              parsedUrl.searchParams.set('reason', message);
-              window.location.replace(parsedUrl.href);
-              openToast({
-                type:  'ERROR',
-                title: message,
-              });
             }
+            await window.fastAuthController.claimOidcToken(user.accessToken);
+            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${user.accessToken}`);
+            (window as any).firestoreController = new FirestoreController();
+            window.firestoreController.updateUser({
+              userUid:   user.uid,
+              oidcToken: user.accessToken,
+            });
+
+            const callback = isRecovery ? onSignIn : onCreateAccount;
+            await callback({
+              oidcKeypair,
+              accessToken: user.accessToken,
+              accountId,
+              publicKeyFak,
+              public_key_lak,
+              contract_id,
+              methodNames,
+              success_url,
+              setStatusMessage,
+              email,
+              navigate,
+              searchParams,
+              gateway:      success_url,
+            });
           }
+        }).catch((e) => {
+          console.log('error:', e);
+          const { message } = e;
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+          parsedUrl.searchParams.set('code', e.code);
+          parsedUrl.searchParams.set('reason', message);
+          window.location.replace(parsedUrl.href);
+          openToast({
+            type:  'ERROR',
+            title: message,
+          });
         });
     } else {
       navigate('/signup');
