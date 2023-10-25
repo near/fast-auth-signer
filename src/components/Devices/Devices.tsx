@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
 import FirestoreController from '../../lib/firestoreController';
-import { decodeIfTruthy } from '../../utils';
+import { decodeIfTruthy, inIframe } from '../../utils';
+import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
 
 const Title = styled.h1`
@@ -92,10 +93,14 @@ function Devices() {
   }, []);
 
   const redirectToSignin = () => {
-    navigate({
-      pathname: '/login',
-      search:   searchParams.toString(),
-    });
+    if (inIframe()) {
+      window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
+    } else {
+      navigate({
+        pathname: '/login',
+        search:   searchParams.toString(),
+      });
+    }
   };
 
   const onDeleteCollections = () => {
