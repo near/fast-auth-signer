@@ -10,7 +10,7 @@ import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy, inIframe } from '../../utils';
-import { network, networkId } from '../../utils/config';
+import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getAddLAKAction
@@ -104,7 +104,7 @@ const onCreateAccount = async ({
 
         setStatusMessage('Redirecting to app...');
 
-        const parsedUrl = new URL(success_url || window.location.origin);
+        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accId);
         parsedUrl.searchParams.set('public_key', public_key_lak);
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
@@ -189,7 +189,7 @@ export const onSignIn = async ({
 
         setStatusMessage('Redirecting to app...');
 
-        const parsedUrl = new URL(success_url || window.location.origin);
+        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accountIds[0]);
         parsedUrl.searchParams.set('public_key', public_key_lak);
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
@@ -228,7 +228,7 @@ function AuthCallbackPage() {
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
       while (!email) {
-        const parsedUrl = new URL(failure_url || window.location.origin);
+        const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('code', '500');
         parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
         window.location.replace(parsedUrl.href);

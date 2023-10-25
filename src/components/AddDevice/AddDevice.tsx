@@ -189,7 +189,7 @@ function SignInPage() {
       const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
         if (!public_key || !contract_id) {
-          window.location.replace(success_url || window.location.origin);
+          window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           return;
         }
         const publicKeyFak = await window.fastAuthController.getPublicKey();
@@ -198,7 +198,7 @@ function SignInPage() {
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;
         if (noNeedToAddKey) {
-          const parsedUrl = new URL(success_url || window.location.origin);
+          const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
           parsedUrl.searchParams.set('public_key', public_key);
           parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
@@ -239,7 +239,7 @@ function SignInPage() {
             gateway:      success_url,
           })
             .then(() => {
-              const parsedUrl = new URL(success_url || window.location.origin);
+              const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
               parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
               parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
@@ -266,7 +266,7 @@ function SignInPage() {
         }).catch((error) => {
           console.log('error', error);
           const { message } = error;
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
+          const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           parsedUrl.searchParams.set('code', error.code);
           parsedUrl.searchParams.set('reason', message);
           window.location.replace(parsedUrl.href);
