@@ -22,3 +22,6 @@ yarn-error.log*
 # Yarn Integrity file
 .yarn-integrity
 .vscode/settings.json
+
+# Sentry Config File
+.env.sentry-build-plugin
