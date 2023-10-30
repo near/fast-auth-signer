@@ -42,7 +42,7 @@ module.exports = {
   }), sentryWebpackPlugin({
     authToken: process.env.SENTRY_AUTH_TOKEN,
     org: "pagoda-o6",
-    project: "javascript-react"
+    project: "fast-auth"
   })],
   devServer: {
     static: {
