@@ -1,6 +1,6 @@
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import BN from 'bn.js';
-import { sendSignInLinkToEmail } from 'firebase/auth';
+import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -138,6 +138,10 @@ function SignInPage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
+      const result = await fetchSignInMethodsForEmail(firebaseAuth, data.email);
+      if (!result.length) {
+        throw new Error('Account not found, please create an account and try again');
+      }
       const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
         accountId:   null,
         email:       data.email,
@@ -162,6 +166,11 @@ function SignInPage() {
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log(error);
+      const { message } = error;
+      const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+      parsedUrl.searchParams.set('code', error.code);
+      parsedUrl.searchParams.set('reason', message);
+      window.location.replace(parsedUrl.href);
 
       if (typeof error?.message === 'string') {
         openToast({

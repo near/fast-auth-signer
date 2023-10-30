@@ -135,6 +135,9 @@ export const onSignIn = async ({
       throw new Error('Unable to retrieve account Id');
     });
 
+  if (!accountIds.length) {
+    throw new Error('Account not found, please create an account and try again');
+  }
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
