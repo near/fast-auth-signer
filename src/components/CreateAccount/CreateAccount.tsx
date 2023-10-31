@@ -11,7 +11,7 @@ import FormContainer from './styles/FormContainer';
 import InputContainer from './styles/InputContainer';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { inIframe } from '../../utils';
+import { inIframe, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
@@ -87,11 +87,7 @@ function CreateAccount() {
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
-      const { message } = error;
-      const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('code', error.code);
-      parsedUrl.searchParams.set('reason', message);
-      window.location.replace(parsedUrl.href);
+      redirectWithError({ success_url, failure_url, error });
       // currently running handleCreateAccount() will throw an error as:
       // error DOMException: The following credential operations can only occur in a document which is same-origin with all of its ancestors: storage/retrieval of 'PasswordCredential' and 'FederatedCredential', storage of 'PublicKeyCredential'.
 

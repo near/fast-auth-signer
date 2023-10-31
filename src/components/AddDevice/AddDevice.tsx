@@ -10,7 +10,7 @@ import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
-import { decodeIfTruthy, inIframe } from '../../utils';
+import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
@@ -166,11 +166,7 @@ function SignInPage() {
       navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
     } catch (error: any) {
       console.log(error);
-      const { message } = error;
-      const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('code', error.code);
-      parsedUrl.searchParams.set('reason', message);
-      window.location.replace(parsedUrl.href);
+      redirectWithError({ success_url, failure_url, error });
 
       if (typeof error?.message === 'string') {
         openToast({
@@ -274,14 +270,10 @@ function SignInPage() {
             });
         }).catch((error) => {
           console.log('error', error);
-          const { message } = error;
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('code', error.code);
-          parsedUrl.searchParams.set('reason', message);
-          window.location.replace(parsedUrl.href);
+          redirectWithError({ success_url, failure_url, error });
           openToast({
             type:  'ERROR',
-            title: message,
+            title: error.message,
           });
         });
       } else if (email && !authenticated) {

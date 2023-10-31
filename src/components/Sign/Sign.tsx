@@ -17,6 +17,7 @@ import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
+import { redirectWithError } from '../../utils';
 
 const formatActionType = (action: string) => {
   switch (action) {
@@ -181,9 +182,7 @@ function Sign() {
           signedTransactions.push(base64);
         } catch (err) {
           const failure_url = searchParams.get('failure_url');
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('message', err);
-          window.location.replace(parsedUrl.href);
+          redirectWithError({ success_url, failure_url, error: err });
           window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
           return;
         }

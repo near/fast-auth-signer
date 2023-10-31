@@ -1,3 +1,5 @@
+import { basePath } from "./config";
+
 /* eslint-disable import/prefer-default-export */
 export function inIframe() {
   try {
@@ -13,4 +15,15 @@ export const decodeIfTruthy = (paramVal) => {
   }
 
   return paramVal;
+};
+
+export const redirectWithError = ({
+  failure_url,
+  success_url,
+  error
+}: { failure_url: string; success_url: string; error: Error }): void => {
+  const { message } = error;
+  const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+  parsedUrl.searchParams.set('reason', message);
+  window.location.replace(parsedUrl.href);
 };

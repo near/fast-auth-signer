@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
-import { decodeIfTruthy, inIframe } from '../../utils';
+import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
@@ -286,14 +286,10 @@ function AuthCallbackPage() {
           }
         }).catch((e) => {
           console.log('error:', e);
-          const { message } = e;
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
-          parsedUrl.searchParams.set('code', e.code);
-          parsedUrl.searchParams.set('reason', message);
-          window.location.replace(parsedUrl.href);
+          redirectWithError({ success_url, failure_url, error: e });
           openToast({
             type:  'ERROR',
-            title: message,
+            title: e.message,
           });
         });
     } else {
