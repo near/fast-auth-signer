@@ -8,6 +8,7 @@ import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
+import { redirectWithError } from '../../utils';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -112,11 +113,7 @@ function VerifyEmailPage() {
       });
     } catch (error: any) {
       console.log(error);
-      const { message } = error;
-      const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('code', error.code);
-      parsedUrl.searchParams.set('reason', message);
-      window.location.replace(parsedUrl.href);
+      redirectWithError({ success_url, failure_url, error });
 
       if (typeof error?.message === 'string') {
         openToast({
