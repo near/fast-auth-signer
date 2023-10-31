@@ -6,6 +6,7 @@ import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
+import { captureException } from '@sentry/react';
 
 const Title = styled.h1`
   padding-bottom: 20px;
@@ -144,6 +145,7 @@ function Devices() {
           setIsAddingKey(false);
         }
       }).catch((err) => {
+        captureException(err);
         setisDeleted(false);
         console.log('Delete Failed', err);
       });

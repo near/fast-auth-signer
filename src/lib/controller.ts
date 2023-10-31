@@ -14,6 +14,7 @@ import { sha256 } from 'js-sha256';
 import networkParams from './networkParams';
 import { network } from '../utils/config';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
+import { captureException } from '@sentry/react';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
@@ -161,6 +162,9 @@ class FastAuthController {
       mode:    'cors',
       body:    JSON.stringify(Array.from(encodeSignedDelegate(signedDelegate))),
       headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).catch((err) => {
+      console.log('Unable to sign and send delegate action', err);
+      captureException(err);
     });
   }
 
@@ -189,7 +193,7 @@ class FastAuthController {
   }
 
   // This call need to be called after new oidc token is generated
-  async claimOidcToken(oidcToken) {
+  async claimOidcToken(oidcToken: string): Promise<{ mpc_signature: string }> {
     let keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
     const CLAIM_SALT = CLAIM + 0;
     if (!keypair) {
@@ -332,6 +336,9 @@ class FastAuthController {
         mode:    'cors',
         body:    JSON.stringify(Array.from(encodedSignedDelegate)),
         headers: new Headers({ 'Content-Type': 'application/json' }),
+      }).catch((err) => {
+        console.log('Unable to sign and send action with recovery key', err);
+        captureException(err);
       });
     });
   }

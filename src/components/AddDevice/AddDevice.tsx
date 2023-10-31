@@ -14,6 +14,7 @@ import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
+import { captureException } from '@sentry/react';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -270,6 +271,7 @@ function SignInPage() {
             });
         }).catch((error) => {
           console.log('error', error);
+          captureException(error);
           redirectWithError({ success_url, failure_url, error });
           openToast({
             type:  'ERROR',

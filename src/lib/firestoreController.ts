@@ -8,6 +8,7 @@ import { network } from '../utils/config';
 import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
+import { captureException } from '@sentry/react';
 
 class FirestoreController {
   private firestore: Firestore;
@@ -42,6 +43,7 @@ class FirestoreController {
       .then((res) => res.json())
       .catch((err) => {
         console.log(err);
+        captureException(err);
         throw new Error('Unable to retrieve account Id');
       });
     return accountIds[0];
@@ -153,6 +155,7 @@ class FirestoreController {
       .then((res) => res.json())
       .catch((err) => {
         console.log(err);
+        captureException(err);
         throw new Error('Unable to retrieve account Id');
       });
     // delete firebase records
