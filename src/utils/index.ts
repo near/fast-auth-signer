@@ -1,4 +1,4 @@
-import { basePath } from "./config";
+import { basePath } from './config';
 
 /* eslint-disable import/prefer-default-export */
 export function inIframe() {

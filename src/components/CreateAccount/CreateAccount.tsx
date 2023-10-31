@@ -12,7 +12,7 @@ import InputContainer from './styles/InputContainer';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
-import { basePath, network } from '../../utils/config';
+import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
 } from '../../utils/form-validation';

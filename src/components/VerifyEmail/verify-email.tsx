@@ -6,9 +6,9 @@ import styled from 'styled-components';
 import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
-import { redirectWithError } from '../../utils';
 
 const StyledContainer = styled.div`
   width: 100%;
