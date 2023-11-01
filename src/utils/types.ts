@@ -17,6 +17,7 @@ type ProductionNetwork = {
   helperUrl: string;
   relayerUrl: string;
   explorerUrl: string;
+  sentryDsn?: string;
   fastAuth: {
     mpcRecoveryUrl: string;
     authHelperUrl: string; // TODO refactor: review by fastauth team
