@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
+import { redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 
@@ -112,6 +113,7 @@ function VerifyEmailPage() {
       });
     } catch (error: any) {
       console.log(error);
+      redirectWithError({ success_url, failure_url, error });
 
       if (typeof error?.message === 'string') {
         openToast({

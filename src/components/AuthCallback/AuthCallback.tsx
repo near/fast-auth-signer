@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { openToast } from '../../lib/Toast';
-import { decodeIfTruthy, inIframe } from '../../utils';
+import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
@@ -135,6 +135,9 @@ export const onSignIn = async ({
       throw new Error('Unable to retrieve account Id');
     });
 
+  if (!accountIds.length) {
+    throw new Error('Account not found, please create an account and try again');
+  }
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -283,14 +286,10 @@ function AuthCallbackPage() {
           }
         }).catch((e) => {
           console.log('error:', e);
-          const { message } = e;
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin);
-          parsedUrl.searchParams.set('code', e.code);
-          parsedUrl.searchParams.set('reason', message);
-          window.location.replace(parsedUrl.href);
+          redirectWithError({ success_url, failure_url, error: e });
           openToast({
             type:  'ERROR',
-            title: message,
+            title: e.message,
           });
         });
     } else {

@@ -15,6 +15,7 @@ import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
+import { redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
@@ -181,9 +182,7 @@ function Sign() {
           signedTransactions.push(base64);
         } catch (err) {
           const failure_url = searchParams.get('failure_url');
-          const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('message', err);
-          window.location.replace(parsedUrl.href);
+          redirectWithError({ success_url, failure_url, error: err });
           window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
           return;
         }
