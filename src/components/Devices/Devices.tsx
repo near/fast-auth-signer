@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
@@ -6,7 +7,6 @@ import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
-import { captureException } from '@sentry/react';
 
 const Title = styled.h1`
   padding-bottom: 20px;

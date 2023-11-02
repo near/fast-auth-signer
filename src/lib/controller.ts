@@ -7,6 +7,7 @@ import { InMemoryKeyStore } from '@near-js/keystores';
 import {
   SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate
 } from '@near-js/transactions';
+import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
@@ -14,7 +15,6 @@ import { sha256 } from 'js-sha256';
 import networkParams from './networkParams';
 import { network } from '../utils/config';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
-import { captureException } from '@sentry/react';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {

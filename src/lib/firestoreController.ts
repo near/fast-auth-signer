@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import { User } from 'firebase/auth';
 import {
   getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, updateDoc, CollectionReference, writeBatch
@@ -8,7 +9,6 @@ import { network } from '../utils/config';
 import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
-import { captureException } from '@sentry/react';
 
 class FirestoreController {
   private firestore: Firestore;

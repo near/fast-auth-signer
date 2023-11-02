@@ -1,9 +1,8 @@
-const {
-  sentryWebpackPlugin
-} = require("@sentry/webpack-plugin");
-
 const path = require('path');
 
+const {
+  sentryWebpackPlugin
+} = require('@sentry/webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
@@ -42,8 +41,8 @@ module.exports = {
     SENTRY_DNS:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
   }), sentryWebpackPlugin({
     authToken: process.env.SENTRY_AUTH_TOKEN,
-    org: "pagoda-o6",
-    project: "fast-auth"
+    org:       'near-protocol',
+    project:   'fast-auth-signer'
   })],
   devServer: {
     static: {
@@ -51,7 +50,7 @@ module.exports = {
     },
     port: 3000,
   },
-  devtool: "source-map",
+  devtool: 'source-map',
   module:  {
     // exclude node_modules
     rules: [

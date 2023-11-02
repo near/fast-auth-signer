@@ -1,4 +1,5 @@
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
+import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -14,7 +15,6 @@ import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { isValidEmail } from '../../utils/form-validation';
-import { captureException } from '@sentry/react';
 
 const StyledContainer = styled.div`
   width: 100%;
