@@ -65,7 +65,7 @@ interface TransactionDetails {
 export const calculateGasLimit = (actions) => actions
   .filter((a) => Object.keys(a)[0] === 'functionCall')
   .map((a) => a.functionCall.gas)
-  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0))
+  .reduce((totalGas, gas) => totalGas.add(gas), new BN(0)).div(new BN('1000000000000'))
   .toString();
 
 function Sign() {
@@ -261,7 +261,7 @@ function Sign() {
                 hasFunctionCall
                 isFunctionCallOpen
                 rightSide={formatActionType(action.enum)}
-                functionDesc={<pre>{JSON.stringify(action, null, 2)}</pre>}
+                functionDesc={action.functionCall.args}
                 openLink={`${network.explorerUrl}/accounts/${transactionDetails.receiverId}`}
               />
             ))}

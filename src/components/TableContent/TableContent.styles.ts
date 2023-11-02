@@ -57,6 +57,7 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
     background-color: #f9f9f8;
     padding: 12px;
     overflow-wrap: anywhere;
+    width: 100%;
   }
 
   .left-side {
