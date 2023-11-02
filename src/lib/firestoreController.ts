@@ -46,6 +46,11 @@ class FirestoreController {
         captureException(err);
         throw new Error('Unable to retrieve account Id');
       });
+    if (!accountIds.length) {
+      const noAccountIdError = new Error('Unable to retrieve account Id');
+      captureException(noAccountIdError);
+      throw noAccountIdError;
+    }
     return accountIds[0];
   }
 
