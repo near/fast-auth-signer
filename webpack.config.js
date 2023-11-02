@@ -1,8 +1,5 @@
 const path = require('path');
 
-const {
-  sentryWebpackPlugin
-} = require('@sentry/webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
@@ -38,7 +35,7 @@ module.exports = {
     FIREBASE_MESSAGING_SENDER_ID_TESTNET: '116526963563',
     FIREBASE_APP_ID_TESTNET:              '1:116526963563:web:053cb0c425bf514007ca2e',
     FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S',
-    SENTRY_DNS:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
+    SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
   }), sentryWebpackPlugin({
     authToken: process.env.SENTRY_AUTH_TOKEN,
     org:       'near-protocol',
