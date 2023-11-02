@@ -257,12 +257,12 @@ function Sign() {
               <TableContent
               // eslint-disable-next-line
                 key={i}
-                leftSide={transactionDetails.receiverId}
+                leftSide={transactionDetails.transactions[i].receiverId}
                 hasFunctionCall
                 isFunctionCallOpen
                 rightSide={formatActionType(action.enum)}
                 functionDesc={action.functionCall.args}
-                openLink={`${network.explorerUrl}/accounts/${transactionDetails.receiverId}`}
+                openLink={`${network.explorerUrl}/accounts/${transactionDetails.transactions[i].receiverId}`}
               />
             ))}
           </div>
