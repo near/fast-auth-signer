@@ -30,12 +30,8 @@ Sentry.init({
       // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
       tracePropagationTargets: [
         'localhost',
-        // MAINNET
-        'https://mpc-recovery-leader-mainnet-tmp-cg7nolnlpa-ue.a.run.app',
-        'https://api.kitwallet.app',
-        // TESTNET
-        'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
-        'https://testnet-api.kitwallet.app'
+        network.fastAuth.mpcRecoveryUrl,
+        network.fastAuth.authHelperUrl,
       ],
     }),
     new Sentry.Replay(),
