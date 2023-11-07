@@ -68,7 +68,12 @@ function TableContent({
         )}
       </div>
       {isFunctionCallOpen && functionDesc && methodDetails ? (
-        <div className="function-desc">{functionDesc}</div>
+        <div className="function-desc">
+          <pre>
+            Arguments:&nbsp;
+            {JSON.stringify(JSON.parse(Buffer.from(functionDesc).toString()), null, 2)}
+          </pre>
+        </div>
       ) : null}
     </TableContentWrapper>
   );
