@@ -1,0 +1,25 @@
+{
+  "name": "fast-auth-signer-e2e-tests",
+  "version": "0.0.1",
+  "description": "End-to-end test suite for fast-auth-signer frontend",
+  "author": "Pagoda, Inc.",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "yarn playwright test"
+  },
+  "dependencies": {
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.39.0",
+    "@types/node": "^20.9.0"
+  }
+}
