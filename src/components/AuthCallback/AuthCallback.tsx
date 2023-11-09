@@ -1,4 +1,5 @@
 import { KeyPairEd25519 } from '@near-js/crypto';
+import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import type { MutableRefObject } from 'react';
@@ -132,6 +133,7 @@ export const onSignIn = async ({
     .then((res) => res.json())
     .catch((err) => {
       console.log(err);
+      captureException(err);
       throw new Error('Unable to retrieve account Id');
     });
 
@@ -285,6 +287,7 @@ function AuthCallbackPage() {
             });
           }
         }).catch((e) => {
+          captureException(e);
           console.log('error:', e);
           redirectWithError({ success_url, failure_url, error: e });
           openToast({

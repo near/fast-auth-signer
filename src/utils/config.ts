@@ -9,6 +9,7 @@ export const networks: Record<NetworkId, Network> = {
     helperUrl:     'https://helper.mainnet.near.org',
     relayerUrl:    process.env.RELAYER_URL,
     explorerUrl:   'https://explorer.near.org',
+    sentryDsn:       process.env.SENTRY_DSN,
     fastAuth:      {
       mpcRecoveryUrl:  'https://mpc-recovery-leader-mainnet-tmp-cg7nolnlpa-ue.a.run.app',
       authHelperUrl:   'https://api.kitwallet.app',
@@ -32,6 +33,7 @@ export const networks: Record<NetworkId, Network> = {
     helperUrl:     'https://helper.testnet.near.org',
     relayerUrl:    process.env.RELAYER_URL_TESTNET,
     explorerUrl:    'https://explorer.testnet.near.org',
+    sentryDsn:       process.env.SENTRY_DSN,
     fastAuth:      {
       mpcRecoveryUrl:    'https://mpc-recovery-leader-dev-7tk2cmmtcq-ue.a.run.app',
       authHelperUrl:   'https://testnet-api.kitwallet.app',

@@ -1,4 +1,5 @@
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
+import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -270,6 +271,7 @@ function SignInPage() {
             });
         }).catch((error) => {
           console.log('error', error);
+          captureException(error);
           redirectWithError({ success_url, failure_url, error });
           openToast({
             type:  'ERROR',

@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import { User } from 'firebase/auth';
 import {
   getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, updateDoc, CollectionReference, writeBatch
@@ -42,8 +43,14 @@ class FirestoreController {
       .then((res) => res.json())
       .catch((err) => {
         console.log(err);
+        captureException(err);
         throw new Error('Unable to retrieve account Id');
       });
+    if (!accountIds.length) {
+      const noAccountIdError = new Error('Unable to retrieve account Id');
+      captureException(noAccountIdError);
+      throw noAccountIdError;
+    }
     return accountIds[0];
   }
 
@@ -153,6 +160,7 @@ class FirestoreController {
       .then((res) => res.json())
       .catch((err) => {
         console.log(err);
+        captureException(err);
         throw new Error('Unable to retrieve account Id');
       });
     // delete firebase records

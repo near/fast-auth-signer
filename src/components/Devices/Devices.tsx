@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
@@ -144,6 +145,7 @@ function Devices() {
           setIsAddingKey(false);
         }
       }).catch((err) => {
+        captureException(err);
         setisDeleted(false);
         console.log('Delete Failed', err);
       });
