@@ -9,8 +9,11 @@ concurrency:
 
 jobs:
   checks:
+    defaults:
+      run:
+        working-directory: ./packages/fast-auth-signer
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Code Checkout
         uses: actions/checkout@v3
