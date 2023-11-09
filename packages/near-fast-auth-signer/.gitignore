@@ -1,0 +1,27 @@
+# Default
+node_modules
+.env
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Parcel
+dist
+.cache
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# dotenv environment variables file
+.env
+
+# Yarn Integrity file
+.yarn-integrity
+.vscode/settings.json
+
+# Sentry Config File
+.env.sentry-build-plugin

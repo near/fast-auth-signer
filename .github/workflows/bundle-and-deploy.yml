@@ -7,12 +7,15 @@ on:
         required: true
         type: string
 
-env: 
+env:
   REACT_APP_BASE_PATH: 'fastauth'
   NETWORK_ID: ${{ inputs.environment == 'staging' && 'testnet' || inputs.environment }}
 
 jobs:
   bundle-frontend:
+    defaults:
+      run:
+        working-directory: ./packages/near-fast-auth-signer
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:

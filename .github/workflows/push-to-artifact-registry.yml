@@ -9,9 +9,12 @@ permissions:
 
 jobs:
   build-and-push-to-artifact-registry:
+    defaults:
+      run:
+        working-directory: ./packages/near-fast-auth-signer
     runs-on: ubuntu-latest
     environment: mainnet
-    steps:      
+    steps:
       - uses: actions/checkout@v3
 
       - name: Login to Artifact Registry
