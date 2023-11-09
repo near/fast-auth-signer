@@ -7,6 +7,7 @@
     "test": "yarn && yarn workspace fast-auth-signer-e2e-tests test"
   },
   "devDependencies": {
+    "@types/node": "^20.9.0",
     "lerna": "^7.4.1"
   },
   "author": "Pagoda, Inc.",
