@@ -11,7 +11,7 @@ jobs:
   checks:
     defaults:
       run:
-        working-directory: ./packages/fast-auth-signer
+        working-directory: ./packages/near-fast-auth-signer
     runs-on: ubuntu-latest
 
     steps:

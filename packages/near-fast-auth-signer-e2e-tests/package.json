@@ -1,5 +1,5 @@
 {
-  "name": "fast-auth-signer-e2e-tests",
+  "name": "near-fast-auth-signer-e2e-tests",
   "version": "0.0.1",
   "description": "End-to-end test suite for fast-auth-signer frontend",
   "author": "Pagoda, Inc.",
@@ -16,6 +16,7 @@
     "test": "yarn playwright test"
   },
   "dependencies": {
+    "near-fast-auth-signer": "*",
     "typescript": "^5.0.4"
   },
   "devDependencies": {

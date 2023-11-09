@@ -1,5 +1,5 @@
 {
-  "name": "@near-js/fast-auth-signer",
+  "name": "near-fast-auth-signer",
   "version": "1.0.1",
   "description": "Signer for fast auth functionality in near-discovery gateways",
   "main": "src/index.html",

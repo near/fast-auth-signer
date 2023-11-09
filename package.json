@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "yarn && yarn workspace fast-auth-signer-e2e-tests test"
   },
   "devDependencies": {
     "lerna": "^7.4.1"

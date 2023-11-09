@@ -8,7 +8,7 @@ jobs:
   test:
     defaults:
       run:
-        working-directory: ./packages/fast-auth-signer-e2e-tests
+        working-directory: ./packages/near-fast-auth-signer-e2e-tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
