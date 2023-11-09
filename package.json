@@ -10,5 +10,8 @@
     "lerna": "^7.4.1"
   },
   "author": "Pagoda, Inc.",
-  "license": "MIT"
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ]
 }
