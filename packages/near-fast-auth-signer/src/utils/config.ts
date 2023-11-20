@@ -35,7 +35,7 @@ export const networks: Record<NetworkId, Network> = {
     explorerUrl:    'https://explorer.testnet.near.org',
     sentryDsn:       process.env.SENTRY_DSN,
     fastAuth:      {
-      mpcRecoveryUrl:    'https://mpc-recovery-leader-testnet.dev.api.pagoda.co/',
+      mpcRecoveryUrl:    'https://mpc-recovery-leader-testnet.api.pagoda.co',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
       accountIdSuffix: 'testnet',
       firebase:        {
