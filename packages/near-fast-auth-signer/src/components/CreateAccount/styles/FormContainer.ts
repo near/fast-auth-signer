@@ -3,7 +3,7 @@ import { styled } from 'styled-components';
 const FormContainer = styled.form`
   max-width: 360px;
   width: 100%;
-  margin: 16px auto;
+  margin: 0 auto;
   background-color: #ffffff;
   padding: 20px;
   border-radius: 12px;
@@ -47,7 +47,13 @@ const FormContainer = styled.form`
   }
   button {
     margin-top: 15px;
-  } 
+  }
+
+  @media only screen and (max-width: 500px) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    max-width: unset;
+  }
 `;
 
 export default FormContainer;

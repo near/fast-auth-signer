@@ -13,7 +13,7 @@ export const LoginWrapper = styled.div`
   form {
     max-width: 360px;
     width: 100%;
-    margin: 16px auto;
+    margin: 0 auto;
     background-color: #ffffff;
     padding: 25px;
     border-radius: 12px;
@@ -23,6 +23,17 @@ export const LoginWrapper = styled.div`
   }
   button {
     margin-top: 20px;
+  }
+
+  @media only screen and (max-width: 500px) {
+    align-items: flex-end;
+    padding: 0;
+
+    form {
+      max-width: unset;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
   }
 `;
 
