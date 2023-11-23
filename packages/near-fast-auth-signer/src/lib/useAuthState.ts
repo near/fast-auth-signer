@@ -1,4 +1,5 @@
-import { getKeys } from '@near-js/biometric-ed25519/lib';
+/* eslint-disable import/prefer-default-export */
+import { getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { KeyPairEd25519 } from '@near-js/crypto';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
@@ -6,7 +7,8 @@ import { useSearchParams } from 'react-router-dom/dist';
 import FastAuthController from './controller';
 import { fetchAccountIds } from '../api';
 import { safeGetLocalStorage } from '../utils';
-import { networkId } from '../utils/config';
+import { network, networkId } from '../utils/config';
+import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = {
   authenticated: 'loading' | boolean | Error
@@ -25,14 +27,15 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
   useEffect(() => {
     const handleAuthState = async () => {
       const controllerState = await window.fastAuthController.isSignedIn();
+      const isPasskeySupported = await isPassKeyAvailable();
 
       if (skipGetKeys) {
         setAuthenticated(false);
       } else if (controllerState === true) {
         setAuthenticated(true);
-      } else if (!webauthnUsername || (email && email !== webauthnUsername)) {
+      } else if ((!webauthnUsername && isPasskeySupported)|| (email && email !== webauthnUsername)) {
         setAuthenticated(false);
-      } else {
+      } else if (isPasskeySupported) {
         try {
           const keypairs = await getKeys(webauthnUsername);
           const accounts = await Promise.allSettled(
@@ -59,6 +62,28 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
         } catch {
           setAuthenticated(false);
         }
+      } else {
+        checkFirestoreReady().then(async (isReady) => {
+          if (isReady) {
+            const oidcToken = firebaseAuth.currentUser.getIdToken();
+            if (window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`)) {
+              const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+              const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+                .then((res) => res.json())
+                .catch((err) => {
+                  console.log(err);
+                  throw new Error('Unable to retrieve account Id');
+                });
+              (window as any).fastAuthController = new FastAuthController({
+                accountId: accountIds[0],
+                networkId
+              });
+              setAuthenticated(true);
+            } else {
+              setAuthenticated(false);
+            }
+          }
+        });
       }
     };
 

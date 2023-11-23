@@ -73,11 +73,12 @@ const onCreateAccount = async ({
   }
 
   setStatusMessage('Redirecting to app...');
-
+  
+  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
   parsedUrl.searchParams.set('account_id', res.near_account_id);
   parsedUrl.searchParams.set('public_key', public_key_lak);
-  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
   window.location.replace(parsedUrl.href);
 };
@@ -163,7 +164,7 @@ export const onSignIn = async ({
         const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accountIds[0]);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
         if (inIframe()) {
           window.open(parsedUrl.href, '_parent');
@@ -223,6 +224,10 @@ function AuthCallbackPage() {
             const keyPair = await createKey(email);
             publicKeyFak = keyPair.getPublicKey().toString();
             await window.fastAuthController.setKey(keyPair);
+          }
+
+          if (!window.fastAuthController.getAccountId()) {
+            await window.fastAuthController.setAccountId(accountId);
           }
 
           await window.fastAuthController.claimOidcToken(accessToken);

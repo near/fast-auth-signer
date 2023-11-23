@@ -168,13 +168,18 @@ function SignInPage() {
         const publicKeyFak = await window.fastAuthController.getPublicKey();
         const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
+        const user = firebaseAuth.currentUser;
+        // @ts-ignore
+        const oidcToken = user.accessToken;
+        const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;
         if (noNeedToAddKey) {
           const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
           parsedUrl.searchParams.set('public_key', public_key);
-          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
+          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
 
           if (inIframe()) {
             setRenderRedirectButton(parsedUrl.href);
@@ -197,12 +202,10 @@ function SignInPage() {
           }
 
           // Add device
-          const user = firebaseAuth.currentUser;
           window.firestoreController.updateUser({
             userUid:   user.uid,
             // User type is missing accessToken but it exist
-            // @ts-ignore
-            oidcToken: user.accessToken,
+            oidcToken,
           });
 
           // Since FAK is already added, we only add LAK
@@ -215,7 +218,7 @@ function SignInPage() {
               const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
               parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
-              parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
+              parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
               window.parent.postMessage({
                 type:   'method',
                 method: 'query',
@@ -223,8 +226,8 @@ function SignInPage() {
                 params: {
                   request_type: 'complete_sign_in',
                   publicKey:    public_key,
-                  allKeys:      [public_key, publicKeyFak].join(','),
-                  accountId:    window.fastAuthController.getAccountId()
+                  allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
+                  accountId:    (window as any).fastAuthController.getAccountId()
                 }
               }, '*');
               if (inIframe()) {

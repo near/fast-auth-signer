@@ -11,9 +11,12 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
+import { keyStores } from 'near-api-js';
 
+import FirestoreController from './firestoreController';
 import networkParams from './networkParams';
 import { network } from '../utils/config';
+import { firebaseAuth } from '../utils/firebase';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
 
 const { addKey, functionCallAccessKey } = actionCreators;
@@ -24,6 +27,8 @@ class FastAuthController {
 
   private keyStore: InMemoryKeyStore;
 
+  private localStore: keyStores.BrowserLocalStorageKeyStore;
+
   private connection: Connection;
 
   constructor({ accountId, networkId }) {
@@ -33,6 +38,7 @@ class FastAuthController {
     }
 
     this.keyStore = new InMemoryKeyStore();
+    this.localStore = new keyStores.BrowserLocalStorageKeyStore();
 
     this.connection = Connection.fromConfig({
       networkId,
@@ -101,6 +107,10 @@ class FastAuthController {
     return !!(await this.getKey());
   }
 
+  async getLocalStoreKey(accountId) {
+    return this.localStore.getKey(this.networkId, accountId);
+  }
+
   assertValidSigner(signerId) {
     if (signerId && signerId !== this.accountId) {
       throw new Error(`Cannot sign transactions for ${signerId} while signed in as ${this.accountId}`);
@@ -145,8 +155,41 @@ class FastAuthController {
   }
 
   async signDelegateAction({ receiverId, actions, signerId }) {
-    this.assertValidSigner(signerId);
+    const isSigned = await this.isSignedIn();
+    if (this.accountId !== signerId) {
+      this.setAccountId(signerId);
+      this.localStore = new keyStores.BrowserLocalStorageKeyStore();
+    }
+    if (!isSigned) {
+      // use indexDB token to get key from localStorage
+      if (!window.firestoreController) {
+        window.firestoreController = new FirestoreController();
+      }
+      // @ts-ignore
+      const oidcToken =  firebaseAuth.currentUser.accessToken;
+      const recoveryPK = await this.getUserCredential(oidcToken);
+      // fix PK
+      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
+        .then((res) => res.json())
+        .catch((err) => {
+          console.log(err);
+          captureException(err);
+          throw new Error('Unable to retrieve account Id');
+        });
+      // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
+      return this.createSignedDelegateWithRecoveryKey({
+        oidcToken,
+        accountId: accountIds[0],
+        actions,
+        recoveryPK,
+      }).catch((err) => {
+        console.log(err);
+        captureException(err);
+        throw new Error('Unable to sign delegate action');
+      });
+    }
 
+    this.assertValidSigner(signerId);
     const account = new Account(this.connection, this.accountId);
     return account.signedDelegate({
       actions,
@@ -199,6 +242,7 @@ class FastAuthController {
     if (!keypair) {
       keypair = KeyPair.fromRandom('ED25519');
       await this.keyStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
+      await this.localStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
     }
     const signature = getUserCredentialsFrpSignature({
       salt:            CLAIM_SALT,
@@ -232,8 +276,14 @@ class FastAuthController {
   }
 
   async getUserCredential(oidcToken) {
+    // @ts-ignore
     const GET_USER_SALT = CLAIM + 2;
-    const keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
+    const keypair = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+
+    if (!keypair) {
+      throw new Error('Unable to get oidc keypair');
+    }
+
     const signature = getUserCredentialsFrpSignature({
       salt:            GET_USER_SALT,
       oidcToken,
@@ -269,7 +319,7 @@ class FastAuthController {
     return this.connection.provider.block({ finality: 'final' });
   }
 
-  async signAndSendActionsWithRecoveryKey({
+  async createSignedDelegateWithRecoveryKey({
     oidcToken,
     accountId,
     recoveryPK,
@@ -277,7 +327,8 @@ class FastAuthController {
   }) {
     const GET_SIGNATURE_SALT = CLAIM + 3;
     const GET_USER_SALT = CLAIM + 2;
-    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`);
+    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+
     const { header } = await this.getBlock();
     const delegateAction = buildDelegateAction({
       actions,
@@ -326,20 +377,38 @@ class FastAuthController {
         keyType: KeyType.ED25519,
         data:    Buffer.from(signature, 'hex'),
       });
-      const signedDelegate = new SignedDelegate({
+      return new SignedDelegate({
         delegateAction,
         signature: signatureObj,
       });
-      const encodedSignedDelegate = encodeSignedDelegate(signedDelegate);
-      return fetch(network.relayerUrl, {
-        method:  'POST',
-        mode:    'cors',
-        body:    JSON.stringify(Array.from(encodedSignedDelegate)),
-        headers: new Headers({ 'Content-Type': 'application/json' }),
-      }).catch((err) => {
-        console.log('Unable to sign and send action with recovery key', err);
-        captureException(err);
-      });
+    });
+  }
+
+  async signAndSendActionsWithRecoveryKey({
+    oidcToken,
+    accountId,
+    recoveryPK,
+    actions,
+  }) {
+    const signedDelegate = await this.createSignedDelegateWithRecoveryKey({
+      oidcToken,
+      accountId,
+      recoveryPK,
+      actions,
+    }).catch((err) => {
+      console.log(err);
+      captureException(err);
+      throw new Error('Unable to sign delegate action');
+    });
+    const encodedSignedDelegate = encodeSignedDelegate(signedDelegate);
+    return fetch(network.relayerUrl, {
+      method:  'POST',
+      mode:    'cors',
+      body:    JSON.stringify(Array.from(encodedSignedDelegate)),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    }).catch((err) => {
+      console.log('Unable to sign and send action with recovery key', err);
+      captureException(err);
     });
   }
 }
