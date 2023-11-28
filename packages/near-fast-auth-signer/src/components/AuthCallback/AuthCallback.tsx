@@ -300,7 +300,7 @@ function AuthCallbackPage() {
     }
   }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once
 
-  return <StyledStatusMessage>{statusMessage}</StyledStatusMessage>;
+  return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
 
 export default AuthCallbackPage;

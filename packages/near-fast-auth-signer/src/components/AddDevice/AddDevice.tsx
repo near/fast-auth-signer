@@ -343,13 +343,14 @@ function SignInPage() {
               placeholder="user_name@email.com"
               type="email"
               id="email"
+              data-test-id="add-device-email"
               required
             />
           </label>
 
         </InputContainer>
 
-        <Button type="submit" size="large" label="Continue" variant="affirmative" onClick={onSubmit} />
+        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" onClick={onSubmit} />
       </FormContainer>
     </StyledContainer>
   );

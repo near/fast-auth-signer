@@ -135,12 +135,12 @@ function VerifyEmailPage() {
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
-          <p>{query.get('email')}</p>
+          <p data-test-id="verify-email-address">{query.get('email')}</p>
         </header>
 
         <p>Check your inbox to activate your account.</p>
 
-        <Button size="large" label="Resend" onClick={handleResendEmail} />
+        <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
       </FormContainer>
     </StyledContainer>
   );

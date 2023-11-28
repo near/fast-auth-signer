@@ -7,16 +7,16 @@ function Layout() {
       <div>
         <ul>
           <li>
-            <Link to="/">Home</Link>
+            <Link data-test-id="layout-link-home" to="/">Home</Link>
           </li>
           <li>
-            <Link to="/add-device">Add Device</Link>
+            <Link data-test-id="layout-link-add-device" to="/add-device">Add Device</Link>
           </li>
           <li>
-            <Link to="/create-account">Create Account</Link>
+            <Link data-test-id="layout-link-create-account" to="/create-account">Create Account</Link>
           </li>
           <li>
-            <Link to="/sign">Sign</Link>
+            <Link data-test-id="layout-link-sign" to="/sign">Sign</Link>
           </li>
         </ul>
       </div>

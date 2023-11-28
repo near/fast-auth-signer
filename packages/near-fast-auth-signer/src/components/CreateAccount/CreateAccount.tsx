@@ -191,11 +191,11 @@ function CreateAccount() {
     <StyledContainer>
       <FormContainer onSubmit={onSubmit}>
         <header>
-          <h1>Create account</h1>
+          <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">
             <span>Have an account?</span>
             {' '}
-            <Link to="/login">Sign in</Link>
+            <Link to="/login" data-test-id="create_login_link">Sign in</Link>
           </p>
         </header>
 
@@ -222,6 +222,7 @@ function CreateAccount() {
             placeholder="user_name@email.com"
             type="email"
             id="email"
+            data-test-id="email_create"
           />
           <div className="select-mail-provider">
             {emailProviders.map((provider) => {
@@ -238,7 +239,7 @@ function CreateAccount() {
             })}
           </div>
           <div className="subText">
-            <div className="error">
+            <div className="error" data-test-id="create_email_subtext_error">
               <ErrorMessage
                 errors={errors}
                 name="email"
@@ -280,6 +281,7 @@ function CreateAccount() {
                 setIsUsernameAvailable(isAccountAvailable);
                 return null;
               }}
+              data-test-id="username_create"
               placeholder="user_name"
             />
             <div className="input-group-right">
@@ -291,14 +293,14 @@ function CreateAccount() {
             {isUsernameAvailable && (
               <div className="success">
                 <SuccessSvg />
-                <span>Account ID available</span>
+                <span data-test-id="account_available_notice">Account ID available</span>
               </div>
             )}
             <ErrorMessage
               errors={errors}
               name="username"
               render={({ message }) => (
-                <div className="error">
+                <div className="error" data-test-id="create-error-subtext">
                   <ErrorSvg />
                   <span>{message}</span>
                 </div>
@@ -307,7 +309,7 @@ function CreateAccount() {
           </div>
         </InputContainer>
 
-        <Button label="Continue" variant="affirmative" type="submit" size="large" />
+        <Button label="Continue" variant="affirmative" type="submit" size="large" data-test-id="continue_button_create" />
       </FormContainer>
     </StyledContainer>
   );
