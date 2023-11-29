@@ -77,7 +77,7 @@ function Login() {
               }}
               placeholder="user_name@email.com"
               type="email"
-              data-test-id='email_login'
+              data-test-id="email_login"
               required
             />
           </label>
