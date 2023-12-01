@@ -155,31 +155,24 @@ class FastAuthController {
   }
 
   async signDelegateAction({ receiverId, actions, signerId }) {
-    const isSigned = await this.isSignedIn();
-    if (this.accountId !== signerId) {
-      this.setAccountId(signerId);
-      this.localStore = new keyStores.BrowserLocalStorageKeyStore();
-    }
-    if (!isSigned) {
-      // use indexDB token to get key from localStorage
-      if (!window.firestoreController) {
-        window.firestoreController = new FirestoreController();
-      }
+    this.assertValidSigner(signerId);
+    try {
+      // webAuthN supported browser
+      const account = new Account(this.connection, this.accountId);
+      return account.signedDelegate({
+        actions,
+        blockHeightTtl: 60,
+        receiverId,
+      });
+    } catch {
+      // fallback, non webAuthN supported browser
       // @ts-ignore
       const oidcToken =  firebaseAuth.currentUser.accessToken;
       const recoveryPK = await this.getUserCredential(oidcToken);
-      // fix PK
-      const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-        .then((res) => res.json())
-        .catch((err) => {
-          console.log(err);
-          captureException(err);
-          throw new Error('Unable to retrieve account Id');
-        });
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
       return this.createSignedDelegateWithRecoveryKey({
         oidcToken,
-        accountId: accountIds[0],
+        accountId: this.accountId,
         actions,
         recoveryPK,
       }).catch((err) => {
@@ -187,15 +180,7 @@ class FastAuthController {
         captureException(err);
         throw new Error('Unable to sign delegate action');
       });
-    }
-
-    this.assertValidSigner(signerId);
-    const account = new Account(this.connection, this.accountId);
-    return account.signedDelegate({
-      actions,
-      blockHeightTtl: 60,
-      receiverId,
-    });
+    };
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {
