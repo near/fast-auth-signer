@@ -13,7 +13,6 @@ import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
 import { keyStores } from 'near-api-js';
 
-import FirestoreController from './firestoreController';
 import networkParams from './networkParams';
 import { network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
@@ -180,7 +179,7 @@ class FastAuthController {
         captureException(err);
         throw new Error('Unable to sign delegate action');
       });
-    };
+    }
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {
