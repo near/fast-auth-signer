@@ -22,23 +22,48 @@ i18next.init({
   },
 });
 
-Sentry.init({
-  environment:           networkId,
-  dsn:                   network.sentryDsn,
-  integrations: [
-    new Sentry.BrowserTracing({
-      // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-      tracePropagationTargets: [
-        'localhost',
-        network.fastAuth.mpcRecoveryUrl,
-        network.fastAuth.authHelperUrl,
-      ],
-    }),
-    new Sentry.Replay(),
-  ],
-  // Performance Monitoring
-  tracesSampleRate:         1.0, // Capture 100% of the transactions
-});
+if (network.sentryDsn) {
+  Sentry.init({
+    environment:           networkId,
+    dsn:                   network.sentryDsn,
+    integrations: [
+      new Sentry.BrowserTracing({
+        // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+        tracePropagationTargets: [
+          'localhost',
+          network.fastAuth.mpcRecoveryUrl,
+          network.fastAuth.authHelperUrl,
+        ],
+      }),
+    ],
+    // Performance Monitoring
+    tracesSampleRate:         0.1, // Capture 10% of transactions
+
+    // Reconstructing the URL to exclude sensitive query parameters
+    beforeSend(event) {
+      if (event.request && event.request.url) {
+        const url = new URL(event.request.url);
+        const queryParams = url.searchParams;
+
+        // Remove sensitive query parameters
+        queryParams.delete('publicKeyFak');
+        queryParams.delete('public_key_lak');
+
+        event.request.url = url.toString();
+      }
+
+      return event;
+    },
+
+    // Hide transaction history
+    beforeBreadcrumb() {
+      return null;
+    },
+
+    // Only send issues if network is mainnet
+    enabled: networkId === 'mainnet',
+  });
+}
 
 const container = document.getElementById('root');
 const root = createRoot(container); // createRoot(container!) if you use TypeScript
