@@ -62,7 +62,7 @@ function Login() {
     <LoginWrapper>
       <form onSubmit={onSubmit}>
         <header>
-          <h1>Log In</h1>
+          <h1 data-test-id="heading_login">Log In</h1>
           <p className="desc">Please enter your email</p>
         </header>
 
@@ -77,6 +77,7 @@ function Login() {
               }}
               placeholder="user_name@email.com"
               type="email"
+              data-test-id="email_login"
               required
             />
           </label>
@@ -87,6 +88,7 @@ function Login() {
           type="submit"
           label="Continue"
           variant="affirmative"
+          data-test-id="login_button"
           onClick={onSubmit}
         />
       </form>
