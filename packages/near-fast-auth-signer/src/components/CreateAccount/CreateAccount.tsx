@@ -47,6 +47,8 @@ function CreateAccount() {
   } = useForm();
   const [emailProvider, setEmailProvider] = useState(null);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(null);
+  const [usernameInputEmpty, setUsernameInputEmpty] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const formValues = watch();
   const navigate = useNavigate();
@@ -184,6 +186,7 @@ function CreateAccount() {
 
     if (!formValues?.username || !touchedFields?.username) {
       setValue('username', emailId);
+      setUsernameInputEmpty(false);
     }
   };
 
@@ -267,35 +270,37 @@ function CreateAccount() {
               autoComplete="webauthn username"
               {...register('username', {
                 required: 'Please enter a valid account ID',
-                pattern:  {
-                  value:   accountAddressPatternNoSubaccount,
-                  message: 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.',
-                },
-                validate: async (username) => {
-                  const isAccountAvailable = await checkIsAccountAvailable(username);
-                  setIsUsernameAvailable(isAccountAvailable);
-                  if (!isAccountAvailable) {
-                    return `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
-                  }
-                  return null;
-                },
               })}
               onChange={async (e) => {
                 clearErrors('username');
-                const isValidPattern = accountAddressPatternNoSubaccount.test(e.target.value);
+                const username = e.target.value;
+                const isValidPattern = accountAddressPatternNoSubaccount.test(username);
+                const isAccountAvailable = await checkIsAccountAvailable(username);
+
+                if (username.length > 0) {
+                  setUsernameInputEmpty(false);
+                  setIsUsernameAvailable(isAccountAvailable);
+                } else setUsernameInputEmpty(true);
+
                 if (!isValidPattern) {
                   setIsUsernameAvailable(false);
+                  setErrorMessage('Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.');
                   return null;
+                } setErrorMessage(null);
+
+                if (!isUsernameAvailable) {
+                  setErrorMessage(`${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`);
                 }
-                const isAccountAvailable = await checkIsAccountAvailable(e.target.value);
-                setIsUsernameAvailable(isAccountAvailable);
                 return null;
               }}
               data-test-id="username_create"
               placeholder="user_name"
             />
             <div className="input-group-right">
-              <span>.near</span>
+              <span>
+                .
+                {network.fastAuth.accountIdSuffix}
+              </span>
             </div>
           </div>
           <div className="subText">
@@ -306,20 +311,25 @@ function CreateAccount() {
                 <span data-test-id="account_available_notice">Account ID available</span>
               </div>
             )}
-            <ErrorMessage
-              errors={errors}
-              name="username"
-              render={({ message }) => (
-                <div className="error" data-test-id="create-error-subtext">
+            {errors && !isUsernameAvailable && !usernameInputEmpty && errorMessage && (
+              <div className="error">
+                <span>
                   <ErrorSvg />
-                  <span>{message}</span>
-                </div>
-              )}
-            />
+                  {errorMessage}
+                </span>
+              </div>
+            )}
           </div>
         </InputContainer>
 
-        <Button label="Continue" variant="affirmative" type="submit" size="large" data-test-id="continue_button_create" />
+        <Button
+          label="Continue"
+          variant="affirmative"
+          type="submit"
+          size="large"
+          disabled={(errors && !isUsernameAvailable && !usernameInputEmpty && errorMessage) || ''}
+          data-test-id="continue_button_create"
+        />
       </FormContainer>
     </StyledContainer>
   );
