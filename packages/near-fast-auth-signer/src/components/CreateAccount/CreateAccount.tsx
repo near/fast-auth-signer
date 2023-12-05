@@ -235,6 +235,16 @@ function CreateAccount() {
                   </div>
                 );
               }
+              if ((formValues?.email === '') || (formValues && (!formValues?.email.includes(emailProvider)))) {
+                setEmailProvider(null);
+                return (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                  <div key={provider} className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
+                    @
+                    {provider}
+                  </div>
+                );
+              }
               return null;
             })}
           </div>
