@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
 import FastAuthController from './controller';
+import { fetchAccountIds } from '../api';
 import { safeGetLocalStorage } from '../utils';
-import { network, networkId } from '../utils/config';
+import { networkId } from '../utils/config';
 
 type AuthState = {
   authenticated: 'loading' | boolean | Error
@@ -27,23 +28,22 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
 
       if (skipGetKeys) {
         setAuthenticated(false);
-      } else if (controllerState !== false) {
-        if (controllerState === true) {
-          setAuthenticated(true);
-        }
+      } else if (controllerState === true) {
+        setAuthenticated(true);
       } else if (!webauthnUsername || (email && email !== webauthnUsername)) {
         setAuthenticated(false);
       } else {
         try {
           const keypairs = await getKeys(webauthnUsername);
           const accounts = await Promise.allSettled(
-            keypairs.map((k) => fetch(`${network.fastAuth.authHelperUrl}/publicKey/${k.getPublicKey().toString()}/accounts`)
-              .then((res) => res.json())
-              .then((accIds) => accIds.map((accId) => { return { accId, keyPair: k }; })))
+            keypairs.map(async (k) => {
+              const accIds = await fetchAccountIds(k.getPublicKey().toString());
+              return accIds.map((accId) => { return { accId, keyPair: k }; });
+            })
           );
 
           const accountsList = accounts
-            .flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+            .flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
 
           if (accountsList.length === 0) {
             setAuthenticated(false);
