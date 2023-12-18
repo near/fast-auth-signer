@@ -31,6 +31,7 @@
   ],
   "dependencies": {
     "@hookform/error-message": "^2.0.1",
+    "@hookform/resolvers": "^3.3.2",
     "@near-js/accounts": "^0.1.4",
     "@near-js/biometric-ed25519": "^0.3.0",
     "@near-js/crypto": "^0.0.5",
@@ -64,6 +65,7 @@
     "styled-components": "^6.0.5",
     "ua-parser-js": "^1.0.35",
     "url": "^0.11.0",
+    "yup": "^1.3.3",
     "zustand": "^4.3.9"
   },
   "devDependencies": {
