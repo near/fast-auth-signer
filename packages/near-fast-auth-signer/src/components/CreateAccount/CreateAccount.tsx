@@ -77,8 +77,7 @@ const checkIsAccountAvailable = async (desiredUsername: string) => {
 
 const schema = yup.object().shape({
   email:    yup.string()
-    .required('Email address is required')
-    .email('Please enter a valid email address'),
+    .required('Email address is required'),
   username: yup.string()
     .required('Please enter a valid account ID')
     .matches(accountAddressPatternNoSubaccount, 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.')
@@ -100,7 +99,7 @@ function CreateAccount() {
     reset,
     formState: { errors, isDirty, isValid },
   } = useForm({
-    mode:          'onChange',
+    mode:          'all',
     resolver:      yupResolver(schema),
   });
 
@@ -113,6 +112,7 @@ function CreateAccount() {
     const public_key =  searchParams.get('public_key');
     const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
@@ -203,8 +203,8 @@ function CreateAccount() {
           {...register('email')}
           placeholder="user_name@email.com"
           type="email"
-          id="email"
           label="Email"
+          error={errors?.email?.message}
           badges={emailProviders?.reduce((acc, provider) => {
             const currProvider = email?.split('@')[1];
 
@@ -224,13 +224,12 @@ function CreateAccount() {
               onClick:    () => setValue('email', `${email}@${provider}.com`)
             }];
           }, [] as BadgeProps[])}
-          error={!!errors.email}
         />
         <Input
           {...register('username')}
           label="Account ID"
           success={!errors.username && isDirty && 'Account ID available'}
-          error={!!errors.username}
+          error={errors?.username?.message}
           subText="Use a suggested ID or customize your own"
           autoComplete="webauthn username"
           right=".near"

@@ -9,6 +9,7 @@ const FormContainer = styled.form`
   border-radius: 12px;
   display: flex;
   flex-direction: column;
+  gap: 32px;
 
   header h1 {
     font: var(--text-2xl);
