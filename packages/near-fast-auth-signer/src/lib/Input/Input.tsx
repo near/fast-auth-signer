@@ -8,24 +8,34 @@ import ErrorSvg from '../../components/CreateAccount/icons/ErrorSvg';
 import SuccessSvg from '../../components/CreateAccount/icons/SuccessSvg';
 import Badge, { BadgeProps } from '../Badge/Badge';
 
-const InputContainer = styled.div`
+interface InputContainerProps {
+  hasRight?: boolean;
+}
+
+const InputContainer = styled.div<InputContainerProps>`
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
 
   label {
+    color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   input {
+    border-radius: 6px;
+    border: 1px solid var(--Sand-Light-6, #E3E3E0);
+    background: var(--Sand-Light-1, #FDFDFC);
     margin: 0;
     padding: 8px 12px;
-    border: 1px solid #e3e3e0;
-    border-radius: 10px;
-    height: 40px;
     cursor: text;
+    ${({ hasRight }) => (hasRight ? `
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      flex: 1;
+    ` : '')}
   }
 
   .input-badges {
@@ -54,10 +64,21 @@ const InputContainer = styled.div`
       }
     }
 
-    input {
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      flex: 1;
+    &.error {
+      input {
+        background-color: #f5fffa;
+        color: #A81500;
+        border-color: #FFAFA3;
+      }
+
+      .input-group-right {
+        background-color: #FFE0DB;
+        border-color: #FFAFA3;
+
+        span {
+          color: #A81500;
+        }
+      }
     }
 
     .input-group-right {
@@ -154,7 +175,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   };
 
   return (
-    <InputContainer>
+    <InputContainer hasRight={!!right}>
       <label htmlFor={name}>{label}</label>
       <div className={`input-group ${success ? 'success' : ''} ${error ? 'error' : ''}`}>
         <input

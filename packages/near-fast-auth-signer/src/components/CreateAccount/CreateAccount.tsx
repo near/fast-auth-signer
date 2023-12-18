@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -36,10 +36,8 @@ const StyledContainer = styled.div`
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
 
-const checkIsAccountAvailable = async (desiredUsername: string) => {
+const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
   try {
-    if (!desiredUsername) return;
-
     const response = await fetch(network.nodeUrl, {
       method:  'POST',
       headers: {
@@ -58,39 +56,51 @@ const checkIsAccountAvailable = async (desiredUsername: string) => {
     });
     const data = await response.json();
     if (data?.error?.cause?.name === 'UNKNOWN_ACCOUNT') {
-      // eslint-disable-next-line consistent-return
       return true;
     }
 
     if (data?.result?.code_hash) {
-      // eslint-disable-next-line consistent-return
       return false;
     }
+
+    return false;
   } catch (error: any) {
     console.log(error);
     openToast({
       title: error.message,
       type:  'ERROR'
     });
+    return false;
   }
 };
 
 const schema = yup.object().shape({
-  email:    yup.string()
+  email:    yup
+    .string()
     .required('Email address is required'),
-  username: yup.string()
+  username: yup
+    .string()
     .required('Please enter a valid account ID')
-    .matches(accountAddressPatternNoSubaccount, 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.')
-    .test('is-account-available', 'Username is already taken, try something else.', async (username) => {
-      if (username) {
-        return checkIsAccountAvailable(username);
+    .matches(
+      accountAddressPatternNoSubaccount,
+      'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.'
+    )
+    .test(
+      'is-account-available',
+      'Username is already taken, try something else.',
+      async (username) => {
+        if (username) {
+          return checkIsAccountAvailable(username);
+        }
+        return true;
       }
-      return true;
-    })
+    )
 
 });
 
 function CreateAccount() {
+  const [searchParams] = useSearchParams();
+
   const {
     register,
     handleSubmit,
@@ -103,10 +113,12 @@ function CreateAccount() {
     resolver:      yupResolver(schema),
   });
 
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const formsEmail = watch('email', '');
+  const formsUserName = watch('username', '');
 
-  const createAccount = async (data: { email: string; username: string; }) => {
+  const navigate = useNavigate();
+
+  const createAccount = useCallback(async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
@@ -116,7 +128,7 @@ function CreateAccount() {
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
-        publicKey: publicKeyFak, email, privateKey, accountId
+        publicKey: publicKeyFak, privateKey, accountId
       } = await handleCreateAccount({
         accountId:   fullAccountId,
         email:       data.email,
@@ -129,7 +141,7 @@ function CreateAccount() {
       });
       const newSearchParams = new URLSearchParams({
         accountId,
-        email,
+        email:      data.email,
         isRecovery: 'false',
         ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
@@ -157,7 +169,7 @@ function CreateAccount() {
       //   title: message,
       // });
     }
-  };
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     const email = searchParams.get('email');
@@ -173,7 +185,13 @@ function CreateAccount() {
         createAccount({ email, username });
       }
     }
-  }, []);
+  }, [createAccount, reset, searchParams]);
+
+  useEffect(() => {
+    if (formsEmail.split('@').length > 1 && !formsUserName) {
+      setValue('username', getEmailId(formsEmail));
+    }
+  }, [formsEmail, setValue, formsUserName]);
 
   if (inIframe()) {
     return (
@@ -185,8 +203,6 @@ function CreateAccount() {
       />
     );
   }
-
-  const email = watch('email', '');
 
   return (
     <StyledContainer>
@@ -206,13 +222,13 @@ function CreateAccount() {
           label="Email"
           error={errors?.email?.message}
           badges={emailProviders?.reduce((acc, provider) => {
-            const currProvider = email?.split('@')[1];
+            const currProvider = formsEmail?.split('@')[1];
 
             if (currProvider?.includes(provider)) {
               return [{
                 isSelected: true,
                 label:      `@${provider}`,
-                onClick:    () => setValue('email', email?.split('@')[0])
+                onClick:    () => setValue('email', formsEmail?.split('@')[0])
               }];
             }
 
@@ -221,7 +237,7 @@ function CreateAccount() {
             return [...acc, {
               isSelected: false,
               label:      `@${provider}`,
-              onClick:    () => setValue('email', `${email}@${provider}.com`)
+              onClick:    () => setValue('email', `${formsEmail}@${provider}.com`)
             }];
           }, [] as BadgeProps[])}
         />

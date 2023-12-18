@@ -1,30 +1,34 @@
 import React, { MouseEventHandler } from 'react';
 import styled from 'styled-components';
 
-const BadgeContainer = styled.div`
+type BadgeContainerProps = {
+  isSelected?: boolean,
+  isClickable?: boolean,
+}
+
+const BadgeContainer = styled.div<BadgeContainerProps>`
   border-radius: 50px;
-  border: 1px solid var(--Sand-Light-6, #E3E3E0);
   padding: 8px 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
-  color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
   font-size: 12px;
   font-weight: 500;
 
-  &.badge-selected {
-    background-color: #E3E1F9;
-    border-color: #928BE4;
-  }
+  ${({ isSelected }) => (isSelected ? `
+    border: 1px solid var(--Violet-Light-7, #928BE4);
+    background: var(--Violet-Light-3, #E3E1F9);
+    color: var(--Violet-Light-11, var(--Violet-Light-11, #2A297A));
+  ` : `
+    border: 1px solid var(--Sand-Light-6, #E3E3E0);
+    color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
+    background: var(--White, #FFF);
+  `)}
 
-  &.badge-clickable {
+  ${({ isClickable }) => (isClickable ? `
     cursor: pointer;
-  }
-
-  &:hover {
-    background-color: #F3F3F2;
-  }
+  ` : '')}
 `;
 
 export type BadgeProps = {
@@ -36,10 +40,8 @@ export type BadgeProps = {
 function Badge({ isSelected, label, onClick }: BadgeProps) {
   return (
     <BadgeContainer
-      className={`
-        ${isSelected ? 'badge-selected' : ''}
-        ${onClick ? 'badge-clickable' : ''}
-      `}
+      isSelected={isSelected}
+      isClickable={!!onClick}
       onClick={onClick}
     >
       {label}
