@@ -10,6 +10,8 @@ import Badge, { BadgeProps } from '../Badge/Badge';
 
 interface InputContainerProps {
   hasRight?: boolean;
+  isError?: boolean;
+  isSuccess?: boolean;
 }
 
 const InputContainer = styled.div<InputContainerProps>`
@@ -19,15 +21,12 @@ const InputContainer = styled.div<InputContainerProps>`
   gap: 8px;
 
   label {
-    color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
     font-size: 12px;
     font-weight: 600;
   }
 
   input {
     border-radius: 6px;
-    border: 1px solid var(--Sand-Light-6, #E3E3E0);
-    background: var(--Sand-Light-1, #FDFDFC);
     margin: 0;
     padding: 8px 12px;
     cursor: text;
@@ -45,90 +44,113 @@ const InputContainer = styled.div<InputContainerProps>`
 
   .input-group {
     display: flex;
-    align-items: end;
-
-    &.success {
-      input {
-        background-color: #f5fffa;
-        color: #197650;
-        border-color: #7af5b8;
-      }
-
-      .input-group-right {
-        background-color: #dcfeed;
-        border-color: #7af5b8;
-
-        span {
-          color: #197650;
-        }
-      }
-    }
-
-    &.error {
-      input {
-        background-color: #f5fffa;
-        color: #A81500;
-        border-color: #FFAFA3;
-      }
-
-      .input-group-right {
-        background-color: #FFE0DB;
-        border-color: #FFAFA3;
-
-        span {
-          color: #A81500;
-        }
-      }
-    }
-
+    align-items: stretch;
+    
     .input-group-right {
-      background-color: #f9f9f8;
-      border: 1px solid #e3e3e0;
       display: flex;
       padding: 0 1em;
       border-top-right-radius: 10px;
       border-bottom-right-radius: 10px;
       border-left: 0;
-      height: 40px;
-
+    
       span {
         margin: auto;
         font-size: 16px;
-        color: #706f6c;
       }
     }
   }
 
-  .sub-text {
-    font-size: 12px;
-    padding: 2px;
-    
-    .message {
-      display: flex;
-      align-items: center;
+    ${({ isError, isSuccess }) => {
+    if (isError) {
+      return `
+            label {
+              color: var(--Red-Light-12, var(--Red-Light-12, #4B0B02));
+            }
 
-      svg {
-        margin-right: 5px;
-      }
+            input {
+              background-color: #f5fffa;
+              color: #A81500;
+              border-color: #FFAFA3;
+            }
 
-      span {
-        flex: 1;
-      }
+            .input-group-right {
+              background-color: #FFE0DB;
+              border: 1px solid #FFAFA3;
+
+              span {
+                color: #A81500;
+              }
+            }
+          `;
     }
 
-    .error {
-      color: #a81500;
+    if (isSuccess) {
+      return `
+            label {
+              color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
+            }
+
+            input {
+              background-color: #f5fffa;
+              color: #197650;
+              border-color: #7af5b8;
+            }
+
+            .input-group-right {
+              background-color: #dcfeed;
+              border: 1px solid #7af5b8;
+
+              span {
+                color: #197650;
+              }
+            }
+          `;
+    }
+
+    return `
+      label {
+        color: var(--Sand-Light-12, var(--Sand-Light-12, #1B1B18));
+      }
+
+      input {
+        border: 1px solid var(--Sand-Light-6, #E3E3E0);
+        background: var(--Sand-Light-1, #FDFDFC);
+      }
+
+      .input-group-right {
+        background-color: #f9f9f8;
+        border: 1px solid #e3e3e0;
+
+        span {
+          color: #706f6c;
+        }
+      }
+    `;
+  }}
+
+  .sub-text {
+    font-size: 12px;
+
+    .stats-message {
       display: flex;
       align-items: center;
       gap: 6px;
 
+      span {
+        flex: 1;
+      }
+
       svg {
         flex-shrink: 0;
       }
-    }
 
-    .success {
-      color: #197650;
+      &.error {
+        color: #A81500;
+      }
+
+      &.success {
+        color: #197650;
+      }
     }
   }
 `;
@@ -151,7 +173,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   const renderMessage = () => {
     if (success) {
       return (
-        <div className="message success">
+        <div className="stats-message success">
           <SuccessSvg />
           <span>{success}</span>
         </div>
@@ -160,7 +182,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
 
     if (error) {
       return (
-        <div className="error">
+        <div className="stats-message error">
           <ErrorSvg />
           <span>{error}</span>
         </div>
@@ -175,9 +197,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   };
 
   return (
-    <InputContainer hasRight={!!right}>
+    <InputContainer
+      hasRight={!!right}
+      isError={!!error}
+      isSuccess={!!success}
+    >
       <label htmlFor={name}>{label}</label>
-      <div className={`input-group ${success ? 'success' : ''} ${error ? 'error' : ''}`}>
+      <div className="input-group">
         <input
           {...rest}
           name={name}
