@@ -27,3 +27,19 @@ export const redirectWithError = ({
   parsedUrl.searchParams.set('reason', message);
   window.location.replace(parsedUrl.href);
 };
+
+/**
+ * Safely retrieves a value from local storage.
+ * If the retrieval fails (e.g., due to a SecurityError when the localStorage is not accessible),
+ * it will return undefined.
+ *
+ * @param {string} key - The key of the item to retrieve from local storage.
+ * @returns {string | undefined} The retrieved item's value, or undefined if the retrieval fails.
+ */
+export const safeGetLocalStorage = (key: string) => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return undefined;
+  }
+};
