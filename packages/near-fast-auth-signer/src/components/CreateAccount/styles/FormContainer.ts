@@ -19,10 +19,6 @@ const FormContainer = styled.form`
   header .desc span {
     color: #706F6C;
   }
-
-  button {
-    margin-top: 15px;
-  } 
 `;
 
 export default FormContainer;

@@ -14,7 +14,7 @@ import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import {
-  accountAddressPatternNoSubaccount, getEmailId
+  accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
 
@@ -82,7 +82,7 @@ const schema = yup.object().shape({
     .string()
     .required('Please enter a valid account ID')
     .matches(
-      accountAddressPatternNoSubaccount,
+      accountAddressPatternNoSubAccount,
       'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.'
     )
     .test(
@@ -107,7 +107,9 @@ function CreateAccount() {
     setValue,
     watch,
     reset,
-    formState: { errors, isDirty, isValid },
+    formState: {
+      errors, isDirty, isValid, dirtyFields
+    },
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
@@ -188,10 +190,10 @@ function CreateAccount() {
   }, [createAccount, reset, searchParams]);
 
   useEffect(() => {
-    if (formsEmail.split('@').length > 1 && !formsUserName) {
-      setValue('username', getEmailId(formsEmail));
+    if (formsEmail.split('@').length > 1 && !formsUserName && !dirtyFields.username) {
+      setValue('username', getEmailId(formsEmail), { shouldValidate: true });
     }
-  }, [formsEmail, setValue, formsUserName]);
+  }, [formsEmail, setValue, formsUserName, dirtyFields.username]);
 
   if (inIframe()) {
     return (
@@ -240,6 +242,10 @@ function CreateAccount() {
               onClick:    () => setValue('email', `${formsEmail}@${provider}.com`)
             }];
           }, [] as BadgeProps[])}
+          dataTest={{
+            input: 'email_create',
+            error: 'create_email_subtext_error',
+          }}
         />
         <Input
           {...register('username')}
@@ -250,6 +256,11 @@ function CreateAccount() {
           autoComplete="webauthn username"
           right=".near"
           placeholder="user_name"
+          dataTest={{
+            input:   'username_create',
+            error:   'account_available_notice',
+            success: 'create-error-subtext',
+          }}
         />
         <Button
           disabled={!isValid}
