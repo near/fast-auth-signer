@@ -108,7 +108,7 @@ function CreateAccount() {
     watch,
     reset,
     formState: {
-      errors, isDirty, isValid, dirtyFields
+      errors, isValid, dirtyFields
     },
   } = useForm({
     mode:          'all',
@@ -191,7 +191,7 @@ function CreateAccount() {
 
   useEffect(() => {
     if (formsEmail.split('@').length > 1 && !formsUserName && !dirtyFields.username) {
-      setValue('username', getEmailId(formsEmail), { shouldValidate: true });
+      setValue('username', getEmailId(formsEmail), { shouldValidate: true, shouldDirty: true });
     }
   }, [formsEmail, setValue, formsUserName, dirtyFields.username]);
 
@@ -250,7 +250,7 @@ function CreateAccount() {
         <Input
           {...register('username')}
           label="Account ID"
-          success={!errors.username && isDirty && 'Account ID available'}
+          success={!errors.username && dirtyFields.username && 'Account ID available'}
           error={errors?.username?.message}
           subText="Use a suggested ID or customize your own"
           autoComplete="webauthn username"
