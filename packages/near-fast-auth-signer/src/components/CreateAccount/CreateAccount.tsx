@@ -26,11 +26,15 @@ const StyledContainer = styled.div`
   justify-content: center;
   background-color: #f2f1ea;
   padding: 0 16px;
-  padding-bottom: 60px;
 
   header {
     text-align: center;
     margin-top: 1em;
+  }
+
+  @media only screen and (max-width: 500px) {
+    align-items: flex-end;
+    padding: 0;
   }
 `;
 
