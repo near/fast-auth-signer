@@ -87,15 +87,20 @@ const schema = yup.object().shape({
     )
     .test(
       'is-account-available',
-      'Username is already taken, try something else.',
-      async (username) => {
+      async (username, context) => {
         if (username) {
-          return checkIsAccountAvailable(username);
+          const isAvailable = await checkIsAccountAvailable(username);
+          if (!isAvailable) {
+            return context.createError({
+              message: `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`,
+              path:    context.path
+            });
+          }
         }
+
         return true;
       }
     )
-
 });
 
 function CreateAccount() {
@@ -113,10 +118,14 @@ function CreateAccount() {
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
+    defaultValues: {
+      email:    '',
+      username: '',
+    }
   });
 
-  const formsEmail = watch('email', '');
-  const formsUserName = watch('username', '');
+  const formsEmail = watch('email');
+  const formsUsername = watch('username');
 
   const navigate = useNavigate();
 
@@ -190,10 +199,12 @@ function CreateAccount() {
   }, [createAccount, reset, searchParams]);
 
   useEffect(() => {
-    if (formsEmail.split('@').length > 1 && !formsUserName && !dirtyFields.username) {
+    if (formsEmail?.split('@').length > 1 && !formsUsername) {
       setValue('username', getEmailId(formsEmail), { shouldValidate: true, shouldDirty: true });
     }
-  }, [formsEmail, setValue, formsUserName, dirtyFields.username]);
+  // Should only trigger when email changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formsEmail, setValue]);
 
   if (inIframe()) {
     return (
