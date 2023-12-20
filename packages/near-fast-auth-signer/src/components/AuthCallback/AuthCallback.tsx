@@ -2,14 +2,12 @@ import { KeyPairEd25519 } from '@near-js/crypto';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import type { MutableRefObject } from 'react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
@@ -211,39 +209,35 @@ export const onSignIn = async ({
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
-  const pendingSignInRef: MutableRefObject<null | Promise<void>> = useRef(null);
+
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    if (pendingSignInRef.current) {
-      return;
-    }
+    const signInProcess = async () => {
+      if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
+        const accountId = decodeIfTruthy(searchParams.get('accountId'));
+        const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
+        const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
+        const success_url = decodeIfTruthy(searchParams.get('success_url'));
+        const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
+        const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
+        const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
+        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
-    if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
-      const accountId = decodeIfTruthy(searchParams.get('accountId'));
-      const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-      const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
-      const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
-      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+        const email = window.localStorage.getItem('emailForSignIn');
+        const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
-      const email = window.localStorage.getItem('emailForSignIn');
-      const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
+        if (!email) {
+          const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+          parsedUrl.searchParams.set('code', '500');
+          parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
+          window.location.replace(parsedUrl.href);
+        }
 
-      if (!email) {
-        const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('code', '500');
-        parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
-        window.location.replace(parsedUrl.href);
-      }
+        setStatusMessage('Verifying email...');
 
-      setStatusMessage('Verifying email...');
-
-      // TODO: refactor this function, introduce early return pattern and cleanup async/await
-      pendingSignInRef.current = signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then(async ({ user }) => {
+        try {
+          const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
           const accessToken = await user.getIdToken();
 
           if (user.emailVerified) {
@@ -284,19 +278,17 @@ function AuthCallbackPage() {
               gateway:      success_url,
             });
           }
-        }).catch((e) => {
+        } catch (e) {
           captureException(e);
           console.log('error:', e);
           redirectWithError({ success_url, failure_url, error: e });
-          openToast({
-            type:  'ERROR',
-            title: e.message,
-          });
-        });
-    } else {
-      navigate('/signup');
-    }
-  }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once
+        }
+      } else {
+        navigate('/signup');
+      }
+    };
+    signInProcess();
+  }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once```
 
   return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
