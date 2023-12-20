@@ -243,8 +243,7 @@ function AuthCallbackPage() {
 
       // TODO: refactor this function, introduce early return pattern and cleanup async/await
       pendingSignInRef.current = signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then(async (result) => {
-          const { user } = result;
+        .then(async ({ user }) => {
           const accessToken = await user.getIdToken();
 
           if (user.emailVerified) {
@@ -252,7 +251,7 @@ function AuthCallbackPage() {
             const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
             // claim the oidc token
-            (window as any).fastAuthController = new FastAuthController({
+            window.fastAuthController = new FastAuthController({
               accountId,
               networkId
             });
@@ -262,7 +261,7 @@ function AuthCallbackPage() {
             }
             await window.fastAuthController.claimOidcToken(accessToken);
             const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-            (window as any).firestoreController = new FirestoreController();
+            window.firestoreController = new FirestoreController();
             window.firestoreController.updateUser({
               userUid:   user.uid,
               oidcToken: accessToken,
