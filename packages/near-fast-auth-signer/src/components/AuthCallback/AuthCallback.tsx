@@ -41,12 +41,12 @@ const onCreateAccount = async ({
   const res = await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
-    limitedAccessKeys: [{
+    limitedAccessKeys: public_key_lak ? [{
       public_key:   public_key_lak,
       receiver_id:  contract_id,
       allowance:    '250000000000000',
       method_names: methodNames ?? '',
-    }],
+    }] : [],
     accessToken,
     oidcKeypair,
   });
@@ -212,9 +212,6 @@ function AuthCallbackPage() {
           if (!user || !user.emailVerified) return;
 
           const accessToken = await user.getIdToken();
-
-          // @ts-ignore
-          console.log({ accessToken, userAccessToken: user.accessToken });
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
           const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
