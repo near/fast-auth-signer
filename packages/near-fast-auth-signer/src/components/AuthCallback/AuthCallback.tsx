@@ -6,13 +6,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
-  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getAddLAKAction
+  getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
 
 const StyledStatusMessage = styled.div`
@@ -37,80 +38,46 @@ const onCreateAccount = async ({
   email,
   gateway,
 }) => {
-  const CLAIM_SALT = CLAIM + 2;
-  const signature = getUserCredentialsFrpSignature({
-    salt:            CLAIM_SALT,
-    oidcToken:       accessToken,
-    shouldHashToken: false,
-    keypair:         oidcKeypair,
+  const res = await createNEARAccount({
+    accountId,
+    publicKeyFak,
+    public_key_lak,
+    contract_id,
+    methodNames,
+    accessToken,
+    oidcKeypair,
   });
-  const data = {
-    near_account_id:        accountId,
-    create_account_options: {
-      full_access_keys:    publicKeyFak ? [publicKeyFak] : [],
-      limited_access_keys: public_key_lak ? [
-        {
-          public_key:   public_key_lak,
-          receiver_id:  contract_id,
-          allowance:    '250000000000000',
-          method_names: (methodNames && methodNames.split(',')) || '',
-        },
-      ] : [],
-    },
-    oidc_token:                     accessToken,
-    user_credentials_frp_signature: signature,
-    frp_public_key:                 oidcKeypair.getPublicKey().toString(),
-  };
 
-  const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
+  if (res.type === 'err') return;
 
-  const options = {
-    method: 'POST',
-    mode:   'cors' as const,
-    body:   JSON.stringify(data),
-    headers,
-  };
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
 
-  return fetch(`${network.fastAuth.mpcRecoveryUrl}/new_account`, options)
-    .then(
-      async (response) => {
-        if (!response?.ok) {
-          throw new Error('Network response was not ok');
-        }
-        if (!window.firestoreController) {
-          (window as any).firestoreController = new FirestoreController();
-        }
-        // Add device
-        await window.firestoreController.addDeviceCollection({
-          fakPublicKey: publicKeyFak,
-          lakPublicKey: public_key_lak,
-          gateway,
-        });
+  // Add device
+  await window.firestoreController.addDeviceCollection({
+    fakPublicKey: publicKeyFak,
+    lakPublicKey: public_key_lak,
+    gateway,
+  });
 
-        setStatusMessage('Account created successfully!');
-        const res = await response.json();
-        const accId = res.near_account_id;
-        // TODO: Check if account ID matches the one from email
-        if (!accId) {
-          throw new Error('Could not find account creation data');
-        }
+  setStatusMessage('Account created successfully!');
 
-        if (publicKeyFak) {
-          window.localStorage.setItem('webauthn_username', email);
-        }
-        window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
+  // TODO: Check if account ID matches the one from email
 
-        setStatusMessage('Redirecting to app...');
+  if (publicKeyFak) {
+    window.localStorage.setItem('webauthn_username', email);
+  }
+  window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
-        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('account_id', accId);
-        parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+  setStatusMessage('Redirecting to app...');
 
-        window.location.replace(parsedUrl.href);
-      },
-    );
+  const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+  parsedUrl.searchParams.set('account_id', res.near_account_id);
+  parsedUrl.searchParams.set('public_key', public_key_lak);
+  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+
+  window.location.replace(parsedUrl.href);
 };
 
 export const onSignIn = async ({
@@ -212,6 +179,7 @@ function AuthCallbackPage() {
 
   const [searchParams] = useSearchParams();
 
+  // The signIn should run only once
   useEffect(() => {
     const signInProcess = async () => {
       if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
@@ -238,46 +206,49 @@ function AuthCallbackPage() {
 
         try {
           const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
+          if (!user || !user.emailVerified) return;
+
           const accessToken = await user.getIdToken();
 
-          if (user.emailVerified) {
-            setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-            const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
+          // @ts-ignore
+          console.log({ accessToken, userAccessToken: user.accessToken });
 
-            // claim the oidc token
-            window.fastAuthController = new FastAuthController({
-              accountId,
-              networkId
-            });
+          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+          const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
-            if (keypair) {
-              await window.fastAuthController.setKey(keypair);
-            }
-            await window.fastAuthController.claimOidcToken(accessToken);
-            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-            window.firestoreController = new FirestoreController();
-            window.firestoreController.updateUser({
-              userUid:   user.uid,
-              oidcToken: accessToken,
-            });
+          // claim the oidc token
+          window.fastAuthController = new FastAuthController({
+            accountId,
+            networkId
+          });
 
-            const callback = isRecovery ? onSignIn : onCreateAccount;
-            await callback({
-              oidcKeypair,
-              accessToken,
-              accountId,
-              publicKeyFak,
-              public_key_lak,
-              contract_id,
-              methodNames,
-              success_url,
-              setStatusMessage,
-              email,
-              navigate,
-              searchParams,
-              gateway:      success_url,
-            });
+          if (keypair) {
+            await window.fastAuthController.setKey(keypair);
           }
+          await window.fastAuthController.claimOidcToken(accessToken);
+          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+          window.firestoreController = new FirestoreController();
+          window.firestoreController.updateUser({
+            userUid:   user.uid,
+            oidcToken: accessToken,
+          });
+
+          const callback = isRecovery ? onSignIn : onCreateAccount;
+          await callback({
+            oidcKeypair,
+            accessToken,
+            accountId,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            success_url,
+            setStatusMessage,
+            email,
+            navigate,
+            searchParams,
+            gateway:      success_url,
+          });
         } catch (e) {
           captureException(e);
           console.log('error:', e);
@@ -287,8 +258,9 @@ function AuthCallbackPage() {
         navigate('/signup');
       }
     };
+
     signInProcess();
-  }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once```
+  }, [navigate, searchParams]);
 
   return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
