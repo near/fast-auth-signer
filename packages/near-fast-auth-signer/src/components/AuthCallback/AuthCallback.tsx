@@ -218,21 +218,21 @@ function AuthCallbackPage() {
     if (pendingSignInRef.current) {
       return;
     }
-    const locationUrl = window.location.href;
 
-    if (isSignInWithEmailLink(firebaseAuth, locationUrl)) {
+    if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
       const accountId = decodeIfTruthy(searchParams.get('accountId'));
       const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-      const email = window.localStorage.getItem('emailForSignIn');
       const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
       const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+
+      const email = window.localStorage.getItem('emailForSignIn');
       const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
-      while (!email) {
+      if (!email) {
         const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('code', '500');
         parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
@@ -243,11 +243,10 @@ function AuthCallbackPage() {
 
       // TODO: refactor this function, introduce early return pattern and cleanup async/await
       pendingSignInRef.current = signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then(async (result: any) => {
-          // TODO refactor: remove weird typing here, it is a temporary hack to get around
-          // a TypeScript error where the defined type does not match the actual
-          // type returned by the function
+        .then(async (result) => {
           const { user } = result;
+          const accessToken = await user.getIdToken();
+
           if (user.emailVerified) {
             setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
             const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
@@ -261,18 +260,18 @@ function AuthCallbackPage() {
             if (keypair) {
               await window.fastAuthController.setKey(keypair);
             }
-            await window.fastAuthController.claimOidcToken(user.accessToken);
-            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${user.accessToken}`);
+            await window.fastAuthController.claimOidcToken(accessToken);
+            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
             (window as any).firestoreController = new FirestoreController();
             window.firestoreController.updateUser({
               userUid:   user.uid,
-              oidcToken: user.accessToken,
+              oidcToken: accessToken,
             });
 
             const callback = isRecovery ? onSignIn : onCreateAccount;
             await callback({
               oidcKeypair,
-              accessToken: user.accessToken,
+              accessToken,
               accountId,
               publicKeyFak,
               public_key_lak,
