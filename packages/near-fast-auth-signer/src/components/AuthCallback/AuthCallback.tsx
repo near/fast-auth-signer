@@ -40,10 +40,13 @@ const onCreateAccount = async ({
 }) => {
   const res = await createNEARAccount({
     accountId,
-    publicKeyFak,
-    public_key_lak,
-    contract_id,
-    methodNames,
+    fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
+    limitedAccessKeys: [{
+      public_key:   public_key_lak,
+      receiver_id:  contract_id,
+      allowance:    '250000000000000',
+      method_names: methodNames ?? '',
+    }],
     accessToken,
     oidcKeypair,
   });
