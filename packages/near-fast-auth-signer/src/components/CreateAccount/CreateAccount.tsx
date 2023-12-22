@@ -1,20 +1,20 @@
-import { ErrorMessage } from '@hookform/error-message';
+import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import * as yup from 'yup';
 
-import ErrorSvg from './icons/ErrorSvg';
-import SuccessSvg from './icons/SuccessSvg';
 import FormContainer from './styles/FormContainer';
-import InputContainer from './styles/InputContainer';
+import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
+import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import {
-  accountAddressPatternNoSubaccount, emailPattern, getEmailId, isValidEmail
+  accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
 
@@ -36,32 +36,110 @@ const StyledContainer = styled.div`
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
 
+const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
+  try {
+    const response = await fetch(network.nodeUrl, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id:      'dontcare',
+        method:  'query',
+        params:  {
+          request_type: 'view_account',
+          finality:     'final',
+          account_id:   `${desiredUsername}.${network.fastAuth.accountIdSuffix}`,
+        },
+      }),
+    });
+    const data = await response.json();
+    if (data?.error?.cause?.name === 'UNKNOWN_ACCOUNT') {
+      return true;
+    }
+
+    if (data?.result?.code_hash) {
+      return false;
+    }
+
+    return false;
+  } catch (error: any) {
+    console.log(error);
+    openToast({
+      title: error.message,
+      type:  'ERROR'
+    });
+    return false;
+  }
+};
+
+const schema = yup.object().shape({
+  email:    yup
+    .string()
+    .required('Email address is required'),
+  username: yup
+    .string()
+    .required('Please enter a valid account ID')
+    .matches(
+      accountAddressPatternNoSubAccount,
+      'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.'
+    )
+    .test(
+      'is-account-available',
+      async (username, context) => {
+        if (username) {
+          const isAvailable = await checkIsAccountAvailable(username);
+          if (!isAvailable) {
+            return context.createError({
+              message: `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`,
+              path:    context.path
+            });
+          }
+        }
+
+        return true;
+      }
+    )
+});
+
 function CreateAccount() {
+  const [searchParams] = useSearchParams();
+
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
-    formState: { errors, touchedFields },
-    clearErrors,
-  } = useForm();
-  const [emailProvider, setEmailProvider] = useState(null);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState(null);
+    watch,
+    reset,
+    formState: {
+      errors, isValid, dirtyFields
+    },
+  } = useForm({
+    mode:          'all',
+    resolver:      yupResolver(schema),
+    defaultValues: {
+      email:    '',
+      username: '',
+    }
+  });
 
-  const formValues = watch();
+  const formsEmail = watch('email');
+  const formsUsername = watch('username');
+
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
-  const createAccount = async (data: { email: string; username: string; }) => {
+  const createAccount = useCallback(async (data: { email: string; username: string; }) => {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
     const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
-        publicKey: publicKeyFak, email, privateKey, accountId
+        publicKey: publicKeyFak, privateKey, accountId
       } = await handleCreateAccount({
         accountId:   fullAccountId,
         email:       data.email,
@@ -74,7 +152,7 @@ function CreateAccount() {
       });
       const newSearchParams = new URLSearchParams({
         accountId,
-        email,
+        email:      data.email,
         isRecovery: 'false',
         ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
@@ -102,61 +180,31 @@ function CreateAccount() {
       //   title: message,
       // });
     }
-  };
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     const email = searchParams.get('email');
     const username = searchParams.get('accountId');
 
     if (email) {
-      setValue('email', email);
-      setValue('username', username || getEmailId(email));
+      reset({
+        email,
+        username: username || getEmailId(email),
+      });
+
       if (username) {
         createAccount({ email, username });
       }
     }
-  }, []);
+  }, [createAccount, reset, searchParams]);
 
-  const checkIsAccountAvailable = useCallback(async (desiredUsername: string) => {
-    try {
-      if (!desiredUsername) return;
-
-      const response = await fetch(network.nodeUrl, {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id:      'dontcare',
-          method:  'query',
-          params:  {
-            request_type: 'view_account',
-            finality:     'final',
-            account_id:   `${desiredUsername}.${network.fastAuth.accountIdSuffix}`,
-          },
-        }),
-      });
-      const data = await response.json();
-      if (data?.error?.cause?.name === 'UNKNOWN_ACCOUNT') {
-        // eslint-disable-next-line consistent-return
-        return true;
-      }
-
-      if (data?.result?.code_hash) {
-        // eslint-disable-next-line consistent-return
-        return false;
-      }
-    } catch (error: any) {
-      console.log(error);
-      openToast({
-        title: error.message,
-        type:  'ERROR'
-      });
+  useEffect(() => {
+    if (formsEmail?.split('@').length > 1 && !formsUsername) {
+      setValue('username', getEmailId(formsEmail), { shouldValidate: true, shouldDirty: true });
     }
-  }, []);
-
-  const onSubmit = handleSubmit(async (data) => createAccount(data));
+  // Should only trigger when email changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formsEmail, setValue]);
 
   if (inIframe()) {
     return (
@@ -169,27 +217,9 @@ function CreateAccount() {
     );
   }
 
-  const selectMailProvider = (provider: string) => {
-    if (!formValues.email) {
-      formValues.email = '';
-    }
-    const emailId = getEmailId(formValues.email);
-    if (emailProvider === provider) {
-      setEmailProvider(null);
-      setValue('email', emailId);
-    } else {
-      setEmailProvider(provider);
-      setValue('email', `${emailId}@${provider}.com`);
-    }
-
-    if (!formValues?.username || !touchedFields?.username) {
-      setValue('username', emailId);
-    }
-  };
-
   return (
     <StyledContainer>
-      <FormContainer onSubmit={onSubmit}>
+      <FormContainer onSubmit={handleSubmit(createAccount)}>
         <header>
           <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">
@@ -198,128 +228,59 @@ function CreateAccount() {
             <Link to="/login" data-test-id="create_login_link">Sign in</Link>
           </p>
         </header>
+        <Input
+          {...register('email')}
+          placeholder="user_name@email.com"
+          type="email"
+          label="Email"
+          error={errors?.email?.message}
+          badges={emailProviders?.reduce((acc, provider) => {
+            const currProvider = formsEmail?.split('@')[1];
 
-        <InputContainer>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label htmlFor="email">Email</label>
+            if (currProvider?.includes(provider)) {
+              return [{
+                isSelected: true,
+                label:      `@${provider}`,
+                onClick:    () => setValue('email', formsEmail?.split('@')[0])
+              }];
+            }
 
-          <input
-            {...register('email', {
-              required: 'Email address is required',
-              pattern:  {
-                value:   emailPattern,
-                message: 'Please enter a valid email address',
-              },
-            })}
-            onChange={(e) => {
-              clearErrors('email');
-              setValue('email', e.target.value);
-              if (!isValidEmail(e.target.value)) return;
-              if (!formValues?.username || !touchedFields?.username) {
-                setValue('username', getEmailId(e.target.value));
-              }
-            }}
-            placeholder="user_name@email.com"
-            type="email"
-            id="email"
-            data-test-id="email_create"
-          />
-          <div className="select-mail-provider">
-            {emailProviders.map((provider) => {
-              if (!emailProvider || emailProvider === provider) {
-                return (
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <div key={provider} className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
-                    @
-                    {provider}
-                  </div>
-                );
-              }
-              if ((formValues?.email === '') || (formValues && (!formValues?.email.includes(emailProvider)))) {
-                setEmailProvider(null);
-                return (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <div key={provider} className={`mail-provider ${emailProvider === provider ? 'mail-provider-selected' : ''}`} onClick={() => selectMailProvider(provider)}>
-                    @
-                    {provider}
-                  </div>
-                );
-              }
-              return null;
-            })}
-          </div>
-          <div className="subText">
-            <div className="error" data-test-id="create_email_subtext_error">
-              <ErrorMessage
-                errors={errors}
-                name="email"
-                render={({ message }) => <p>{message}</p>}
-              />
-            </div>
-          </div>
-        </InputContainer>
+            if (acc.some((p) => p.isSelected)) return acc;
 
-        <InputContainer>
-          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label htmlFor="username">Account ID</label>
-          <div className={`input-group-custom ${isUsernameAvailable === true && 'input-group-custom-success'} ${isUsernameAvailable === false && 'input-group-custom-failure'}`}>
-            <input
-              autoComplete="webauthn username"
-              {...register('username', {
-                required: 'Please enter a valid account ID',
-                pattern:  {
-                  value:   accountAddressPatternNoSubaccount,
-                  message: 'Accounts must be lowercase and may contain - or _, but they may not begin or end with a special character or have two consecutive special characters.',
-                },
-                validate: async (username) => {
-                  const isAccountAvailable = await checkIsAccountAvailable(username);
-                  setIsUsernameAvailable(isAccountAvailable);
-                  if (!isAccountAvailable) {
-                    return `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`;
-                  }
-                  return null;
-                },
-              })}
-              onChange={async (e) => {
-                clearErrors('username');
-                const isValidPattern = accountAddressPatternNoSubaccount.test(e.target.value);
-                if (!isValidPattern) {
-                  setIsUsernameAvailable(false);
-                  return null;
-                }
-                const isAccountAvailable = await checkIsAccountAvailable(e.target.value);
-                setIsUsernameAvailable(isAccountAvailable);
-                return null;
-              }}
-              data-test-id="username_create"
-              placeholder="user_name"
-            />
-            <div className="input-group-right">
-              <span>.near</span>
-            </div>
-          </div>
-          <div className="subText">
-            <div>Use a suggested ID or customize your own</div>
-            {isUsernameAvailable && (
-              <div className="success">
-                <SuccessSvg />
-                <span data-test-id="account_available_notice">Account ID available</span>
-              </div>
-            )}
-            <ErrorMessage
-              errors={errors}
-              name="username"
-              render={({ message }) => (
-                <div className="error" data-test-id="create-error-subtext">
-                  <ErrorSvg />
-                  <span>{message}</span>
-                </div>
-              )}
-            />
-          </div>
-        </InputContainer>
-
-        <Button label="Continue" variant="affirmative" type="submit" size="large" data-test-id="continue_button_create" />
+            return [...acc, {
+              isSelected: false,
+              label:      `@${provider}`,
+              onClick:    () => setValue('email', `${formsEmail}@${provider}.com`)
+            }];
+          }, [] as BadgeProps[])}
+          dataTest={{
+            input: 'email_create',
+            error: 'create_email_subtext_error',
+          }}
+        />
+        <Input
+          {...register('username')}
+          label="Account ID"
+          success={!errors.username && dirtyFields.username && 'Account ID available'}
+          error={errors?.username?.message}
+          subText="Use a suggested ID or customize your own"
+          autoComplete="webauthn username"
+          right=".near"
+          placeholder="user_name"
+          dataTest={{
+            input:   'username_create',
+            error:   'account_available_notice',
+            success: 'create-error-subtext',
+          }}
+        />
+        <Button
+          disabled={!isValid}
+          label="Continue"
+          variant="affirmative"
+          type="submit"
+          size="large"
+          data-test-id="continue_button_create"
+        />
       </FormContainer>
     </StyledContainer>
   );
