@@ -1,3 +1,4 @@
+import { yupResolver } from '@hookform/resolvers/yup';
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
@@ -6,15 +7,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import * as yup from 'yup';
 
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
+import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
-import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
+import {
+  decodeIfTruthy, inIframe, redirectWithError
+} from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
-import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -37,37 +41,6 @@ const FormContainer = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
-`;
-
-const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 10px;
-
-  label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  input {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 4px;
-    min-height: 50px;
-    cursor: text;
-
-    &:focus {
-      outline: none;
-      border: 1px solid #e5e5e5;
-    }
-  }
-
-  .subText {
-    font-size: 12px;
-  }
 `;
 
 export const handleCreateAccount = async ({
@@ -107,9 +80,21 @@ export const handleCreateAccount = async ({
   };
 };
 
+const schema = yup.object().shape({
+  email:    yup.string().email().required(),
+});
+
 function SignInPage() {
-  const { register, handleSubmit, setValue } = useForm();
   const [searchParams] = useSearchParams();
+
+  const { register, handleSubmit } = useForm({
+    resolver:      yupResolver(schema),
+    mode:          'all',
+    defaultValues: {
+      email: searchParams.get('email') ?? '',
+    }
+  });
+
   const navigate = useNavigate();
 
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
@@ -127,7 +112,7 @@ function SignInPage() {
         setIsFirestoreReady(isReady as boolean);
       });
     }
-  }, [authenticated]);
+  }, [authenticated, isFirestoreReady]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -281,13 +266,12 @@ function SignInPage() {
       } else if (email && !authenticated) {
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
-        setValue('email', email);
         addDevice({ email });
       }
     };
 
     handleAuthCallback();
-  }, [isFirestoreReady, authenticated]);
+  }, [isFirestoreReady, authenticated, searchParams, navigate, addDevice]);
 
   if (authenticated === true) {
     return renderRedirectButton ? (
@@ -327,30 +311,18 @@ function SignInPage() {
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
         </header>
-
-        <InputContainer>
-          <label htmlFor="email">
-            Email
-            <input
-              {...register('email', {
-                required: 'Please enter a valid email address',
-              })}
-              onChange={(e) => {
-                setValue('email', e.target.value);
-                // eslint-disable-next-line
-              if (!isValidEmail(e.target.value)) return;
-              }}
-              placeholder="user_name@email.com"
-              type="email"
-              id="email"
-              data-test-id="add-device-email"
-              required
-            />
-          </label>
-
-        </InputContainer>
-
-        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" onClick={onSubmit} />
+        <Input
+          {...register('email')}
+          label="Email"
+          placeholder="user_name@email.com"
+          type="email"
+          id="email"
+          required
+          dataTest={{
+            input: 'add-device-email',
+          }}
+        />
+        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" />
       </FormContainer>
     </StyledContainer>
   );
