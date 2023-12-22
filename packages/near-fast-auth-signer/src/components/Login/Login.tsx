@@ -12,7 +12,10 @@ import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
 
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup
+    .string()
+    .email('Please enter a valid email address')
+    .required('Please enter a valid email address'),
 });
 
 function Login() {
@@ -36,7 +39,7 @@ function Login() {
     }
   }, [currentSearchParams, navigate]);
 
-  const { handleSubmit, register } = useForm({
+  const { handleSubmit, register, formState: { errors } } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
     defaultValues: {
@@ -83,6 +86,7 @@ function Login() {
           type="email"
           dataTest={{ input: 'email_login' }}
           required
+          error={errors.email?.message}
         />
         <Button
           size="large"

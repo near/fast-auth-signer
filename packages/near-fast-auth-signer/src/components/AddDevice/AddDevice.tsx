@@ -81,13 +81,16 @@ export const handleCreateAccount = async ({
 };
 
 const schema = yup.object().shape({
-  email:    yup.string().email().required(),
+  email:    yup
+    .string()
+    .email('Please enter a valid email address')
+    .required('Please enter a valid email address'),
 });
 
 function SignInPage() {
   const [searchParams] = useSearchParams();
 
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver:      yupResolver(schema),
     mode:          'all',
     defaultValues: {
@@ -102,17 +105,8 @@ function SignInPage() {
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
   if (!window.firestoreController) {
-    (window as any).firestoreController = new FirestoreController();
+    window.firestoreController = new FirestoreController();
   }
-  const [isFirestoreReady, setIsFirestoreReady] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (isFirestoreReady === null && authenticated !== 'loading') {
-      checkFirestoreReady().then((isReady) => {
-        setIsFirestoreReady(isReady as boolean);
-      });
-    }
-  }, [authenticated, isFirestoreReady]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -169,8 +163,11 @@ function SignInPage() {
   }, [searchParams, navigate]);
 
   useEffect(() => {
-    if (authenticated === 'loading' || isFirestoreReady === null) return;
+    if (authenticated === 'loading') return;
+
     const handleAuthCallback = async () => {
+      const isFirestoreReady = await checkFirestoreReady();
+
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
@@ -190,7 +187,7 @@ function SignInPage() {
         const noNeedToAddKey = existingDeviceLakKey === public_key;
         if (noNeedToAddKey) {
           const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+          parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
           parsedUrl.searchParams.set('public_key', public_key);
           parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
 
@@ -202,12 +199,12 @@ function SignInPage() {
           return;
         }
 
-        (window as any).fastAuthController.signAndSendAddKey({
+        window.fastAuthController.signAndSendAddKey({
           contractId: contract_id,
           methodNames,
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
-        }).then((res) => res.json()).then((res) => {
+        }).then((res) => res && res.json()).then((res) => {
           const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
           if (failure?.ActionError?.kind?.LackBalanceForState) {
             navigate(`/devices?${searchParams.toString()}`);
@@ -231,7 +228,7 @@ function SignInPage() {
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-              parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+              parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
               parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
               window.parent.postMessage({
@@ -242,7 +239,7 @@ function SignInPage() {
                   request_type: 'complete_sign_in',
                   publicKey:    public_key,
                   allKeys:      [public_key, publicKeyFak].join(','),
-                  accountId:    (window as any).fastAuthController.getAccountId()
+                  accountId:    window.fastAuthController.getAccountId()
                 }
               }, '*');
               if (inIframe()) {
@@ -271,7 +268,7 @@ function SignInPage() {
     };
 
     handleAuthCallback();
-  }, [isFirestoreReady, authenticated, searchParams, navigate, addDevice]);
+  }, [addDevice, authenticated, navigate, searchParams]);
 
   if (authenticated === true) {
     return renderRedirectButton ? (
@@ -302,11 +299,9 @@ function SignInPage() {
     );
   }
 
-  const onSubmit = handleSubmit(addDevice);
-
   return (
     <StyledContainer>
-      <FormContainer onSubmit={onSubmit}>
+      <FormContainer onSubmit={handleSubmit(addDevice)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
@@ -321,6 +316,7 @@ function SignInPage() {
           dataTest={{
             input: 'add-device-email',
           }}
+          error={errors.email?.message}
         />
         <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" />
       </FormContainer>
