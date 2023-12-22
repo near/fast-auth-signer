@@ -139,6 +139,7 @@ function Sign() {
       .catch(() => {
         console.warn('Coin Gecko Error');
       });
+  // eslint-disable-next-line
   }, []);
 
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);

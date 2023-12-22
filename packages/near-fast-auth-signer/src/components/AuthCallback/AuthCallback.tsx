@@ -73,7 +73,7 @@ const onCreateAccount = async ({
   }
 
   setStatusMessage('Redirecting to app...');
-  
+
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
   parsedUrl.searchParams.set('account_id', res.near_account_id);

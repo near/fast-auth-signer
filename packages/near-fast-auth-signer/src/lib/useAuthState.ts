@@ -33,7 +33,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
         setAuthenticated(false);
       } else if (controllerState === true) {
         setAuthenticated(true);
-      } else if ((!webauthnUsername && isPasskeySupported)|| (email && email !== webauthnUsername)) {
+      } else if ((!webauthnUsername && isPasskeySupported) || (email && email !== webauthnUsername)) {
         setAuthenticated(false);
       } else if (isPasskeySupported) {
         try {
