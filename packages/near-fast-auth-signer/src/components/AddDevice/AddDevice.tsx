@@ -76,7 +76,7 @@ export const handleCreateAccount = async ({
   });
   window.localStorage.setItem('emailForSignIn', email);
   return {
-    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
+    publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
   };
 };
 
@@ -122,7 +122,7 @@ function SignInPage() {
       if (!result.length) {
         throw new Error('Account not found, please create an account and try again');
       }
-      const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
+      const { publicKey: publicKeyFak, privateKey } = await handleCreateAccount({
         accountId:   null,
         email:       data.email,
         isRecovery:  true,
@@ -133,7 +133,7 @@ function SignInPage() {
         methodNames,
       });
       const newSearchParams = new URLSearchParams({
-        email,
+        email:      data.email,
         isRecovery: 'true',
         ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
