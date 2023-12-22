@@ -2,19 +2,18 @@ import { KeyPairEd25519 } from '@near-js/crypto';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import type { MutableRefObject } from 'react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
-  CLAIM, getAddKeyAction, getUserCredentialsFrpSignature, getAddLAKAction
+  getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
 
 const StyledStatusMessage = styled.div`
@@ -39,80 +38,49 @@ const onCreateAccount = async ({
   email,
   gateway,
 }) => {
-  const CLAIM_SALT = CLAIM + 2;
-  const signature = getUserCredentialsFrpSignature({
-    salt:            CLAIM_SALT,
-    oidcToken:       accessToken,
-    shouldHashToken: false,
-    keypair:         oidcKeypair,
+  const res = await createNEARAccount({
+    accountId,
+    fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
+    limitedAccessKeys: public_key_lak ? [{
+      public_key:   public_key_lak,
+      receiver_id:  contract_id,
+      allowance:    '250000000000000',
+      method_names: methodNames ?? '',
+    }] : [],
+    accessToken,
+    oidcKeypair,
   });
-  const data = {
-    near_account_id:        accountId,
-    create_account_options: {
-      full_access_keys:    publicKeyFak ? [publicKeyFak] : [],
-      limited_access_keys: public_key_lak ? [
-        {
-          public_key:   public_key_lak,
-          receiver_id:  contract_id,
-          allowance:    '250000000000000',
-          method_names: (methodNames && methodNames.split(',')) || '',
-        },
-      ] : [],
-    },
-    oidc_token:                     accessToken,
-    user_credentials_frp_signature: signature,
-    frp_public_key:                 oidcKeypair.getPublicKey().toString(),
-  };
 
-  const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
+  if (res.type === 'err') return;
 
-  const options = {
-    method: 'POST',
-    mode:   'cors' as const,
-    body:   JSON.stringify(data),
-    headers,
-  };
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
 
-  return fetch(`${network.fastAuth.mpcRecoveryUrl}/new_account`, options)
-    .then(
-      async (response) => {
-        if (!response?.ok) {
-          throw new Error('Network response was not ok');
-        }
-        if (!window.firestoreController) {
-          (window as any).firestoreController = new FirestoreController();
-        }
-        // Add device
-        await window.firestoreController.addDeviceCollection({
-          fakPublicKey: publicKeyFak,
-          lakPublicKey: public_key_lak,
-          gateway,
-        });
+  // Add device
+  await window.firestoreController.addDeviceCollection({
+    fakPublicKey: publicKeyFak,
+    lakPublicKey: public_key_lak,
+    gateway,
+  });
 
-        setStatusMessage('Account created successfully!');
-        const res = await response.json();
-        const accId = res.near_account_id;
-        // TODO: Check if account ID matches the one from email
-        if (!accId) {
-          throw new Error('Could not find account creation data');
-        }
+  setStatusMessage('Account created successfully!');
 
-        if (publicKeyFak) {
-          window.localStorage.setItem('webauthn_username', email);
-        }
-        window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
+  // TODO: Check if account ID matches the one from email
 
-        setStatusMessage('Redirecting to app...');
+  if (publicKeyFak) {
+    window.localStorage.setItem('webauthn_username', email);
+  }
+  window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
-        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('account_id', accId);
-        parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+  setStatusMessage('Redirecting to app...');
 
-        window.location.replace(parsedUrl.href);
-      },
-    );
+  const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+  parsedUrl.searchParams.set('account_id', res.near_account_id);
+  parsedUrl.searchParams.set('public_key', public_key_lak);
+  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+
+  window.location.replace(parsedUrl.href);
 };
 
 export const onSignIn = async ({
@@ -211,94 +179,88 @@ export const onSignIn = async ({
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
-  const pendingSignInRef: MutableRefObject<null | Promise<void>> = useRef(null);
+
   const [searchParams] = useSearchParams();
 
+  // The signIn should run only once
   useEffect(() => {
-    if (pendingSignInRef.current) {
-      return;
-    }
-    const locationUrl = window.location.href;
+    const signInProcess = async () => {
+      if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
+        const accountId = decodeIfTruthy(searchParams.get('accountId'));
+        const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
+        const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
+        const success_url = decodeIfTruthy(searchParams.get('success_url'));
+        const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
+        const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
+        const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
+        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
-    if (isSignInWithEmailLink(firebaseAuth, locationUrl)) {
-      const accountId = decodeIfTruthy(searchParams.get('accountId'));
-      const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
-      const email = window.localStorage.getItem('emailForSignIn');
-      const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
-      const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
-      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-      const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
+        const email = window.localStorage.getItem('emailForSignIn');
+        const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
-      while (!email) {
-        const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('code', '500');
-        parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
-        window.location.replace(parsedUrl.href);
-      }
+        if (!email) {
+          const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+          parsedUrl.searchParams.set('code', '500');
+          parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
+          window.location.replace(parsedUrl.href);
+        }
 
-      setStatusMessage('Verifying email...');
+        setStatusMessage('Verifying email...');
 
-      // TODO: refactor this function, introduce early return pattern and cleanup async/await
-      pendingSignInRef.current = signInWithEmailLink(firebaseAuth, email, window.location.href)
-        .then(async (result: any) => {
-          // TODO refactor: remove weird typing here, it is a temporary hack to get around
-          // a TypeScript error where the defined type does not match the actual
-          // type returned by the function
-          const { user } = result;
-          if (user.emailVerified) {
-            setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-            const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
+        try {
+          const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
+          if (!user || !user.emailVerified) return;
 
-            // claim the oidc token
-            (window as any).fastAuthController = new FastAuthController({
-              accountId,
-              networkId
-            });
+          const accessToken = await user.getIdToken();
 
-            if (keypair) {
-              await window.fastAuthController.setKey(keypair);
-            }
-            await window.fastAuthController.claimOidcToken(user.accessToken);
-            const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${user.accessToken}`);
-            (window as any).firestoreController = new FirestoreController();
-            window.firestoreController.updateUser({
-              userUid:   user.uid,
-              oidcToken: user.accessToken,
-            });
+          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+          const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
-            const callback = isRecovery ? onSignIn : onCreateAccount;
-            await callback({
-              oidcKeypair,
-              accessToken: user.accessToken,
-              accountId,
-              publicKeyFak,
-              public_key_lak,
-              contract_id,
-              methodNames,
-              success_url,
-              setStatusMessage,
-              email,
-              navigate,
-              searchParams,
-              gateway:      success_url,
-            });
+          // claim the oidc token
+          window.fastAuthController = new FastAuthController({
+            accountId,
+            networkId
+          });
+
+          if (keypair) {
+            await window.fastAuthController.setKey(keypair);
           }
-        }).catch((e) => {
+          await window.fastAuthController.claimOidcToken(accessToken);
+          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+          window.firestoreController = new FirestoreController();
+          window.firestoreController.updateUser({
+            userUid:   user.uid,
+            oidcToken: accessToken,
+          });
+
+          const callback = isRecovery ? onSignIn : onCreateAccount;
+          await callback({
+            oidcKeypair,
+            accessToken,
+            accountId,
+            publicKeyFak,
+            public_key_lak,
+            contract_id,
+            methodNames,
+            success_url,
+            setStatusMessage,
+            email,
+            navigate,
+            searchParams,
+            gateway:      success_url,
+          });
+        } catch (e) {
           captureException(e);
           console.log('error:', e);
           redirectWithError({ success_url, failure_url, error: e });
-          openToast({
-            type:  'ERROR',
-            title: e.message,
-          });
-        });
-    } else {
-      navigate('/signup');
-    }
-  }, []); // DEC-1294 leaving dependencies empty to ensure the effect runs only once
+        }
+      } else {
+        navigate('/signup');
+      }
+    };
+
+    signInProcess();
+  }, [navigate, searchParams]);
 
   return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
