@@ -65,7 +65,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
       } else {
         checkFirestoreReady().then(async (isReady) => {
           if (isReady) {
-            const oidcToken = firebaseAuth.currentUser.getIdToken();
+            const oidcToken = await firebaseAuth.currentUser.getIdToken();
             if (window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`)) {
               const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
               const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)

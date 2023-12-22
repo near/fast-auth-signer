@@ -175,12 +175,12 @@ function SignInPage() {
 
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;
-        if (noNeedToAddKey) {
-          const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-          parsedUrl.searchParams.set('public_key', public_key);
-          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
+        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+        parsedUrl.searchParams.set('public_key', public_key);
+        parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
 
+        if (noNeedToAddKey) {
           if (inIframe()) {
             setRenderRedirectButton(parsedUrl.href);
           } else {
@@ -215,10 +215,6 @@ function SignInPage() {
             gateway:      success_url,
           })
             .then(() => {
-              const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-              parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-              parsedUrl.searchParams.set('public_key', public_key);
-              parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
               window.parent.postMessage({
                 type:   'method',
                 method: 'query',
