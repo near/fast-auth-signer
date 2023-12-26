@@ -265,7 +265,7 @@ function CreateAccount() {
           error={errors?.username?.message}
           subText="Use a suggested ID or customize your own"
           autoComplete="webauthn username"
-          right={network.fastAuth.accountIdSuffix}
+          right={`.${network.fastAuth.accountIdSuffix}`}
           placeholder="user_name"
           dataTest={{
             input:   'username_create',
