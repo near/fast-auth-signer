@@ -28,7 +28,7 @@ function Login() {
         });
       }
     }
-  }, [currentSearchParams]);
+  }, [currentSearchParams, navigate]);
 
   const { handleSubmit, setValue } = useForm();
 

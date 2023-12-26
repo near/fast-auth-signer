@@ -2,6 +2,7 @@ import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
+import { KeyPair } from 'near-api-js';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -74,7 +75,10 @@ export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
   const passkeyAvailable = await isPassKeyAvailable();
-  let publicKeyWebAuthn; let keyPair;
+
+  let publicKeyWebAuthn: string;
+  let keyPair: KeyPair;
+
   if (passkeyAvailable) {
     keyPair = await createKey(email);
     publicKeyWebAuthn = keyPair.getPublicKey().toString();
