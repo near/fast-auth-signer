@@ -235,13 +235,14 @@ function CreateAccount() {
           label="Email"
           error={errors?.email?.message}
           badges={emailProviders?.reduce((acc, provider) => {
+            const username = formsEmail?.split('@')[0];
             const currProvider = formsEmail?.split('@')[1];
 
             if (currProvider?.includes(provider)) {
               return [{
                 isSelected: true,
                 label:      `@${provider}`,
-                onClick:    () => setValue('email', formsEmail?.split('@')[0])
+                onClick:    () => setValue('email', username)
               }];
             }
 
@@ -250,7 +251,7 @@ function CreateAccount() {
             return [...acc, {
               isSelected: false,
               label:      `@${provider}`,
-              onClick:    () => setValue('email', `${formsEmail}@${provider}.com`)
+              onClick:    () => setValue('email', `${username}@${provider}.com`)
             }];
           }, [] as BadgeProps[])}
           dataTest={{
