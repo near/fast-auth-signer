@@ -1,6 +1,5 @@
 import { basePath } from './config';
 
-/* eslint-disable import/prefer-default-export */
 export function inIframe() {
   try {
     return window.self !== window.top;
