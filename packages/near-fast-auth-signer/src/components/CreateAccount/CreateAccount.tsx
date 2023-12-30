@@ -140,7 +140,7 @@ function CreateAccount() {
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
-        publicKey: publicKeyFak, privateKey, accountId
+        accountId
       } = await handleCreateAccount({
         accountId:   fullAccountId,
         email:       data.email,
@@ -155,15 +155,13 @@ function CreateAccount() {
         accountId,
         email:      data.email,
         isRecovery: 'false',
-        ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      const hashParams = new URLSearchParams({ ...(privateKey ? { privateKey } : {}) });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+      navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
       redirectWithError({ success_url, failure_url, error });
