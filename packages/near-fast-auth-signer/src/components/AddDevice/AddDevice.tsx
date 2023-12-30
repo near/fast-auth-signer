@@ -1,3 +1,4 @@
+import { yupResolver } from '@hookform/resolvers/yup';
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
@@ -7,15 +8,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import * as yup from 'yup';
 
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
+import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
-import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
+import {
+  decodeIfTruthy, inIframe, redirectWithError
+} from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
-import { isValidEmail } from '../../utils/form-validation';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -38,37 +42,6 @@ const FormContainer = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
-`;
-
-const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 10px;
-
-  label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  input {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 4px;
-    min-height: 50px;
-    cursor: text;
-
-    &:focus {
-      outline: none;
-      border: 1px solid #e5e5e5;
-    }
-  }
-
-  .subText {
-    font-size: 12px;
-  }
 `;
 
 export const handleCreateAccount = async ({
@@ -107,13 +80,28 @@ export const handleCreateAccount = async ({
   });
   window.localStorage.setItem('emailForSignIn', email);
   return {
-    email, publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
+    publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
   };
 };
 
+const schema = yup.object().shape({
+  email:    yup
+    .string()
+    .email('Please enter a valid email address')
+    .required('Please enter a valid email address'),
+});
+
 function SignInPage() {
-  const { register, handleSubmit, setValue } = useForm();
   const [searchParams] = useSearchParams();
+
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver:      yupResolver(schema),
+    mode:          'all',
+    defaultValues: {
+      email: searchParams.get('email') ?? '',
+    }
+  });
+
   const navigate = useNavigate();
 
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
@@ -121,17 +109,8 @@ function SignInPage() {
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
   if (!window.firestoreController) {
-    (window as any).firestoreController = new FirestoreController();
+    window.firestoreController = new FirestoreController();
   }
-  const [isFirestoreReady, setIsFirestoreReady] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (isFirestoreReady === null && authenticated !== 'loading') {
-      checkFirestoreReady().then((isReady) => {
-        setIsFirestoreReady(isReady as boolean);
-      });
-    }
-  }, [authenticated]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -147,7 +126,7 @@ function SignInPage() {
       if (!result.length) {
         throw new Error('Account not found, please create an account and try again');
       }
-      const { publicKey: publicKeyFak, email, privateKey } = await handleCreateAccount({
+      const { publicKey: publicKeyFak, privateKey } = await handleCreateAccount({
         accountId:   null,
         email:       data.email,
         isRecovery:  true,
@@ -158,7 +137,7 @@ function SignInPage() {
         methodNames,
       });
       const newSearchParams = new URLSearchParams({
-        email,
+        email:      data.email,
         isRecovery: 'true',
         ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
@@ -188,8 +167,11 @@ function SignInPage() {
   }, [searchParams, navigate]);
 
   useEffect(() => {
-    if (authenticated === 'loading' || isFirestoreReady === null) return;
+    if (authenticated === 'loading') return;
+
     const handleAuthCallback = async () => {
+      const isFirestoreReady = await checkFirestoreReady();
+
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
       const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
@@ -209,7 +191,7 @@ function SignInPage() {
         const noNeedToAddKey = existingDeviceLakKey === public_key;
         if (noNeedToAddKey) {
           const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+          parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
           parsedUrl.searchParams.set('public_key', public_key);
           parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
 
@@ -221,12 +203,12 @@ function SignInPage() {
           return;
         }
 
-        (window as any).fastAuthController.signAndSendAddKey({
+        window.fastAuthController.signAndSendAddKey({
           contractId: contract_id,
           methodNames,
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
-        }).then((res) => res.json()).then((res) => {
+        }).then((res) => res && res.json()).then((res) => {
           const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
           if (failure?.ActionError?.kind?.LackBalanceForState) {
             navigate(`/devices?${searchParams.toString()}`);
@@ -250,7 +232,7 @@ function SignInPage() {
           })
             .then(() => {
               const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-              parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+              parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
               parsedUrl.searchParams.set('public_key', public_key);
               parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
               window.parent.postMessage({
@@ -261,7 +243,7 @@ function SignInPage() {
                   request_type: 'complete_sign_in',
                   publicKey:    public_key,
                   allKeys:      [public_key, publicKeyFak].join(','),
-                  accountId:    (window as any).fastAuthController.getAccountId()
+                  accountId:    window.fastAuthController.getAccountId()
                 }
               }, '*');
               if (inIframe()) {
@@ -285,13 +267,12 @@ function SignInPage() {
       } else if (email && !authenticated) {
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
-        setValue('email', email);
         addDevice({ email });
       }
     };
 
     handleAuthCallback();
-  }, [isFirestoreReady, authenticated]);
+  }, [addDevice, authenticated, navigate, searchParams]);
 
   if (authenticated === true) {
     return renderRedirectButton ? (
@@ -322,39 +303,26 @@ function SignInPage() {
     );
   }
 
-  const onSubmit = handleSubmit(addDevice);
-
   return (
     <StyledContainer>
-      <FormContainer onSubmit={onSubmit}>
+      <FormContainer onSubmit={handleSubmit(addDevice)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
         </header>
-
-        <InputContainer>
-          <label htmlFor="email">
-            Email
-            <input
-              {...register('email', {
-                required: 'Please enter a valid email address',
-              })}
-              onChange={(e) => {
-                setValue('email', e.target.value);
-                // eslint-disable-next-line
-              if (!isValidEmail(e.target.value)) return;
-              }}
-              placeholder="user_name@email.com"
-              type="email"
-              id="email"
-              data-test-id="add-device-email"
-              required
-            />
-          </label>
-
-        </InputContainer>
-
-        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" onClick={onSubmit} />
+        <Input
+          {...register('email')}
+          label="Email"
+          placeholder="user_name@email.com"
+          type="email"
+          id="email"
+          required
+          dataTest={{
+            input: 'add-device-email',
+          }}
+          error={errors.email?.message}
+        />
+        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" />
       </FormContainer>
     </StyledContainer>
   );

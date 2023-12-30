@@ -198,7 +198,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         isError={!!error}
         isSuccess={!!success}
       >
-        <label htmlFor={name}>{label}</label>
+        {label && <label htmlFor={name}>{label}</label>}
         <div className="input-group">
           <input
             {...rest}

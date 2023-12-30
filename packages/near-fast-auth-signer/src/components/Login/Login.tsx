@@ -1,13 +1,22 @@
+import { yupResolver } from '@hookform/resolvers/yup';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import * as yup from 'yup';
 
-import { LoginWrapper, InputContainer } from './Login.style';
+import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
+import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { firebaseAuth } from '../../utils/firebase';
-import { isValidEmail } from '../../utils/form-validation';
+
+const schema = yup.object().shape({
+  email: yup
+    .string()
+    .email('Please enter a valid email address')
+    .required('Please enter a valid email address'),
+});
 
 function Login() {
   const [currentSearchParams] = useSearchParams();
@@ -30,9 +39,17 @@ function Login() {
     }
   }, [currentSearchParams, navigate]);
 
-  const { handleSubmit, setValue } = useForm();
+  const { handleSubmit, register, formState: { errors } } = useForm({
+    mode:          'all',
+    resolver:      yupResolver(schema),
+    defaultValues: {
+      email: currentSearchParams.get('email') ?? '',
+    }
+  });
 
-  const emailCheck = async (params: any) => {
+  const emailCheck = async (
+    params: { email: string }
+  ) => {
     fetchSignInMethodsForEmail(firebaseAuth, params.email)
       .then((result) => {
         if (result.length === 0) {
@@ -56,40 +73,27 @@ function Login() {
       });
   };
 
-  const onSubmit = handleSubmit(emailCheck);
-
   return (
     <LoginWrapper>
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit(emailCheck)}>
         <header>
           <h1 data-test-id="heading_login">Log In</h1>
           <p className="desc">Please enter your email</p>
         </header>
-
-        <InputContainer>
-          <label htmlFor="email">
-            Email
-            <input
-              onChange={(e) => {
-                setValue('email', e.target.value);
-                // eslint-disable-next-line
-                if (!isValidEmail(e.target.value)) return;
-              }}
-              placeholder="user_name@email.com"
-              type="email"
-              data-test-id="email_login"
-              required
-            />
-          </label>
-        </InputContainer>
-
+        <Input
+          {...register('email')}
+          placeholder="user_name@email.com"
+          type="email"
+          dataTest={{ input: 'email_login' }}
+          required
+          error={errors.email?.message}
+        />
         <Button
           size="large"
           type="submit"
           label="Continue"
           variant="affirmative"
           data-test-id="login_button"
-          onClick={onSubmit}
         />
       </form>
     </LoginWrapper>

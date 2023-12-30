@@ -112,8 +112,9 @@ function CreateAccount() {
     setValue,
     watch,
     reset,
+    trigger,
     formState: {
-      errors, isValid, dirtyFields
+      errors, isValid
     },
   } = useForm({
     mode:          'all',
@@ -191,12 +192,13 @@ function CreateAccount() {
         email,
         username: username || getEmailId(email),
       });
+      trigger();
 
       if (username) {
         createAccount({ email, username });
       }
     }
-  }, [createAccount, reset, searchParams]);
+  }, [createAccount, reset, searchParams, trigger]);
 
   useEffect(() => {
     if (formsEmail?.split('@').length > 1 && !formsUsername) {
@@ -235,13 +237,14 @@ function CreateAccount() {
           label="Email"
           error={errors?.email?.message}
           badges={emailProviders?.reduce((acc, provider) => {
+            const username = formsEmail?.split('@')[0];
             const currProvider = formsEmail?.split('@')[1];
 
             if (currProvider?.includes(provider)) {
               return [{
                 isSelected: true,
                 label:      `@${provider}`,
-                onClick:    () => setValue('email', formsEmail?.split('@')[0])
+                onClick:    () => setValue('email', username)
               }];
             }
 
@@ -250,7 +253,7 @@ function CreateAccount() {
             return [...acc, {
               isSelected: false,
               label:      `@${provider}`,
-              onClick:    () => setValue('email', `${formsEmail}@${provider}.com`)
+              onClick:    () => setValue('email', `${username}@${provider}.com`)
             }];
           }, [] as BadgeProps[])}
           dataTest={{
@@ -261,11 +264,11 @@ function CreateAccount() {
         <Input
           {...register('username')}
           label="Account ID"
-          success={!errors.username && dirtyFields.username && 'Account ID available'}
+          success={!errors.username && formsUsername && 'Account ID available'}
           error={errors?.username?.message}
           subText="Use a suggested ID or customize your own"
           autoComplete="webauthn username"
-          right=".near"
+          right={`.${network.fastAuth.accountIdSuffix}`}
           placeholder="user_name"
           dataTest={{
             input:   'username_create',

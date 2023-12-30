@@ -25,33 +25,3 @@ export const LoginWrapper = styled.div`
     margin-top: 20px;
   }
 `;
-
-export const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-
-  label {
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  input {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 4px;
-    min-height: 50px;
-    cursor: text;
-
-    &:focus {
-      outline: none;
-      border: 1px solid #e5e5e5;
-    }
-  }
-
-  .subText {
-    font-size: 12px;
-  }
-`;
