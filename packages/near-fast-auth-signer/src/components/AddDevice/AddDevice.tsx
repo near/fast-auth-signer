@@ -204,7 +204,7 @@ function SignInPage() {
           methodNames,
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
-        }).then((res) => res && res.json()).then((res) => {
+        }).then((res) => res && res.json()).then(async (res) => {
           const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
           if (failure?.ActionError?.kind?.LackBalanceForState) {
             navigate(`/devices?${searchParams.toString()}`);
@@ -215,9 +215,7 @@ function SignInPage() {
           const user = firebaseAuth.currentUser;
           window.firestoreController.updateUser({
             userUid:   user.uid,
-            // User type is missing accessToken but it exist
-            // @ts-ignore
-            oidcToken: user.accessToken,
+            oidcToken: await user.getIdToken(),
           });
 
           // Since FAK is already added, we only add LAK

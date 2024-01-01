@@ -210,6 +210,9 @@ class FirestoreController {
   updateUser = async ({
     userUid,
     oidcToken,
+  }: {
+    userUid: string;
+    oidcToken: string;
   }) => {
     this.userUid = userUid;
     this.oidcToken = oidcToken;
