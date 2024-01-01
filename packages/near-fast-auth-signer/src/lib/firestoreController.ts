@@ -1,7 +1,7 @@
 import { captureException } from '@sentry/react';
 import { User } from 'firebase/auth';
 import {
-  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, updateDoc, CollectionReference, writeBatch
+  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference, writeBatch
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
@@ -17,10 +17,6 @@ class FirestoreController {
 
   private oidcToken: string;
 
-  private isReady: boolean;
-
-  private existingDeviceId: string | null;
-
   constructor() {
     this.firestore = getFirestore(firebaseApp);
 
@@ -29,9 +25,7 @@ class FirestoreController {
         return;
       }
       this.userUid = user.uid;
-      // @ts-ignore
-      this.oidcToken = user.accessToken;
-      this.isReady = true;
+      this.oidcToken = await user.getIdToken();
     });
 
     checkFirestoreReady();
@@ -93,17 +87,6 @@ class FirestoreController {
     ]).catch((err) => {
       console.log('fail to add device collection, ', err);
       throw new Error('fail to add device collection');
-    });
-  }
-
-  async updateDeviceCollection(publicKeys: string[]) {
-    return updateDoc(doc(this.firestore, `/users/${this.userUid}/devices`, this.existingDeviceId), {
-      publicKeys
-    }).then(() => {
-      this.existingDeviceId = null;
-    }).catch((err) => {
-      console.log('fail to update device collection, ', err);
-      throw new Error('fail to update device collection');
     });
   }
 

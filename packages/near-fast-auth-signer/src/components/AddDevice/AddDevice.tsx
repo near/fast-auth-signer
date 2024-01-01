@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
-import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
+import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -18,7 +18,7 @@ import {
   decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth, userExists } from '../../utils/firebase';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -118,8 +118,7 @@ function SignInPage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      const result = await fetchSignInMethodsForEmail(firebaseAuth, data.email);
-      if (!result.length) {
+      if (!await userExists(data.email)) {
         throw new Error('Account not found, please create an account and try again');
       }
       const { publicKey: publicKeyFak, privateKey } = await handleCreateAccount({

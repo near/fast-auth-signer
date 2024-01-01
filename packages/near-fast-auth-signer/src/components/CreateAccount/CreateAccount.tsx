@@ -13,6 +13,7 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
+import { userExists } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
@@ -77,7 +78,28 @@ const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean
 const schema = yup.object().shape({
   email:    yup
     .string()
-    .required('Email address is required'),
+    .required('Email address is required')
+    .test(
+      'is-email-available',
+      async (email, context) => {
+        let message: string;
+
+        try {
+          if (email && await userExists(email)) {
+            message = `${email} is taken, try something else.`;
+          } else {
+            return true;
+          }
+        } catch {
+          message = 'Please enter a valid email address';
+        }
+
+        return context.createError({
+          message,
+          path:    context.path
+        });
+      }
+    ),
   username: yup
     .string()
     .required('Please enter a valid account ID')
@@ -244,7 +266,7 @@ function CreateAccount() {
               return [{
                 isSelected: true,
                 label:      `@${provider}`,
-                onClick:    () => setValue('email', username)
+                onClick:    () => setValue('email', username, { shouldValidate: true })
               }];
             }
 
@@ -253,7 +275,9 @@ function CreateAccount() {
             return [...acc, {
               isSelected: false,
               label:      `@${provider}`,
-              onClick:    () => setValue('email', `${username}@${provider}.com`)
+              onClick:    () => setValue('email', `${username}@${provider}.com`, {
+                shouldValidate: true
+              })
             }];
           }, [] as BadgeProps[])}
           dataTest={{
