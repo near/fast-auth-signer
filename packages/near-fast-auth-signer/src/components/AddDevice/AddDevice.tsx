@@ -260,10 +260,10 @@ function SignInPage() {
 
   return (
     <FlexContainer
-      height="100vh"
-      alignItems="center"
-      justifyContent="center"
-      backgroundColor="#f2f1ea"
+      $height="100vh"
+      $alignItems="center"
+      $justifyContent="center"
+      $backgroundColor="#f2f1ea"
     >
       <Spinner />
     </FlexContainer>
