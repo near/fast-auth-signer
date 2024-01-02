@@ -166,7 +166,7 @@ function Sign() {
   };
 
   const onConfirm = async () => {
-    if (authenticated) {
+    if (authenticated === true) {
       const signedTransactions = [];
       const success_url = searchParams.get('success_url');
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {

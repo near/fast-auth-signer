@@ -155,10 +155,11 @@ class FastAuthController {
 
   async signDelegateAction({ receiverId, actions, signerId }) {
     this.assertValidSigner(signerId);
+    let signedDelegate;
     try {
       // webAuthN supported browser
       const account = new Account(this.connection, this.accountId);
-      return account.signedDelegate({
+      signedDelegate = await account.signedDelegate({
         actions,
         blockHeightTtl: 60,
         receiverId,
@@ -169,7 +170,7 @@ class FastAuthController {
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
       const recoveryPK = await this.getUserCredential(oidcToken);
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
-      return this.createSignedDelegateWithRecoveryKey({
+      signedDelegate = await this.createSignedDelegateWithRecoveryKey({
         oidcToken,
         accountId: this.accountId,
         actions,
@@ -180,6 +181,7 @@ class FastAuthController {
         throw new Error('Unable to sign delegate action');
       });
     }
+    return signedDelegate;
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {
