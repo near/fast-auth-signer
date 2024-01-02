@@ -1,17 +1,14 @@
-import { yupResolver } from '@hookform/resolvers/yup';
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
-import * as yup from 'yup';
 
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
-import Input from '../../lib/Input/Input';
+import FlexContainer from '../../lib/FlexContainer/FlexContainer';
+import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
@@ -19,29 +16,6 @@ import {
 } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
-
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-  padding-bottom: 60px;
-`;
-
-const FormContainer = styled.form`
-  max-width: 360px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -80,23 +54,8 @@ export const handleCreateAccount = async ({
   };
 };
 
-const schema = yup.object().shape({
-  email:    yup
-    .string()
-    .email('Please enter a valid email address')
-    .required('Please enter a valid email address'),
-});
-
 function SignInPage() {
   const [searchParams] = useSearchParams();
-
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver:      yupResolver(schema),
-    mode:          'all',
-    defaultValues: {
-      email: searchParams.get('email') ?? '',
-    }
-  });
 
   const navigate = useNavigate();
 
@@ -261,7 +220,7 @@ function SignInPage() {
           });
         });
       } else if (email && !authenticated) {
-        // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+        // once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
         addDevice({ email });
       }
@@ -300,27 +259,14 @@ function SignInPage() {
   }
 
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleSubmit(addDevice)}>
-        <header>
-          <h1>Sign In</h1>
-          <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
-        </header>
-        <Input
-          {...register('email')}
-          label="Email"
-          placeholder="user_name@email.com"
-          type="email"
-          id="email"
-          required
-          dataTest={{
-            input: 'add-device-email',
-          }}
-          error={errors.email?.message}
-        />
-        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" />
-      </FormContainer>
-    </StyledContainer>
+    <FlexContainer
+      height="100vh"
+      alignItems="center"
+      justifyContent="center"
+      backgroundColor="#f2f1ea"
+    >
+      <Spinner />
+    </FlexContainer>
   );
 }
 

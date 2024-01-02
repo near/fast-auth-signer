@@ -3,24 +3,19 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Wrapper = styled.span`
-  display: inline-flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  animation: spin 1200ms infinite linear;
-
-  i {
-    color: currentColor;
-    font-size: 16px;
-    line-height: 16px;
-  }
-
+  display: flex;
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #007fe6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
   @keyframes spin {
-    from {
+    0% {
       transform: rotate(0deg);
     }
-    to {
+    100% {
       transform: rotate(360deg);
     }
   }
@@ -28,8 +23,6 @@ const Wrapper = styled.span`
 
 export function Spinner() {
   return (
-    <Wrapper>
-      <i className="ph ph-spinner" />
-    </Wrapper>
+    <Wrapper />
   );
 }
