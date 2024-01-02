@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
-import { network } from '../utils/config';
+import { fetchAccountIds } from '../api';
 import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
@@ -39,13 +39,8 @@ class FirestoreController {
 
   async getAccountIdFromOidcToken() {
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
-    const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-      .then((res) => res.json())
-      .catch((err) => {
-        console.log(err);
-        captureException(err);
-        throw new Error('Unable to retrieve account Id');
-      });
+    const accountIds = await fetchAccountIds(recoveryPK);
+
     if (!accountIds.length) {
       const noAccountIdError = new Error('Unable to retrieve account Id');
       captureException(noAccountIdError);
@@ -156,13 +151,8 @@ class FirestoreController {
 
   async deleteDeviceCollections(list) {
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
-    const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-      .then((res) => res.json())
-      .catch((err) => {
-        console.log(err);
-        captureException(err);
-        throw new Error('Unable to retrieve account Id');
-      });
+    const accountIds = await fetchAccountIds(recoveryPK);
+
     // delete firebase records
     try {
       const batch = writeBatch(this.firestore);
