@@ -24,10 +24,16 @@ function Login() {
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
+    const email = currentSearchParams.get('email');
     if (isRecovery) {
-      if (isRecovery === 'true') {
+      if (isRecovery === 'true' && email) {
         navigate({
           pathname: '/add-device',
+          search:   currentSearchParams.toString(),
+        });
+      } else if (isRecovery === 'true' && !email) {
+        navigate({
+          pathname: '/login',
           search:   currentSearchParams.toString(),
         });
       } else {
