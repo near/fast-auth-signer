@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
+import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath, network, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {

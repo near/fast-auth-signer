@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom/dist';
 import FastAuthController from './controller';
 import { fetchAccountIds } from '../api';
 import { safeGetLocalStorage } from '../utils';
-import { network, networkId } from '../utils/config';
+import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = {

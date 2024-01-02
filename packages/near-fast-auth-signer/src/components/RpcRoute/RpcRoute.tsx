@@ -24,6 +24,7 @@ function RpcRoute() {
                     }
                     return null;
                   }
+                  return null;
                 });
               }
               window.parent.postMessage({
