@@ -1,5 +1,4 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -9,7 +8,7 @@ import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { firebaseAuth } from '../../utils/firebase';
+import { userExists } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -50,27 +49,25 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
-    fetchSignInMethodsForEmail(firebaseAuth, params.email)
-      .then((result) => {
-        if (result.length === 0) {
-          navigate({
-            pathname: '/create-account',
-            search:   `email=${params.email}`,
-          });
-        } else if (result[0] === 'emailLink') {
-          navigate({
-            pathname: '/add-device',
-            search:   `email=${params.email}`,
-          });
-        }
-      })
-      .catch((error: any) => {
-        console.error('error', error);
-        openToast({
-          type:  'ERROR',
-          title: error.message,
+    try {
+      if (await userExists(params.email)) {
+        navigate({
+          pathname: '/add-device',
+          search:   `email=${params.email}`,
         });
+      } else {
+        navigate({
+          pathname: '/create-account',
+          search:   `email=${params.email}`,
+        });
+      }
+    } catch (e) {
+      console.error('error', e);
+      openToast({
+        type:  'ERROR',
+        title: e.message,
       });
+    }
   };
 
   return (

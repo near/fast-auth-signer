@@ -91,7 +91,7 @@ function Devices() {
         }
       });
     }
-  }, []);
+  }, [controller]);
 
   const redirectToSignin = () => {
     if (inIframe()) {
