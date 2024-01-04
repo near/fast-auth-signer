@@ -19,6 +19,8 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
   const webauthnUsername = useMemo(() => safeGetLocalStorage('webauthn_username'), []);
   const [query] = useSearchParams();
   const email = query.get('email');
+  const successUrl = query.get('success_url');
+  const failureUrl = query.get('failure_url');
 
   if (webauthnUsername === undefined) {
     return { authenticated: new Error('Please allow third party cookies') };
@@ -86,12 +88,12 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
     handleAuthState()
       .catch((e) => {
         redirectWithError({
-          failure_url: query.get('failure_url'),
-          success_url: query.get('success_url'),
-          error: e.message,
+          failure_url: failureUrl,
+          success_url: successUrl,
+          error:       e.message,
         });
       });
-  }, [email, skipGetKeys, webauthnUsername]);
+  }, [email, skipGetKeys, webauthnUsername, successUrl, failureUrl]);
 
   return { authenticated };
 };

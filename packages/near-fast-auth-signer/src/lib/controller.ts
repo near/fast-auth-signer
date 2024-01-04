@@ -14,10 +14,10 @@ import { sha256 } from 'js-sha256';
 import { keyStores } from 'near-api-js';
 
 import networkParams from './networkParams';
+import { deleteOidcKeyPairOnLocalStorage } from '../utils';
 import { network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
-import { deleteOidcKeyPairOnLocalStorage } from '../utils';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {

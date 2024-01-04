@@ -2,7 +2,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback, useEffect, useMemo, useState
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -259,7 +261,7 @@ function SignInPage() {
     if (requireVerifyEmail) return;
 
     handleAuthCallback();
-  }, [addDevice, authenticated, navigate, searchParams]);
+  }, [addDevice, authenticated, navigate, searchParams, requireVerifyEmail]);
 
   if (authenticated === true && !requireVerifyEmail) {
     return renderRedirectButton ? (
