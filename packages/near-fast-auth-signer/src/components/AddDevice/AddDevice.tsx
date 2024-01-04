@@ -1,4 +1,3 @@
-import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
@@ -20,15 +19,7 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
 }) => {
-  const passkeyAvailable = await isPassKeyAvailable();
-  let publicKeyWebAuthn; let keyPair;
-  if (passkeyAvailable) {
-    keyPair = await createKey(email);
-    publicKeyWebAuthn = keyPair.getPublicKey().toString();
-  }
-
   const searchParams = new URLSearchParams({
-    ...(publicKeyWebAuthn ? { publicKeyFak: publicKeyWebAuthn } : {}),
     ...(accountId ? { accountId } : {}),
     ...(isRecovery ? { isRecovery } : {}),
     ...(success_url ? { success_url } : {}),
@@ -38,10 +29,6 @@ export const handleCreateAccount = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
-  if (publicKeyWebAuthn) {
-    window.localStorage.setItem(`temp_fastauthflow_${publicKeyWebAuthn}`, keyPair.toString());
-  }
-
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
       `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
@@ -49,8 +36,9 @@ export const handleCreateAccount = async ({
     handleCodeInApp: true,
   });
   window.localStorage.setItem('emailForSignIn', email);
+
   return {
-    publicKey: publicKeyWebAuthn, accountId, privateKey: keyPair && keyPair.toString()
+    accountId,
   };
 };
 
@@ -81,7 +69,7 @@ function SignInPage() {
       if (!result.length) {
         throw new Error('Account not found, please create an account and try again');
       }
-      const { publicKey: publicKeyFak, privateKey } = await handleCreateAccount({
+      await handleCreateAccount({
         accountId:   null,
         email:       data.email,
         isRecovery:  true,
@@ -94,15 +82,13 @@ function SignInPage() {
       const newSearchParams = new URLSearchParams({
         email:      data.email,
         isRecovery: 'true',
-        ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      const hashParams = new URLSearchParams({ ...(privateKey ? { privateKey } : {}) });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+      navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
       redirectWithError({ success_url, failure_url, error });
