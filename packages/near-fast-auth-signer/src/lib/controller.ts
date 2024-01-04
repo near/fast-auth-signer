@@ -13,6 +13,7 @@ import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
 
 import networkParams from './networkParams';
+import { fetchAccountIds } from '../api';
 import { network } from '../utils/config';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
 
@@ -341,6 +342,23 @@ class FastAuthController {
         captureException(err);
       });
     });
+  }
+
+  async recoverAccountWithOIDCToken(oidcToken: string): Promise<undefined | {
+    accountId: string;
+    recoveryPK: string;
+  }> {
+    const recoveryPK = await this.getUserCredential(oidcToken);
+    const accountIds = await fetchAccountIds(recoveryPK);
+
+    if (accountIds.length > 0) {
+      return {
+        accountId: accountIds[0],
+        recoveryPK
+      };
+    }
+
+    return undefined;
   }
 }
 

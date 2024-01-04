@@ -13,10 +13,10 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
+import { sendFirebaseInviteEmail } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
-import { handleCreateAccount } from '../AddDevice/AddDevice';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -139,20 +139,19 @@ function CreateAccount() {
 
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const {
-        accountId
-      } = await handleCreateAccount({
+
+      await sendFirebaseInviteEmail({
         accountId:   fullAccountId,
         email:       data.email,
-        isRecovery:  false,
         success_url,
         failure_url,
         public_key,
         contract_id,
         methodNames,
       });
+
       const newSearchParams = new URLSearchParams({
-        accountId,
+        accountId:  fullAccountId,
         email:      data.email,
         isRecovery: 'false',
         ...(success_url ? { success_url } : {}),

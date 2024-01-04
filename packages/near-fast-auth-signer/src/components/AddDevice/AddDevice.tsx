@@ -1,6 +1,6 @@
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
-import { fetchSignInMethodsForEmail, sendSignInLinkToEmail } from 'firebase/auth';
+import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -14,33 +14,7 @@ import {
   decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
-
-export const handleCreateAccount = async ({
-  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
-}) => {
-  const searchParams = new URLSearchParams({
-    ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery } : {}),
-    ...(success_url ? { success_url } : {}),
-    ...(failure_url ? { failure_url } : {}),
-    ...(public_key ? { public_key_lak: public_key } : {}),
-    ...(contract_id ? { contract_id } : {}),
-    ...(methodNames ? { methodNames } : {})
-  });
-
-  await sendSignInLinkToEmail(firebaseAuth, email, {
-    url: encodeURI(
-      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
-    ),
-    handleCodeInApp: true,
-  });
-  window.localStorage.setItem('emailForSignIn', email);
-
-  return {
-    accountId,
-  };
-};
+import { checkFirestoreReady, firebaseAuth, sendFirebaseInviteEmail } from '../../utils/firebase';
 
 function SignInPage() {
   const [searchParams] = useSearchParams();
@@ -69,16 +43,17 @@ function SignInPage() {
       if (!result.length) {
         throw new Error('Account not found, please create an account and try again');
       }
-      await handleCreateAccount({
+
+      await sendFirebaseInviteEmail({
         accountId:   null,
         email:       data.email,
-        isRecovery:  true,
         success_url,
         failure_url,
         public_key,
         contract_id,
         methodNames,
       });
+
       const newSearchParams = new URLSearchParams({
         email:      data.email,
         isRecovery: 'true',

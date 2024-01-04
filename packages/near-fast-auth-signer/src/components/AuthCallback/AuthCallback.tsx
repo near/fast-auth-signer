@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { createNEARAccount, fetchAccountIds } from '../../api';
+import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
@@ -94,13 +94,9 @@ export const onSignIn = async ({
   searchParams,
   navigate,
   gateway,
+  accountId,
+  recoveryPK
 }) => {
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetchAccountIds(recoveryPK);
-
-  if (!accountIds.length) {
-    throw new Error('Account not found, please create an account and try again');
-  }
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -125,7 +121,7 @@ export const onSignIn = async ({
 
   return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
     oidcToken: accessToken,
-    accountId: accountIds[0],
+    accountId,
     recoveryPK,
     actions:   addKeyActions
   })
@@ -155,7 +151,7 @@ export const onSignIn = async ({
         setStatusMessage('Redirecting to app...');
 
         const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('account_id', accountIds[0]);
+        parsedUrl.searchParams.set('account_id', accountId);
         parsedUrl.searchParams.set('public_key', public_key_lak);
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
 
@@ -178,8 +174,7 @@ function AuthCallbackPage() {
   useEffect(() => {
     const signInProcess = async () => {
       if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
-        const accountId = decodeIfTruthy(searchParams.get('accountId'));
-        const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
+        let accountId = decodeIfTruthy(searchParams.get('accountId'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
         const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
         const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
@@ -202,6 +197,13 @@ function AuthCallbackPage() {
           if (!user || !user.emailVerified) return;
 
           const accessToken = await user.getIdToken();
+          const account = await window.fastAuthController.recoverAccountWithOIDCToken(accessToken);
+          let isRecovery = false;
+
+          if (account) {
+            isRecovery = true;
+            accountId = account.accountId;
+          }
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
 
@@ -242,6 +244,8 @@ function AuthCallbackPage() {
             navigate,
             searchParams,
             gateway:      success_url,
+            recoveryPK: account.recoveryPK,
+
           });
         } catch (e) {
           captureException(e);

@@ -74,7 +74,6 @@ function VerifyEmailPage() {
 
     const accountId = query.get('accountId');
     const email = query.get('email');
-    const isRecovery = query.get('isRecovery');
     const success_url = query.get('success_url');
     const failure_url = query.get('failure_url');
     const public_key_lak =  query.get('public_key_lak');
@@ -83,7 +82,6 @@ function VerifyEmailPage() {
 
     const searchParams = new URLSearchParams({
       ...(accountId ? { accountId } : {}),
-      ...(isRecovery ? { isRecovery } : {}),
       ...(success_url ? { success_url } : {}),
       ...(failure_url ? { failure_url } : {}),
       ...(public_key_lak ? { public_key_lak } : {}),
