@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -91,6 +91,8 @@ function SignInPage() {
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
+  // if requireVerifyEmail is set, user need to verify email first
+  const requireVerifyEmail = useMemo(() => window.localStorage.getItem('requireVerifyEmail'), []);
 
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
@@ -165,8 +167,11 @@ function SignInPage() {
           window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           return;
         }
-        const publicKeyFak = await window.fastAuthController.getPublicKey();
-        const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+        const isPasskeySupported = await isPassKeyAvailable();
+        const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
+        const existingDevice = isPasskeySupported
+          ? await window.firestoreController.getDeviceCollection(publicKeyFak)
+          : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
         const user = firebaseAuth.currentUser;
         // @ts-ignore
@@ -251,10 +256,12 @@ function SignInPage() {
       }
     };
 
+    if (requireVerifyEmail) return;
+
     handleAuthCallback();
   }, [addDevice, authenticated, navigate, searchParams]);
 
-  if (authenticated === true) {
+  if (authenticated === true && !requireVerifyEmail) {
     return renderRedirectButton ? (
       <Button
         label="Back to app"

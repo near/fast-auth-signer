@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom/dist';
 
 import FastAuthController from './controller';
 import { fetchAccountIds } from '../api';
-import { safeGetLocalStorage } from '../utils';
+import { redirectWithError, safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
@@ -33,7 +33,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
         setAuthenticated(false);
       } else if (controllerState === true) {
         setAuthenticated(true);
-      } else if ((!webauthnUsername && isPasskeySupported) || (email && email !== webauthnUsername)) {
+      } else if (isPasskeySupported && (!webauthnUsername || (email && email !== webauthnUsername))) {
         setAuthenticated(false);
       } else if (isPasskeySupported) {
         try {
@@ -66,7 +66,8 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
         checkFirestoreReady().then(async (isReady) => {
           if (isReady) {
             const oidcToken = await firebaseAuth.currentUser.getIdToken();
-            if (window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`)) {
+            const localStoreKey = await window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+            if (localStoreKey) {
               const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
               const accountIds = await fetchAccountIds(recoveryPK);
               (window as any).fastAuthController = new FastAuthController({
@@ -82,7 +83,14 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
       }
     };
 
-    handleAuthState();
+    handleAuthState()
+      .catch((e) => {
+        redirectWithError({
+          failure_url: query.get('failure_url'),
+          success_url: query.get('success_url'),
+          error: e.message,
+        });
+      });
   }, [email, skipGetKeys, webauthnUsername]);
 
   return { authenticated };

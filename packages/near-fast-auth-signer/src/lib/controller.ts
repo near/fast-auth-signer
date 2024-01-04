@@ -17,6 +17,7 @@ import networkParams from './networkParams';
 import { network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
 import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
+import { deleteOidcKeyPairOnLocalStorage } from '../utils';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
@@ -228,6 +229,8 @@ class FastAuthController {
     if (!keypair) {
       keypair = KeyPair.fromRandom('ED25519');
       await this.keyStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
+      // Delete old oidc keypair
+      deleteOidcKeyPairOnLocalStorage();
       await this.localStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
     }
     const signature = getUserCredentialsFrpSignature({

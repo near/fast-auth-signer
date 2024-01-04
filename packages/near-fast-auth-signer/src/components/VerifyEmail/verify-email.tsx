@@ -1,5 +1,5 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -118,6 +118,10 @@ function VerifyEmailPage() {
       });
     }
   };
+
+  useEffect(() => {
+    window.localStorage.removeItem('requireVerifyEmail');
+  }, []);
 
   return (
     <StyledContainer>

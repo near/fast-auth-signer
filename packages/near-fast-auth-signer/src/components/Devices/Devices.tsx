@@ -94,6 +94,7 @@ function Devices() {
   }, [controller]);
 
   const redirectToSignin = () => {
+    window.localStorage.setItem('requireVerifyEmail', 'true');
     if (inIframe()) {
       window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
     } else {
