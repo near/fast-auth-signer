@@ -1,20 +1,16 @@
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
-import FlexContainer from '../../lib/FlexContainer/FlexContainer';
-import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
   decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth, sendFirebaseInviteEmail } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 
 function SignInPage() {
   const [searchParams] = useSearchParams();
@@ -23,11 +19,12 @@ function SignInPage() {
 
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
-  const [renderRedirectButton, setRenderRedirectButton] = useState('');
 
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
+
+  const email = decodeIfTruthy(searchParams.get('email'));
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -39,23 +36,8 @@ function SignInPage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      const result = await fetchSignInMethodsForEmail(firebaseAuth, data.email);
-      if (!result.length) {
-        throw new Error('Account not found, please create an account and try again');
-      }
-
-      await sendFirebaseInviteEmail({
-        accountId:   null,
-        email:       data.email,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
-      });
-
       const newSearchParams = new URLSearchParams({
-        email:      data.email,
+        email,
         isRecovery: 'true',
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
@@ -63,24 +45,13 @@ function SignInPage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
+
       navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
       redirectWithError({ success_url, failure_url, error });
-
-      if (typeof error?.message === 'string') {
-        openToast({
-          type:  'ERROR',
-          title: error.message,
-        });
-      } else {
-        openToast({
-          type:  'ERROR',
-          title: 'Something went wrong',
-        });
-      }
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, email, navigate]);
 
   useEffect(() => {
     if (authenticated === 'loading') return;
@@ -94,7 +65,6 @@ function SignInPage() {
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
-      const email = decodeIfTruthy(searchParams.get('email'));
       if (authenticated === true && isFirestoreReady) {
         if (!public_key || !contract_id) {
           window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
@@ -112,7 +82,7 @@ function SignInPage() {
           parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
 
           if (inIframe()) {
-            setRenderRedirectButton(parsedUrl.href);
+            window.open(parsedUrl.href, '_parent');
           } else {
             window.location.replace(parsedUrl.href);
           }
@@ -162,8 +132,9 @@ function SignInPage() {
                   accountId:    window.fastAuthController.getAccountId()
                 }
               }, '*');
+
               if (inIframe()) {
-                setRenderRedirectButton(parsedUrl.href);
+                window.open(parsedUrl.href, '_parent');
               } else {
                 window.location.replace(parsedUrl.href);
               }
@@ -188,47 +159,7 @@ function SignInPage() {
     };
 
     handleAuthCallback();
-  }, [addDevice, authenticated, navigate, searchParams]);
-
-  if (authenticated === true) {
-    return renderRedirectButton ? (
-      <Button
-        label="Back to app"
-        onClick={() => {
-          window.open(renderRedirectButton, '_parent');
-        }}
-      />
-    ) : (
-      <div>Signing transaction</div>
-    );
-  }
-
-  if (authenticated instanceof Error) {
-    return <div>{authenticated.message}</div>;
-  }
-
-  if (inIframe()) {
-    return (
-      <Button
-        label="Continue on fast auth"
-        onClick={() => {
-          const url = !authenticated ? `${window.location.href}&skipGetKey=true` : window.location.href;
-          window.open(url, '_parent');
-        }}
-      />
-    );
-  }
-
-  return (
-    <FlexContainer
-      $height="100vh"
-      $alignItems="center"
-      $justifyContent="center"
-      $backgroundColor="#f2f1ea"
-    >
-      <Spinner />
-    </FlexContainer>
-  );
+  }, [addDevice, authenticated, email, navigate, searchParams]);
 }
 
 export default SignInPage;

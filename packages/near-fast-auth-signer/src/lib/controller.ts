@@ -344,6 +344,12 @@ class FastAuthController {
     });
   }
 
+  /**
+   * Recovers the account ID and the recovery public key using an OIDC token.
+   *
+   * @param oidcToken - The OIDC token used for account recovery.
+   * @returns A promise that resolves to an object containing the account ID and recovery public key, or undefined if no account IDs are found.
+   */
   async recoverAccountWithOIDCToken(oidcToken: string): Promise<undefined | {
     accountId: string;
     recoveryPK: string;

@@ -1,14 +1,11 @@
-import { sendSignInLinkToEmail } from 'firebase/auth';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
-import { openToast } from '../../lib/Toast';
 import { redirectWithError } from '../../utils';
-import { basePath } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
+import { sendFirebaseSignInEmail } from '../../utils/firebase';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -64,58 +61,54 @@ const FormContainer = styled.form`
 function VerifyEmailPage() {
   const [query] = useSearchParams();
 
+  const isRecovery = query.get('isRecovery');
+  const accountId = query.get('accountId');
+  const email = query.get('email');
+  const success_url = query.get('success_url');
+  const failure_url = query.get('failure_url');
+  const public_key_lak =  query.get('public_key_lak');
+  const contract_id = query.get('contract_id');
+  const methodNames = query.get('methodNames');
+
   const handleResendEmail = async () => {
-    const accountRequiredButNotThere = !query.get('accountId') && query.get('isRecovery') !== 'true';
+    const accountRequiredButNotThere = !accountId && isRecovery !== 'true';
     if (
       accountRequiredButNotThere
       || !query.get('email')
       || !query.get('email').length
     ) return;
 
-    const accountId = query.get('accountId');
-    const email = query.get('email');
-    const success_url = query.get('success_url');
-    const failure_url = query.get('failure_url');
-    const public_key_lak =  query.get('public_key_lak');
-    const contract_id = query.get('contract_id');
-    const methodNames = query.get('methodNames');
-
-    const searchParams = new URLSearchParams({
-      ...(accountId ? { accountId } : {}),
-      ...(success_url ? { success_url } : {}),
-      ...(failure_url ? { failure_url } : {}),
-      ...(public_key_lak ? { public_key_lak } : {}),
-      ...(contract_id ? { contract_id } : {}),
-      ...(methodNames ? { methodNames } : {})
-    });
-
     try {
-      await sendSignInLinkToEmail(firebaseAuth, email as string, {
-        url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
-        handleCodeInApp: true,
-      });
-      window.localStorage.setItem('emailForSignIn', email);
-      openToast({
-        type:  'SUCCESS',
-        title: 'Email resent successfully!',
+      await sendFirebaseSignInEmail({
+        accountId:   null,
+        email,
+        success_url,
+        failure_url,
+        public_key: public_key_lak,
+        contract_id,
+        methodNames,
       });
     } catch (error: any) {
       console.log(error);
       redirectWithError({ success_url, failure_url, error });
-
-      if (typeof error?.message === 'string') {
-        openToast({
-          type:  'ERROR',
-          title: error.message,
-        });
-        return;
-      }
-      openToast({
-        type:  'ERROR',
-        title: 'Something went wrong',
-      });
     }
   };
+
+  useEffect(() => {
+    const sendEmail = async () => {
+      await sendFirebaseSignInEmail({
+        accountId,
+        email,
+        success_url,
+        failure_url,
+        public_key: public_key_lak,
+        contract_id,
+        methodNames,
+      });
+    };
+
+    sendEmail();
+  }, [accountId, contract_id, email, failure_url, methodNames, public_key_lak, success_url]);
 
   return (
     <StyledContainer>
@@ -123,11 +116,9 @@ function VerifyEmailPage() {
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
-          <p data-test-id="verify-email-address">{query.get('email')}</p>
+          <p data-test-id="verify-email-address">{email}</p>
         </header>
-
         <p>Check your inbox to activate your account.</p>
-
         <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
       </FormContainer>
     </StyledContainer>
