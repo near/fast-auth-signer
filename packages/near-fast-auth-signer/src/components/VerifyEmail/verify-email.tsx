@@ -1,6 +1,6 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
@@ -63,7 +63,6 @@ const FormContainer = styled.form`
 
 function VerifyEmailPage() {
   const [query] = useSearchParams();
-  const { hash = '' } = useLocation();
 
   const handleResendEmail = async () => {
     const accountRequiredButNotThere = !query.get('accountId') && query.get('isRecovery') !== 'true';
@@ -73,10 +72,7 @@ function VerifyEmailPage() {
       || !query.get('email').length
     ) return;
 
-    const hashParams = new URLSearchParams(hash.slice(1));
-
     const accountId = query.get('accountId');
-    const publicKeyFak = query.get('publicKeyFak');
     const email = query.get('email');
     const isRecovery = query.get('isRecovery');
     const success_url = query.get('success_url');
@@ -84,10 +80,8 @@ function VerifyEmailPage() {
     const public_key_lak =  query.get('public_key_lak');
     const contract_id = query.get('contract_id');
     const methodNames = query.get('methodNames');
-    const privateKey = hashParams.get('privateKey');
 
     const searchParams = new URLSearchParams({
-      ...(publicKeyFak ? { publicKeyFak } : {}),
       ...(accountId ? { accountId } : {}),
       ...(isRecovery ? { isRecovery } : {}),
       ...(success_url ? { success_url } : {}),
@@ -96,10 +90,6 @@ function VerifyEmailPage() {
       ...(contract_id ? { contract_id } : {}),
       ...(methodNames ? { methodNames } : {})
     });
-
-    if (publicKeyFak) {
-      window.localStorage.setItem(`temp_fastauthflow_${publicKeyFak}`, privateKey);
-    }
 
     try {
       await sendSignInLinkToEmail(firebaseAuth, email as string, {
