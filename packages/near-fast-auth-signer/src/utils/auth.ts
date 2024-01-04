@@ -131,7 +131,7 @@ export const useHandleAuthenticationFlow = () => {
           ...(methodNames ? { methodNames } : {})
         });
 
-        navigate(`/verify-email?${newSearchParams.toString()}}`);
+        navigate(`/verify-email?${newSearchParams.toString()}`);
       } catch (error: any) {
         console.log(error);
         redirectWithError({ success_url, failure_url, error });

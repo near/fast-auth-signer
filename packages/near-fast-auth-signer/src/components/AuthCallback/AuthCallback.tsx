@@ -202,7 +202,7 @@ function AuthCallbackPage() {
 
           if (account) {
             isRecovery = true;
-            accountId = account.accountId;
+            accountId = account?.accountId;
           }
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
