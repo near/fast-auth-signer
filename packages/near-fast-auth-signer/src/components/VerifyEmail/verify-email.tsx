@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
+import { openToast } from '../../lib/Toast';
 import { redirectWithError } from '../../utils';
 import { sendFirebaseSignInEmail } from '../../utils/firebase';
 
@@ -57,7 +58,6 @@ const FormContainer = styled.form`
     width: 100%;
   }
 `;
-
 function VerifyEmailPage() {
   const [query] = useSearchParams();
 
@@ -70,32 +70,8 @@ function VerifyEmailPage() {
   const contract_id = query.get('contract_id');
   const methodNames = query.get('methodNames');
 
-  const handleResendEmail = async () => {
-    const accountRequiredButNotThere = !accountId && isRecovery !== 'true';
-    if (
-      accountRequiredButNotThere
-      || !query.get('email')
-      || !query.get('email').length
-    ) return;
-
+  const sendEmail = useCallback(async () => {
     try {
-      await sendFirebaseSignInEmail({
-        accountId:   null,
-        email,
-        success_url,
-        failure_url,
-        public_key: public_key_lak,
-        contract_id,
-        methodNames,
-      });
-    } catch (error: any) {
-      console.log(error);
-      redirectWithError({ success_url, failure_url, error });
-    }
-  };
-
-  useEffect(() => {
-    const sendEmail = async () => {
       await sendFirebaseSignInEmail({
         accountId,
         email,
@@ -105,10 +81,31 @@ function VerifyEmailPage() {
         contract_id,
         methodNames,
       });
-    };
 
-    sendEmail();
+      openToast({
+        type:  'SUCCESS',
+        title: 'Email resent successfully!',
+      });
+    } catch (error: any) {
+      console.log(error);
+      redirectWithError({ success_url, failure_url, error });
+    }
   }, [accountId, contract_id, email, failure_url, methodNames, public_key_lak, success_url]);
+
+  const handleResendEmail = async () => {
+    const accountRequiredButNotThere = !accountId && isRecovery !== 'true';
+    if (
+      accountRequiredButNotThere
+      || !query.get('email')
+      || !query.get('email').length
+    ) return;
+
+    await sendEmail();
+  };
+
+  useEffect(() => {
+    sendEmail();
+  }, [accountId, contract_id, email, failure_url, methodNames, public_key_lak, sendEmail, success_url]);
 
   return (
     <StyledContainer>

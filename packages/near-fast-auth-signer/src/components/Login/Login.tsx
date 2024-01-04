@@ -9,6 +9,7 @@ import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
+import { useHandleAuthenticationFlow } from '../../utils/auth';
 import { firebaseAuth } from '../../utils/firebase';
 
 const schema = yup.object().shape({
@@ -21,16 +22,15 @@ const schema = yup.object().shape({
 function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const handleAuthenticationFlow = useHandleAuthenticationFlow();
+  const skipGetKeys = currentSearchParams.get('skipGetKey') === 'true';
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
     const email = currentSearchParams.get('email');
     if (isRecovery) {
       if (isRecovery === 'true' && email) {
-        navigate({
-          pathname: '/add-device',
-          search:   currentSearchParams.toString(),
-        });
+        handleAuthenticationFlow(currentSearchParams.get('email'), skipGetKeys);
       } else if (isRecovery === 'true' && !email) {
         navigate({
           pathname: '/login',
@@ -43,7 +43,7 @@ function Login() {
         });
       }
     }
-  }, [currentSearchParams, navigate]);
+  }, [currentSearchParams, handleAuthenticationFlow, navigate, skipGetKeys]);
 
   const { handleSubmit, register, formState: { errors } } = useForm({
     mode:          'all',
@@ -64,10 +64,7 @@ function Login() {
             search:   `email=${params.email}`,
           });
         } else if (result[0] === 'emailLink') {
-          navigate({
-            pathname: '/add-device',
-            search:   `email=${params.email}`,
-          });
+          handleAuthenticationFlow(params.email, skipGetKeys);
         }
       })
       .catch((error: any) => {
