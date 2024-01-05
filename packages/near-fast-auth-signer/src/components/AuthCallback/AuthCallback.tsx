@@ -197,15 +197,6 @@ function AuthCallbackPage() {
           if (!user || !user.emailVerified) return;
 
           const accessToken = await user.getIdToken();
-          const account = await window.fastAuthController.recoverAccountWithOIDCToken(accessToken);
-          let isRecovery = false;
-
-          if (account) {
-            isRecovery = true;
-            accountId = account?.accountId;
-          }
-
-          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
 
           // claim the oidc token
           window.fastAuthController = new FastAuthController({
@@ -229,6 +220,16 @@ function AuthCallbackPage() {
             oidcToken: accessToken,
           });
 
+          const account = await window.fastAuthController.recoverAccountWithOIDCToken(accessToken);
+          let isRecovery = false;
+
+          if (account) {
+            isRecovery = true;
+            accountId = account?.accountId;
+          }
+
+          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
+
           const callback = isRecovery ? onSignIn : onCreateAccount;
           await callback({
             oidcKeypair,
@@ -244,8 +245,7 @@ function AuthCallbackPage() {
             navigate,
             searchParams,
             gateway:      success_url,
-            recoveryPK: account.recoveryPK,
-
+            recoveryPK: account?.recoveryPK,
           });
         } catch (e) {
           captureException(e);

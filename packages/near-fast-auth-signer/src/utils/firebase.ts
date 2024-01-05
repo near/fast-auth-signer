@@ -46,7 +46,7 @@ export const sendFirebaseSignInEmail = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
-  await sendSignInLinkToEmail(firebaseAuth, email, {
+  await sendSignInLinkToEmail(getAuth(firebaseApp), email, {
     url: encodeURI(
       `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
     ),
