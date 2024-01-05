@@ -77,7 +77,7 @@ function VerifyEmailPage() {
         email,
         success_url,
         failure_url,
-        public_key: public_key_lak,
+        public_key:           public_key_lak,
         contract_id,
         methodNames,
       });
@@ -105,7 +105,7 @@ function VerifyEmailPage() {
 
   useEffect(() => {
     sendEmail();
-  }, [accountId, contract_id, email, failure_url, methodNames, public_key_lak, sendEmail, success_url]);
+  }, [sendEmail]);
 
   return (
     <StyledContainer>

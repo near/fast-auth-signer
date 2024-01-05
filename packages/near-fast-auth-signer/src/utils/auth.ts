@@ -15,7 +15,6 @@ export const useHandleAuthenticationFlow = () => {
 
   return async (email: string, skipGetKey = false) => {
     const authenticated = await getAuthState(email, skipGetKey);
-    if (authenticated === 'loading') return;
 
     if (!window.firestoreController) {
       window.firestoreController = new FirestoreController();
