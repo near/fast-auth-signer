@@ -58,7 +58,7 @@ export const useHandleAuthenticationFlow = () => {
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
         });
-        const resJson = res && res.json();
+        const resJson = res && await res.json();
 
         const failure = resJson['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
         if (failure?.ActionError?.kind?.LackBalanceForState) {
