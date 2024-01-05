@@ -10,7 +10,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
-import { firebaseAuth } from '../../utils/firebase';
+import { getFirebaseAuth } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -56,7 +56,7 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
-    fetchSignInMethodsForEmail(firebaseAuth, params.email)
+    fetchSignInMethodsForEmail(getFirebaseAuth(), params.email)
       .then((result) => {
         if (result.length === 0) {
           navigate({

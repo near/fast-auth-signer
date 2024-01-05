@@ -6,24 +6,22 @@ import { basePath, network } from './config';
 
 // Initialize Firebase
 export const firebaseApp = initializeApp(network.fastAuth.firebase);
-export const firebaseAuth = getAuth(firebaseApp);
+export const getFirebaseAuth = () => getAuth(firebaseApp);
 
-export const checkFirestoreReady = async () => firebaseAuth.authStateReady()
+export const checkFirestoreReady = async () => getFirebaseAuth().authStateReady()
   .then(async () => {
-    if (firebaseAuth.currentUser) {
+    if (getFirebaseAuth().currentUser) {
       return true;
     }
     return false;
   });
 
-export const getDomain = (url) => {
-  let urlObj;
+export const getDomain = (url: string) => {
   try {
-    urlObj = new URL(url);
+    return new URL(url).hostname.replace('www.', '');
   } catch {
     return false;
   }
-  return urlObj.hostname.replace('www.', '');
 };
 
 export const sendFirebaseSignInEmail = async ({
@@ -46,7 +44,7 @@ export const sendFirebaseSignInEmail = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
-  await sendSignInLinkToEmail(getAuth(firebaseApp), email, {
+  await sendSignInLinkToEmail(getFirebaseAuth(), email, {
     url: encodeURI(
       `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
     ),

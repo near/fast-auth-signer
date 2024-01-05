@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { decodeIfTruthy, inIframe, redirectWithError } from '.';
 import { basePath } from './config';
-import { checkFirestoreReady, firebaseAuth } from './firebase';
+import { checkFirestoreReady, getFirebaseAuth } from './firebase';
 import FirestoreController from '../lib/firestoreController';
 import { getAuthState } from '../lib/useAuthState';
 
@@ -66,7 +66,7 @@ export const useHandleAuthenticationFlow = () => {
           return;
         }
 
-        const user = firebaseAuth.currentUser;
+        const user = getFirebaseAuth().currentUser;
         window.firestoreController.updateUser({
           userUid:   user.uid,
           oidcToken: await user.getIdToken(),
