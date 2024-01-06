@@ -40,7 +40,7 @@ function Login() {
   const email = currentSearchParams.get('email');
 
   const {
-    handleSubmit, register, trigger, formState: { errors, isValid }
+    handleSubmit, register, formState: { errors, isSubmitting, isSubmitted }
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
@@ -75,11 +75,12 @@ function Login() {
   }, [currentSearchParams, handleAuthenticationFlow, navigate, skipGetKeys]);
 
   useEffect(() => {
-    if (email && isValid) {
-      onSubmit({ email });
+    if (email && !isSubmitting && !isSubmitted) {
+      handleSubmit(onSubmit)();
+    } else if (!isSubmitting) {
+      setIsLoading(false);
     }
-    trigger('email');
-  }, [email, onSubmit, isValid, trigger]);
+  }, [email, handleSubmit, isSubmitted, isSubmitting, onSubmit]);
 
   return (
     <LoginWrapper>

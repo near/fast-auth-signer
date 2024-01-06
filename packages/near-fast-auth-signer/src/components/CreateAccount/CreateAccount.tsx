@@ -197,10 +197,10 @@ function CreateAccount() {
 
   useEffect(() => {
     const email = searchParams.get('email');
-    const username = searchParams.get('accountId') || getEmailId(email);
+    const username = searchParams.get('accountId');
 
     if (email) {
-      reset({ email, username });
+      reset({ email, username: username || getEmailId(email) });
       trigger();
       if (username) {
         createAccount({ email, username });
