@@ -1,5 +1,4 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,7 +11,7 @@ import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy } from '../../utils';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
-import { firebaseAuth } from '../../utils/firebase';
+import { userExists } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -54,29 +53,25 @@ function Login() {
   const emailCheck = useCallback(async (
     params: { email: string }
   ) => {
-    fetchSignInMethodsForEmail(firebaseAuth, params.email)
-      .then(async (result) => {
-        if (result.length === 0) {
-          navigate({
-            pathname: '/create-account',
-            search:   `email=${params.email}`,
-          });
-        } else if (result[0] === 'emailLink') {
-          try {
-            setIsLoading(true);
-            await handleAuthenticationFlow(params.email, skipGetKeys);
-          } finally {
-            setIsLoading(false);
-          }
-        }
-      })
-      .catch((error: any) => {
-        console.error('error', error);
-        openToast({
-          type:  'ERROR',
-          title: error.message,
+    try {
+      setIsLoading(true);
+      if (await userExists(params.email)) {
+        await handleAuthenticationFlow(params.email, skipGetKeys);
+      } else {
+        navigate({
+          pathname: '/create-account',
+          search:   `email=${params.email}`,
         });
+      }
+    } catch (error) {
+      console.error('error', error);
+      openToast({
+        type:  'ERROR',
+        title: error.message
       });
+    } finally {
+      setIsLoading(false);
+    }
   }, [handleAuthenticationFlow, navigate, skipGetKeys]);
 
   useEffect(() => {
