@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -102,10 +102,6 @@ function VerifyEmailPage() {
 
     await sendEmail();
   };
-
-  useEffect(() => {
-    sendEmail();
-  }, [sendEmail]);
 
   return (
     <StyledContainer>

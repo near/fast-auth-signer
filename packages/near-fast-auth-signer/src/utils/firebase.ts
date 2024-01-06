@@ -6,11 +6,11 @@ import { basePath, network } from './config';
 
 // Initialize Firebase
 export const firebaseApp = initializeApp(network.fastAuth.firebase);
-export const getFirebaseAuth = () => getAuth(firebaseApp);
+export const firebaseAuth = getAuth(firebaseApp);
 
-export const checkFirestoreReady = async () => getFirebaseAuth().authStateReady()
+export const checkFirestoreReady = async () => firebaseAuth.authStateReady()
   .then(async () => {
-    if (getFirebaseAuth().currentUser) {
+    if (firebaseAuth.currentUser) {
       return true;
     }
     return false;
@@ -27,7 +27,7 @@ export const getDomain = (url: string) => {
 export const sendFirebaseSignInEmail = async ({
   accountId, email, success_url, failure_url, public_key, contract_id, methodNames
 }: {
-  accountId: string;
+  accountId?: string;
   email: string;
   success_url: string;
   failure_url: string;
@@ -44,7 +44,7 @@ export const sendFirebaseSignInEmail = async ({
     ...(methodNames ? { methodNames } : {})
   });
 
-  await sendSignInLinkToEmail(getFirebaseAuth(), email, {
+  await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
       `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
     ),

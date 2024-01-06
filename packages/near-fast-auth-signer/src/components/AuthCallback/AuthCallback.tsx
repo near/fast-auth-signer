@@ -11,7 +11,7 @@ import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
-import { checkFirestoreReady, getFirebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
@@ -173,7 +173,7 @@ function AuthCallbackPage() {
   // The signIn should run only once
   useEffect(() => {
     const signInProcess = async () => {
-      if (isSignInWithEmailLink(getFirebaseAuth(), window.location.href)) {
+      if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
         let accountId = decodeIfTruthy(searchParams.get('accountId'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
         const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
@@ -193,7 +193,7 @@ function AuthCallbackPage() {
         setStatusMessage('Verifying email...');
 
         try {
-          const { user } = await signInWithEmailLink(getFirebaseAuth(), email, window.location.href);
+          const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
           if (!user || !user.emailVerified) return;
 
           const accessToken = await user.getIdToken();

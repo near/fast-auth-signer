@@ -11,7 +11,7 @@ import Input from '../../lib/Input/Input';
 import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
-import { getFirebaseAuth } from '../../utils/firebase';
+import { firebaseAuth } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -35,7 +35,7 @@ function Login() {
         if (isRecovery === 'true' && email) {
           try {
             setIsLoading(true);
-            await handleAuthenticationFlow(currentSearchParams.get('email'), skipGetKeys);
+            await handleAuthenticationFlow(email, skipGetKeys);
           } finally {
             setIsLoading(false);
           }
@@ -67,7 +67,7 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
-    fetchSignInMethodsForEmail(getFirebaseAuth(), params.email)
+    fetchSignInMethodsForEmail(firebaseAuth, params.email)
       .then(async (result) => {
         if (result.length === 0) {
           navigate({

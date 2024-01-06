@@ -6,7 +6,7 @@ import {
 import UAParser from 'ua-parser-js';
 
 import { network } from '../utils/config';
-import { checkFirestoreReady, firebaseApp, getFirebaseAuth } from '../utils/firebase';
+import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
 
@@ -24,7 +24,7 @@ class FirestoreController {
   constructor() {
     this.firestore = getFirestore(firebaseApp);
 
-    getFirebaseAuth().onIdTokenChanged(async (user: User) => {
+    firebaseAuth.onIdTokenChanged(async (user: User) => {
       if (!user) {
         return;
       }

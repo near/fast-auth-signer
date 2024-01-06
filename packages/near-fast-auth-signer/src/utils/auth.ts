@@ -1,10 +1,11 @@
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
+import { useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { decodeIfTruthy, inIframe, redirectWithError } from '.';
 import { basePath } from './config';
-import { checkFirestoreReady, getFirebaseAuth } from './firebase';
+import { checkFirestoreReady, firebaseAuth, sendFirebaseSignInEmail } from './firebase';
 import FirestoreController from '../lib/firestoreController';
 import { getAuthState } from '../lib/useAuthState';
 
@@ -13,13 +14,15 @@ export const useHandleAuthenticationFlow = () => {
 
   const navigate = useNavigate();
 
-  return async (email: string, skipGetKey = false) => {
+  return useCallback(async (email: string, skipGetKey = false) => {
     const authenticated = await getAuthState(email, skipGetKey);
 
     if (!window.firestoreController) {
       window.firestoreController = new FirestoreController();
     }
     const isFirestoreReady = await checkFirestoreReady();
+
+    console.log({ authenticated, isFirestoreReady });
 
     if (authenticated === true && isFirestoreReady) {
       const success_url = decodeIfTruthy(searchParams.get('success_url'));
@@ -66,7 +69,7 @@ export const useHandleAuthenticationFlow = () => {
           return;
         }
 
-        const user = getFirebaseAuth().currentUser;
+        const user = firebaseAuth.currentUser;
         window.firestoreController.updateUser({
           userUid:   user.uid,
           oidcToken: await user.getIdToken(),
@@ -130,11 +133,20 @@ export const useHandleAuthenticationFlow = () => {
           ...(methodNames ? { methodNames } : {})
         });
 
+        await sendFirebaseSignInEmail({
+          email,
+          success_url,
+          failure_url,
+          public_key,
+          contract_id,
+          methodNames,
+        });
+
         navigate(`/verify-email?${newSearchParams.toString()}`);
       } catch (error: any) {
         console.log(error);
         redirectWithError({ success_url, failure_url, error });
       }
     }
-  };
+  }, [navigate, searchParams]);
 };
