@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { inIframe, redirectWithError } from '.';
 import { basePath } from './config';
-import { checkFirestoreReady, firebaseAuth, sendFirebaseSignInEmail } from './firebase';
+import { checkFirestoreReady, firebaseAuth } from './firebase';
 import FirestoreController from '../lib/firestoreController';
 import { getAuthState } from '../lib/useAuthState';
 
@@ -130,15 +130,6 @@ export const useHandleAuthenticationFlow = ({
           ...(public_key ? { public_key_lak: public_key } : {}),
           ...(contract_id ? { contract_id } : {}),
           ...(methodNames ? { methodNames } : {})
-        });
-
-        await sendFirebaseSignInEmail({
-          email,
-          success_url,
-          failure_url,
-          public_key,
-          contract_id,
-          methodNames,
         });
 
         navigate(`/verify-email?${newSearchParams.toString()}`);

@@ -14,7 +14,7 @@ import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
-import { sendFirebaseSignInEmail, userExists } from '../../utils/firebase';
+import { userExists } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
@@ -171,16 +171,6 @@ function CreateAccount() {
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
-      });
-
-      await sendFirebaseSignInEmail({
-        accountId: `${data.username}.${network.fastAuth.accountIdSuffix}`,
-        email:      data.email,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
       });
 
       navigate(`/verify-email?${newSearchParams.toString()}`);
