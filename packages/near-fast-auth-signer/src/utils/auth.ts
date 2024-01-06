@@ -1,17 +1,29 @@
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-import { decodeIfTruthy, inIframe, redirectWithError } from '.';
+import { inIframe, redirectWithError } from '.';
 import { basePath } from './config';
 import { checkFirestoreReady, firebaseAuth, sendFirebaseSignInEmail } from './firebase';
 import FirestoreController from '../lib/firestoreController';
 import { getAuthState } from '../lib/useAuthState';
 
-export const useHandleAuthenticationFlow = () => {
-  const [searchParams] = useSearchParams();
-
+export const useHandleAuthenticationFlow = ({
+  success_url,
+  failure_url,
+  public_key,
+  contract_id,
+  methodNames,
+  searchParamsString
+}: {
+  success_url: string;
+  failure_url: string;
+  public_key: string;
+  contract_id: string;
+  methodNames: string;
+  searchParamsString: string
+}) => {
   const navigate = useNavigate();
 
   return useCallback(async (email: string, skipGetKey = false) => {
@@ -25,12 +37,6 @@ export const useHandleAuthenticationFlow = () => {
     console.log({ authenticated, isFirestoreReady });
 
     if (authenticated === true && isFirestoreReady) {
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
-      const public_key =  decodeIfTruthy(searchParams.get('public_key'));
-      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-
       if (!public_key || !contract_id) {
         window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         return;
@@ -62,10 +68,11 @@ export const useHandleAuthenticationFlow = () => {
           publicKey:  public_key,
         });
         const resJson = res && await res.json();
+        console.log(resJson);
 
         const failure = resJson['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
         if (failure?.ActionError?.kind?.LackBalanceForState) {
-          navigate(`/devices?${searchParams.toString()}`);
+          navigate(`/devices?${searchParamsString}`);
           return;
         }
 
@@ -105,22 +112,17 @@ export const useHandleAuthenticationFlow = () => {
             window.location.replace(parsedUrl.href);
           }
         } catch (err) {
-          console.log('Failed to add device collection', err);
+          console.error('Failed to add device collection', err);
           throw new Error('Failed to add device collection');
         }
       } catch (error) {
-        console.log('error', error);
+        console.error('error', error);
         captureException(error);
         redirectWithError({ success_url, failure_url, error });
       }
     } else if (email && !authenticated) {
       // Once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-      window.localStorage.removeItem('webauthn_username');
-      const success_url = searchParams.get('success_url');
-      const failure_url = searchParams.get('failure_url');
-      const public_key =  searchParams.get('public_key');
-      const contract_id = searchParams.get('contract_id');
-      const methodNames = searchParams.get('methodNames');
+      // window.localStorage.removeItem('webauthn_username');
 
       try {
         const newSearchParams = new URLSearchParams({
@@ -144,9 +146,9 @@ export const useHandleAuthenticationFlow = () => {
 
         navigate(`/verify-email?${newSearchParams.toString()}`);
       } catch (error: any) {
-        console.log(error);
+        console.error(error);
         redirectWithError({ success_url, failure_url, error });
       }
     }
-  }, [navigate, searchParams]);
+  }, [contract_id, failure_url, methodNames, navigate, public_key, searchParamsString, success_url]);
 };

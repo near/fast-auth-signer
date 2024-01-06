@@ -1,5 +1,6 @@
 import { getKeys } from '@near-js/biometric-ed25519/lib';
 import { KeyPairEd25519 } from '@near-js/crypto';
+import { captureException } from '@sentry/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
@@ -58,7 +59,9 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
 
     await window.fastAuthController.setKey(new KeyPairEd25519(accountsList[0].keyPair.toString().split(':')[1]));
     return true;
-  } catch {
+  } catch (e) {
+    console.error(e);
+    captureException(e);
     return false;
   }
 };

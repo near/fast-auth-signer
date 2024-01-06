@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
@@ -10,6 +10,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
+import { decodeIfTruthy } from '../../utils';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
 import { firebaseAuth } from '../../utils/firebase';
 
@@ -21,50 +22,36 @@ const schema = yup.object().shape({
 });
 
 function Login() {
-  const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const handleAuthenticationFlow = useHandleAuthenticationFlow();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [currentSearchParams] = useSearchParams();
+
+  const searchParamsString = currentSearchParams.toString();
+
+  const handleAuthenticationFlow = useHandleAuthenticationFlow({
+    success_url:        decodeIfTruthy(currentSearchParams.get('success_url')),
+    failure_url:        decodeIfTruthy(currentSearchParams.get('failure_url')),
+    public_key:         decodeIfTruthy(currentSearchParams.get('public_key')),
+    contract_id:        decodeIfTruthy(currentSearchParams.get('contract_id')),
+    methodNames:        decodeIfTruthy(currentSearchParams.get('methodNames')),
+    searchParamsString
+  });
+
   const skipGetKeys = currentSearchParams.get('skipGetKey') === 'true';
-  const [isLoading, setIsLoading] = useState(false);
+  const email = currentSearchParams.get('email');
 
-  useEffect(() => {
-    const handleCheck = async () => {
-      const isRecovery = currentSearchParams.get('isRecovery');
-      const email = currentSearchParams.get('email');
-      if (isRecovery) {
-        if (isRecovery === 'true' && email) {
-          try {
-            setIsLoading(true);
-            await handleAuthenticationFlow(email, skipGetKeys);
-          } finally {
-            setIsLoading(false);
-          }
-        } else if (isRecovery === 'true' && !email) {
-          navigate({
-            pathname: '/login',
-            search:   currentSearchParams.toString(),
-          });
-        } else {
-          navigate({
-            pathname: '/create-account',
-            search:   currentSearchParams.toString(),
-          });
-        }
-      }
-    };
-
-    handleCheck();
-  }, [currentSearchParams, handleAuthenticationFlow, navigate, skipGetKeys]);
-
-  const { handleSubmit, register, formState: { errors } } = useForm({
+  const {
+    handleSubmit, register, trigger, formState: { errors, isValid }
+  } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
     defaultValues: {
-      email: currentSearchParams.get('email') ?? '',
+      email: email ?? '',
     }
   });
 
-  const emailCheck = async (
+  const emailCheck = useCallback(async (
     params: { email: string }
   ) => {
     fetchSignInMethodsForEmail(firebaseAuth, params.email)
@@ -90,7 +77,16 @@ function Login() {
           title: error.message,
         });
       });
-  };
+  }, [handleAuthenticationFlow, navigate, skipGetKeys]);
+
+  useEffect(() => {
+    if (email && isValid) {
+      console.log('email', email);
+      emailCheck({ email });
+    }
+
+    trigger('email');
+  }, [email, emailCheck, isValid, trigger]);
 
   return (
     <LoginWrapper>
