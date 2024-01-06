@@ -15,10 +15,6 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
   const controllerState = await window.fastAuthController.isSignedIn();
   const webauthnUsername = safeGetLocalStorage('webauthn_username');
 
-  console.log({
-    email, webauthnUsername, skipGetKeys, controllerState, comparison: email === webauthnUsername
-  });
-
   if (webauthnUsername === undefined) {
     return new Error('Please allow third party cookies');
   }
@@ -32,12 +28,9 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
   }
 
   try {
-    console.log('called');
     const keypairs = await getKeys(webauthnUsername);
-    console.log('1');
     const accounts = await Promise.allSettled(
       keypairs.map(async (k) => {
-        console.log(k.getPublicKey().toString());
         const accIds = await fetchAccountIds(k.getPublicKey().toString());
         return accIds.map((accId) => { return { accId, keyPair: k }; });
       })
@@ -45,8 +38,6 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
 
     const accountsList = accounts
       .flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-
-    console.log({ accountsList });
 
     if (accountsList.length === 0) {
       return false;

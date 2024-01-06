@@ -34,8 +34,6 @@ export const useHandleAuthenticationFlow = ({
     }
     const isFirestoreReady = await checkFirestoreReady();
 
-    console.log({ authenticated, isFirestoreReady });
-
     if (authenticated === true && isFirestoreReady) {
       if (!public_key || !contract_id) {
         window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
@@ -68,7 +66,6 @@ export const useHandleAuthenticationFlow = ({
           publicKey:  public_key,
         });
         const resJson = res && await res.json();
-        console.log(resJson);
 
         const failure = resJson['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
         if (failure?.ActionError?.kind?.LackBalanceForState) {
@@ -122,7 +119,7 @@ export const useHandleAuthenticationFlow = ({
       }
     } else if (email && !authenticated) {
       // Once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-      // window.localStorage.removeItem('webauthn_username');
+      window.localStorage.removeItem('webauthn_username');
 
       try {
         const newSearchParams = new URLSearchParams({

@@ -23,7 +23,6 @@ const schema = yup.object().shape({
 function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-
   const [currentSearchParams] = useSearchParams();
 
   const searchParamsString = currentSearchParams.toString();
@@ -50,7 +49,7 @@ function Login() {
     }
   });
 
-  const emailCheck = useCallback(async (
+  const onSubmit = useCallback(async (
     params: { email: string }
   ) => {
     try {
@@ -58,9 +57,10 @@ function Login() {
       if (await userExists(params.email)) {
         await handleAuthenticationFlow(params.email, skipGetKeys);
       } else {
+        currentSearchParams.set('email', params.email);
         navigate({
           pathname: '/create-account',
-          search:   `email=${params.email}`,
+          search:   currentSearchParams.toString(),
         });
       }
     } catch (error) {
@@ -72,21 +72,19 @@ function Login() {
     } finally {
       setIsLoading(false);
     }
-  }, [handleAuthenticationFlow, navigate, skipGetKeys]);
+  }, [currentSearchParams, handleAuthenticationFlow, navigate, skipGetKeys]);
 
   useEffect(() => {
     if (email && isValid) {
-      console.log('email', email);
-      emailCheck({ email });
+      onSubmit({ email });
     }
-
     trigger('email');
-  }, [email, emailCheck, isValid, trigger]);
+  }, [email, onSubmit, isValid, trigger]);
 
   return (
     <LoginWrapper>
       {isLoading ? <Spinner /> : (
-        <form onSubmit={handleSubmit(emailCheck)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <header>
             <h1 data-test-id="heading_login">Log In</h1>
             <p className="desc">Please enter your email</p>
