@@ -3,7 +3,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useEffect, useMemo, useState
+  useCallback, useEffect, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
