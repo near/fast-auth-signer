@@ -12,7 +12,7 @@ import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { inIframe, redirectWithError } from '../../utils';
+import { redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
