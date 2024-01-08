@@ -82,6 +82,7 @@ const schema = yup.object().shape({
     .test(
       'is-email-available',
       async (email, context) => {
+        console.log('1');
         let message: string;
 
         try {
@@ -110,6 +111,7 @@ const schema = yup.object().shape({
     .test(
       'is-account-available',
       async (username, context) => {
+        console.log('2');
         if (username) {
           const isAvailable = await checkIsAccountAvailable(username);
           if (!isAvailable) {
@@ -215,10 +217,10 @@ function CreateAccount() {
       trigger();
 
       if (username) {
-        createAccount({ email, username });
+        handleSubmit(createAccount)();
       }
     }
-  }, [createAccount, reset, searchParams, trigger]);
+  }, [createAccount, handleSubmit, reset, searchParams, trigger]);
 
   useEffect(() => {
     if (formsEmail?.split('@').length > 1 && !formsUsername) {
@@ -252,6 +254,7 @@ function CreateAccount() {
         </header>
         <Input
           {...register('email')}
+          debounceTime={1000}
           placeholder="user_name@email.com"
           type="email"
           label="Email"
@@ -285,6 +288,7 @@ function CreateAccount() {
         />
         <Input
           {...register('username')}
+          debounceTime={1000}
           label="Account ID"
           success={!errors.username && formsUsername && 'Account ID available'}
           error={errors?.username?.message}

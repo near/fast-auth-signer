@@ -50,6 +50,7 @@
     "https-browserify": "^1.0.0",
     "i18next": "^23.2.8",
     "js-sha256": "^0.10.1",
+    "lodash": "^4.17.21",
     "near-api-js": "^2.1.4",
     "process": "^0.11.10",
     "query-string": "^7.0.0",

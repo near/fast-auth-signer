@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React, { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { FieldErrors } from 'react-hook-form';
 import styled from 'styled-components';
@@ -152,6 +153,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   subText?: string;
   badges?: BadgeProps[];
+  debounceTime?: number;
   dataTest?: {
     input?: string;
     error?: string;
@@ -162,7 +164,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
-      label, errors, name, right, success, error, subText, badges, dataTest, ...rest
+      label, errors, name, right, success, error, subText, badges, debounceTime, dataTest, ...rest
     },
     ref
   ) => {
@@ -205,6 +207,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             name={name}
             ref={ref}
             data-test-id={dataTest?.input}
+            {...debounceTime ? { onChange: debounce(rest.onChange, debounceTime) } : {}}
           />
           {right && (
             <div className="input-group-right">
