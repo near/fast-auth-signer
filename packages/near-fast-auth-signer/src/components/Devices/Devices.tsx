@@ -69,7 +69,7 @@ function Devices() {
       setCollections(deviceCollections);
     };
 
-    const getKeypairOrLogout = () => window.fastAuthController.getKey(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
+    const getKeypairOrLogout = () => window.fastAuthController.findInKeyStores(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
       if (keypair) {
         getCollection();
       } else {
@@ -94,7 +94,6 @@ function Devices() {
   }, [controller]);
 
   const redirectToSignin = () => {
-    window.localStorage.setItem('requireVerifyEmail', 'true');
     if (inIframe()) {
       window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
     } else {

@@ -119,10 +119,6 @@ function VerifyEmailPage() {
     }
   };
 
-  useEffect(() => {
-    window.localStorage.removeItem('requireVerifyEmail');
-  }, []);
-
   return (
     <StyledContainer>
       <FormContainer onSubmit={handleResendEmail}>

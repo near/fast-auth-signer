@@ -93,9 +93,6 @@ function SignInPage() {
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
-  // if requireVerifyEmail is set, user need to verify email first
-  const requireVerifyEmail = useMemo(() => window.localStorage.getItem('requireVerifyEmail'), []);
-
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
@@ -164,18 +161,20 @@ function SignInPage() {
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
       const email = decodeIfTruthy(searchParams.get('email'));
-      if (authenticated === true && isFirestoreReady) {
+      const isPasskeySupported = await isPassKeyAvailable();
+      const user = firebaseAuth.currentUser;
+      const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== email;
+      if (authenticated === true && isFirestoreReady && !firebaseAuthInvalid) {
         if (!public_key || !contract_id) {
           window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           return;
         }
-        const isPasskeySupported = await isPassKeyAvailable();
         const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
         const existingDevice = isPasskeySupported
           ? await window.firestoreController.getDeviceCollection(publicKeyFak)
           : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
-        const user = firebaseAuth.currentUser;
+
         // @ts-ignore
         const oidcToken = user.accessToken;
         const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
@@ -251,19 +250,19 @@ function SignInPage() {
             title: error.message,
           });
         });
-      } else if (email && !authenticated) {
+      } else if (email && (!authenticated || firebaseAuthInvalid)) {
+        // if different user is logged in, sign out
+        await firebaseAuth.signOut();
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
         addDevice({ email });
       }
     };
 
-    if (requireVerifyEmail) return;
-
     handleAuthCallback();
-  }, [addDevice, authenticated, navigate, searchParams, requireVerifyEmail]);
+  }, [addDevice, authenticated, navigate, searchParams]);
 
-  if (authenticated === true && !requireVerifyEmail) {
+  if (authenticated === true) {
     return renderRedirectButton ? (
       <Button
         label="Back to app"

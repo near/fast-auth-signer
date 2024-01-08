@@ -111,6 +111,11 @@ class FastAuthController {
     return this.localStore.getKey(this.networkId, accountId);
   }
 
+  async findInKeyStores(key) {
+    const keypair = await this.getKey(key) || await this.getLocalStoreKey(key);
+    return keypair;
+  }
+
   assertValidSigner(signerId) {
     if (signerId && signerId !== this.accountId) {
       throw new Error(`Cannot sign transactions for ${signerId} while signed in as ${this.accountId}`);
