@@ -11,7 +11,7 @@ import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { inIframe, redirectWithError } from '../../utils';
+import { redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import { userExists } from '../../utils/firebase';
 import {
@@ -227,17 +227,6 @@ function CreateAccount() {
   // Should only trigger when email changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formsEmail, setValue]);
-
-  if (inIframe()) {
-    return (
-      <Button
-        label="Continue on fast auth"
-        onClick={() => {
-          window.open(window.location.href, '_parent');
-        }}
-      />
-    );
-  }
 
   return (
     <StyledContainer>
