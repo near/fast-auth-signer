@@ -82,7 +82,6 @@ const schema = yup.object().shape({
     .test(
       'is-email-available',
       async (email, context) => {
-        console.log('1');
         let message: string;
 
         try {
@@ -111,7 +110,6 @@ const schema = yup.object().shape({
     .test(
       'is-account-available',
       async (username, context) => {
-        console.log('2');
         if (username) {
           const isAvailable = await checkIsAccountAvailable(username);
           if (!isAvailable) {

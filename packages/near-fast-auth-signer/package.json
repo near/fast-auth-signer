@@ -30,7 +30,6 @@
     "last 1 Chrome version"
   ],
   "dependencies": {
-    "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^3.3.2",
     "@near-js/accounts": "^0.1.4",
     "@near-js/biometric-ed25519": "^0.3.0",
