@@ -1,4 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
