@@ -165,7 +165,11 @@ function SignInPage() {
       const isPasskeySupported = await isPassKeyAvailable();
       const user = firebaseAuth.currentUser;
       const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== email;
-      if (authenticated === true && isFirestoreReady && !firebaseAuthInvalid) {
+      const shouldUseCurrentUser = (isPasskeySupported
+        ? authenticated === true
+        : !firebaseAuthInvalid) && isFirestoreReady;
+
+      if (shouldUseCurrentUser) {
         if (!public_key || !contract_id) {
           window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           return;
