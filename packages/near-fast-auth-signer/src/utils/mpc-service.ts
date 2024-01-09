@@ -1,8 +1,9 @@
-import { PublicKey } from '@near-js/crypto';
+import { KeyType, PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
 
+import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
 
 export const CLAIM = 3177899144;
@@ -106,7 +107,17 @@ export const errorMessages: Record<string, string> = {
   'auth/missing-email':       'No email found, please try again.',
 };
 
-export const MPC_PULIC_KEY = [
-  187, 24, 21, 82, 105, 165, 254, 26, 167, 89, 195, 236, 44, 83, 69, 87, 30,
-  151, 139, 229, 233, 182, 65, 230, 7, 234, 204, 91, 38, 70, 254, 254,
-];
+export const verifyMpcSignature = (oidcToken: string, mpcSignature: string): boolean => {
+  const mpcPublicKeyHexString = network.fastAuth.mpcPublicKey.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
+  const salt = CLAIM + 1;
+  const saltSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['salt', 'u32']] }]]), ({ salt }));
+  const signatureSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['signature', [64]]] }]]), ({ signature: mpcSignature }));
+
+  const hash = sha256.create();
+  hash.update(saltSerialize);
+  hash.update(signatureSerialize);
+
+  const publicKey = new PublicKey({ keyType: KeyType.ED25519, data: Buffer.from(mpcPublicKeyHexString, 'hex') });
+  return publicKey.verify(new Uint8Array(hash.arrayBuffer()), Buffer.from(mpcSignature, 'hex'));
+};

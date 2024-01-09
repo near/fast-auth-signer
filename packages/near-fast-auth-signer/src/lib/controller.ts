@@ -214,21 +214,24 @@ class FastAuthController {
     };
 
     // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
-    return fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
-      method:  'POST',
-      mode:    'cors' as const,
-      body:    JSON.stringify(data),
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-    }).then(async (response) => {
+    try {
+      const response = await fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
+        method:  'POST',
+        mode:    'cors' as const,
+        body:    JSON.stringify(data),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+      });
+
       if (!response.ok) {
         throw new Error('Unable to claim OIDC token');
       }
+
       const res = await response.json();
       return res.mpc_signature;
-    }).catch((err) => {
+    } catch (err) {
       console.log(err);
       throw new Error('Unable to claim OIDC token');
-    });
+    }
   }
 
   async getUserCredential(oidcToken) {

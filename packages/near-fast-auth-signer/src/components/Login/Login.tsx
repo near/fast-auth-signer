@@ -1,4 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import { KeyPair } from 'near-api-js';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -8,6 +9,7 @@ import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
+import { network } from '../../utils/config';
 import { userExists } from '../../utils/firebase';
 
 const schema = yup.object().shape({
@@ -20,6 +22,27 @@ const schema = yup.object().shape({
 function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const test = async () => {
+      const keyPair = KeyPair.fromRandom('ed25519');
+      console.log(keyPair.getPublicKey());
+      console.log(keyPair.getPublicKey().toString());
+
+      const response = await fetch(`${network.fastAuth.mpcRecoveryUrl}/mpc_public_key`, {
+        method:  'GET',
+        mode:    'cors' as const,
+        body:    JSON.stringify({}),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+      });
+
+      response.json().then((data) => {
+        console.log(data.mpc_pk.toString());
+      });
+    };
+
+    test();
+  }, []);
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');

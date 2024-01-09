@@ -101,7 +101,7 @@ class FirestoreController {
       });
     });
 
-    await (window as any).fastAuthController.claimOidcToken(this.oidcToken);
+    await window.fastAuthController.claimOidcToken(this.oidcToken);
 
     if (!window.fastAuthController.getAccountId()) {
       const accountId = await this.getAccountIdFromOidcToken();
