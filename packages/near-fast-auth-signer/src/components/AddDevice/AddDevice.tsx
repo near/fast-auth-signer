@@ -180,8 +180,7 @@ function SignInPage() {
           : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
-        // @ts-ignore
-        const oidcToken = user.accessToken;
+        const oidcToken = await user.getIdToken();
         const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
 
         // if given lak key is already attached to webAuthN public key, no need to add it again
@@ -215,8 +214,6 @@ function SignInPage() {
           // Add device
           window.firestoreController.updateUser({
             userUid:   user.uid,
-            oidcToken: await user.getIdToken(),
-            // User type is missing accessToken but it exist
             oidcToken,
           });
 
