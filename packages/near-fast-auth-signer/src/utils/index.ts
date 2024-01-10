@@ -42,3 +42,14 @@ export const safeGetLocalStorage = (key: string) => {
     return undefined;
   }
 };
+
+export const deleteOidcKeyPairOnLocalStorage = () => {
+  const itemCount = localStorage.length;
+  for (let i = 0; i < itemCount; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('near-api-js:keystore:oidc_keypair')) {
+      console.log(`removing ${key} from localStorage`);
+      localStorage.removeItem(key);
+    }
+  }
+};
