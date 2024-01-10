@@ -230,11 +230,13 @@ class FastAuthController {
 
       const res = await response.json();
 
-      if (!verifyMpcSignature(res.mpc_signature, signature)) {
+      if (verifyMpcSignature(res.mpc_signature, signature)) {
         console.log('MPC Signature is valid');
+        debugger;
         return res.mpc_signature;
       }
 
+      debugger;
       throw new Error('MPC Signature is not valid');
     } catch (err) {
       console.log(err);
