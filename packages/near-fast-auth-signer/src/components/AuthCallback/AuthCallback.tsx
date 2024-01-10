@@ -1,4 +1,4 @@
-import { KeyPairEd25519 } from '@near-js/crypto';
+import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
@@ -71,14 +71,14 @@ const onCreateAccount = async ({
   if (publicKeyFak) {
     window.localStorage.setItem('webauthn_username', email);
   }
-  window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
   setStatusMessage('Redirecting to app...');
 
+  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
   parsedUrl.searchParams.set('account_id', res.near_account_id);
   parsedUrl.searchParams.set('public_key', public_key_lak);
-  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
   window.location.replace(parsedUrl.href);
 };
@@ -158,14 +158,13 @@ export const onSignIn = async ({
         if (publicKeyFak) {
           window.localStorage.setItem('webauthn_username', email);
         }
-        window.localStorage.removeItem(`temp_fastauthflow_${publicKeyFak}`);
 
         setStatusMessage('Redirecting to app...');
 
         const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         parsedUrl.searchParams.set('account_id', accountIds[0]);
         parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak] : [public_key_lak]).join(','));
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
         if (inIframe()) {
           window.open(parsedUrl.href, '_parent');
@@ -187,7 +186,6 @@ function AuthCallbackPage() {
     const signInProcess = async () => {
       if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
         const accountId = decodeIfTruthy(searchParams.get('accountId'));
-        const publicKeyFak = decodeIfTruthy(searchParams.get('publicKeyFak'));
         const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
         const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
@@ -196,7 +194,6 @@ function AuthCallbackPage() {
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
         const email = window.localStorage.getItem('emailForSignIn');
-        const privateKey = window.localStorage.getItem(`temp_fastauthflow_${publicKeyFak}`);
 
         if (!email) {
           const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
@@ -214,7 +211,6 @@ function AuthCallbackPage() {
           const accessToken = await user.getIdToken();
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-          const keypair = privateKey && new KeyPairEd25519(privateKey.split(':')[1]);
 
           // claim the oidc token
           window.fastAuthController = new FastAuthController({
@@ -222,9 +218,18 @@ function AuthCallbackPage() {
             networkId
           });
 
-          if (keypair) {
-            await window.fastAuthController.setKey(keypair);
+          let publicKeyFak: string;
+
+          if (await isPassKeyAvailable()) {
+            const keyPair = await createKey(email);
+            publicKeyFak = keyPair.getPublicKey().toString();
+            await window.fastAuthController.setKey(keyPair);
           }
+
+          if (!window.fastAuthController.getAccountId()) {
+            await window.fastAuthController.setAccountId(accountId);
+          }
+
           await window.fastAuthController.claimOidcToken(accessToken);
           const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
           window.firestoreController = new FirestoreController();

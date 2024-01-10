@@ -12,6 +12,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
+import { userExists } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
@@ -38,7 +39,28 @@ const emailProviders = ['gmail', 'yahoo', 'outlook'];
 const schema = yup.object().shape({
   email:    yup
     .string()
-    .required('Email address is required'),
+    .required('Email address is required')
+    .test(
+      'is-email-available',
+      async (email, context) => {
+        let message: string;
+
+        try {
+          if (email && await userExists(email)) {
+            message = `${email} is taken, try something else.`;
+          } else {
+            return true;
+          }
+        } catch {
+          message = 'Please enter a valid email address';
+        }
+
+        return context.createError({
+          message,
+          path:    context.path
+        });
+      }
+    ),
   username: yup
     .string()
     .required('Please enter a valid account ID')
@@ -98,7 +120,7 @@ function CreateAccount() {
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
-        publicKey: publicKeyFak, privateKey, accountId
+        accountId
       } = await handleCreateAccount({
         accountId:   fullAccountId,
         email:       data.email,
@@ -113,15 +135,13 @@ function CreateAccount() {
         accountId,
         email:      data.email,
         isRecovery: 'false',
-        ...(publicKeyFak ? { publicKeyFak } : {}),
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      const hashParams = new URLSearchParams({ ...(privateKey ? { privateKey } : {}) });
-      navigate(`/verify-email?${newSearchParams.toString()}#${hashParams.toString()}`);
+      navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
       redirectWithError({ success_url, failure_url, error });
@@ -202,7 +222,7 @@ function CreateAccount() {
               return [{
                 isSelected: true,
                 label:      `@${provider}`,
-                onClick:    () => setValue('email', username)
+                onClick:    () => setValue('email', username, { shouldValidate: true })
               }];
             }
 
@@ -211,7 +231,9 @@ function CreateAccount() {
             return [...acc, {
               isSelected: false,
               label:      `@${provider}`,
-              onClick:    () => setValue('email', `${username}@${provider}.com`)
+              onClick:    () => setValue('email', `${username}@${provider}.com`, {
+                shouldValidate: true
+              })
             }];
           }, [] as BadgeProps[])}
           dataTest={{
