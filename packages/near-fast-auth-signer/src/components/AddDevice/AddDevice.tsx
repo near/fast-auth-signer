@@ -1,8 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback, useEffect, useState
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -91,7 +94,6 @@ function SignInPage() {
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
-
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
@@ -160,22 +162,36 @@ function SignInPage() {
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
       const email = decodeIfTruthy(searchParams.get('email'));
-      if (authenticated === true && isFirestoreReady) {
+      const isPasskeySupported = await isPassKeyAvailable();
+      const user = firebaseAuth.currentUser;
+      const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== email;
+      const shouldUseCurrentUser = authenticated === true
+        && (isPasskeySupported || !firebaseAuthInvalid)
+        && isFirestoreReady;
+
+      if (shouldUseCurrentUser) {
         if (!public_key || !contract_id) {
           window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
           return;
         }
-        const publicKeyFak = await window.fastAuthController.getPublicKey();
-        const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+        const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
+        const existingDevice = isPasskeySupported
+          ? await window.firestoreController.getDeviceCollection(publicKeyFak)
+          : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
+
+        // @ts-ignore
+        const oidcToken = user.accessToken;
+        const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;
-        if (noNeedToAddKey) {
-          const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-          parsedUrl.searchParams.set('public_key', public_key);
-          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
+        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+        parsedUrl.searchParams.set('public_key', public_key);
+        parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
 
+        if (noNeedToAddKey) {
           if (inIframe()) {
             setRenderRedirectButton(parsedUrl.href);
           } else {
@@ -197,12 +213,10 @@ function SignInPage() {
           }
 
           // Add device
-          const user = firebaseAuth.currentUser;
           window.firestoreController.updateUser({
             userUid:   user.uid,
             // User type is missing accessToken but it exist
-            // @ts-ignore
-            oidcToken: user.accessToken,
+            oidcToken,
           });
 
           // Since FAK is already added, we only add LAK
@@ -212,10 +226,6 @@ function SignInPage() {
             gateway:      success_url,
           })
             .then(() => {
-              const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-              parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-              parsedUrl.searchParams.set('public_key', public_key);
-              parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
               window.parent.postMessage({
                 type:   'method',
                 method: 'query',
@@ -223,8 +233,8 @@ function SignInPage() {
                 params: {
                   request_type: 'complete_sign_in',
                   publicKey:    public_key,
-                  allKeys:      [public_key, publicKeyFak].join(','),
-                  accountId:    window.fastAuthController.getAccountId()
+                  allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
+                  accountId:    (window as any).fastAuthController.getAccountId()
                 }
               }, '*');
               if (inIframe()) {
@@ -245,7 +255,9 @@ function SignInPage() {
             title: error.message,
           });
         });
-      } else if (email && !authenticated) {
+      } else if (email && (!authenticated || firebaseAuthInvalid)) {
+        // if different user is logged in, sign out
+        await firebaseAuth.signOut();
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
         addDevice({ email });

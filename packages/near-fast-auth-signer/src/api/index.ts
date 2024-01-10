@@ -17,7 +17,12 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
-  return res.json();
+
+  const accountIds = await res.json();
+  if (accountIds.length === 0) {
+    throw new Error('Unable to retrieve account id');
+  }
+  return accountIds;
 };
 
 type LimitedAccessKey = {
