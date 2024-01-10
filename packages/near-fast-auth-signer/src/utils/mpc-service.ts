@@ -107,17 +107,24 @@ export const errorMessages: Record<string, string> = {
   'auth/missing-email':       'No email found, please try again.',
 };
 
-export const verifyMpcSignature = (oidcToken: string, mpcSignature: string): boolean => {
-  const mpcPublicKeyHexString = network.fastAuth.mpcPublicKey.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+export const verifyMpcSignature = (
+  mpcSignature: string,
+  originalSignature: string,
+): boolean => {
+  const SALT: number = 3177899144;
 
-  const salt = CLAIM + 1;
-  const saltSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['salt', 'u32']] }]]), ({ salt }));
-  const signatureSerialize = serialize(new Map([[Object, { kind: 'struct', fields: [['signature', [64]]] }]]), ({ signature: mpcSignature }));
+  const mpcSignatureBytes = Uint8Array.from(Buffer.from(mpcSignature, 'hex'));
+  const originalSignatureBytes = Uint8Array.from(Buffer.from(originalSignature, 'hex'));
 
-  const hash = sha256.create();
-  hash.update(saltSerialize);
-  hash.update(signatureSerialize);
+  const claimData = { salt: SALT + 1, signature:  originalSignatureBytes };
+  const serializedData = serialize(new Map([
+    [Object, { kind: 'struct', fields: [['salt', 'u32'], ['signature', ['u8', 64]]] }]
+  ]), claimData);
 
-  const publicKey = new PublicKey({ keyType: KeyType.ED25519, data: Buffer.from(mpcPublicKeyHexString, 'hex') });
-  return publicKey.verify(new Uint8Array(hash.arrayBuffer()), Buffer.from(mpcSignature, 'hex'));
+  const hashedData = new Uint8Array(sha256.array(serializedData));
+  const mpcPublicKey = new PublicKey({ keyType: KeyType.ED25519, data: new Uint8Array(network.fastAuth.mpcPublicKey) });
+
+  const isMpcSignatureValid = mpcPublicKey.verify(hashedData, mpcSignatureBytes);
+
+  return isMpcSignatureValid;
 };

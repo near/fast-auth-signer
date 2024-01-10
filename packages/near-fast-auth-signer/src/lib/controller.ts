@@ -14,7 +14,9 @@ import { sha256 } from 'js-sha256';
 
 import networkParams from './networkParams';
 import { network } from '../utils/config';
-import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
+import {
+  CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature, verifyMpcSignature
+} from '../utils/mpc-service';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
@@ -227,7 +229,13 @@ class FastAuthController {
       }
 
       const res = await response.json();
-      return res.mpc_signature;
+
+      if (!verifyMpcSignature(res.mpc_signature, signature)) {
+        console.log('MPC Signature is valid');
+        return res.mpc_signature;
+      }
+
+      throw new Error('MPC Signature is not valid');
     } catch (err) {
       console.log(err);
       throw new Error('Unable to claim OIDC token');
