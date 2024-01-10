@@ -252,10 +252,10 @@ function AuthCallbackPage() {
         } catch (e) {
           captureException(e);
           console.log('error:', e);
-          // redirectWithError({ success_url, failure_url, error: e });
+          redirectWithError({ success_url, failure_url, error: e });
         }
       } else {
-        // navigate('/signup');
+        navigate('/signup');
       }
     };
 

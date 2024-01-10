@@ -230,16 +230,14 @@ class FastAuthController {
 
       const res = await response.json();
 
-      if (verifyMpcSignature(res.mpc_signature, signature)) {
-        console.log('MPC Signature is valid');
-        debugger;
-        return res.mpc_signature;
+      if (!verifyMpcSignature(res.mpc_signature, signature)) {
+        throw new Error('MPC Signature is not valid');
       }
 
-      debugger;
-      throw new Error('MPC Signature is not valid');
+      return res.mpc_signature;
     } catch (err) {
       console.log(err);
+      captureException(err);
       throw new Error('Unable to claim OIDC token');
     }
   }
