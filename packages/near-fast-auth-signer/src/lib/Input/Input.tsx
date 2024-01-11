@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import debounce from 'lodash.debounce';
 import React, { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { FieldErrors } from 'react-hook-form';
 import styled from 'styled-components';
