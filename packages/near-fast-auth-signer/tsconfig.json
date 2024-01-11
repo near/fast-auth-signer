@@ -9,6 +9,7 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "jsx": "react",
     "incremental": true,
+    "sourceMap": true
   },
   "exclude": ["node_modules", "dist"],
   "include": ["**/*.ts", "**/*.tsx", "**/*.js"]
