@@ -268,6 +268,7 @@ class FastAuthController {
       }
 
       const res: {
+        type: string,
         mpc_signature: string;
       } = await response.json();
 
