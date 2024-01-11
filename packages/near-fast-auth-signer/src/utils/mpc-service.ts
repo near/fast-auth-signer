@@ -108,10 +108,9 @@ export const errorMessages: Record<string, string> = {
 };
 
 export const verifyMpcSignature = (mpcSignature: string, originalSignature: string): boolean => {
-  const SALT: number = 3177899144;
   const mpcSignatureBytes = Uint8Array.from(Buffer.from(mpcSignature, 'hex'));
   const originalSignatureBytes = Uint8Array.from(Buffer.from(originalSignature, 'hex'));
-  const claimData = { salt: SALT + 1, signature:  originalSignatureBytes };
+  const claimData = { salt: CLAIM + 1, signature:  originalSignatureBytes };
   const serializedData = serialize(new Map([
     [Object, { kind: 'struct', fields: [['salt', 'u32'], ['signature', ['u8', 64]]] }]
   ]), claimData);

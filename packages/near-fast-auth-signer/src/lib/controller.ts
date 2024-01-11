@@ -232,7 +232,7 @@ class FastAuthController {
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken: string): Promise<{ mpc_signature: string }> {
     let keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
-    const CLAIM_SALT = CLAIM + 0;
+
     if (!keypair) {
       keypair = KeyPair.fromRandom('ED25519');
       await this.keyStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
@@ -240,8 +240,9 @@ class FastAuthController {
       deleteOidcKeyPairOnLocalStorage();
       await this.localStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
     }
+
     const signature = getUserCredentialsFrpSignature({
-      salt:            CLAIM_SALT,
+      salt:            CLAIM + 0,
       oidcToken,
       shouldHashToken: true,
       keypair,
@@ -266,13 +267,15 @@ class FastAuthController {
         throw new Error('Unable to claim OIDC token');
       }
 
-      const res = await response.json();
+      const res: {
+        mpc_signature: string;
+      } = await response.json();
 
       if (!verifyMpcSignature(res.mpc_signature, signature)) {
         throw new Error('MPC Signature is not valid');
       }
 
-      return res.mpc_signature;
+      return res;
     } catch (err) {
       console.log(err);
       captureException(err);
