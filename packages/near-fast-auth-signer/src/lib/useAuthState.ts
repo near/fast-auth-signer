@@ -56,19 +56,18 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
     } catch {
       return false;
     }
-  } else if (isFirestoreReady) {
+  } else if (isFirestoreReady && firebaseAuth.currentUser) {
     const oidcToken = await firebaseAuth.currentUser.getIdToken();
     const localStoreKey = await window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+
     if (localStoreKey) {
-      const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
-      const accountIds = await fetchAccountIds(recoveryPK);
-      (window as any).fastAuthController = new FastAuthController({
-        accountId: accountIds[0],
+      const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
+      window.fastAuthController = new FastAuthController({
+        accountId: account?.accountId,
         networkId
       });
       return true;
     }
-    return false;
   }
 
   return false;

@@ -90,7 +90,7 @@ export const useHandleAuthenticationFlow = ({
 
         window.firestoreController.updateUser({
           userUid:   user.uid,
-          oidcToken: await user.getIdToken(),
+          oidcToken,
         });
 
         // Since FAK is already added, we only add LAK

@@ -214,7 +214,7 @@ function AuthCallbackPage() {
           }
 
           if (!window.fastAuthController.getAccountId()) {
-            await window.fastAuthController.setAccountId(accountId);
+            window.fastAuthController.setAccountId(accountId);
           }
 
           await window.fastAuthController.claimOidcToken(accessToken);
