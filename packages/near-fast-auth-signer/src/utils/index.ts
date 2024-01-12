@@ -20,7 +20,7 @@ export const redirectWithError = ({
   failure_url,
   success_url,
   error
-}: { failure_url: string; success_url: string; error: Error }): void => {
+}: { failure_url: string | null ; success_url: string | null; error: Error }): void => {
   const { message } = error;
   const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
   parsedUrl.searchParams.set('reason', message);

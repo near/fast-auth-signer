@@ -1,3 +1,4 @@
+import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { useCallback } from 'react';
@@ -34,22 +35,36 @@ export const useHandleAuthenticationFlow = ({
     }
     const isFirestoreReady = await checkFirestoreReady();
 
-    if (authenticated === true && isFirestoreReady) {
+    const isPasskeySupported = await isPassKeyAvailable();
+    const user = firebaseAuth.currentUser;
+    const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== email;
+    const shouldUseCurrentUser = authenticated === true
+        && (isPasskeySupported || !firebaseAuthInvalid)
+        && isFirestoreReady;
+
+    if (shouldUseCurrentUser) {
       if (!public_key || !contract_id) {
         window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
         return;
       }
-      const publicKeyFak = await window.fastAuthController.getPublicKey();
-      const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
+
+      const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
+      const existingDevice = isPasskeySupported
+        ? await window.firestoreController.getDeviceCollection(publicKeyFak)
+        : null;
       const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
+
+      const oidcToken = await user?.getIdToken();
+      const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+
       // if given lak key is already attached to webAuthN public key, no need to add it again
       const noNeedToAddKey = existingDeviceLakKey === public_key;
-      if (noNeedToAddKey) {
-        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-        parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-        parsedUrl.searchParams.set('public_key', public_key);
-        parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
+      const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+      parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
+      parsedUrl.searchParams.set('public_key', public_key);
+      parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
 
+      if (noNeedToAddKey) {
         if (inIframe()) {
           window.open(parsedUrl.href, '_parent');
         } else {
@@ -73,7 +88,6 @@ export const useHandleAuthenticationFlow = ({
           return;
         }
 
-        const user = firebaseAuth.currentUser;
         window.firestoreController.updateUser({
           userUid:   user.uid,
           oidcToken: await user.getIdToken(),
@@ -87,10 +101,6 @@ export const useHandleAuthenticationFlow = ({
             gateway:      success_url,
           });
 
-          const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          parsedUrl.searchParams.set('account_id', window.fastAuthController.getAccountId());
-          parsedUrl.searchParams.set('public_key', public_key);
-          parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak].join(','));
           window.parent.postMessage({
             type:   'method',
             method: 'query',
@@ -98,7 +108,7 @@ export const useHandleAuthenticationFlow = ({
             params: {
               request_type: 'complete_sign_in',
               publicKey:    public_key,
-              allKeys:      [public_key, publicKeyFak].join(','),
+              allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
               accountId:    window.fastAuthController.getAccountId()
             }
           }, '*');
@@ -117,7 +127,10 @@ export const useHandleAuthenticationFlow = ({
         captureException(error);
         redirectWithError({ success_url, failure_url, error });
       }
-    } else if (email && !authenticated) {
+    } else if (email && (!authenticated || firebaseAuthInvalid)) {
+      // if different user is logged in, sign out
+      await firebaseAuth.signOut();
+
       // Once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
       window.localStorage.removeItem('webauthn_username');
 
