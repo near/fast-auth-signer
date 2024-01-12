@@ -30,7 +30,7 @@ module.exports = {
       FIREBASE_MESSAGING_SENDER_ID:         '829449955812',
       FIREBASE_APP_ID:                      '1:829449955812:web:532436aa35572be60abff1',
       FIREBASE_MEASUREMENT_ID:              'G-T2PPJ8QRYY',
-      RELAYER_URL_TESTNET:                  'http://34.70.226.83:3030/relay',
+      RELAYER_URL_TESTNET:                  'http://near-relayer-testnet.api.pagoda.co/relay',
       FIREBASE_API_KEY_TESTNET:             'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU',
       FIREBASE_AUTH_DOMAIN_TESTNET:         'pagoda-oboarding-dev.firebaseapp.com',
       FIREBASE_PROJECT_ID_TESTNET:          'pagoda-oboarding-dev',

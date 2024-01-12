@@ -16,11 +16,11 @@ import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
-import { basePath } from './utils/config';
+import { basePath, networkId } from './utils/config';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'harisvalj.testnet',
-  networkId: 'testnet'
+  networkId
 });
 
 const faLog = debug('fastAuth');

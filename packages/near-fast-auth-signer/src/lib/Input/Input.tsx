@@ -1,3 +1,4 @@
+import debounce from 'lodash.debounce';
 import React, { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { FieldErrors } from 'react-hook-form';
 import styled from 'styled-components';
@@ -7,9 +8,9 @@ import SuccessSvg from '../../components/CreateAccount/icons/SuccessSvg';
 import Badge, { BadgeProps } from '../Badge/Badge';
 
 interface InputContainerProps {
-  hasRight?: boolean;
-  isError?: boolean;
-  isSuccess?: boolean;
+  $hasRight?: boolean;
+  $isError?: boolean;
+  $isSuccess?: boolean;
 }
 
 const InputContainer = styled.div<InputContainerProps>`
@@ -31,7 +32,7 @@ const InputContainer = styled.div<InputContainerProps>`
     cursor: text;
     background: var(--Sand-Light-1, #fdfdfc);
     border: 1px solid var(--Sand-Light-6, #e3e3e0);
-    ${({ hasRight }) => (hasRight
+    ${({ $hasRight }) => ($hasRight
     ? `
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
@@ -66,8 +67,8 @@ const InputContainer = styled.div<InputContainerProps>`
     }
   }
 
-  ${({ isError, isSuccess }) => {
-    if (isError) {
+  ${({ $isError, $isSuccess }) => {
+    if ($isError) {
       return `
               label {
                 color: var(--Red-Light-12, var(--Red-Light-12, #4B0B02));
@@ -92,7 +93,7 @@ const InputContainer = styled.div<InputContainerProps>`
             `;
     }
 
-    if (isSuccess) {
+    if ($isSuccess) {
       return `
               input {
                 background-color: #f5fffa;
@@ -152,6 +153,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   subText?: string;
   badges?: BadgeProps[];
+  debounceTime?: number;
   dataTest?: {
     input?: string;
     error?: string;
@@ -162,7 +164,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
-      label, errors, name, right, success, error, subText, badges, dataTest, ...rest
+      label, errors, name, right, success, error, subText, badges, debounceTime, dataTest, ...rest
     },
     ref
   ) => {
@@ -194,9 +196,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <InputContainer
-        hasRight={!!right}
-        isError={!!error}
-        isSuccess={!!success}
+        $hasRight={!!right}
+        $isError={!!error}
+        $isSuccess={!!success}
       >
         {label && <label htmlFor={name}>{label}</label>}
         <div className="input-group">
@@ -205,6 +207,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             name={name}
             ref={ref}
             data-test-id={dataTest?.input}
+            {...debounceTime ? { onChange: debounce(rest.onChange, debounceTime) } : {}}
           />
           {right && (
             <div className="input-group-right">

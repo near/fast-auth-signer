@@ -30,7 +30,6 @@
     "last 1 Chrome version"
   ],
   "dependencies": {
-    "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^3.3.2",
     "@near-js/accounts": "^0.1.4",
     "@near-js/biometric-ed25519": "^0.3.0",
@@ -50,6 +49,7 @@
     "https-browserify": "^1.0.0",
     "i18next": "^23.2.8",
     "js-sha256": "^0.10.1",
+    "lodash.debounce": "^4.0.8",
     "near-api-js": "^2.1.4",
     "process": "^0.11.10",
     "query-string": "^7.0.0",
@@ -76,6 +76,7 @@
     "@svgr/webpack": "^8.1.0",
     "@types/bn.js": "^5.1.1",
     "@types/debug": "^4.1.7",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
@@ -91,7 +92,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.1",
-    "ts-loader": "^9.4.2",
+    "ts-loader": "^9.5.1",
     "typescript": "^5.0.4",
     "webpack": "^5.82.1",
     "webpack-cli": "^5.1.1",
