@@ -7,30 +7,30 @@ import { useSearchParams } from 'react-router-dom/dist';
 
 import FastAuthController from './controller';
 import { fetchAccountIds } from '../api';
-import { redirectWithError, safeGetLocalStorage } from '../utils';
+import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = 'loading' | boolean | Error
 
-export const getAuthState = async (email: string, skipGetKeys = false): Promise<AuthState> => {
-  const controllerState = await window.fastAuthController.isSignedIn();
-  const isFirestoreReady = await checkFirestoreReady();
-  const isPasskeySupported = await isPassKeyAvailable();
+export const getAuthState = async (email?: string, skipGetKeys = false): Promise<AuthState> => {
+  try {
+    const controllerState = await window.fastAuthController.isSignedIn();
+    const isFirestoreReady = await checkFirestoreReady();
+    const isPasskeySupported = await isPassKeyAvailable();
 
-  const webauthnUsername = safeGetLocalStorage('webauthn_username');
-  if (webauthnUsername === undefined || webauthnUsername === null) {
-    return new Error('Please allow third party cookies');
-  }
+    const webauthnUsername = safeGetLocalStorage('webauthn_username');
+    if (webauthnUsername === undefined) {
+      return new Error('Please allow third party cookies');
+    }
 
-  if (skipGetKeys) {
-    return false;
-  } if (controllerState === true) {
-    return true;
-  } if (isPasskeySupported && (!webauthnUsername || (email && email !== webauthnUsername))) {
-    return false;
-  } if (isPasskeySupported) {
-    try {
+    if (skipGetKeys) {
+      return false;
+    } if (controllerState === true) {
+      return true;
+    } if (isPasskeySupported && (!webauthnUsername || (email && email !== webauthnUsername))) {
+      return false;
+    } if (isPasskeySupported && webauthnUsername) {
       const keypairs = await getKeys(webauthnUsername);
       const accounts = await Promise.allSettled(
         keypairs.map(async (k) => {
@@ -53,21 +53,21 @@ export const getAuthState = async (email: string, skipGetKeys = false): Promise<
 
       await window.fastAuthController.setKey(new KeyPairEd25519(accountsList[0].keyPair.toString().split(':')[1]));
       return true;
-    } catch {
-      return false;
-    }
-  } else if (isFirestoreReady && firebaseAuth.currentUser) {
-    const oidcToken = await firebaseAuth.currentUser.getIdToken();
-    const localStoreKey = await window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+    } if (isFirestoreReady && firebaseAuth.currentUser) {
+      const oidcToken = await firebaseAuth.currentUser.getIdToken();
+      const localStoreKey = await window.fastAuthController.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
 
-    if (localStoreKey) {
-      const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
-      window.fastAuthController = new FastAuthController({
-        accountId: account?.accountId,
-        networkId
-      });
-      return true;
+      if (localStoreKey) {
+        const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
+        window.fastAuthController = new FastAuthController({
+          accountId: account?.accountId,
+          networkId
+        });
+        return true;
+      }
     }
+  } catch {
+    return false;
   }
 
   return false;
@@ -77,29 +77,19 @@ export const useAuthState = (skipGetKeys = false): {authenticated: AuthState} =>
   const [authenticated, setAuthenticated] = useState<AuthState>('loading');
   const [query] = useSearchParams();
   const email = query.get('email');
-  const successUrl = query.get('success_url');
-  const failureUrl = query.get('failure_url');
 
   useEffect(() => {
     const handleAuthState = async () => {
+      console.log('useAuthState');
       try {
-        if (!email) {
-          throw new Error('Email is required');
-        }
-
         setAuthenticated(await getAuthState(email, skipGetKeys));
       } catch (e) {
         captureException(e);
-        redirectWithError({
-          failure_url: failureUrl,
-          success_url: successUrl,
-          error:       e.message,
-        });
       }
     };
 
     handleAuthState();
-  }, [email, failureUrl, skipGetKeys, successUrl]);
+  }, [email, skipGetKeys]);
 
   return { authenticated };
 };

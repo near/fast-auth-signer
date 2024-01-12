@@ -16,14 +16,16 @@ export const useHandleAuthenticationFlow = ({
   public_key,
   contract_id,
   methodNames,
-  searchParamsString
+  searchParamsString,
+  accountId
 }: {
   success_url: string;
   failure_url: string;
   public_key: string;
   contract_id: string;
   methodNames: string;
-  searchParamsString: string
+  searchParamsString: string;
+  accountId: string;
 }) => {
   const navigate = useNavigate();
 
@@ -137,12 +139,12 @@ export const useHandleAuthenticationFlow = ({
       try {
         const newSearchParams = new URLSearchParams({
           email,
-          isRecovery: 'true',
           ...(success_url ? { success_url } : {}),
           ...(failure_url ? { failure_url } : {}),
           ...(public_key ? { public_key_lak: public_key } : {}),
           ...(contract_id ? { contract_id } : {}),
-          ...(methodNames ? { methodNames } : {})
+          ...(methodNames ? { methodNames } : {}),
+          ...(accountId ? { accountId } : {})
         });
 
         navigate(`/verify-email?${newSearchParams.toString()}`);
@@ -151,5 +153,5 @@ export const useHandleAuthenticationFlow = ({
         redirectWithError({ success_url, failure_url, error });
       }
     }
-  }, [contract_id, failure_url, methodNames, navigate, public_key, searchParamsString, success_url]);
+  }, [accountId, contract_id, failure_url, methodNames, navigate, public_key, searchParamsString, success_url]);
 };

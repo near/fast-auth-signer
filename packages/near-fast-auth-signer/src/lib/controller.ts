@@ -417,17 +417,21 @@ class FastAuthController {
     accountId: string;
     recoveryPK: string;
   }> {
-    const recoveryPK = await this.getUserCredential(oidcToken);
-    const accountIds = await fetchAccountIds(recoveryPK);
+    try {
+      const recoveryPK = await this.getUserCredential(oidcToken);
+      const accountIds = await fetchAccountIds(recoveryPK);
 
-    if (accountIds.length > 0) {
-      return {
-        accountId: accountIds[0],
-        recoveryPK
-      };
+      if (accountIds.length > 0) {
+        return {
+          accountId: accountIds[0],
+          recoveryPK
+        };
+      }
+
+      return undefined;
+    } catch {
+      return undefined;
     }
-
-    return undefined;
   }
 }
 

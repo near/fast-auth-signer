@@ -165,7 +165,6 @@ function CreateAccount() {
       const newSearchParams = new URLSearchParams({
         accountId:  `${data.username}.${network.fastAuth.accountIdSuffix}`,
         email:      data.email,
-        isRecovery: 'false',
         ...(success_url ? { success_url } : {}),
         ...(failure_url ? { failure_url } : {}),
         ...(public_key ? { public_key_lak: public_key } : {}),

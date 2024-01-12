@@ -33,6 +33,7 @@ function Login() {
     public_key:         decodeIfTruthy(currentSearchParams.get('public_key')),
     contract_id:        decodeIfTruthy(currentSearchParams.get('contract_id')),
     methodNames:        decodeIfTruthy(currentSearchParams.get('methodNames')),
+    accountId:        decodeIfTruthy(currentSearchParams.get('accountId')),
     searchParamsString
   });
 

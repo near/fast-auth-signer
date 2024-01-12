@@ -61,7 +61,6 @@ const FormContainer = styled.form`
 function VerifyEmailPage() {
   const [query] = useSearchParams();
 
-  const isRecovery = query.get('isRecovery');
   const accountId = query.get('accountId');
   const email = query.get('email');
   const success_url = query.get('success_url');
@@ -92,31 +91,20 @@ function VerifyEmailPage() {
     }
   }, [accountId, contract_id, email, failure_url, methodNames, public_key_lak, success_url]);
 
-  const handleResendEmail = async () => {
-    const accountRequiredButNotThere = !accountId && isRecovery !== 'true';
-    if (
-      accountRequiredButNotThere
-      || !query.get('email')
-      || !query.get('email').length
-    ) return;
-
-    await sendEmail();
-  };
-
   useEffect(() => {
     sendEmail();
   }, [sendEmail]);
 
   return (
     <StyledContainer>
-      <FormContainer onSubmit={handleResendEmail}>
+      <FormContainer onSubmit={() => sendEmail()}>
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
           <p data-test-id="verify-email-address">{email}</p>
         </header>
         <p>Check your inbox to activate your account.</p>
-        <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
+        <Button size="large" label="Resend" data-test-id="resend-verify-email-button" type="submit" />
       </FormContainer>
     </StyledContainer>
   );
