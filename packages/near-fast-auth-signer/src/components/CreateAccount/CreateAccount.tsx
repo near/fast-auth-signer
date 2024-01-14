@@ -1,18 +1,18 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
-import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { redirectWithError } from '../../utils';
+import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
@@ -110,9 +110,8 @@ const schema = yup.object().shape({
 });
 
 function CreateAccount() {
-  const createAccountFormRef = useRef(null);
   // Send form height to modal if in iframe
-  useIframeDialogConfig({ element: createAccountFormRef.current });
+  useElementHeightForIframe(document.querySelector('#createAccountForm'));
 
   const [searchParams] = useSearchParams();
 
@@ -218,7 +217,7 @@ function CreateAccount() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <CreateAccountForm ref={createAccountFormRef} inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
+      <CreateAccountForm id="createAccountForm" inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
         <header>
           <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">

@@ -1,10 +1,10 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
-import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
@@ -28,10 +28,13 @@ const VerifyForm = styled(FormContainer)`
 `;
 
 function VerifyEmailPage() {
-  const verifyRef = useRef(null);
-  // Send form height to modal if in iframe
-  useIframeDialogConfig({ element: verifyRef.current });
+  const { sendIframeHeight } = useElementHeightForIframe(document.querySelector('#verifyEmailForm'));
 
+  useEffect(() => {
+    const formElement = document.querySelector('#verifyEmailForm') as HTMLElement;
+    sendIframeHeight(formElement);
+  }, [sendIframeHeight]);
+  // Send form height to modal if in iframe
   const [query] = useSearchParams();
 
   const handleResendEmail = async () => {
@@ -89,20 +92,9 @@ function VerifyEmailPage() {
     }
   };
 
-  useEffect(() => {
-    window.parent.postMessage({
-      type:   'method',
-      method: 'query',
-      id:     1234,
-      params: {
-        request_type: 'complete_authentication',
-      }
-    }, '*');
-  }, []);
-
   return (
     <StyledContainer inIframe={inIframe()}>
-      <VerifyForm ref={verifyRef} inIframe={inIframe()} onSubmit={handleResendEmail}>
+      <VerifyForm id="verifyEmailForm" inIframe={inIframe()} onSubmit={handleResendEmail}>
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>

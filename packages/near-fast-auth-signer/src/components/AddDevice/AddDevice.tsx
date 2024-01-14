@@ -4,23 +4,23 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useEffect, useRef, useState
+  useCallback, useEffect, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 
-import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
-  decodeIfTruthy, inIframe, redirectWithError
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth, userExists } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 
 export const handleCreateAccount = async ({
@@ -57,9 +57,7 @@ const schema = yup.object().shape({
 });
 
 function AddDevicePage() {
-  const addDeviceFormRef = useRef(null);
-  // Send form height to modal if in iframe
-  useIframeDialogConfig({ element: addDeviceFormRef.current });
+  useElementHeightForIframe(document.querySelector('#addDeviceForm'));
 
   const [searchParams] = useSearchParams();
 
@@ -90,9 +88,6 @@ function AddDevicePage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      if (!await userExists(data.email)) {
-        throw new Error('Account not found, please create an account and try again');
-      }
       await handleCreateAccount({
         accountId:   null,
         email:       data.email,
@@ -137,8 +132,8 @@ function AddDevicePage() {
     const handleAuthCallback = async () => {
       const isFirestoreReady = await checkFirestoreReady();
 
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
+      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
+      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
@@ -213,7 +208,7 @@ function AddDevicePage() {
                 method: 'query',
                 id:     1234,
                 params: {
-                  request_type: 'complete_authentication',
+                  request_type: 'complete_sign_in',
                   publicKey:    public_key,
                   allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
                   accountId:    (window as any).fastAuthController.getAccountId()
@@ -268,7 +263,7 @@ function AddDevicePage() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <FormContainer ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(addDevice)}>
+      <FormContainer id="addDeviceForm" inIframe={inIframe()} onSubmit={handleSubmit(addDevice)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
