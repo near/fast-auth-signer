@@ -8,42 +8,20 @@ import React, {
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
 import * as yup from 'yup';
 
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
+  decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
-
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-  padding-bottom: 60px;
-`;
-
-const FormContainer = styled.form`
-  max-width: 360px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
+import { checkFirestoreReady, firebaseAuth, userExists } from '../../utils/firebase';
+import { FormContainer, StyledContainer } from '../Layout';
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -78,7 +56,9 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
-function SignInPage() {
+function AddDevicePage() {
+  useElementHeightForIframe(document.querySelector('#addDeviceForm'));
+
   const [searchParams] = useSearchParams();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -108,6 +88,9 @@ function SignInPage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
+      if (!await userExists(data.email)) {
+        throw new Error('Account not found, please create an account and try again');
+      }
       await handleCreateAccount({
         accountId:   null,
         email:       data.email,
@@ -152,8 +135,8 @@ function SignInPage() {
     const handleAuthCallback = async () => {
       const isFirestoreReady = await checkFirestoreReady();
 
-      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
+      const success_url = decodeIfTruthy(searchParams.get('success_url'));
+      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
@@ -258,7 +241,6 @@ function SignInPage() {
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
         addDevice({ email });
-        window.fastAuthController.setAccountId('');
       }
     };
 
@@ -282,21 +264,9 @@ function SignInPage() {
     return <div>{authenticated.message}</div>;
   }
 
-  if (inIframe()) {
-    return (
-      <Button
-        label="Continue on fast auth"
-        onClick={() => {
-          const url = !authenticated ? `${window.location.href}&skipGetKey=true` : window.location.href;
-          window.open(url, '_parent');
-        }}
-      />
-    );
-  }
-
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleSubmit(addDevice)}>
+    <StyledContainer inIframe={inIframe()}>
+      <FormContainer id="addDeviceForm" inIframe={inIframe()} onSubmit={handleSubmit(addDevice)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
@@ -319,4 +289,4 @@ function SignInPage() {
   );
 }
 
-export default SignInPage;
+export default AddDevicePage;
