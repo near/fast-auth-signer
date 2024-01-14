@@ -1,67 +1,40 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { redirectWithError } from '../../utils';
+import { inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
+import { FormContainer, StyledContainer } from '../Layout';
 
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
+const VerifyForm = styled(FormContainer)`
+  height: 275px;
+  text-align: center;
+  gap: 7px;
   align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  padding-bottom: 60px;
-`;
-
-const FormContainer = styled.form`
-  box-shadow: 0px 4px 8px 0px #0000000F;
-  box-shadow: 0px 0px 0px 1px #0000000F;
-  max-width: 360px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 25px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  header p {
+    color: #604CC8;
+    margin-bottom: 1px;
+  }
 
   svg {
     width: 100px;
   }
-
-  & > p {
-    color: #706F6C;
-    font-size: 14px;
-  }
-
-  header {
-    text-align: center;
-  }
-
-  header h1 {
-    font: var(--text-xl);
-    font-weight: bold;
-  }
-
-  header p {
-    color: #604CC8;
-  }
-
-  button {
-    width: 100%;
-  }
 `;
 
 function VerifyEmailPage() {
+  const { sendIframeHeight } = useElementHeightForIframe(document.querySelector('#verifyEmailForm'));
+
+  useEffect(() => {
+    const formElement = document.querySelector('#verifyEmailForm') as HTMLElement;
+    sendIframeHeight(formElement);
+  }, [sendIframeHeight]);
+  // Send form height to modal if in iframe
   const [query] = useSearchParams();
 
   const handleResendEmail = async () => {
@@ -120,8 +93,8 @@ function VerifyEmailPage() {
   };
 
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleResendEmail}>
+    <StyledContainer inIframe={inIframe()}>
+      <VerifyForm id="verifyEmailForm" inIframe={inIframe()} onSubmit={handleResendEmail}>
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
@@ -131,7 +104,7 @@ function VerifyEmailPage() {
         <p>Check your inbox to activate your account.</p>
 
         <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
-      </FormContainer>
+      </VerifyForm>
     </StyledContainer>
   );
 }

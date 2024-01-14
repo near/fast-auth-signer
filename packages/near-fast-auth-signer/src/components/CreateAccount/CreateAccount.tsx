@@ -6,33 +6,22 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
-import FormContainer from './styles/FormContainer';
+import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { redirectWithError } from '../../utils';
+import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import { userExists } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
+import { FormContainer, StyledContainer } from '../Layout';
 
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-  padding-bottom: 60px;
-
-  header {
-    text-align: center;
-    margin-top: 1em;
-  }
+const CreateAccountForm = styled(FormContainer)`
+  height: 500px;
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
@@ -126,6 +115,9 @@ const schema = yup.object().shape({
 });
 
 function CreateAccount() {
+  // Send form height to modal if in iframe
+  useElementHeightForIframe(document.querySelector('#createAccountForm'));
+
   const [searchParams] = useSearchParams();
 
   const {
@@ -229,8 +221,8 @@ function CreateAccount() {
   }, [formsEmail, setValue]);
 
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleSubmit(createAccount)}>
+    <StyledContainer inIframe={inIframe()}>
+      <CreateAccountForm id="createAccountForm" inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
         <header>
           <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">
@@ -297,7 +289,7 @@ function CreateAccount() {
           size="large"
           data-test-id="continue_button_create"
         />
-      </FormContainer>
+      </CreateAccountForm>
     </StyledContainer>
   );
 }
