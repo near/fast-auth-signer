@@ -48,18 +48,10 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
-    try {
-      navigate({
-        pathname: '/add-device',
-        search:   `email=${params.email}`,
-      });
-    } catch (e) {
-      console.error('error', e);
-      openToast({
-        type:  'ERROR',
-        title: e.message,
-      });
-    }
+    navigate({
+      pathname: '/add-device',
+      search:   `email=${params.email}`,
+    });
   };
 
   return (
