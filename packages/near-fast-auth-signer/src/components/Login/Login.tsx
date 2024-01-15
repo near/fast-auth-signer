@@ -7,7 +7,6 @@ import * as yup from 'yup';
 import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
-import { openToast } from '../../lib/Toast';
 
 const schema = yup.object().shape({
   email: yup
