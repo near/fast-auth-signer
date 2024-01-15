@@ -66,6 +66,11 @@ function Login() {
     });
   };
 
+  const handleConnectWallet = () => {
+    if (!inIframe()) return;
+    window.parent.postMessage({ connectWalletButton: true }, '*');
+  };
+
   return (
     <StyledContainer inIframe={inIframe()}>
 
@@ -101,6 +106,7 @@ function Login() {
           variant="secondary"
           data-test-id="connect_wallet_button"
           iconLeft="bi bi-wallet"
+          onClick={handleConnectWallet}
         />
       </LoginForm>
     </StyledContainer>
