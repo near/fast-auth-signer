@@ -8,7 +8,6 @@ import { LoginWrapper } from './Login.style';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { userExists } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -50,17 +49,10 @@ function Login() {
     params: { email: string }
   ) => {
     try {
-      if (await userExists(params.email)) {
-        navigate({
-          pathname: '/add-device',
-          search:   `email=${params.email}`,
-        });
-      } else {
-        navigate({
-          pathname: '/create-account',
-          search:   `email=${params.email}`,
-        });
-      }
+      navigate({
+        pathname: '/add-device',
+        search:   `email=${params.email}`,
+      });
     } catch (e) {
       console.error('error', e);
       openToast({
