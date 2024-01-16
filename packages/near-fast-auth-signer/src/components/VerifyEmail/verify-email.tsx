@@ -97,7 +97,11 @@ function VerifyEmailPage() {
 
   return (
     <StyledContainer>
-      <FormContainer onSubmit={() => sendEmail()}>
+      <FormContainer onSubmit={(e) => {
+        e.preventDefault();
+        sendEmail();
+      }}
+      >
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
