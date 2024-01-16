@@ -2,6 +2,7 @@ import { encodeSignedDelegate } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ModalSignWrapper } from './Sign.styles';
@@ -10,12 +11,13 @@ import {
 } from './Values/fiatValueManager';
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
-import { isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
+import { redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
@@ -92,8 +94,8 @@ function Sign() {
 
   React.useEffect(() => {
     if (!authenticated) {
-      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
+      const success_url = searchParams.get('success_url');
+      const failure_url = searchParams.get('failure_url');
       const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       url.searchParams.append('error', 'User not authenticated');
       window.location.replace(url);
@@ -124,8 +126,7 @@ function Sign() {
         actions:      allActions,
       });
     } catch (err) {
-      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
-      const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+      const parsedUrl = new URL(searchParams.get('failure_url'));
       parsedUrl.searchParams.set('code', err.code);
       parsedUrl.searchParams.set('reason', err.message);
       window.location.replace(parsedUrl.href);
@@ -142,6 +143,22 @@ function Sign() {
       });
   // eslint-disable-next-line
   }, []);
+
+  const onCancel = () => {
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
+    const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+    url.searchParams.append('error', 'User cancelled action');
+    window.location.replace(url);
+    window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
+  };
+
+  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#signTransactionForm'), onClose: onCancel });
+
+  useEffect(() => {
+    const formElement = document.querySelector('#signTransactionForm') as HTMLElement;
+    sendDialogHeight(formElement);
+  }, [sendDialogHeight]);
 
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
@@ -169,7 +186,7 @@ function Sign() {
   const onConfirm = async () => {
     if (authenticated === true) {
       const signedTransactions = [];
-      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+      const success_url = searchParams.get('success_url');
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
           // eslint-disable-next-line
@@ -196,17 +213,8 @@ function Sign() {
     }
   };
 
-  const onCancel = () => {
-    const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-    const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
-    const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-    url.searchParams.append('error', 'User cancelled action');
-    window.location.replace(url);
-    window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
-  };
-
   return (
-    <ModalSignWrapper>
+    <ModalSignWrapper id="signTransactionForm">
       <div className="modal-top">
         <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
         <h4>Confirm transaction</h4>
