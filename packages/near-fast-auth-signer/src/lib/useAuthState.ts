@@ -13,7 +13,7 @@ import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = 'loading' | boolean | Error
 
-export const getAuthState = async (email?: string, skipGetKeys = false): Promise<AuthState> => {
+export const getAuthState = async (email?: string | null, skipGetKeys = false): Promise<AuthState> => {
   try {
     const controllerState = await window.fastAuthController.isSignedIn();
     const isFirestoreReady = await checkFirestoreReady();
@@ -59,6 +59,11 @@ export const getAuthState = async (email?: string, skipGetKeys = false): Promise
 
       if (localStoreKey) {
         const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
+
+        if (!account) {
+          return false;
+        }
+
         window.fastAuthController = new FastAuthController({
           accountId: account?.accountId,
           networkId
@@ -66,7 +71,8 @@ export const getAuthState = async (email?: string, skipGetKeys = false): Promise
         return true;
       }
     }
-  } catch {
+  } catch (e) {
+    captureException(e);
     return false;
   }
 
@@ -80,12 +86,7 @@ export const useAuthState = (skipGetKeys = false): {authenticated: AuthState} =>
 
   useEffect(() => {
     const handleAuthState = async () => {
-      console.log('useAuthState');
-      try {
-        setAuthenticated(await getAuthState(email, skipGetKeys));
-      } catch (e) {
-        captureException(e);
-      }
+      setAuthenticated(await getAuthState(email, skipGetKeys));
     };
 
     handleAuthState();
