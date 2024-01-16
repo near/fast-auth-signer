@@ -155,7 +155,6 @@ function CreateAccount() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      if (!isValid) return;
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
       const {
         accountId
@@ -197,7 +196,7 @@ function CreateAccount() {
       //   title: message,
       // });
     }
-  }, [navigate, searchParams, isValid]);
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     const email = searchParams.get('email');
