@@ -1,4 +1,4 @@
-import { KeyType, PublicKey } from '@near-js/crypto';
+import { PublicKey } from '@near-js/crypto';
 import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
@@ -115,6 +115,5 @@ export const verifyMpcSignature = (mpcSignature: string, originalSignature: stri
     [Object, { kind: 'struct', fields: [['salt', 'u32'], ['signature', ['u8', 64]]] }]
   ]), claimData);
   const hashedData = new Uint8Array(sha256.array(serializedData));
-  const mpcPublicKey = new PublicKey({ keyType: KeyType.ED25519, data: new Uint8Array(network.fastAuth.mpcPublicKey) });
-  return mpcPublicKey.verify(hashedData, mpcSignatureBytes);
+  return network.fastAuth.mpcPublicKey.verify(hashedData, mpcSignatureBytes);
 };
