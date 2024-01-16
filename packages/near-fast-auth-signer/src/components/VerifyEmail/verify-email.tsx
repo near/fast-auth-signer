@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
-import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
@@ -28,12 +28,12 @@ const VerifyForm = styled(FormContainer)`
 `;
 
 function VerifyEmailPage() {
-  const { sendIframeHeight } = useElementHeightForIframe(document.querySelector('#verifyEmailForm'));
+  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#verifyEmailForm') });
 
   useEffect(() => {
     const formElement = document.querySelector('#verifyEmailForm') as HTMLElement;
-    sendIframeHeight(formElement);
-  }, [sendIframeHeight]);
+    sendDialogHeight(formElement);
+  }, [sendDialogHeight]);
   // Send form height to modal if in iframe
   const [query] = useSearchParams();
 

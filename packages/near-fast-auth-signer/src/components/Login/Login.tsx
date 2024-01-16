@@ -5,13 +5,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
+import WalletSvg from './icons/WalletSvg';
 import { SeparatorWrapper, Separator } from './Login.style';
-import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
-import { openToast } from '../../lib/Toast';
 import { inIframe } from '../../utils';
-import { userExists } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 
 const schema = yup.object().shape({
@@ -27,7 +26,7 @@ const LoginForm = styled(FormContainer)`
 
 function Login() {
   // Send form height to modal if in iframe
-  useElementHeightForIframe(document.querySelector('#loginForm'));
+  useIframeDialogConfig({ element: document.querySelector('#loginForm') });
 
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -102,7 +101,13 @@ function Login() {
         </SeparatorWrapper>
         <Button
           size="large"
-          label="Connect Wallet"
+          label={(
+            <>
+              <WalletSvg />
+              {' '}
+              Connect Wallet
+            </>
+          )}
           variant="secondary"
           data-test-id="connect_wallet_button"
           iconLeft="bi bi-wallet"

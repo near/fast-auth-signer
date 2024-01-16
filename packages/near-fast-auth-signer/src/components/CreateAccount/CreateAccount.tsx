@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
-import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
@@ -111,7 +111,7 @@ const schema = yup.object().shape({
 
 function CreateAccount() {
   // Send form height to modal if in iframe
-  useElementHeightForIframe(document.querySelector('#createAccountForm'));
+  useIframeDialogConfig({ element: document.querySelector('#createAccountForm') });
 
   const [searchParams] = useSearchParams();
 
