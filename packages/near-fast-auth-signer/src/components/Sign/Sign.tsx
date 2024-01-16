@@ -2,6 +2,7 @@ import { encodeSignedDelegate } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ModalSignWrapper } from './Sign.styles';
@@ -10,6 +11,7 @@ import {
 } from './Values/fiatValueManager';
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
@@ -143,6 +145,13 @@ function Sign() {
   // eslint-disable-next-line
   }, []);
 
+  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#signTransactionForm'), onClose: onCancel });
+
+  useEffect(() => {
+    const formElement = document.querySelector('#signTransactionForm') as HTMLElement;
+    sendDialogHeight(formElement);
+  }, [sendDialogHeight]);
+
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
   const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
@@ -206,7 +215,7 @@ function Sign() {
   };
 
   return (
-    <ModalSignWrapper>
+    <ModalSignWrapper id="signTransactionForm">
       <div className="modal-top">
         <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
         <h4>Confirm transaction</h4>
