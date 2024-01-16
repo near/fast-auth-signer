@@ -5,8 +5,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
+import WalletSvg from './icons/WalletSvg';
 import { SeparatorWrapper, Separator } from './Login.style';
-import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
@@ -27,7 +28,7 @@ const LoginForm = styled(FormContainer)`
 
 function Login() {
   // Send form height to modal if in iframe
-  useElementHeightForIframe(document.querySelector('#loginForm'));
+  useIframeDialogConfig({ element: document.querySelector('#loginForm') });
 
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -60,16 +61,17 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
+    currentSearchParams.set('email', params.email);
     try {
       if (await userExists(params.email)) {
         navigate({
           pathname: '/add-device',
-          search:   `email=${params.email}`,
+          search:   currentSearchParams.toString(),
         });
       } else {
         navigate({
           pathname: '/create-account',
-          search:   `email=${params.email}`,
+          search:   currentSearchParams.toString(),
         });
       }
     } catch (e) {
@@ -117,7 +119,13 @@ function Login() {
         </SeparatorWrapper>
         <Button
           size="large"
-          label="Connect Wallet"
+          label={(
+            <>
+              <WalletSvg />
+              {' '}
+              Connect Wallet
+            </>
+          )}
           variant="secondary"
           data-test-id="connect_wallet_button"
           iconLeft="bi bi-wallet"

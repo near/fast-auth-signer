@@ -10,7 +10,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 
-import useElementHeightForIframe from '../../hooks/useElementHeightForIframe';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
@@ -57,7 +57,7 @@ const schema = yup.object().shape({
 });
 
 function AddDevicePage() {
-  useElementHeightForIframe(document.querySelector('#addDeviceForm'));
+  useIframeDialogConfig({ element: document.querySelector('#addDeviceForm') });
 
   const [searchParams] = useSearchParams();
 

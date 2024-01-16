@@ -193,6 +193,9 @@ function AuthCallbackPage() {
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
+        console.log('success_url ', success_url);
+        console.log('failure_url ', failure_url);
+
         const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {

@@ -4,13 +4,13 @@ export const ModalSignWrapper = styled.div`
   max-width: 550px;
   width: auto;
   margin: 0 auto;
-  box-shadow: 0px 4px 8px 0px #0000000f;
-  box-shadow: 0px 0px 0px 1px #0000000f;
+  box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.06), 0px 0px 0px 1px rgba(0, 0, 0, 0.06), 0px 12px 20px 0px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   row-gap: 8px;
+  height: 500px;
 
   .modal-top {
     display: flex;
