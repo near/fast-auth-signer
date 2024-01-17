@@ -23,6 +23,7 @@ type ConfigOptions = {
  */
 const useIframeDialogConfig = (options: ConfigOptions): HookReturnType => {
   const { element, onClose, source } = options;
+
   /**
    * Callback function to send the iframe height to the parent window.
    * @param {HTMLElement} domElement - Optional parameter to specify the target element.
@@ -37,11 +38,11 @@ const useIframeDialogConfig = (options: ConfigOptions): HookReturnType => {
     if (el) {
       // Get the height of the element
       const dialogHeight = el.offsetHeight;
-
-      console.log('dialogHeight ', dialogHeight);
-
+      const data = { dialogHeight } as Record<string, unknown>;
+      if (source) data.source = source;
+      if (onClose) data.onClose = onClose.toString();
       // Send the height, onClose, and source to the parent window
-      window.parent.postMessage({ dialogHeight, onClose, source }, '*');
+      window.parent.postMessage(data, '*');
     }
   }, [element, onClose, source]);
 
