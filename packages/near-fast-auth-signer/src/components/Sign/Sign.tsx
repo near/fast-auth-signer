@@ -71,6 +71,7 @@ export const calculateGasLimit = (actions) => actions
   .toString();
 
 function Sign() {
+  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#signTransaction') as HTMLElement });
   const [searchParams] = useSearchParams();
   const callbackUrl = React.useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
   const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
@@ -91,6 +92,11 @@ function Sign() {
   const storeFetchedUsdValues = fiatValuesStore(
     (state) => state.storeFetchedUsdValues
   );
+
+  useEffect(() => {
+    const element = document.querySelector('#signTransaction') as HTMLElement;
+    sendDialogHeight(element);
+  }, [sendDialogHeight]);
 
   React.useEffect(() => {
     if (!authenticated) {
@@ -145,13 +151,6 @@ function Sign() {
   // eslint-disable-next-line
   }, []);
 
-  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#signTransactionForm'), onClose: onCancel });
-
-  useEffect(() => {
-    const formElement = document.querySelector('#signTransactionForm') as HTMLElement;
-    sendDialogHeight(formElement);
-  }, [sendDialogHeight]);
-
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
   const totalNearAmount = () => formatNearAmount(transactionDetails.totalAmount);
@@ -205,17 +204,17 @@ function Sign() {
     }
   };
 
-  const onCancel = () => {
-    const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-    const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
+  /*  const onCancel = () => {
+    const success_url = searchParams.get('success_url');
+    const failure_url = searchParams.get('failure_url');
     const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
     url.searchParams.append('error', 'User cancelled action');
     window.location.replace(url);
     window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
-  };
+  }; */
 
   return (
-    <ModalSignWrapper id="signTransactionForm">
+    <ModalSignWrapper id="signTransaction">
       <div className="modal-top">
         <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
         <h4>Confirm transaction</h4>
@@ -286,13 +285,6 @@ function Sign() {
           size="large"
           label="Confirm"
           onClick={onConfirm}
-        />
-        <Button
-          variant="secondary"
-          size="large"
-          label="Cancel"
-          fill="ghost"
-          onClick={onCancel}
         />
       </div>
     </ModalSignWrapper>
