@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import EmailSvg from './icons/EmailSvg';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { addNetworkSuffix, redirectWithError } from '../../utils';
+import { redirectWithError } from '../../utils';
 import { sendFirebaseSignInEmail } from '../../utils/firebase';
 
 const StyledContainer = styled.div`
@@ -61,7 +61,7 @@ const FormContainer = styled.form`
 function VerifyEmailPage() {
   const [query] = useSearchParams();
 
-  const accountId = addNetworkSuffix(query.get('accountId'));
+  const accountId = query.get('accountId');
   const email = query.get('email');
   const success_url = query.get('success_url');
   const failure_url = query.get('failure_url');

@@ -60,9 +60,7 @@ export const getAuthState = async (email?: string | null, skipGetKeys = false): 
       if (localStoreKey) {
         const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
 
-        if (!account) {
-          return false;
-        }
+        if (!account) return false;
 
         window.fastAuthController = new FastAuthController({
           accountId: account?.accountId,
@@ -80,17 +78,3 @@ export const getAuthState = async (email?: string | null, skipGetKeys = false): 
 };
 
 export const useAuthState = (skipGetKeys = false): {authenticated: AuthState} => {
-  const [authenticated, setAuthenticated] = useState<AuthState>('loading');
-  const [query] = useSearchParams();
-  const email = query.get('email');
-
-  useEffect(() => {
-    const handleAuthState = async () => {
-      setAuthenticated(await getAuthState(email, skipGetKeys));
-    };
-
-    handleAuthState();
-  }, [email, skipGetKeys]);
-
-  return { authenticated };
-};

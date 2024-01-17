@@ -9,7 +9,9 @@ import styled from 'styled-components';
 import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { decodeIfTruthy, inIframe, redirectWithError } from '../../utils';
+import {
+  addNetworkSuffix, decodeIfTruthy, inIframe, redirectWithError
+} from '../../utils';
 import { basePath, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
@@ -175,7 +177,7 @@ function AuthCallbackPage() {
   useEffect(() => {
     const signInProcess = async () => {
       if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
-        let accountId = decodeIfTruthy(searchParams.get('accountId'));
+        let accountId = addNetworkSuffix(decodeIfTruthy(searchParams.get('accountId')));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
         const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
         const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
