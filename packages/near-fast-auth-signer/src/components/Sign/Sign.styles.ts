@@ -10,7 +10,6 @@ export const ModalSignWrapper = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 8px;
-  height: 500px;
 
   .modal-top {
     display: flex;
