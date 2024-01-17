@@ -22,7 +22,8 @@ export const ContainerWrapper = styled.div`
   }
 `;
 
-const StyledContainer: React.FC<StyledContainerProps> = ({ inIframe, children }) => (inIframe
-  ? children : <ContainerWrapper>{children}</ContainerWrapper>);
+function StyledContainer({ inIframe, children }: StyledContainerProps) {
+  return inIframe ? children : <ContainerWrapper>{children}</ContainerWrapper>;
+}
 
 export default StyledContainer;
