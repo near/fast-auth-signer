@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import * as yup from 'yup';
 
 import { LoginWrapper } from './Login.style';
@@ -11,7 +11,6 @@ import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
 import { decodeIfTruthy } from '../../utils';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
-import { userExists } from '../../utils/firebase';
 
 const schema = yup.object().shape({
   email: yup
@@ -21,7 +20,6 @@ const schema = yup.object().shape({
 });
 
 function Login() {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [currentSearchParams] = useSearchParams();
 
@@ -55,15 +53,7 @@ function Login() {
   ) => {
     try {
       setIsLoading(true);
-      if (await userExists(params.email)) {
-        await handleAuthenticationFlow(params.email, skipGetKeys);
-      } else {
-        currentSearchParams.set('email', params.email);
-        navigate({
-          pathname: '/create-account',
-          search:   currentSearchParams.toString(),
-        });
-      }
+      await handleAuthenticationFlow(params.email, skipGetKeys);
     } catch (error) {
       console.error('error', error);
       openToast({
@@ -73,7 +63,7 @@ function Login() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentSearchParams, handleAuthenticationFlow, navigate, skipGetKeys]);
+  }, [handleAuthenticationFlow, skipGetKeys]);
 
   useEffect(() => {
     if (email && !isSubmitting && !isSubmitted) {
