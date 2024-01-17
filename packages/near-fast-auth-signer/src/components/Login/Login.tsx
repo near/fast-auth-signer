@@ -70,7 +70,7 @@ function Login() {
     if (!inIframe()) return;
     const currentUrl = new URL(currentSearchParams.get('success_url'));
     currentUrl.searchParams.set('connectWallet', String(true));
-    window.open(currentUrl, '_parent');
+    window.parent.location.replace(currentUrl.toString());
   };
 
   return (
