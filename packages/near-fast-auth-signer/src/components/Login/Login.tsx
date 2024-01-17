@@ -33,23 +33,6 @@ function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  /*  useEffect(() => {
-    const isRecovery = currentSearchParams.get('isRecovery');
-    if (isRecovery) {
-      if (isRecovery === 'true') {
-        navigate({
-          pathname: '/login',
-          search:   currentSearchParams.toString(),
-        });
-      } else {
-        navigate({
-          pathname: '/create-account',
-          search:   currentSearchParams.toString(),
-        });
-      }
-    }
-  }, [currentSearchParams, navigate]); */
-
   const { handleSubmit, register, formState: { errors } } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
@@ -85,7 +68,9 @@ function Login() {
 
   const handleConnectWallet = () => {
     if (!inIframe()) return;
-    window.parent.postMessage({ connectWalletButton: true }, '*');
+    const currentUrl = new URL(currentSearchParams.get('success_url'));
+    currentUrl.searchParams.set('connectWallet', String(true));
+    window.open(currentUrl, '_parent');
   };
 
   return (
