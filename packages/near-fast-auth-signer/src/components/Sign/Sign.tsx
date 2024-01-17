@@ -71,7 +71,11 @@ export const calculateGasLimit = (actions) => actions
   .toString();
 
 function Sign() {
-  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#signTransaction') as HTMLElement });
+  const { sendDialogHeight } = useIframeDialogConfig({
+    element: document.querySelector('#signTransaction') as HTMLElement,
+    onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
+
+  });
   const [searchParams] = useSearchParams();
   const callbackUrl = React.useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
   const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
