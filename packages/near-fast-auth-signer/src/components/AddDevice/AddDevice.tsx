@@ -208,7 +208,7 @@ function AddDevicePage() {
                 method: 'query',
                 id:     1234,
                 params: {
-                  request_type: 'complete_sign_in',
+                  request_type: 'complete_authentication',
                   publicKey:    public_key,
                   allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
                   accountId:    (window as any).fastAuthController.getAccountId()

@@ -92,6 +92,17 @@ function VerifyEmailPage() {
     }
   };
 
+  useEffect(() => {
+    window.parent.postMessage({
+      type:   'method',
+      method: 'query',
+      id:     1234,
+      params: {
+        request_type: 'complete_authentication',
+      }
+    }, '*');
+  }, []);
+
   return (
     <StyledContainer inIframe={inIframe()}>
       <VerifyForm id="verifyEmailForm" inIframe={inIframe()} onSubmit={handleResendEmail}>
