@@ -20,7 +20,7 @@ import {
   decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth, userExists } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 
 const StyledContainer = styled.div`
   width: 100%;
@@ -108,9 +108,6 @@ function SignInPage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      if (!await userExists(data.email)) {
-        throw new Error('Account not found, please create an account and try again');
-      }
       await handleCreateAccount({
         accountId:   null,
         email:       data.email,
