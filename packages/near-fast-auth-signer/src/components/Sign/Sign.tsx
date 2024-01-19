@@ -1,8 +1,9 @@
 import { encodeSignedDelegate } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
-import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import React, {
+  useEffect, useRef, useMemo, useState
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ModalSignWrapper } from './Sign.styles';
@@ -79,8 +80,8 @@ function Sign() {
   });
 
   const [searchParams] = useSearchParams();
-  const callbackUrl = React.useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
-  const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
+  const callbackUrl = useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
+  const [transactionDetails, setTransactionDetails] =    useState<TransactionDetails>({
     signerId:    '',
     receiverId:  '',
     totalAmount: '0',
@@ -93,13 +94,13 @@ function Sign() {
     actions:      [],
   });
   const { authenticated } = useAuthState();
-  const [showDetails, setShowDetails] = React.useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const storeFetchedUsdValues = fiatValuesStore(
     (state) => state.storeFetchedUsdValues
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!authenticated) {
       const success_url = searchParams.get('success_url');
       const failure_url = searchParams.get('failure_url');
