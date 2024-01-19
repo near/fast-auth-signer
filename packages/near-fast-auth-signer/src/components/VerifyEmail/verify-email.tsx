@@ -1,5 +1,5 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -28,13 +28,10 @@ const VerifyForm = styled(FormContainer)`
 `;
 
 function VerifyEmailPage() {
-  const { sendDialogHeight } = useIframeDialogConfig({ element: document.querySelector('#verifyEmailForm') });
-
-  useEffect(() => {
-    const formElement = document.querySelector('#verifyEmailForm') as HTMLElement;
-    sendDialogHeight(formElement);
-  }, [sendDialogHeight]);
+  const verifyRef = useRef(null);
   // Send form height to modal if in iframe
+  useIframeDialogConfig({ element: verifyRef.current });
+
   const [query] = useSearchParams();
 
   const handleResendEmail = async () => {
@@ -105,7 +102,7 @@ function VerifyEmailPage() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <VerifyForm id="verifyEmailForm" inIframe={inIframe()} onSubmit={handleResendEmail}>
+      <VerifyForm ref={verifyRef} inIframe={inIframe()} onSubmit={handleResendEmail}>
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>

@@ -4,7 +4,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useEffect, useState
+  useCallback, useEffect, useRef, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -57,7 +57,9 @@ const schema = yup.object().shape({
 });
 
 function AddDevicePage() {
-  useIframeDialogConfig({ element: document.querySelector('#addDeviceForm') });
+  const addDeviceFormRef = useRef(null);
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({ element: addDeviceFormRef.current });
 
   const [searchParams] = useSearchParams();
 
@@ -266,7 +268,7 @@ function AddDevicePage() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <FormContainer id="addDeviceForm" inIframe={inIframe()} onSubmit={handleSubmit(addDevice)}>
+      <FormContainer ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(addDevice)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>

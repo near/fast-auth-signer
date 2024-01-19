@@ -2,7 +2,7 @@ import { encodeSignedDelegate } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ModalSignWrapper } from './Sign.styles';
@@ -71,11 +71,13 @@ export const calculateGasLimit = (actions) => actions
   .toString();
 
 function Sign() {
-  const { sendDialogHeight } = useIframeDialogConfig({
-    element: document.querySelector('#signTransaction') as HTMLElement,
+  const signTransactionRef = useRef(null);
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({
+    element: signTransactionRef.current,
     onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
-
   });
+
   const [searchParams] = useSearchParams();
   const callbackUrl = React.useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
   const [transactionDetails, setTransactionDetails] =    React.useState<TransactionDetails>({
@@ -96,11 +98,6 @@ function Sign() {
   const storeFetchedUsdValues = fiatValuesStore(
     (state) => state.storeFetchedUsdValues
   );
-
-  useEffect(() => {
-    const element = document.querySelector('#signTransaction') as HTMLElement;
-    sendDialogHeight(element);
-  }, [sendDialogHeight]);
 
   React.useEffect(() => {
     if (!authenticated) {
@@ -217,7 +214,7 @@ function Sign() {
   }; */
 
   return (
-    <ModalSignWrapper id="signTransaction">
+    <ModalSignWrapper ref={signTransactionRef}>
       <div className="modal-top">
         <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
         <h4>Confirm transaction</h4>
@@ -289,13 +286,6 @@ function Sign() {
           label="Confirm"
           onClick={onConfirm}
         />
-        {/*        <Button
-          variant="secondary"
-          size="large"
-          label="Cancel"
-          fill="ghost"
-          onClick={onCancel}
-        /> */}
       </div>
     </ModalSignWrapper>
   );

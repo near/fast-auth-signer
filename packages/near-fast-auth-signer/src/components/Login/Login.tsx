@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -27,8 +27,9 @@ const LoginForm = styled(FormContainer)`
 `;
 
 function Login() {
+  const loginFormRef = useRef(null);
   // Send form height to modal if in iframe
-  useIframeDialogConfig({ element: document.querySelector('#loginForm') });
+  useIframeDialogConfig({ element: loginFormRef.current });
 
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ function Login() {
   return (
     <StyledContainer inIframe={inIframe()}>
 
-      <LoginForm id="loginForm" inIframe={inIframe()} onSubmit={handleSubmit(emailCheck)}>
+      <LoginForm ref={loginFormRef} inIframe={inIframe()} onSubmit={handleSubmit(emailCheck)}>
         <header>
           <h1 data-test-id="heading_login">Log In</h1>
           <p className="desc">Please enter your email</p>
