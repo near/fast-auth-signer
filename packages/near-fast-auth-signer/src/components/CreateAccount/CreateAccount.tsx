@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
@@ -13,7 +14,6 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
-import { userExists } from '../../utils/firebase';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
@@ -69,18 +69,13 @@ const schema = yup.object().shape({
     .string()
     .required('Email address is required')
     .test(
-      'is-email-available',
+      'is-email-valid',
       async (email, context) => {
         let message: string;
-
-        try {
-          if (email && await userExists(email)) {
-            message = `${email} is taken, try something else.`;
-          } else {
-            return true;
-          }
-        } catch {
+        if (!isEmail(email)) {
           message = 'Please enter a valid email address';
+        } else {
+          return true;
         }
 
         return context.createError({

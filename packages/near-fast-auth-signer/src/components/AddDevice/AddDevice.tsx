@@ -90,9 +90,6 @@ function AddDevicePage() {
     const methodNames = searchParams.get('methodNames');
 
     try {
-      if (!await userExists(data.email)) {
-        throw new Error('Account not found, please create an account and try again');
-      }
       await handleCreateAccount({
         accountId:   null,
         email:       data.email,

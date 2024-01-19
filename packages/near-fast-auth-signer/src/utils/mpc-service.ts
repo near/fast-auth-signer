@@ -3,6 +3,7 @@ import { Action, SCHEMA, actionCreators } from '@near-js/transactions';
 import { serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
 
+import { network } from './config';
 import { SignRequestFrpSignature, UserCredentialsFrpSignature } from './types';
 
 export const CLAIM = 3177899144;
@@ -106,7 +107,13 @@ export const errorMessages: Record<string, string> = {
   'auth/missing-email':       'No email found, please try again.',
 };
 
-export const MPC_PULIC_KEY = [
-  187, 24, 21, 82, 105, 165, 254, 26, 167, 89, 195, 236, 44, 83, 69, 87, 30,
-  151, 139, 229, 233, 182, 65, 230, 7, 234, 204, 91, 38, 70, 254, 254,
-];
+export const verifyMpcSignature = (mpcSignature: string, originalSignature: string): boolean => {
+  const mpcSignatureBytes = Uint8Array.from(Buffer.from(mpcSignature, 'hex'));
+  const originalSignatureBytes = Uint8Array.from(Buffer.from(originalSignature, 'hex'));
+  const claimData = { salt: CLAIM + 1, signature:  originalSignatureBytes };
+  const serializedData = serialize(new Map([
+    [Object, { kind: 'struct', fields: [['salt', 'u32'], ['signature', ['u8', 64]]] }]
+  ]), claimData);
+  const hashedData = new Uint8Array(sha256.array(serializedData));
+  return network.fastAuth.mpcPublicKey.verify(hashedData, mpcSignatureBytes);
+};

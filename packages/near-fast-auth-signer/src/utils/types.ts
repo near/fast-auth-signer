@@ -1,8 +1,7 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-unused-vars */
-import { KeyPair } from '@near-js/crypto';
+import { KeyPair, PublicKey } from '@near-js/crypto';
 import { DelegateAction } from '@near-js/transactions';
-import type { ReactElement, ReactNode } from 'react';
 
 export type NetworkId = ProductionNetwork['networkId'];
 export type Network = ProductionNetwork;
@@ -22,6 +21,7 @@ type ProductionNetwork = {
     mpcRecoveryUrl: string;
     authHelperUrl: string; // TODO refactor: review by fastauth team
     accountIdSuffix: string;
+    mpcPublicKey: PublicKey,
     firebase: {
       apiKey: string;
       authDomain: string;
