@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { initializeApp } from 'firebase/app';
-import { fetchSignInMethodsForEmail, getAuth } from 'firebase/auth';
+import { getAuth, fetchSignInMethodsForEmail } from 'firebase/auth';
 
 import { network } from './config';
 
