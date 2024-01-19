@@ -20,7 +20,7 @@ import {
   decodeIfTruthy, inIframe, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth, userExists } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 
 export const handleCreateAccount = async ({
