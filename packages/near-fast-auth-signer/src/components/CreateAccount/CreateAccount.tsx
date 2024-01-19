@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -115,8 +115,9 @@ const schema = yup.object().shape({
 });
 
 function CreateAccount() {
+  const createAccountFormRef = useRef(null);
   // Send form height to modal if in iframe
-  useIframeDialogConfig({ element: document.querySelector('#createAccountForm') });
+  useIframeDialogConfig({ element: createAccountFormRef.current });
 
   const [searchParams] = useSearchParams();
 
@@ -222,7 +223,7 @@ function CreateAccount() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <CreateAccountForm id="createAccountForm" inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
+      <CreateAccountForm ref={createAccountFormRef} inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
         <header>
           <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">
