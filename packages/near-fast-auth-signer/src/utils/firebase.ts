@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { initializeApp } from 'firebase/app';
-import { getAuth, sendSignInLinkToEmail, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { getAuth, sendSignInLinkToEmail } from 'firebase/auth';
 
 import { basePath, network } from './config';
 
@@ -52,14 +52,4 @@ export const sendFirebaseSignInEmail = async ({
   });
 
   window.localStorage.setItem('emailForSignIn', email);
-};
-
-/**
- * Checks if a user exists in the Firebase authentication system.
- * @param {string} email - The email of the user to check.
- * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, false otherwise.
- */
-export const userExists = async (email: string): Promise<boolean> => {
-  const signInMethods = await fetchSignInMethodsForEmail(firebaseAuth, email);
-  return signInMethods.length > 0;
 };

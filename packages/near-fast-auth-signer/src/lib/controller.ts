@@ -18,7 +18,9 @@ import { fetchAccountIds } from '../api';
 import { deleteOidcKeyPairOnLocalStorage } from '../utils';
 import { network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
-import { CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature } from '../utils/mpc-service';
+import {
+  CLAIM, getSignRequestFrpSignature, getUserCredentialsFrpSignature, verifyMpcSignature,
+} from '../utils/mpc-service';
 
 const { addKey, functionCallAccessKey } = actionCreators;
 class FastAuthController {
@@ -238,7 +240,7 @@ class FastAuthController {
   // This call need to be called after new oidc token is generated
   async claimOidcToken(oidcToken: string): Promise<{ mpc_signature: string }> {
     let keypair = await this.getKey(`oidc_keypair_${oidcToken}`);
-    const CLAIM_SALT = CLAIM + 0;
+
     if (!keypair) {
       keypair = KeyPair.fromRandom('ED25519');
       await this.keyStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
@@ -246,8 +248,9 @@ class FastAuthController {
       deleteOidcKeyPairOnLocalStorage();
       await this.localStore.setKey(this.networkId, `oidc_keypair_${oidcToken}`, keypair);
     }
+
     const signature = getUserCredentialsFrpSignature({
-      salt:            CLAIM_SALT,
+      salt:            CLAIM + 0,
       oidcToken,
       shouldHashToken: true,
       keypair,
@@ -260,21 +263,33 @@ class FastAuthController {
     };
 
     // https://github.com/near/mpc-recovery#claim-oidc-id-token-ownership
-    return fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
-      method:  'POST',
-      mode:    'cors' as const,
-      body:    JSON.stringify(data),
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-    }).then(async (response) => {
+    try {
+      const response = await fetch(`${network.fastAuth.mpcRecoveryUrl}/claim_oidc`, {
+        method:  'POST',
+        mode:    'cors' as const,
+        body:    JSON.stringify(data),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+      });
+
       if (!response.ok) {
         throw new Error('Unable to claim OIDC token');
       }
-      const res = await response.json();
-      return res.mpc_signature;
-    }).catch((err) => {
+
+      const res: {
+        type: string,
+        mpc_signature: string;
+      } = await response.json();
+
+      if (!verifyMpcSignature(res.mpc_signature, signature)) {
+        throw new Error('MPC Signature is not valid');
+      }
+
+      return res;
+    } catch (err) {
       console.log(err);
+      captureException(err);
       throw new Error('Unable to claim OIDC token');
-    });
+    }
   }
 
   async getUserCredential(oidcToken) {
