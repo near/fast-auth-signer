@@ -78,3 +78,17 @@ export const getAuthState = async (email?: string | null, skipGetKeys = false): 
 };
 
 export const useAuthState = (skipGetKeys = false): {authenticated: AuthState} => {
+  const [authenticated, setAuthenticated] = useState<AuthState>('loading');
+  const [query] = useSearchParams();
+  const email = query.get('email');
+
+  useEffect(() => {
+    const handleAuthState = async () => {
+      setAuthenticated(await getAuthState(email, skipGetKeys));
+    };
+
+    handleAuthState();
+  }, [email, skipGetKeys]);
+
+  return { authenticated };
+};
