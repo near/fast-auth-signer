@@ -17,7 +17,7 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
-  decodeIfTruthy, inIframe, redirectWithError
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
@@ -152,8 +152,8 @@ function SignInPage() {
     const handleAuthCallback = async () => {
       const isFirestoreReady = await checkFirestoreReady();
 
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
+      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
+      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
       const public_key =  decodeIfTruthy(searchParams.get('public_key'));
       const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
       const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
