@@ -9,7 +9,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { Spinner } from '../../lib/Spinner';
 import { openToast } from '../../lib/Toast';
-import { decodeIfTruthy } from '../../utils';
+import { decodeIfTruthy, isUrlNotJavascriptProtocol } from '../../utils';
 import { useHandleAuthenticationFlow } from '../../utils/auth';
 
 const schema = yup.object().shape({
@@ -26,8 +26,8 @@ function Login() {
   const searchParamsString = currentSearchParams.toString();
 
   const handleAuthenticationFlow = useHandleAuthenticationFlow({
-    success_url:        decodeIfTruthy(currentSearchParams.get('success_url')),
-    failure_url:        decodeIfTruthy(currentSearchParams.get('failure_url')),
+    success_url: isUrlNotJavascriptProtocol(currentSearchParams.get('success_url')) && decodeIfTruthy(currentSearchParams.get('success_url')),
+    failure_url: isUrlNotJavascriptProtocol(currentSearchParams.get('failure_url')) && decodeIfTruthy(currentSearchParams.get('failure_url')),
     public_key:         decodeIfTruthy(currentSearchParams.get('public_key')),
     contract_id:        decodeIfTruthy(currentSearchParams.get('contract_id')),
     methodNames:        decodeIfTruthy(currentSearchParams.get('methodNames')),
