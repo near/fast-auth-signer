@@ -18,7 +18,7 @@ import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
-import { redirectWithError } from '../../utils';
+import { isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
@@ -102,8 +102,8 @@ function Sign() {
 
   useEffect(() => {
     if (!authenticated) {
-      const success_url = searchParams.get('success_url');
-      const failure_url = searchParams.get('failure_url');
+      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
       const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       url.searchParams.append('error', 'User not authenticated');
       window.location.replace(url);
@@ -134,7 +134,8 @@ function Sign() {
         actions:      allActions,
       });
     } catch (err) {
-      const parsedUrl = new URL(searchParams.get('failure_url'));
+      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
+      const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       parsedUrl.searchParams.set('code', err.code);
       parsedUrl.searchParams.set('reason', err.message);
       window.location.replace(parsedUrl.href);
@@ -178,7 +179,7 @@ function Sign() {
   const onConfirm = async () => {
     if (authenticated === true) {
       const signedTransactions = [];
-      const success_url = searchParams.get('success_url');
+      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
       for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
         try {
           // eslint-disable-next-line
