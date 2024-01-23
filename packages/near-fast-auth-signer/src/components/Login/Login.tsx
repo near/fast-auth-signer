@@ -47,17 +47,12 @@ function Login() {
   ) => {
     currentSearchParams.set('email', params.email);
     try {
-      if (await userExists(params.email)) {
-        navigate({
-          pathname: '/add-device',
-          search:   currentSearchParams.toString(),
-        });
-      } else {
-        navigate({
-          pathname: '/create-account',
-          search:   currentSearchParams.toString(),
-        });
-      }
+      const isUserExist = await userExists(params.email);
+      const redirectPath = isUserExist ? '/add-device' : '/create-account';
+      navigate({
+        pathname: redirectPath,
+        search:   currentSearchParams.toString(),
+      });
     } catch (e) {
       console.error('error', e);
       openToast({
