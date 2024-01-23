@@ -10,7 +10,8 @@ import { createNEARAccount } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
-  addNetworkSuffix, decodeIfTruthy, inIframe, redirectWithError
+  addNetworkSuffix,
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
@@ -77,7 +78,11 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+  const parsedUrl = new URL(
+    success_url && isUrlNotJavascriptProtocol(success_url)
+      ? success_url
+      : window.location.origin + (basePath ? `/${basePath}` : '')
+  );
   parsedUrl.searchParams.set('account_id', res.near_account_id);
   parsedUrl.searchParams.set('public_key', public_key_lak);
   parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
@@ -153,7 +158,11 @@ export const onSignIn = async ({
 
         setStatusMessage('Redirecting to app...');
 
-        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+        const parsedUrl = new URL(
+          success_url && isUrlNotJavascriptProtocol(success_url)
+            ? success_url
+            : window.location.origin + (basePath ? `/${basePath}` : '')
+        );
         parsedUrl.searchParams.set('account_id', accountId);
         parsedUrl.searchParams.set('public_key', public_key_lak);
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
@@ -187,7 +196,11 @@ function AuthCallbackPage() {
         const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {
-          const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+          const parsedUrl = new URL(
+            failure_url && isUrlNotJavascriptProtocol(failure_url)
+              ? failure_url
+              : window.location.origin + (basePath ? `/${basePath}` : '')
+          );
           parsedUrl.searchParams.set('code', '500');
           parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
           window.location.replace(parsedUrl.href);

@@ -1,5 +1,22 @@
 import { basePath, network } from './config';
 
+export function isUrlNotJavascriptProtocol(url) {
+  if (!url) {
+    return true;
+  }
+  try {
+    const urlProtocol = new URL(url).protocol;
+    // eslint-disable-next-line no-script-url
+    if (urlProtocol === 'javascript:') {
+      console.log('Invalid URL protocol:', urlProtocol, 'URL cannot execute JavaScript');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export function inIframe() {
   try {
     return window.self !== window.top;
@@ -22,7 +39,9 @@ export const redirectWithError = ({
   error
 }: { failure_url: string | null ; success_url: string | null; error: Error }): void => {
   const { message } = error;
-  const parsedUrl = new URL(failure_url || success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+  const validFailureUrl = isUrlNotJavascriptProtocol(failure_url) && failure_url;
+  const validSuccessUrl = isUrlNotJavascriptProtocol(success_url) && success_url;
+  const parsedUrl = new URL(validFailureUrl || validSuccessUrl || window.location.origin + (basePath ? `/${basePath}` : ''));
   parsedUrl.searchParams.set('reason', message);
   window.location.replace(parsedUrl.href);
 };
