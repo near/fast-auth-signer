@@ -128,7 +128,13 @@ function Devices() {
           const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
-          const oidcToken = await controller.getUserOidcToken();
+          const oidcToken = controller.getUserOidcToken();
+          const account = await window.fastAuthController.recoverAccountWithOIDCToken(oidcToken);
+
+          if (!account) {
+            throw new Error('Account not found, please create an account and try again');
+          }
+
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,
@@ -141,6 +147,8 @@ function Devices() {
             searchParams,
             navigate,
             gateway:          success_url,
+            accountId:        account.accountId,
+            recoveryPK:       account.recoveryPK,
           });
           setIsAddingKey(false);
         }

@@ -4,7 +4,6 @@ import {
   Navigate, Route, BrowserRouter as Router, Routes, useLocation
 } from 'react-router-dom';
 
-import AddDevice from './components/AddDevice/AddDevice';
 import AuthCallbackPage from './components/AuthCallback/AuthCallback';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
@@ -71,7 +70,6 @@ export default function App() {
             <Route path="login" element={<Login />} />
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
-            <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />

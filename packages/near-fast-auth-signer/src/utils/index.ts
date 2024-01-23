@@ -1,4 +1,4 @@
-import { basePath } from './config';
+import { basePath, network } from './config';
 
 export function isUrlNotJavascriptProtocol(url) {
   if (!url) {
@@ -37,7 +37,7 @@ export const redirectWithError = ({
   failure_url,
   success_url,
   error
-}: { failure_url: string; success_url: string; error: Error }): void => {
+}: { failure_url: string | null ; success_url: string | null; error: Error }): void => {
   const { message } = error;
   const validFailureUrl = isUrlNotJavascriptProtocol(failure_url) && failure_url;
   const validSuccessUrl = isUrlNotJavascriptProtocol(success_url) && success_url;
@@ -71,4 +71,21 @@ export const deleteOidcKeyPairOnLocalStorage = () => {
       localStorage.removeItem(key);
     }
   }
+};
+
+/**
+ * Appends the network's accountIdSuffix to the provided username if it doesn't already have it.
+ * This function is used to ensure that the username is always in the correct format for the network.
+ *
+ * @param {string} username - The username to which the suffix will be added.
+ * @returns {string} The username with the network's accountIdSuffix appended if it wasn't already there.
+ */
+export const addNetworkSuffix = (username: string): string => {
+  if (!username) return username;
+
+  if (!username.endsWith(`.${network.fastAuth.accountIdSuffix}`)) {
+    return `${username}.${network.fastAuth.accountIdSuffix}`;
+  }
+
+  return username;
 };

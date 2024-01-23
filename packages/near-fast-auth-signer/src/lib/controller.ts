@@ -14,6 +14,7 @@ import { sha256 } from 'js-sha256';
 import { keyStores } from 'near-api-js';
 
 import networkParams from './networkParams';
+import { fetchAccountIds } from '../api';
 import { deleteOidcKeyPairOnLocalStorage } from '../utils';
 import { network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
@@ -163,7 +164,7 @@ class FastAuthController {
 
   async signDelegateAction({ receiverId, actions, signerId }) {
     this.assertValidSigner(signerId);
-    let signedDelegate;
+    let signedDelegate: SignedDelegate;
     try {
       // webAuthN supported browser
       const account = new Account(this.connection, this.accountId);
@@ -174,21 +175,28 @@ class FastAuthController {
       });
     } catch {
       // fallback, non webAuthN supported browser
-      // @ts-ignore
-      const oidcToken = await firebaseAuth.currentUser.getIdToken();
-      const recoveryPK = await this.getUserCredential(oidcToken);
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
-      signedDelegate = await this.createSignedDelegateWithRecoveryKey({
-        oidcToken,
-        accountId: this.accountId,
-        actions,
-        recoveryPK,
-      }).catch((err) => {
+      try {
+        if (!firebaseAuth.currentUser) {
+          throw new Error('User not found');
+        }
+
+        const oidcToken = await firebaseAuth.currentUser.getIdToken();
+        const recoveryPK = await this.getUserCredential(oidcToken);
+
+        signedDelegate = await this.createSignedDelegateWithRecoveryKey({
+          oidcToken,
+          accountId: this.accountId,
+          actions,
+          recoveryPK,
+        });
+      } catch (err) {
         console.log(err);
         captureException(err);
         throw new Error('Unable to sign delegate action');
-      });
+      }
     }
+
     return signedDelegate;
   }
 
@@ -419,6 +427,33 @@ class FastAuthController {
       console.log('Unable to sign and send action with recovery key', err);
       captureException(err);
     });
+  }
+
+  /**
+   * Recovers the account ID and the recovery public key using an OIDC token.
+   *
+   * @param oidcToken - The OIDC token used for account recovery.
+   * @returns A promise that resolves to an object containing the account ID and recovery public key, or undefined if no account IDs are found.
+   */
+  async recoverAccountWithOIDCToken(oidcToken: string): Promise<undefined | {
+    accountId: string;
+    recoveryPK: string;
+  }> {
+    try {
+      const recoveryPK = await this.getUserCredential(oidcToken);
+      const accountIds = await fetchAccountIds(recoveryPK);
+
+      if (accountIds.length > 0) {
+        return {
+          accountId: accountIds[0],
+          recoveryPK
+        };
+      }
+
+      return undefined;
+    } catch {
+      return undefined;
+    }
   }
 }
 
