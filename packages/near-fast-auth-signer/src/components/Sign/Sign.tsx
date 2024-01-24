@@ -206,15 +206,6 @@ function Sign() {
     }
   };
 
-  /*  const onCancel = () => {
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-    url.searchParams.append('error', 'User cancelled action');
-    window.location.replace(url);
-    window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*');
-  }; */
-
   return (
     <ModalSignWrapper ref={signTransactionRef}>
       <div className="modal-top">
