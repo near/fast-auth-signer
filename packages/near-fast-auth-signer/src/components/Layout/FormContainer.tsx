@@ -11,6 +11,7 @@ const FormContainer = styled.form<{ inIframe?: boolean }>`
   gap: 32px;
   border: 1px solid #EEEEEC;
   box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.06), 0px 0px 0px 1px rgba(0, 0, 0, 0.06), 0px 12px 20px 0px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
   
   header {
     text-align: center;
@@ -39,7 +40,7 @@ const FormContainer = styled.form<{ inIframe?: boolean }>`
       max-width: 380px;
   }
 
-  ${(props) => props.inIframe && 'margin: 0;'}
+  ${(props) => props.inIframe && 'margin: 0; border-bottom: none; box-shadow: none;'}
 
   @media screen and (max-width: 767px) {
   // Height and width will be controlled by iFrame
