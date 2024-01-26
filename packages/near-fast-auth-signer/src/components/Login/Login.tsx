@@ -23,7 +23,7 @@ const schema = yup.object().shape({
 });
 
 const LoginForm = styled(FormContainer)`
-  height: 400px;
+  height: 420px;
 `;
 
 function Login() {
