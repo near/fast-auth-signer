@@ -55,10 +55,6 @@ const onCreateAccount = async ({
 
   if (res.type === 'err') return;
 
-  if (!window.firestoreController) {
-    window.firestoreController = new FirestoreController();
-  }
-
   // Add device
   await window.firestoreController.addDeviceCollection({
     fakPublicKey: publicKeyFak,
@@ -77,6 +73,8 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+  await window.firestoreController.addPublicKey(recoveryPK, accountId);
+
   const parsedUrl = new URL(
     success_url && isUrlNotJavascriptProtocol(success_url)
       ? success_url
@@ -150,9 +148,6 @@ export const onSignIn = async ({
         navigate(`/devices?${searchParams.toString()}`);
       } else {
         await checkFirestoreReady();
-        if (!window.firestoreController) {
-          (window as any).firestoreController = new FirestoreController();
-        }
         await window.firestoreController.addDeviceCollection({
           fakPublicKey: onlyAddLak ? null : publicKeyFak,
           lakPublicKey: public_key_lak,
@@ -216,6 +211,10 @@ function AuthCallbackPage() {
           window.location.replace(parsedUrl.href);
         }
 
+        if (!window.firestoreController) {
+          window.firestoreController = new FirestoreController();
+        }
+
         setStatusMessage('Verifying email...');
 
         try {
@@ -238,6 +237,7 @@ function AuthCallbackPage() {
             const keyPair = await createKey(email);
             publicKeyFak = keyPair.getPublicKey().toString();
             await window.fastAuthController.setKey(keyPair);
+            await window.firestoreController.addPublicKey(publicKeyFak, accountId);
           }
 
           if (!window.fastAuthController.getAccountId()) {

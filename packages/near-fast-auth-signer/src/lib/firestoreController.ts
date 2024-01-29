@@ -1,7 +1,7 @@
 import { captureException } from '@sentry/react';
 import { User } from 'firebase/auth';
 import {
-  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference, writeBatch
+  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference, writeBatch,
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
@@ -192,6 +192,23 @@ class FirestoreController {
   };
 
   getUserOidcToken = () => this.oidcToken;
+
+  async addPublicKey(publicKey: string, accountId: string) {
+    await setDoc(doc(this.firestore, 'publicKeys', publicKey), {
+      accountId,
+    });
+  }
+
+  async getAccountIdByPublicKey(publicKey: string): Promise<string> {
+    const publicKeyDoc = await getDoc(doc(this.firestore, 'publicKeys', publicKey));
+    if (!publicKeyDoc.exists()) {
+      return undefined;
+    }
+
+    const { accountId } = publicKeyDoc.data() as { accountId: string };
+
+    return accountId;
+  }
 }
 
 export default FirestoreController;
