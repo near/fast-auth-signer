@@ -73,7 +73,7 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  await window.firestoreController.addPublicKey(recoveryPK, accountId);
+  await window.firestoreController.addAccountIdPublicKey(recoveryPK, accountId);
 
   const parsedUrl = new URL(
     success_url && isUrlNotJavascriptProtocol(success_url)
@@ -237,7 +237,7 @@ function AuthCallbackPage() {
             const keyPair = await createKey(email);
             publicKeyFak = keyPair.getPublicKey().toString();
             await window.fastAuthController.setKey(keyPair);
-            await window.firestoreController.addPublicKey(publicKeyFak, accountId);
+            await window.firestoreController.addAccountIdPublicKey(publicKeyFak, accountId);
           }
 
           if (!window.fastAuthController.getAccountId()) {

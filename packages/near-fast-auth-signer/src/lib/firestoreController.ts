@@ -193,7 +193,9 @@ class FirestoreController {
 
   getUserOidcToken = () => this.oidcToken;
 
-  async addPublicKey(publicKey: string, accountId: string) {
+  async addAccountIdPublicKey(publicKey: string, accountId: string) {
+    if (!publicKey || !accountId) return;
+
     await setDoc(doc(this.firestore, 'publicKeys', publicKey), {
       accountId,
     });
