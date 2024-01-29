@@ -18,9 +18,7 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
     throw new Error(`HTTP error! status: ${res.status}`);
   }
 
-  let accountIds: string[] = [];
-
-  // accountIds = await res.json();
+  let accountIds: string[] = await res.json();
 
   if (accountIds.length === 0) {
     const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
