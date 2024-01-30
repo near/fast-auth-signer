@@ -6,13 +6,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { createNEARAccount } from '../../api';
+import { createNEARAccount, fetchAccountIds } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
-import { basePath, network, networkId } from '../../utils/config';
+import { basePath, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
@@ -60,6 +60,7 @@ const onCreateAccount = async ({
     fakPublicKey: publicKeyFak,
     lakPublicKey: public_key_lak,
     gateway,
+    accountId
   });
 
   setStatusMessage('Account created successfully!');
@@ -101,13 +102,7 @@ export const onSignIn = async ({
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-    .then((res) => res.json())
-    .catch((err) => {
-      console.log(err);
-      captureException(err);
-      throw new Error('Unable to retrieve account Id');
-    });
+  const accountIds = await fetchAccountIds(recoveryPK);
 
   if (!accountIds.length) {
     throw new Error('Account not found, please create an account and try again');
@@ -152,6 +147,7 @@ export const onSignIn = async ({
           fakPublicKey: onlyAddLak ? null : publicKeyFak,
           lakPublicKey: public_key_lak,
           gateway,
+          accountId:    accountIds[0],
         });
 
         setStatusMessage('Account recovered successfully!');
@@ -237,7 +233,6 @@ function AuthCallbackPage() {
             const keyPair = await createKey(email);
             publicKeyFak = keyPair.getPublicKey().toString();
             await window.fastAuthController.setKey(keyPair);
-            await window.firestoreController.addAccountIdPublicKey(publicKeyFak, accountId);
           }
 
           if (!window.fastAuthController.getAccountId()) {
