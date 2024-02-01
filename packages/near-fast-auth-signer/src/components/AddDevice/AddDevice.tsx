@@ -284,10 +284,8 @@ function AddDevicePage() {
   const handleConnectWallet = () => {
     if (!inIframe()) return;
     window.parent.postMessage({
+      closeIframe:        true,
       showWalletSelector:    true,
-    }, '*');
-    window.parent.postMessage({
-      closeIframe: true
     }, '*');
   };
 
