@@ -5,9 +5,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
-import WalletSvg from './icons/WalletSvg';
 import { SeparatorWrapper, Separator } from './Login.style';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { inIframe } from '../../utils';
@@ -34,7 +34,6 @@ function Login() {
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
-    console.log('currentSearchParams ', currentSearchParams);
     if (isRecovery) {
       navigate({
         pathname: isRecovery === 'true' ? '/add-device' : '/create-account',
@@ -62,9 +61,12 @@ function Login() {
 
   const handleConnectWallet = () => {
     if (!inIframe()) return;
-    const currentUrl = new URL(currentSearchParams.get('success_url'));
-    currentUrl.searchParams.set('connectWallet', String(true));
-    window.parent.location.replace(currentUrl.toString());
+    window.parent.postMessage({
+      showWalletSelector:    true,
+    }, '*');
+    window.parent.postMessage({
+      closeIframe: true
+    }, '*');
   };
 
   return (

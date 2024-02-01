@@ -3,13 +3,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
+import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
 
+const DevicesWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  justify-content: center;
+  align-items: center;
+`;
 const Title = styled.h1`
-  padding-bottom: 20px;
 `;
 
 const Description = styled.p`
@@ -31,14 +39,6 @@ const StyledCheckbox = styled.input`
 const Row = styled.div`
   display: flex;
   align-items: center;
-  padding-bottom: 10px;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  margin-top: 30px;
-  outline: none;
-  font-size: 20px;
 `;
 
 function Devices() {
@@ -151,8 +151,14 @@ function Devices() {
       });
   };
 
+  const deleteCollectionText = useMemo(() => {
+    if (isDeleted) return 'Deleting...';
+    if (isAddingKey) return 'Signing In...';
+    return `Delete key${deleteCollections.length > 1 ? 's' : ''}`;
+  }, [deleteCollections.length, isAddingKey, isDeleted]);
+
   return (
-    <>
+    <DevicesWrapper>
       <Title>Devices with Keys</Title>
 
       {isLoaded && <div>Loading...</div>}
@@ -181,20 +187,22 @@ function Devices() {
       {
         collections.length > 0 && (
           <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
-            {`Delete key${deleteCollections.length > 1 ? 's' : ''}`}
+            {deleteCollectionText}
           </Button>
         )
       }
       {
         isVerifyEmailRequired && (
-          <Button type="button" onClick={redirectToSignin}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={redirectToSignin}
+          >
             Redirect
           </Button>
         )
       }
-      {isDeleted && <div>Deleting...</div>}
-      {isAddingKey && <div>Signing In...</div>}
-    </>
+    </DevicesWrapper>
   );
 }
 

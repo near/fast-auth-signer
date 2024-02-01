@@ -4,25 +4,28 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useEffect, useRef, useState
+  useCallback, useEffect, useMemo, useRef, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import styled from 'styled-components';
 import * as yup from 'yup';
 
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
 } from '../../utils';
 import { basePath } from '../../utils/config';
 import { setCookie } from '../../utils/cookie';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
+import { Separator, SeparatorWrapper } from '../Login/Login.style';
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -58,18 +61,28 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+const AddDeviceForm = styled(FormContainer)`
+  height: 420px;
+  gap: 18px;
+  justify-content: center;
+`;
+
 function AddDevicePage() {
   const addDeviceFormRef = useRef(null);
   // Send form height to modal if in iframe
   useIframeDialogConfig({ element: addDeviceFormRef.current });
 
   const [searchParams] = useSearchParams();
+  const user = firebaseAuth.currentUser;
+  const userEmail = useMemo(() => user?.email, [user?.email]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const {
+    register, handleSubmit, setValue, formState: { errors }
+  } = useForm({
     resolver:      yupResolver(schema),
     mode:          'all',
     defaultValues: {
-      email: searchParams.get('email') ?? '',
+      email: user?.email ?? '',
     }
   });
 
@@ -77,12 +90,19 @@ function AddDevicePage() {
 
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
+
+  const [inFlight, setInFlight] = useState(false);
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
 
+  useEffect(() => {
+    setValue('email', userEmail);
+  }, [setValue, userEmail]);
+
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
+    setInFlight(true);
 
     // if different user is logged in, sign out
     await firebaseAuth.signOut();
@@ -118,7 +138,10 @@ function AddDevicePage() {
       navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
-      // redirectWithError({ success_url, failure_url, error });
+      window.parent.postMessage({
+        type:    'AddDeviceError',
+        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+      }, '*');
 
       if (typeof error?.message === 'string') {
         openToast({
@@ -131,18 +154,20 @@ function AddDevicePage() {
           title: 'Something went wrong',
         });
       }
+    } finally {
+      setInFlight(false);
     }
   }, [searchParams, navigate]);
 
   const handleAuthCallback = useCallback(async () => {
+    setInFlight(true);
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
-    const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
+    // const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
     const public_key =  decodeIfTruthy(searchParams.get('public_key'));
     const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
     const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
     const isPasskeySupported = await isPassKeyAvailable();
-    const user = firebaseAuth.currentUser;
     if (!public_key || !contract_id) {
       window.location.replace(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       return;
@@ -175,6 +200,7 @@ function AddDevicePage() {
           accountId:    (window as any).fastAuthController.getAccountId()
         }
       }, '*');
+      setInFlight(false);
       return;
     }
 
@@ -222,51 +248,52 @@ function AddDevicePage() {
     }).catch((error) => {
       console.log('error', error);
       captureException(error);
-      // redirectWithError({ success_url, failure_url, error });
+
+      window.parent.postMessage({
+        type:    'AddDeviceError',
+        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+      }, '*');
+
       openToast({
         type:  'ERROR',
         title: error.message,
       });
-    });
-  }, [navigate, searchParams]);
-
-  useEffect(() => {
-    if (authenticated === 'loading') return;
-
-    // handleAuthCallback();
-  }, [addDevice, authenticated, navigate, searchParams]);
+    })
+      .finally(() => setInFlight(false)); // @ts-ignore
+  }, [navigate, searchParams, user]);
 
   const onSubmit = async (data) => {
     if (!data.email) return;
     const isFirestoreReady = await checkFirestoreReady();
     const isPasskeySupported = await isPassKeyAvailable();
-    const user = firebaseAuth.currentUser;
     // @ts-ignore
     const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== data.email;
-    console.log('firebaseAuthInvalid ', firebaseAuthInvalid);
-    console.log('authenticated ', authenticated);
 
     // @ts-ignore
     const shouldUseCurrentUser = authenticated === true
       && (isPasskeySupported || !firebaseAuthInvalid)
       && isFirestoreReady;
 
-    console.log('shouldUseCurrentUser ', shouldUseCurrentUser);
-
     if (shouldUseCurrentUser) {
-      await handleAuthCallback().finally();
+      await handleAuthCallback();
     } else {
-      await addDevice({ email: data.email }).finally();
+      await addDevice({ email: data.email });
     }
   };
 
-  if (authenticated instanceof Error) {
-    return <div>{authenticated.message}</div>;
-  }
+  const handleConnectWallet = () => {
+    if (!inIframe()) return;
+    window.parent.postMessage({
+      showWalletSelector:    true,
+    }, '*');
+    window.parent.postMessage({
+      closeIframe: true
+    }, '*');
+  };
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <FormContainer ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(onSubmit)}>
+      <AddDeviceForm ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(onSubmit)}>
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
@@ -274,7 +301,7 @@ function AddDevicePage() {
         <Input
           {...register('email')}
           label="Email"
-          placeholder="user_name@email.com"
+          placeholder="your@email.com"
           type="email"
           id="email"
           required
@@ -283,8 +310,36 @@ function AddDevicePage() {
           }}
           error={errors.email?.message}
         />
-        <Button type="submit" size="large" label="Continue" variant="affirmative" data-test-id="add-device-continue-button" />
-      </FormContainer>
+        <Button
+          type="submit"
+          size="large"
+          // @ts-ignore
+          label={inFlight ? 'Signing...' : 'Continue'}
+          variant="affirmative"
+          data-test-id="add-device-continue-button"
+          disabled={inFlight}
+        />
+        <SeparatorWrapper>
+          <Separator />
+          Or
+          <Separator />
+        </SeparatorWrapper>
+        <Button
+          size="large"
+          label={(
+            <>
+              <WalletSvg />
+              {' '}
+              Connect Wallet
+            </>
+          )}
+          variant="secondary"
+          data-test-id="connect_wallet_button"
+          iconLeft="bi bi-wallet"
+          onClick={handleConnectWallet}
+        />
+
+      </AddDeviceForm>
     </StyledContainer>
   );
 }
