@@ -1,6 +1,8 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import {
+  useCallback, useEffect, useRef, useState
+} from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -12,7 +14,7 @@ import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { inIframe, redirectWithError } from '../../utils';
+import { inIframe } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
@@ -115,6 +117,7 @@ function CreateAccount() {
   useIframeDialogConfig({ element: createAccountFormRef.current });
 
   const [searchParams] = useSearchParams();
+  const [inFlight, setInFlight] = useState(false);
 
   const {
     register,
@@ -141,6 +144,7 @@ function CreateAccount() {
   const navigate = useNavigate();
 
   const createAccount = useCallback(async (data: { email: string; username: string; }) => {
+    setInFlight(true);
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
@@ -174,7 +178,12 @@ function CreateAccount() {
       navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
-      // TODO: Close window instead of redirect
+
+      window.parent.postMessage({
+        type:    'CreateAccountError',
+        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+      }, '*');
+
       openToast({
         type:  'ERROR',
         title: error.message,
@@ -193,6 +202,8 @@ function CreateAccount() {
       //   type:  'ERROR',
       //   title: message,
       // });
+    } finally {
+      setInFlight(false);
     }
   }, [navigate, searchParams]);
 
@@ -283,8 +294,8 @@ function CreateAccount() {
           }}
         />
         <Button
-          disabled={!isValid}
-          label="Continue"
+          disabled={!isValid || inFlight}
+          label={inFlight ? 'Sending...' : 'Continue'}
           variant="affirmative"
           type="submit"
           size="large"
