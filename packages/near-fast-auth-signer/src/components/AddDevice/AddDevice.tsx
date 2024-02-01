@@ -325,6 +325,7 @@ function AddDevicePage() {
           <Separator />
         </SeparatorWrapper>
         <Button
+          disabled={inFlight}
           size="large"
           label={(
             <>
