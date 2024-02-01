@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -31,6 +31,17 @@ function Login() {
 
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const isRecovery = currentSearchParams.get('isRecovery');
+    console.log('currentSearchParams ', currentSearchParams);
+    if (isRecovery) {
+      navigate({
+        pathname: isRecovery === 'true' ? '/add-device' : '/create-account',
+        search:   currentSearchParams.toString(),
+      });
+    }
+  }, [currentSearchParams, navigate]);
 
   const { handleSubmit, register, formState: { errors } } = useForm({
     mode:          'all',

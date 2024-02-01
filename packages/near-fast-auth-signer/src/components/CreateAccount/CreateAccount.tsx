@@ -174,7 +174,12 @@ function CreateAccount() {
       navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
-      redirectWithError({ success_url, failure_url, error });
+      // TODO: Close window instead of redirect
+      openToast({
+        type:  'ERROR',
+        title: error.message,
+      });
+      // redirectWithError({ success_url, failure_url, error });
       // currently running handleCreateAccount() will throw an error as:
       // error DOMException: The following credential operations can only occur in a document which is same-origin with all of its ancestors: storage/retrieval of 'PasswordCredential' and 'FederatedCredential', storage of 'PublicKeyCredential'.
 

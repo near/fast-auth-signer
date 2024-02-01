@@ -9,6 +9,7 @@ import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
+import { setCookie } from '../../utils/cookie';
 import { firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 
@@ -66,7 +67,8 @@ function VerifyEmailPage() {
         url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
-      window.localStorage.setItem('emailForSignIn', email);
+      setCookie('emailForSignIn', email, 1);
+
       openToast({
         type:  'SUCCESS',
         title: 'Email resent successfully!',
