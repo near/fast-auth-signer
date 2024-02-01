@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -10,9 +10,7 @@ import { SeparatorWrapper, Separator } from './Login.style';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
-import { openToast } from '../../lib/Toast';
 import { inIframe } from '../../utils';
-import { userExists } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 
 const schema = yup.object().shape({
@@ -34,6 +32,17 @@ function Login() {
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const isRecovery = currentSearchParams.get('isRecovery');
+    console.log('currentSearchParams ', currentSearchParams);
+    if (isRecovery) {
+      navigate({
+        pathname: isRecovery === 'true' ? '/add-device' : '/create-account',
+        search:   currentSearchParams.toString(),
+      });
+    }
+  }, [currentSearchParams, navigate]);
+
   const { handleSubmit, register, formState: { errors } } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
@@ -45,21 +54,10 @@ function Login() {
   const emailCheck = async (
     params: { email: string }
   ) => {
-    currentSearchParams.set('email', params.email);
-    try {
-      const isUserExist = await userExists(params.email);
-      const redirectPath = isUserExist ? '/add-device' : '/create-account';
-      navigate({
-        pathname: redirectPath,
-        search:   currentSearchParams.toString(),
-      });
-    } catch (e) {
-      console.error('error', e);
-      openToast({
-        type:  'ERROR',
-        title: e.message,
-      });
-    }
+    navigate({
+      pathname: '/add-device',
+      search:   `email=${params.email}`,
+    });
   };
 
   const handleConnectWallet = () => {
