@@ -55,20 +55,21 @@ class FirestoreController {
     gateway: string;
     accountId?: string;
   }) {
-    const parser = new UAParser();
-    const device = parser.getDevice();
-    const os = parser.getOS();
-    const browser = parser.getBrowser();
-    const dateTime = new Date().toISOString();
+    try {
+      const parser = new UAParser();
+      const device = parser.getDevice();
+      const os = parser.getOS();
+      const browser = parser.getBrowser();
+      const dateTime = new Date().toISOString();
 
-    if (accountId && fakPublicKey) {
-      await window.firestoreController.addAccountIdPublicKey(fakPublicKey, accountId);
-    }
+      const docPromises = [];
 
-    // setDoc will overwrite existing document or create new if not exist
-    return Promise.all([
-      ...(fakPublicKey ? [
-        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
+      if (accountId && fakPublicKey) {
+        await window.firestoreController.addAccountIdPublicKey(fakPublicKey, accountId);
+      }
+
+      if (fakPublicKey) {
+        const fakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
@@ -77,10 +78,12 @@ class FirestoreController {
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'fak',
-        }, { merge: true })
-      ] : []),
-      ...(lakPublicKey ? [
-        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
+        }, { merge: true });
+        docPromises.push(fakDoc);
+      }
+
+      if (lakPublicKey) {
+        const lakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
@@ -89,12 +92,15 @@ class FirestoreController {
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'lak',
-        }, { merge: true })
-      ] : [])
-    ]).catch((err) => {
-      console.log('fail to add device collection, ', err);
-      throw new Error('fail to add device collection');
-    });
+        }, { merge: true });
+        docPromises.push(lakDoc);
+      }
+
+      return await Promise.all(docPromises);
+    } catch (err) {
+      console.error('Failed to add device collection:', err);
+      throw new Error('Failed to add device collection');
+    }
   }
 
   async listDevices() {
