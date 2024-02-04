@@ -4,7 +4,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useEffect, useMemo, useRef, useState
+  useCallback, useRef, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -74,7 +74,8 @@ function AddDevicePage() {
 
   const [searchParams] = useSearchParams();
   const user = firebaseAuth.currentUser;
-  const userEmail = useMemo(() => user?.email, [user?.email]);
+  console.log('user ', user);
+  // const userEmail = useMemo(() => user?.email, [user?.email]);
 
   const {
     register, handleSubmit, setValue, formState: { errors }
@@ -82,7 +83,7 @@ function AddDevicePage() {
     resolver:      yupResolver(schema),
     mode:          'all',
     defaultValues: {
-      email: user?.email ?? '',
+      email: searchParams.get('email') ?? '',
     }
   });
 
@@ -95,10 +96,6 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
-
-  useEffect(() => {
-    setValue('email', userEmail);
-  }, [setValue, userEmail]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -138,22 +135,16 @@ function AddDevicePage() {
       navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
+      const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
       window.parent.postMessage({
         type:    'AddDeviceError',
-        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+        message: errorMessage
       }, '*');
 
-      if (typeof error?.message === 'string') {
-        openToast({
-          type:  'ERROR',
-          title: error.message,
-        });
-      } else {
-        openToast({
-          type:  'ERROR',
-          title: 'Something went wrong',
-        });
-      }
+      openToast({
+        type:  'ERROR',
+        title: errorMessage,
+      });
     } finally {
       setInFlight(false);
     }
@@ -266,10 +257,9 @@ function AddDevicePage() {
     if (!data.email) return;
     const isFirestoreReady = await checkFirestoreReady();
     const isPasskeySupported = await isPassKeyAvailable();
-    // @ts-ignore
+
     const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== data.email;
 
-    // @ts-ignore
     const shouldUseCurrentUser = authenticated === true
       && (isPasskeySupported || !firebaseAuthInvalid)
       && isFirestoreReady;
