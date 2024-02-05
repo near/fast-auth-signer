@@ -1,7 +1,8 @@
 import { captureException } from '@sentry/react';
 import { User } from 'firebase/auth';
 import {
-  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference, writeBatch
+  getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference,
+  deleteDoc,
 } from 'firebase/firestore';
 import UAParser from 'ua-parser-js';
 
@@ -47,16 +48,28 @@ class FirestoreController {
     fakPublicKey,
     lakPublicKey,
     gateway,
+    accountId
+  }: {
+    fakPublicKey: string;
+    lakPublicKey: string;
+    gateway: string;
+    accountId?: string;
   }) {
-    const parser = new UAParser();
-    const device = parser.getDevice();
-    const os = parser.getOS();
-    const browser = parser.getBrowser();
-    const dateTime = new Date().toISOString();
-    // setDoc will overwrite existing document or create new if not exist
-    return Promise.all([
-      ...(fakPublicKey ? [
-        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
+    try {
+      const parser = new UAParser();
+      const device = parser.getDevice();
+      const os = parser.getOS();
+      const browser = parser.getBrowser();
+      const dateTime = new Date().toISOString();
+
+      const docPromises = [];
+
+      if (accountId && fakPublicKey) {
+        await window.firestoreController.addAccountIdPublicKey(fakPublicKey, accountId);
+      }
+
+      if (fakPublicKey) {
+        const fakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
@@ -65,10 +78,12 @@ class FirestoreController {
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'fak',
-        }, { merge: true })
-      ] : []),
-      ...(lakPublicKey ? [
-        setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
+        }, { merge: true });
+        docPromises.push(fakDoc);
+      }
+
+      if (lakPublicKey) {
+        const lakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
@@ -77,12 +92,15 @@ class FirestoreController {
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'lak',
-        }, { merge: true })
-      ] : [])
-    ]).catch((err) => {
-      console.log('fail to add device collection, ', err);
-      throw new Error('fail to add device collection');
-    });
+        }, { merge: true });
+        docPromises.push(lakDoc);
+      }
+
+      return await Promise.all(docPromises);
+    } catch (err) {
+      console.error('Failed to add device collection:', err);
+      throw new Error('Failed to add device collection');
+    }
   }
 
   async listDevices() {
@@ -141,16 +159,16 @@ class FirestoreController {
 
     // delete firebase records
     try {
-      const batch = writeBatch(this.firestore);
       const firestoreIds = list
         .map(({ firebaseId }) => firebaseId)
         .filter((id) => id);
       if (firestoreIds.length) {
         // delete all records except the one that has LAK
-        firestoreIds.forEach((id) => {
-          batch.delete(doc(this.firestore, `/users/${this.userUid}/devices`, id));
-        });
-        await batch.commit();
+        const deletePromises = firestoreIds.flatMap((id) => [
+          deleteDoc(doc(this.firestore, `/users/${this.userUid}/devices`, id)),
+          deleteDoc(doc(this.firestore, '/publicKeys', id))
+        ]);
+        await Promise.allSettled(deletePromises);
       }
     } catch (err) {
       console.log('Fail to delete firestore records', err);
@@ -192,6 +210,23 @@ class FirestoreController {
   };
 
   getUserOidcToken = () => this.oidcToken;
+
+  async addAccountIdPublicKey(publicKey: string, accountId: string) {
+    await setDoc(doc(this.firestore, 'publicKeys', publicKey), {
+      accountId,
+    });
+  }
+
+  async getAccountIdByPublicKey(publicKey: string): Promise<string> {
+    const publicKeyDoc = await getDoc(doc(this.firestore, 'publicKeys', publicKey));
+    if (!publicKeyDoc.exists()) {
+      return undefined;
+    }
+
+    const { accountId } = publicKeyDoc.data() as { accountId: string };
+
+    return accountId;
+  }
 }
 
 export default FirestoreController;
