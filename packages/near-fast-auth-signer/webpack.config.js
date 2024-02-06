@@ -1,6 +1,6 @@
 const path = require('path');
 
-const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
+const { SentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
@@ -41,12 +41,15 @@ module.exports = {
       FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S',
       SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
     }),
-    sentryWebpackPlugin({
-      org:       'near-protocol',
-      project:   'fast-auth-signer',
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      include:   './fastauth',
-    }),
+    ...(process.env.SENTRY_AUTH_TOKEN
+      ? [new SentryWebpackPlugin({
+        org:       'near-protocol',
+        project:   'fast-auth-signer',
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        include:   './fastauth',
+      })]
+      : []
+    ),
   ],
   devServer: {
     static: {
