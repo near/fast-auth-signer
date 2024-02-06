@@ -10,6 +10,7 @@ on:
 env:
   REACT_APP_BASE_PATH: 'fastauth'
   NETWORK_ID: ${{ inputs.environment == 'staging' && 'testnet' || inputs.environment }}
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
 jobs:
   bundle-frontend:
