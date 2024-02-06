@@ -4,7 +4,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
-  useCallback, useRef, useState
+  useCallback, useEffect, useRef, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -19,7 +19,7 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';
 import { basePath } from '../../utils/config';
 import { setCookie } from '../../utils/cookie';
@@ -75,7 +75,6 @@ function AddDevicePage() {
   const [searchParams] = useSearchParams();
   const user = firebaseAuth.currentUser;
   console.log('user ', user);
-  // const userEmail = useMemo(() => user?.email, [user?.email]);
 
   const {
     register, handleSubmit, setValue, formState: { errors }
@@ -96,6 +95,19 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
+
+  useEffect(() => {
+    (async function () {
+      try {
+        const isPasskeySupported = await isPassKeyAvailable();
+        if (isPasskeySupported) {
+          setValue('email', safeGetLocalStorage('webauthn_username') ?? '');
+        }
+      } catch (e) {
+        setValue('email', '');
+      }
+    }());
+  }, [setValue]);
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -257,9 +269,7 @@ function AddDevicePage() {
     if (!data.email) return;
     const isFirestoreReady = await checkFirestoreReady();
     const isPasskeySupported = await isPassKeyAvailable();
-
     const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== data.email;
-
     const shouldUseCurrentUser = authenticated === true
       && (isPasskeySupported || !firebaseAuthInvalid)
       && isFirestoreReady;
