@@ -51,11 +51,13 @@ function Login() {
   });
 
   const emailCheck = async (
-    params: { email: string }
+    data: { email: string }
   ) => {
+    const newParams = new URLSearchParams(currentSearchParams);
+    newParams.set('email', data.email);
     navigate({
       pathname: '/add-device',
-      search:   `email=${params.email}`,
+      search:   newParams.toString(),
     });
   };
 

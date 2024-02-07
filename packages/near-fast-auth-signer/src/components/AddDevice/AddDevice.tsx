@@ -74,7 +74,6 @@ function AddDevicePage() {
 
   const [searchParams] = useSearchParams();
   const user = firebaseAuth.currentUser;
-  console.log('user ', user);
 
   const {
     register, handleSubmit, setValue, formState: { errors }
@@ -265,7 +264,7 @@ function AddDevicePage() {
       .finally(() => setInFlight(false)); // @ts-ignore
   }, [navigate, searchParams, user]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: { email: string }) => {
     if (!data.email) return;
     const isFirestoreReady = await checkFirestoreReady();
     const isPasskeySupported = await isPassKeyAvailable();
