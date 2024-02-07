@@ -1,10 +1,8 @@
 import styled from 'styled-components';
 
 export const ModalSignWrapper = styled.div`
-  max-width: 550px;
-  width: auto;
+  width: 550px;
   margin: 0 auto;
-  box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.06), 0px 0px 0px 1px rgba(0, 0, 0, 0.06), 0px 12px 20px 0px rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   padding: 24px;
   display: flex;
