@@ -8,6 +8,7 @@ import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
+import { StyledContainer } from '../Layout';
 
 const DevicesWrapper = styled.div`
   display: flex;
@@ -16,12 +17,19 @@ const DevicesWrapper = styled.div`
   padding: 20px 16px;
   justify-content: center;
   align-items: center;
+  width: 385px;
+  margin: 16px auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #EEEEEC;
+  box-sizing: border-box;
+  height: 550px;
 `;
-const Title = styled.h1`
+const Title = styled.h2`
 `;
 
 const Description = styled.p`
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
 `;
 
@@ -38,7 +46,8 @@ const StyledCheckbox = styled.input`
 
 const Row = styled.div`
   display: flex;
-  align-items: center;
+  width: 100%;
+  align-items: flex-start;
 `;
 
 function Devices() {
@@ -158,51 +167,54 @@ function Devices() {
   }, [deleteCollections.length, isAddingKey, isDeleted]);
 
   return (
-    <DevicesWrapper>
-      <Title>Devices with Keys</Title>
+    <StyledContainer inIframe={inIframe()}>
 
-      {isLoaded && <div>Loading...</div>}
+      <DevicesWrapper>
+        <Title>Devices with Keys</Title>
 
-      {collections.length > 0 && (
-        <Description>
-          You have reached maximum number of keys. Please delete some keys to add new keys.
-        </Description>
-      )}
+        {isLoaded && <div>Loading...</div>}
 
-      {
-        isVerifyEmailRequired && (
+        {collections.length > 0 && (
           <Description>
-            You need to verify your email address to use this feature
+            You have reached maximum number of keys. Please delete some keys to add new keys.
           </Description>
-        )
-      }
-      {
-        collections.map((collection) => (
-          <Row key={collection.id}>
-            <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
-            <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
-          </Row>
-        ))
-      }
-      {
-        collections.length > 0 && (
-          <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
-            {deleteCollectionText}
-          </Button>
-        )
-      }
-      {
-        isVerifyEmailRequired && (
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={redirectToSignin}
-          >
-            Redirect
-          </Button>
-        )
-      }
-    </DevicesWrapper>
+        )}
+
+        {
+          isVerifyEmailRequired && (
+            <Description>
+              You need to verify your email address to use this feature
+            </Description>
+          )
+        }
+        {
+          collections.map((collection) => (
+            <Row key={collection.id}>
+              <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
+              <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
+            </Row>
+          ))
+        }
+        {
+          collections.length > 0 && (
+            <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
+              {deleteCollectionText}
+            </Button>
+          )
+        }
+        {
+          isVerifyEmailRequired && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={redirectToSignin}
+            >
+              Redirect
+            </Button>
+          )
+        }
+      </DevicesWrapper>
+    </StyledContainer>
   );
 }
 
