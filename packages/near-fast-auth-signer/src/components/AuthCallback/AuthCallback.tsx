@@ -6,13 +6,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { createNEARAccount } from '../../api';
+import { createNEARAccount, fetchAccountIds } from '../../api';
 import FastAuthController from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
-import { basePath, network, networkId } from '../../utils/config';
+import { basePath, networkId } from '../../utils/config';
 import { getCookieValue } from '../../utils/cookie';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
@@ -56,15 +56,12 @@ const onCreateAccount = async ({
 
   if (res.type === 'err') return;
 
-  if (!window.firestoreController) {
-    window.firestoreController = new FirestoreController();
-  }
-
   // Add device
   await window.firestoreController.addDeviceCollection({
     fakPublicKey: publicKeyFak,
     lakPublicKey: public_key_lak,
     gateway,
+    accountId
   });
 
   setStatusMessage('Account created successfully!');
@@ -78,6 +75,8 @@ const onCreateAccount = async ({
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
+  await window.firestoreController.addAccountIdPublicKey(recoveryPK, accountId);
+
   const parsedUrl = new URL(
     success_url && isUrlNotJavascriptProtocol(success_url)
       ? success_url
@@ -104,13 +103,7 @@ export const onSignIn = async ({
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${recoveryPK}/accounts`)
-    .then((res) => res.json())
-    .catch((err) => {
-      console.log(err);
-      captureException(err);
-      throw new Error('Unable to retrieve account Id');
-    });
+  const accountIds = await fetchAccountIds(recoveryPK);
 
   if (!accountIds.length) {
     throw new Error('Account not found, please create an account and try again');
@@ -151,13 +144,11 @@ export const onSignIn = async ({
         navigate(`/devices?${searchParams.toString()}`);
       } else {
         await checkFirestoreReady();
-        if (!window.firestoreController) {
-          (window as any).firestoreController = new FirestoreController();
-        }
         await window.firestoreController.addDeviceCollection({
           fakPublicKey: onlyAddLak ? null : publicKeyFak,
           lakPublicKey: public_key_lak,
           gateway,
+          accountId:    accountIds[0],
         });
 
         setStatusMessage('Account recovered successfully!');
@@ -215,6 +206,10 @@ function AuthCallbackPage() {
           parsedUrl.searchParams.set('code', '500');
           parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
           window.location.replace(parsedUrl.href);
+        }
+
+        if (!window.firestoreController) {
+          window.firestoreController = new FirestoreController();
         }
 
         setStatusMessage('Verifying email...');
