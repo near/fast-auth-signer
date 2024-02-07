@@ -46,13 +46,14 @@ module.exports = {
       SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
       SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
       ENABLE_SENTRY:                        process.env.ENABLE_SENTRY || false,
-      GIT_COMMIT_HASH:                      JSON.stringify(commitHash),
+      GIT_COMMIT_HASH:                      commitHash,
     }),
     ...(process.env.SENTRY_AUTH_TOKEN
       ? [sentryWebpackPlugin({
         org:       'near-protocol',
         project:   process.env.NETWORK_ID === 'mainnet' ? 'fast-auth-signer' : 'fast-auth-signer-testnet',
         authToken: process.env.SENTRY_AUTH_TOKEN,
+        release:   commitHash,
       })]
       : []
     ),

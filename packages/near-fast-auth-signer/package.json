@@ -5,6 +5,7 @@
   "main": "src/index.html",
   "scripts": {
     "start": "webpack serve --mode development --history-api-fallback",
+    "startWithSentry": "ENABLE_SENTRY=true yarn start ",
     "bundle": "webpack build --mode production --output-public-path /fastauth/",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",
