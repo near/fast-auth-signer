@@ -1,8 +1,10 @@
 const path = require('path');
 
-const { SentryWebpackPlugin } = require('@sentry/webpack-plugin');
+const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
+
+console.log('process.env.NETWORK_ID: ', process.env.NETWORK_ID);
 
 module.exports = {
   entry:  './src/index.tsx',
@@ -40,11 +42,12 @@ module.exports = {
       FIREBASE_APP_ID_TESTNET:              '1:116526963563:web:053cb0c425bf514007ca2e',
       FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S',
       SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
+      SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
     }),
     ...(process.env.SENTRY_AUTH_TOKEN
-      ? [new SentryWebpackPlugin({
+      ? [sentryWebpackPlugin({
         org:       'near-protocol',
-        project:   'fast-auth-signer',
+        project:   process.env.NETWORK_ID === 'mainnet' ? 'fast-auth-signer' : 'fast-auth-signer-testnet',
         authToken: process.env.SENTRY_AUTH_TOKEN,
         include:   './fastauth',
       })]
