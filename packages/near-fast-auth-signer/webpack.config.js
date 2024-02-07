@@ -53,7 +53,8 @@ module.exports = {
         org:       'near-protocol',
         project:   process.env.NETWORK_ID === 'mainnet' ? 'fast-auth-signer' : 'fast-auth-signer-testnet',
         authToken: process.env.SENTRY_AUTH_TOKEN,
-        release:   commitHash,
+        release:   { name: commitHash },
+        sourcemaps: { assets: './dist' },
       })]
       : []
     ),
