@@ -15,50 +15,47 @@ module.exports = {
     path:       path.resolve(__dirname, 'dist'),
     publicPath: '/',
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'public', 'index.html'),
-    }),
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-      Buffer:  ['buffer', 'Buffer']
-    }),
-    new webpack.EnvironmentPlugin({
-      DEBUG:                                true,
-      REACT_APP_BASE_PATH:                  '',
-      NETWORK_ID:                           'mainnet',
-      RELAYER_URL:                          'https://near-relayer-mainnet.api.pagoda.co/relay',
-      FIREBASE_API_KEY:                     'AIzaSyDhxTQVeoWdnbpYTocBAABbLULGf6H5khQ',
-      FIREBASE_AUTH_DOMAIN:                 'near-fastauth-prod.firebaseapp.com',
-      FIREBASE_PROJECT_ID:                  'near-fastauth-prod',
-      FIREBASE_STORAGE_BUCKET:              'near-fastauth-prod.appspot.com',
-      FIREBASE_MESSAGING_SENDER_ID:         '829449955812',
-      FIREBASE_APP_ID:                      '1:829449955812:web:532436aa35572be60abff1',
-      FIREBASE_MEASUREMENT_ID:              'G-T2PPJ8QRYY',
-      RELAYER_URL_TESTNET:                  'http://near-relayer-testnet.api.pagoda.co/relay',
-      FIREBASE_API_KEY_TESTNET:             'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU',
-      FIREBASE_AUTH_DOMAIN_TESTNET:         'pagoda-oboarding-dev.firebaseapp.com',
-      FIREBASE_PROJECT_ID_TESTNET:          'pagoda-oboarding-dev',
-      FIREBASE_STORAGE_BUCKET_TESTNET:      'pagoda-oboarding-dev.appspot.com',
-      FIREBASE_MESSAGING_SENDER_ID_TESTNET: '116526963563',
-      FIREBASE_APP_ID_TESTNET:              '1:116526963563:web:053cb0c425bf514007ca2e',
-      FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S',
-      SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
-      SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
-      ENABLE_SENTRY:                        process.env.ENABLE_SENTRY || false,
-      GIT_COMMIT_HASH:                      commitHash,
-    }),
-    ...(process.env.SENTRY_AUTH_TOKEN
-      ? [sentryWebpackPlugin({
-        org:       'near-protocol',
-        project:   process.env.NETWORK_ID === 'mainnet' ? 'fast-auth-signer' : 'fast-auth-signer-testnet',
-        authToken: process.env.SENTRY_AUTH_TOKEN,
-        release:   { name: commitHash },
-        sourcemaps: { assets: './dist' },
-      })]
-      : []
-    ),
-  ],
+  plugins: [new HtmlWebpackPlugin({
+    template: path.join(__dirname, 'public', 'index.html'),
+  }), new webpack.ProvidePlugin({
+    process: 'process/browser',
+    Buffer:  ['buffer', 'Buffer']
+  }), new webpack.EnvironmentPlugin({
+    DEBUG:                                true,
+    REACT_APP_BASE_PATH:                  '',
+    NETWORK_ID:                           'mainnet',
+    RELAYER_URL:                          'https://near-relayer-mainnet.api.pagoda.co/relay',
+    FIREBASE_API_KEY:                     'AIzaSyDhxTQVeoWdnbpYTocBAABbLULGf6H5khQ',
+    FIREBASE_AUTH_DOMAIN:                 'near-fastauth-prod.firebaseapp.com',
+    FIREBASE_PROJECT_ID:                  'near-fastauth-prod',
+    FIREBASE_STORAGE_BUCKET:              'near-fastauth-prod.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID:         '829449955812',
+    FIREBASE_APP_ID:                      '1:829449955812:web:532436aa35572be60abff1',
+    FIREBASE_MEASUREMENT_ID:              'G-T2PPJ8QRYY',
+    RELAYER_URL_TESTNET:                  'http://near-relayer-testnet.api.pagoda.co/relay',
+    FIREBASE_API_KEY_TESTNET:             'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU',
+    FIREBASE_AUTH_DOMAIN_TESTNET:         'pagoda-oboarding-dev.firebaseapp.com',
+    FIREBASE_PROJECT_ID_TESTNET:          'pagoda-oboarding-dev',
+    FIREBASE_STORAGE_BUCKET_TESTNET:      'pagoda-oboarding-dev.appspot.com',
+    FIREBASE_MESSAGING_SENDER_ID_TESTNET: '116526963563',
+    FIREBASE_APP_ID_TESTNET:              '1:116526963563:web:053cb0c425bf514007ca2e',
+    FIREBASE_MEASUREMENT_ID_TESTNET:      'G-HF2NBGE60S',
+    SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
+    SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
+    ENABLE_SENTRY:                        process.env.ENABLE_SENTRY || false,
+    GIT_COMMIT_HASH:                      commitHash,
+  }), ...(process.env.SENTRY_AUTH_TOKEN
+    ? [sentryWebpackPlugin({
+      org:        'near-protocol',
+      project:    process.env.NETWORK_ID === 'mainnet' ? 'fast-auth-signer' : 'fast-auth-signer-testnet',
+      authToken:  process.env.SENTRY_AUTH_TOKEN,
+      release:    { name: commitHash },
+      sourcemaps: { assets: ['./dist/main.js', './dist/main.js.map'] },
+      telemetry:  false,
+      urlPrefix:  '~/',
+    })]
+    : []
+  )],
   devServer: {
     static: {
       directory: path.join(__dirname, 'dist'),
