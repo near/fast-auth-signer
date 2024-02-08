@@ -62,7 +62,7 @@ module.exports = {
     },
     port: 3000,
   },
-  devtool: 'source-map',
+  devtool: process.env.NETWORK_ID === 'mainnet' ? 'source-map' : 'eval-source-map',
   module:  {
     // exclude node_modules
     rules: [
