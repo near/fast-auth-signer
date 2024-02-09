@@ -2629,6 +2629,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/dateformat@^5.0.2":
+  version "5.0.2"
+  resolved "https://registry.npmjs.org/@types/dateformat/-/dateformat-5.0.2.tgz"
+  integrity sha512-M95hNBMa/hnwErH+a+VOD/sYgTmo15OTYTM2Hr52/e0OdOuY+Crag+kd3/ioZrhg0WGbl9Sm3hR7UU+MH6rfOw==
+
 "@types/debug@^4.1.7":
   version "4.1.12"
   resolved "https://registry.npmjs.org/@types/debug/-/debug-4.1.12.tgz"
@@ -2693,6 +2698,11 @@
   integrity sha512-SSrD0c1OQzlFX7pGu1eXxSEjemej64aaNPRhhVYUGqXh0BtldAAx37MG8btcumvpgKyZp1F5Gn3JkktdxiFv6w==
   dependencies:
     "@types/node" "*"
+
+"@types/intl@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.npmjs.org/@types/intl/-/intl-1.2.2.tgz"
+  integrity sha512-A4g5UEAA9c56JWKhc4LSJ9vzDMztjxVXDAXtVK4EbS3hW1V7Sz05VfcTgDQIvkOYJp1NqH222eg62P72HwltfQ==
 
 "@types/json-schema@*", "@types/json-schema@^7.0.11", "@types/json-schema@^7.0.8", "@types/json-schema@^7.0.9":
   version "7.0.15"
@@ -4474,6 +4484,11 @@ data-loader@^3.8.4:
   dependencies:
     "@types/lodash-es" "4.17.3"
     lodash-es "^4.17.11"
+
+date-fns@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.npmjs.org/date-fns/-/date-fns-3.3.1.tgz"
+  integrity sha512-y8e109LYGgoQDveiEBD3DYXKba1jWf5BA8YU1FL5Tvm0BTdEfy54WLCwnuYWZNnzzvALy/QQ4Hov+Q9RVRv+Zw==
 
 dateformat@^3.0.3:
   version "3.0.3"

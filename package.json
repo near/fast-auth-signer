@@ -7,6 +7,8 @@
     "test": "yarn && yarn workspace fast-auth-signer-e2e-tests test"
   },
   "devDependencies": {
+    "@types/dateformat": "^5.0.2",
+    "@types/intl": "^1.2.2",
     "@types/node": "^20.9.0",
     "lerna": "^7.4.1"
   },
@@ -18,6 +20,7 @@
   "private": true,
   "dependencies": {
     "@types/nodemailer": "^6.4.14",
+    "date-fns": "^3.3.1",
     "mailtrap": "^3.3.0",
     "nodemailer": "^6.9.9"
   }
