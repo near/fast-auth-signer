@@ -19,6 +19,8 @@ import './styles/globals.css';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
 
+import { captureException } from '@sentry/react';
+
 (window as any).fastAuthController = new FastAuthController({
   accountId: 'harisvalj.testnet',
   networkId
@@ -58,6 +60,15 @@ export default function App() {
   faLog('init');
   log('faLog');
   log2('faLogzzzzz');
+
+  const a = 1;
+  if (a === 1) {
+    try {
+      throw new Error('test');
+    } catch (e) {
+      captureException(e);
+    }
+  }
 
   // @ts-ignore
   return (
