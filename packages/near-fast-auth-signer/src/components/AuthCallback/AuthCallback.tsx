@@ -8,7 +8,6 @@ import styled from 'styled-components';
 
 import { createNEARAccount, fetchAccountIds } from '../../api';
 import FastAuthController from '../../lib/controller';
-import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
@@ -207,10 +206,6 @@ function AuthCallbackPage() {
           window.location.replace(parsedUrl.href);
         }
 
-        if (!window.firestoreController) {
-          window.firestoreController = new FirestoreController();
-        }
-
         setStatusMessage('Verifying email...');
 
         try {
@@ -241,7 +236,6 @@ function AuthCallbackPage() {
 
           await window.fastAuthController.claimOidcToken(accessToken);
           const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          window.firestoreController = new FirestoreController();
           window.firestoreController.updateUser({
             userUid:   user.uid,
             oidcToken: accessToken,

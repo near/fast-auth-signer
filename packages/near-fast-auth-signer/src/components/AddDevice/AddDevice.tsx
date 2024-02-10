@@ -12,7 +12,6 @@ import styled from 'styled-components';
 import * as yup from 'yup';
 
 import { Button } from '../../lib/Button';
-import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
@@ -94,9 +93,6 @@ function SignInPage() {
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
-  if (!window.firestoreController) {
-    window.firestoreController = new FirestoreController();
-  }
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;

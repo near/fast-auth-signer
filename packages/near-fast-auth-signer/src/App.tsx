@@ -16,6 +16,7 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
+import FirestoreController from './lib/firestoreController';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
 
@@ -59,7 +60,10 @@ export default function App() {
   log('faLog');
   log2('faLogzzzzz');
 
-  // @ts-ignore
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
+
   return (
     <>
       <GlobalStyle />
