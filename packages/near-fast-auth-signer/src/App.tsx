@@ -67,6 +67,7 @@ export default function App() {
       throw new Error('test');
     } catch (e) {
       console.error(e);
+      console.log(process.env.SENTRY_AUTH_TOKEN);
       captureException(e);
     }
   }
