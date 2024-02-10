@@ -63,7 +63,12 @@ export default function App() {
 
   const a = 1;
   if (a === 1) {
-    throw new Error('test');
+    try {
+      throw new Error('test');
+    } catch (e) {
+      console.error(e);
+      captureException(e);
+    }
   }
 
   // @ts-ignore
