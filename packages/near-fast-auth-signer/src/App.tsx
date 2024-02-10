@@ -68,7 +68,6 @@ export default function App() {
     } catch (e) {
       console.error(e);
       console.log(networkId);
-      console.log(process.env.SENTRY_AUTH_TOKEN);
       captureException(e);
     }
   }
