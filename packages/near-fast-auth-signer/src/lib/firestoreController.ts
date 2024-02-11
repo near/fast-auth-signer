@@ -28,10 +28,6 @@ class FirestoreController {
 
     const user = firebaseAuth.currentUser;
     if (user) {
-      console.log({
-        uid:   user.uid,
-        token: await user.getIdToken()
-      });
       this.userUid = user.uid;
       this.oidcToken = await user.getIdToken();
     }
