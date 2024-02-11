@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
+import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
@@ -67,24 +68,26 @@ function Devices() {
       setCollections(deviceCollections);
     };
 
-    const getKeypairOrLogout = async () => window.fastAuthController.findInKeyStores(`oidc_keypair_${await window.firestoreController.getUserOidcToken()}`).then((keypair) => {
-      if (keypair) {
-        getCollection();
-      } else {
-        window.fastAuthController.clearUser().then(() => {
-          setVerifyEmailRequired(true);
-          setIsLoaded(false);
-        });
-      }
-    });
+    const getKeypairOrLogout = async () => window.fastAuthController
+      .findInKeyStores(`oidc_keypair_${await FirestoreController.getUserOidcToken()}`)
+      .then((keypair) => {
+        if (keypair) {
+          getCollection();
+        } else {
+          window.fastAuthController.clearUser().then(() => {
+            setVerifyEmailRequired(true);
+            setIsLoaded(false);
+          });
+        }
+      });
     setIsLoaded(true);
 
     const verifyUserAuthenticationStatus = async () => {
-      if (await window.firestoreController.getUserOidcToken()) {
+      if (await FirestoreController.getUserOidcToken()) {
         getKeypairOrLogout();
       } else {
         (new Promise((resolve) => { setTimeout(resolve, 5000); }))
-          .then(window.firestoreController.getUserOidcToken).then((token) => {
+          .then(FirestoreController.getUserOidcToken).then((token) => {
             if (!token) {
               setVerifyEmailRequired(true);
             } else {
@@ -132,7 +135,7 @@ function Devices() {
           const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
-          const oidcToken = await window.firestoreController.getUserOidcToken();
+          const oidcToken = await FirestoreController.getUserOidcToken();
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,
