@@ -205,13 +205,6 @@ function SignInPage() {
             return null;
           }
 
-          // Add device
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            // User type is missing accessToken but it exist
-            oidcToken,
-          });
-
           // Since FAK is already added, we only add LAK
           return window.firestoreController.addDeviceCollection({
             fakPublicKey:  null,

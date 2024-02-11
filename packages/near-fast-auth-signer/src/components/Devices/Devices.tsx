@@ -67,7 +67,7 @@ function Devices() {
       setCollections(deviceCollections);
     };
 
-    const getKeypairOrLogout = () => window.fastAuthController.findInKeyStores(`oidc_keypair_${window.firestoreController.getUserOidcToken()}`).then((keypair) => {
+    const getKeypairOrLogout = async () => window.fastAuthController.findInKeyStores(`oidc_keypair_${await window.firestoreController.getUserOidcToken()}`).then((keypair) => {
       if (keypair) {
         getCollection();
       } else {
@@ -78,18 +78,23 @@ function Devices() {
       }
     });
     setIsLoaded(true);
-    if (window.firestoreController.getUserOidcToken()) {
-      getKeypairOrLogout();
-    } else {
-      (new Promise((resolve) => { setTimeout(resolve, 5000); }))
-        .then(window.firestoreController.getUserOidcToken).then((token) => {
-          if (!token) {
-            setVerifyEmailRequired(true);
-          } else {
-            getKeypairOrLogout();
-          }
-        });
-    }
+
+    const verifyUserAuthenticationStatus = async () => {
+      if (await window.firestoreController.getUserOidcToken()) {
+        getKeypairOrLogout();
+      } else {
+        (new Promise((resolve) => { setTimeout(resolve, 5000); }))
+          .then(window.firestoreController.getUserOidcToken).then((token) => {
+            if (!token) {
+              setVerifyEmailRequired(true);
+            } else {
+              getKeypairOrLogout();
+            }
+          });
+      }
+    };
+
+    verifyUserAuthenticationStatus();
   }, []);
 
   const redirectToSignin = () => {

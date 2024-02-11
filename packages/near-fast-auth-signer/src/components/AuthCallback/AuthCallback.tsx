@@ -236,10 +236,6 @@ function AuthCallbackPage() {
 
           await window.fastAuthController.claimOidcToken(accessToken);
           const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            oidcToken: accessToken,
-          });
 
           const callback = isRecovery ? onSignIn : onCreateAccount;
           await callback({

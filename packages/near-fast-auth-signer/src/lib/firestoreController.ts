@@ -1,5 +1,4 @@
 import { captureException } from '@sentry/react';
-import { User } from 'firebase/auth';
 import {
   getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference,
   deleteDoc,
@@ -7,7 +6,7 @@ import {
 import UAParser from 'ua-parser-js';
 
 import { fetchAccountIds } from '../api';
-import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
+import { firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
 
@@ -20,19 +19,26 @@ class FirestoreController {
 
   constructor() {
     this.firestore = getFirestore(firebaseApp);
+    this.setUser();
+  }
 
-    firebaseAuth.onIdTokenChanged(async (user: User) => {
-      if (!user) {
-        return;
-      }
+  async setUser() {
+    this.userUid = undefined;
+    this.oidcToken = undefined;
+
+    const user = firebaseAuth.currentUser;
+    if (user) {
+      console.log({
+        uid:   user.uid,
+        token: await user.getIdToken()
+      });
       this.userUid = user.uid;
       this.oidcToken = await user.getIdToken();
-    });
-
-    checkFirestoreReady();
+    }
   }
 
   async getAccountIdFromOidcToken() {
+    await this.setUser();
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
     const accountIds = await fetchAccountIds(recoveryPK);
 
@@ -56,6 +62,7 @@ class FirestoreController {
     accountId?: string;
   }) {
     try {
+      await this.setUser();
       const parser = new UAParser();
       const device = parser.getDevice();
       const os = parser.getOS();
@@ -104,6 +111,7 @@ class FirestoreController {
   }
 
   async listDevices() {
+    await this.setUser();
     const q = query(collection(this.firestore, `/users/${this.userUid}/devices`) as CollectionReference<Device>);
     const querySnapshot = await getDocs(q);
     const collections = [];
@@ -154,6 +162,7 @@ class FirestoreController {
   }
 
   async deleteDeviceCollections(list) {
+    await this.setUser();
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
     const accountIds = await fetchAccountIds(recoveryPK);
 
@@ -192,6 +201,7 @@ class FirestoreController {
   }
 
   async getDeviceCollection(fakPublicKey) {
+    await this.setUser();
     const docRef = doc(this.firestore, 'users', this.userUid, 'devices', fakPublicKey);
     const docSnap = await getDoc(docRef);
 
@@ -201,15 +211,10 @@ class FirestoreController {
     return null;
   }
 
-  updateUser = async ({
-    userUid,
-    oidcToken,
-  }) => {
-    this.userUid = userUid;
-    this.oidcToken = oidcToken;
+  getUserOidcToken = async () => {
+    await this.setUser();
+    return this.oidcToken;
   };
-
-  getUserOidcToken = () => this.oidcToken;
 
   async addAccountIdPublicKey(publicKey: string, accountId: string) {
     await setDoc(doc(this.firestore, 'publicKeys', publicKey), {
