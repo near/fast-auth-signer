@@ -12,6 +12,7 @@ import styled from 'styled-components';
 import * as yup from 'yup';
 
 import { Button } from '../../lib/Button';
+import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { useAuthState } from '../../lib/useAuthState';
@@ -173,9 +174,8 @@ function SignInPage() {
           : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
-        // @ts-ignore
-        const oidcToken = user.accessToken;
-        const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+        const recoveryPK = await window.fastAuthController
+          .getUserCredential(await FirestoreController.getUserOidcToken());
 
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;

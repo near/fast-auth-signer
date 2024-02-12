@@ -106,7 +106,7 @@ class FirestoreController {
 
     const existingKeyPair = window.fastAuthController.findInKeyStores(`oidc_keypair_${await firebaseAuth.currentUser?.getIdToken()}`);
     if (!existingKeyPair) {
-      await (window as any).fastAuthController.claimOidcToken(await firebaseAuth.currentUser?.getIdToken());
+      await window.fastAuthController.claimOidcToken(await firebaseAuth.currentUser?.getIdToken());
     }
 
     if (!window.fastAuthController.getAccountId()) {

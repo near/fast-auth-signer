@@ -174,7 +174,6 @@ class FastAuthController {
       });
     } catch {
       // fallback, non webAuthN supported browser
-      // @ts-ignore
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
       const recoveryPK = await this.getUserCredential(oidcToken);
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
