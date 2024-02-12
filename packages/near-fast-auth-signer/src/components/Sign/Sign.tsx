@@ -12,12 +12,12 @@ import {
 } from './Values/fiatValueManager';
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
+import { useAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
-import { useAuthState } from '../../lib/useAuthState';
 import { isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';

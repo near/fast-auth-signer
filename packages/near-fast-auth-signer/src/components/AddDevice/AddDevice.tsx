@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
+import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import WalletSvg from '../../Images/WalletSvg';
@@ -18,7 +19,6 @@ import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { getAuthState } from '../../lib/useAuthState';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';

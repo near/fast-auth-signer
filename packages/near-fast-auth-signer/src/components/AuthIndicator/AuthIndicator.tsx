@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 import AuthIndicatorButton from './AuthIndicatorButton';
-import { useAuthState } from '../../lib/useAuthState';
+import { useAuthState } from '../../hooks/useAuthState';
 
 function AuthIndicator() {
   const { authenticated } = useAuthState();

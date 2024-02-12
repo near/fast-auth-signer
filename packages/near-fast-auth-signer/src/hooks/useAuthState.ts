@@ -5,8 +5,8 @@ import { captureException } from '@sentry/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
-import FastAuthController from './controller';
 import { fetchAccountIds } from '../api';
+import FastAuthController from '../lib/controller';
 import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
