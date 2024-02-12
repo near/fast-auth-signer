@@ -72,7 +72,7 @@ export const networks: Record<NetworkId, Network> = {
     helperUrl:     'https://helper.testnet.near.org',
     relayerUrl:    process.env.RELAYER_URL_TESTNET,
     explorerUrl:    'https://explorer.testnet.near.org',
-    sentryDsn:       process.env.SENTRY_DSN,
+    sentryDsn:       process.env.SENTRY_DSN_TESTNET,
     fastAuth:      {
       mpcRecoveryUrl:    'https://mpc-recovery-leader-testnet.api.pagoda.co',
       authHelperUrl:   'https://testnet-api.kitwallet.app',

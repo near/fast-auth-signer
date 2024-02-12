@@ -26,6 +26,7 @@ if (network.sentryDsn) {
   Sentry.init({
     environment:           networkId,
     dsn:                   network.sentryDsn,
+    release:               process.env.GIT_COMMIT_HASH,
     integrations: [
       new Sentry.BrowserTracing({
         // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
