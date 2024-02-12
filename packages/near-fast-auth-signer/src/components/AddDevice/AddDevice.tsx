@@ -11,13 +11,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import * as yup from 'yup';
 
+import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { useAuthState } from '../../lib/useAuthState';
+import { getAuthState } from '../../lib/useAuthState';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';
@@ -73,7 +74,7 @@ function AddDevicePage() {
   useIframeDialogConfig({ element: addDeviceFormRef.current });
 
   const [searchParams] = useSearchParams();
-  const user = firebaseAuth.currentUser;
+  const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
 
   const {
     register, handleSubmit, setValue, formState: { errors }
@@ -87,10 +88,8 @@ function AddDevicePage() {
 
   const navigate = useNavigate();
 
-  const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
-  const { authenticated } = useAuthState(skipGetKey);
-
   const [inFlight, setInFlight] = useState(false);
+  const loading = firebaseUserLoading || inFlight;
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
@@ -181,14 +180,15 @@ function AddDevicePage() {
     const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
     // @ts-ignore
-    const oidcToken = user.accessToken;
-    const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+    const oidcToken = firebaseUser?.accessToken;
+    const recoveryPk = oidcToken && (await window.fastAuthController.getUserCredential(oidcToken).catch(() => false));
+    const allKeys = [public_key, publicKeyFak].concat(recoveryPk || []);
     // if given lak key is already attached to webAuthN public key, no need to add it again
     const noNeedToAddKey = existingDeviceLakKey === public_key;
     const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
     parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
     parsedUrl.searchParams.set('public_key', public_key);
-    parsedUrl.searchParams.set('all_keys', [public_key, publicKeyFak, recoveryPK].join(','));
+    parsedUrl.searchParams.set('all_keys', allKeys.join(','));
 
     if (noNeedToAddKey) {
       window.parent.postMessage({
@@ -198,7 +198,7 @@ function AddDevicePage() {
         params: {
           request_type: 'complete_authentication',
           publicKey:    public_key,
-          allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
+          allKeys:      allKeys.join(','),
           accountId:    (window as any).fastAuthController.getAccountId()
         }
       }, '*');
@@ -213,14 +213,15 @@ function AddDevicePage() {
       publicKey:  public_key,
     }).then((res) => res && res.json()).then((res) => {
       const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-      if (failure?.ActionError?.kind?.LackBalanceForState) {
-        navigate(`/devices?${searchParams.toString()}`);
-        return null;
+      if (failure) {
+        return failure;
       }
+
+      if (!firebaseUser) return null;
 
       // Add device
       window.firestoreController.updateUser({
-        userUid:   user.uid,
+        userUid:   firebaseUser.uid,
         // User type is missing accessToken but it exist
         oidcToken,
       });
@@ -230,8 +231,15 @@ function AddDevicePage() {
         fakPublicKey:  null,
         lakPublicKey: public_key,
         gateway:      success_url,
-      })
-        .then(() => {
+      }).catch((err) => {
+        console.log('Failed to add device collection', err);
+        throw new Error('Failed to add device collection');
+      });
+    })
+      .then((failure) => {
+        if (failure?.ActionError?.kind?.LackBalanceForState) {
+          navigate(`/devices?${searchParams.toString()}`);
+        } else {
           window.parent.postMessage({
             type:   'method',
             method: 'query',
@@ -239,44 +247,47 @@ function AddDevicePage() {
             params: {
               request_type: 'complete_authentication',
               publicKey:    public_key,
-              allKeys:      [public_key, publicKeyFak, recoveryPK].join(','),
+              allKeys:      allKeys.join(','),
               accountId:    (window as any).fastAuthController.getAccountId()
             }
           }, '*');
-        }).catch((err) => {
-          console.log('Failed to add device collection', err);
-          throw new Error('Failed to add device collection');
+        }
+      })
+      .catch((error) => {
+        console.log('error', error);
+        captureException(error);
+
+        window.parent.postMessage({
+          type:    'AddDeviceError',
+          message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+        }, '*');
+
+        openToast({
+          type:  'ERROR',
+          title: error.message,
         });
-    }).catch((error) => {
-      console.log('error', error);
-      captureException(error);
-
-      window.parent.postMessage({
-        type:    'AddDeviceError',
-        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
-      }, '*');
-
-      openToast({
-        type:  'ERROR',
-        title: error.message,
-      });
-    })
+      })
       .finally(() => setInFlight(false)); // @ts-ignore
-  }, [navigate, searchParams, user]);
+  }, [firebaseUser, navigate, searchParams]);
 
   const onSubmit = async (data: { email: string }) => {
     if (!data.email) return;
-    const isFirestoreReady = await checkFirestoreReady();
-    const isPasskeySupported = await isPassKeyAvailable();
-    const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && user?.email !== data.email;
-    const shouldUseCurrentUser = authenticated === true
-      && (isPasskeySupported || !firebaseAuthInvalid)
-      && isFirestoreReady;
+    try {
+      const authenticated = await getAuthState(data.email);
+      const isFirestoreReady = await checkFirestoreReady();
+      const isPasskeySupported = await isPassKeyAvailable();
+      const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
+      const shouldUseCurrentUser = authenticated === true
+        && (isPasskeySupported || !firebaseAuthInvalid)
+        && isFirestoreReady;
 
-    if (shouldUseCurrentUser) {
-      await handleAuthCallback();
-    } else {
-      await addDevice({ email: data.email });
+      if (shouldUseCurrentUser) {
+        await handleAuthCallback();
+      } else {
+        await addDevice({ email: data.email });
+      }
+    } catch (e) {
+      console.log('error ', e);
     }
   };
 
@@ -302,6 +313,7 @@ function AddDevicePage() {
           type="email"
           id="email"
           required
+          disabled={loading}
           dataTest={{
             input: 'add-device-email',
           }}
@@ -311,10 +323,10 @@ function AddDevicePage() {
           type="submit"
           size="large"
           // @ts-ignore
-          label={inFlight ? 'Signing...' : 'Continue'}
+          label={loading ? 'Loading...' : 'Continue'}
           variant="affirmative"
           data-test-id="add-device-continue-button"
-          disabled={inFlight}
+          disabled={loading}
         />
         <SeparatorWrapper>
           <Separator />
@@ -322,7 +334,7 @@ function AddDevicePage() {
           <Separator />
         </SeparatorWrapper>
         <Button
-          disabled={inFlight}
+          disabled={loading}
           size="large"
           label={(
             <>

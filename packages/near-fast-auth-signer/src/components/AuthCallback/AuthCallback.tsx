@@ -169,7 +169,17 @@ export const onSignIn = async ({
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
         if (inIframe()) {
-          window.open(parsedUrl.href, '_parent');
+          window.parent.postMessage({
+            type:   'method',
+            method: 'query',
+            id:     1234,
+            params: {
+              request_type: 'complete_authentication',
+              publicKey:    public_key_lak,
+              allKeys:      (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','),
+              accountId:    accountIds[0]
+            }
+          }, '*');
         } else {
           window.location.replace(parsedUrl.href);
         }

@@ -10,11 +10,11 @@ import { basePath } from '../../utils/config';
 import { onSignIn } from '../AuthCallback/AuthCallback';
 import { StyledContainer } from '../Layout';
 
-const DevicesWrapper = styled.div`
+const DevicesWrapper = styled.div<{ inIframe?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px 16px;
+  padding: 20px;
   justify-content: center;
   align-items: center;
   width: 385px;
@@ -24,8 +24,27 @@ const DevicesWrapper = styled.div`
   border: 1px solid #EEEEEC;
   box-sizing: border-box;
   height: 550px;
+
+  @media (min-width: 768px) {
+    max-width: 380px;
+  }
+  
+  
+
+  ${(props) => props.inIframe && 'margin: 0; border-bottom: none; box-shadow: none;'}
+
+  @media screen and (max-width: 767px) {
+  // Height and width will be controlled by iFrame
+  ${(props) => props.inIframe && `
+        width: 100%;
+        height: 100vh;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      `}
+}
 `;
 const Title = styled.h2`
+  font-size: bolder;
 `;
 
 const Description = styled.p`
@@ -48,12 +67,13 @@ const Row = styled.div`
   display: flex;
   width: 100%;
   align-items: flex-start;
+  font-weight: 400;
 `;
 
 function Devices() {
   const [collections, setCollections] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isDeleted, setisDeleted] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
@@ -114,7 +134,7 @@ function Devices() {
   };
 
   const onDeleteCollections = () => {
-    setisDeleted(true);
+    setIsDeleted(true);
     const list = deleteCollections
       .map((id) => {
         const target = collections.find((collection) => collection.id === id);
@@ -126,7 +146,7 @@ function Devices() {
 
     return controller.deleteDeviceCollections(list)
       .then(async () => {
-        setisDeleted(false);
+        setIsDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
         setDeleteCollections([]);
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
@@ -155,7 +175,7 @@ function Devices() {
         }
       }).catch((err) => {
         captureException(err);
-        setisDeleted(false);
+        setIsDeleted(false);
         console.log('Delete Failed', err);
       });
   };
@@ -169,7 +189,7 @@ function Devices() {
   return (
     <StyledContainer inIframe={inIframe()}>
 
-      <DevicesWrapper>
+      <DevicesWrapper inIframe={inIframe()}>
         <Title>Devices with Keys</Title>
 
         {isLoaded && <div>Loading...</div>}
