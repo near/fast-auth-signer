@@ -1,5 +1,5 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -33,6 +33,8 @@ function VerifyEmailPage() {
   // Send form height to modal if in iframe
   useIframeDialogConfig({ element: verifyRef.current });
 
+  const [inFlight, setInFlight] = useState(false);
+
   const [query] = useSearchParams();
 
   const handleResendEmail = async () => {
@@ -42,6 +44,7 @@ function VerifyEmailPage() {
       || !query.get('email')
       || !query.get('email').length
     ) return;
+    setInFlight(true);
 
     const accountId = query.get('accountId');
     const email = query.get('email');
@@ -88,6 +91,8 @@ function VerifyEmailPage() {
         type:  'ERROR',
         title: 'Something went wrong',
       });
+    } finally {
+      setInFlight(false);
     }
   };
 
@@ -113,7 +118,7 @@ function VerifyEmailPage() {
 
         <p>Check your inbox to activate your account.</p>
 
-        <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
+        <Button size="large" label={inFlight ? 'Sending...' : 'Resend'} disabled={inFlight} data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
       </VerifyForm>
     </StyledContainer>
   );
