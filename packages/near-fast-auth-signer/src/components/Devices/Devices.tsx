@@ -13,10 +13,8 @@ import { StyledContainer } from '../Layout';
 const DevicesWrapper = styled.div<{ inIframe?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 16px;
   padding: 20px;
-  justify-content: center;
-  align-items: center;
+  padding-bottom: 0;
   width: 385px;
   margin: 16px auto;
   background-color: #ffffff;
@@ -43,13 +41,21 @@ const DevicesWrapper = styled.div<{ inIframe?: boolean }>`
       `}
 }
 `;
+const DevicesWrapperInner = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  align-items: center;
+`;
 const Title = styled.h2`
-  font-size: bolder;
+  font-weight: bolder;
 `;
 
-const Description = styled.p`
+const Description = styled.p<{bold?: boolean}>`
   font-size: 15px;
-  font-weight: bold;
+  ${(props) => props.bold && 'font-weight: bold;'}
 `;
 
 const StyledCheckbox = styled.input`
@@ -70,10 +76,20 @@ const Row = styled.div`
   font-weight: 400;
 `;
 
+const DevicesBottom = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #EEEEEC;
+  width: 100%;
+  height: 70px;
+  margin: 5px 0;
+`;
+
 function Devices() {
   const [collections, setCollections] = useState([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
@@ -94,7 +110,7 @@ function Devices() {
   useEffect(() => {
     const getCollection = async () => {
       const deviceCollections = await controller.listDevices();
-      setIsLoaded(false);
+      setIsLoading(false);
       setCollections(deviceCollections);
     };
 
@@ -104,11 +120,11 @@ function Devices() {
       } else {
         window.fastAuthController.clearUser().then(() => {
           setVerifyEmailRequired(true);
-          setIsLoaded(false);
+          setIsLoading(false);
         });
       }
     });
-    setIsLoaded(true);
+    setIsLoading(true);
     if (controller.getUserOidcToken()) {
       getKeypairOrLogout();
     } else {
@@ -134,7 +150,7 @@ function Devices() {
   };
 
   const onDeleteCollections = () => {
-    setIsDeleted(true);
+    setIsDeleting(true);
     const list = deleteCollections
       .map((id) => {
         const target = collections.find((collection) => collection.id === id);
@@ -146,7 +162,6 @@ function Devices() {
 
     return controller.deleteDeviceCollections(list)
       .then(async () => {
-        setIsDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
         setDeleteCollections([]);
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
@@ -157,7 +172,7 @@ function Devices() {
           const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
-          const oidcToken = await controller.getUserOidcToken();
+          const oidcToken = controller.getUserOidcToken();
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,
@@ -175,62 +190,65 @@ function Devices() {
         }
       }).catch((err) => {
         captureException(err);
-        setIsDeleted(false);
         console.log('Delete Failed', err);
-      });
+      }).finally(() => setIsDeleting(false));
   };
 
   const deleteCollectionText = useMemo(() => {
-    if (isDeleted) return 'Deleting...';
+    if (isDeleting) return 'Deleting...';
     if (isAddingKey) return 'Signing In...';
     return `Delete key${deleteCollections.length > 1 ? 's' : ''}`;
-  }, [deleteCollections.length, isAddingKey, isDeleted]);
+  }, [deleteCollections.length, isAddingKey, isDeleting]);
 
   return (
     <StyledContainer inIframe={inIframe()}>
 
       <DevicesWrapper inIframe={inIframe()}>
-        <Title>Devices with Keys</Title>
+        <DevicesWrapperInner>
+          <Title>Devices with Keys</Title>
 
-        {isLoaded && <div>Loading...</div>}
+          {isLoading && <div>Loading...</div>}
 
-        {collections.length > 0 && (
-          <Description>
-            You have reached maximum number of keys. Please delete some keys to add new keys.
-          </Description>
-        )}
+          {isVerifyEmailRequired ? (
+            <>
+              <Description>
+                You need to verify your email address to use this feature.
+              </Description>
+              <Button
+                type="button"
+                onClick={redirectToSignin}
+              >
+                Redirect
+              </Button>
+            </>
+          ) : (
+            <>
+              {collections.length > 0 && (
+                <Description bold>
+                  You have reached maximum number of keys. Please delete some keys to add new keys.
+                </Description>
+              )}
 
-        {
-          isVerifyEmailRequired && (
-            <Description>
-              You need to verify your email address to use this feature
-            </Description>
-          )
-        }
-        {
-          collections.map((collection) => (
-            <Row key={collection.id}>
-              <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
-              <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
-            </Row>
-          ))
-        }
+              {
+                collections.map((collection) => (
+                  <Row key={collection.id}>
+                    <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
+                    <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
+                  </Row>
+                ))
+              }
+            </>
+          )}
+        </DevicesWrapperInner>
         {
           collections.length > 0 && (
-            <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleted}>
-              {deleteCollectionText}
-            </Button>
-          )
-        }
-        {
-          isVerifyEmailRequired && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={redirectToSignin}
-            >
-              Redirect
-            </Button>
+            <DevicesBottom>
+
+              <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleting}>
+                {deleteCollectionText}
+              </Button>
+
+            </DevicesBottom>
           )
         }
       </DevicesWrapper>

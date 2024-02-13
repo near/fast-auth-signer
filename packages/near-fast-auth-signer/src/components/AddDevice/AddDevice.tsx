@@ -113,7 +113,7 @@ function AddDevicePage() {
 
     // if different user is logged in, sign out
     await firebaseAuth.signOut();
-    // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
+    // once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
     window.localStorage.removeItem('webauthn_username');
 
     const success_url = searchParams.get('success_url');
@@ -222,7 +222,7 @@ function AddDevicePage() {
       // Add device
       window.firestoreController.updateUser({
         userUid:   firebaseUser.uid,
-        // User type is missing accessToken but it exist
+        // User type is missing accessToken but it exists
         oidcToken,
       });
 
@@ -256,7 +256,6 @@ function AddDevicePage() {
       .catch((error) => {
         console.log('error', error);
         captureException(error);
-
         window.parent.postMessage({
           type:    'AddDeviceError',
           message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
@@ -287,7 +286,12 @@ function AddDevicePage() {
         await addDevice({ email: data.email });
       }
     } catch (e) {
-      console.log('error ', e);
+      console.error('Error occurred during form submission:', e);
+      // Display error to the user
+      openToast({
+        type:  'ERROR',
+        title: 'An error occurred. Please try again later.',
+      });
     }
   };
 
