@@ -93,7 +93,10 @@ function Devices() {
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
-  const controller = useMemo(() => new FirestoreController(), []);
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak')) || decodeIfTruthy(searchParams.get('public_key'));
@@ -106,15 +109,14 @@ function Devices() {
       setDeleteCollections([...deleteCollections, id]);
     }
   };
-
   useEffect(() => {
     const getCollection = async () => {
-      const deviceCollections = await controller.listDevices();
+      const deviceCollections = await window.firestoreController.listDevices();
       setIsLoading(false);
       setCollections(deviceCollections);
     };
 
-    const getKeypairOrLogout = () => window.fastAuthController.findInKeyStores(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
+    const getKeypairOrLogout = () => window.fastAuthController.findInKeyStores(`oidc_keypair_${window.firestoreController.getUserOidcToken()}`).then((keypair) => {
       if (keypair) {
         getCollection();
       } else {
@@ -125,10 +127,10 @@ function Devices() {
       }
     });
     setIsLoading(true);
-    if (controller.getUserOidcToken()) {
+    if (window.firestoreController.getUserOidcToken()) {
       getKeypairOrLogout();
     } else {
-      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
+      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(window.firestoreController.getUserOidcToken).then((token) => {
         if (!token) {
           setVerifyEmailRequired(true);
         } else {
@@ -136,7 +138,7 @@ function Devices() {
         }
       });
     }
-  }, [controller]);
+  }, []);
 
   const redirectToSignin = () => {
     if (inIframe()) {
@@ -160,19 +162,18 @@ function Devices() {
         };
       });
 
-    return controller.deleteDeviceCollections(list)
+    return window.firestoreController.deleteDeviceCollections(list)
       .then(async () => {
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
         setDeleteCollections([]);
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-
         if (contract_id && public_key_lak) {
           setIsAddingKey(true);
 
           const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
-          const oidcToken = controller.getUserOidcToken();
+          const oidcToken = window.firestoreController.getUserOidcToken();
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,
