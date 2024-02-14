@@ -98,6 +98,7 @@ function AddDevicePage() {
     (async function () {
       try {
         const isPasskeySupported = await isPassKeyAvailable();
+        console.log('isPasskeySupported ', isPasskeySupported);
         if (isPasskeySupported) {
           setValue('email', safeGetLocalStorage('webauthn_username') ?? '');
         }
