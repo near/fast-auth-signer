@@ -130,13 +130,14 @@ function Devices() {
     if (window.firestoreController.getUserOidcToken()) {
       getKeypairOrLogout();
     } else {
-      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(window.firestoreController.getUserOidcToken).then((token) => {
-        if (!token) {
-          setVerifyEmailRequired(true);
-        } else {
-          getKeypairOrLogout();
-        }
-      });
+      (new Promise((resolve) => { setTimeout(resolve, 5000); }))
+        .then(window.firestoreController.getUserOidcToken).then((token) => {
+          if (!token) {
+            setVerifyEmailRequired(true);
+          } else {
+            getKeypairOrLogout();
+          }
+        });
     }
   }, []);
 
