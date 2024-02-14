@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 
 import { network } from '../utils/config';
@@ -9,35 +10,26 @@ import {
  * Fetches the account IDs associated with a given public key.
  *
  * @param publicKey - The public key to fetch the account IDs for.
- * @param options - An object containing the following properties:
- * - returnEmpty: A boolean indicating whether to return an empty array if no account IDs are found.
  * @returns A promise that resolves to an array of account IDs.
  * @throws Will throw an error if the fetch request fails.
  */
-
-type Option= {
-  returnEmpty?: boolean;
-}
-export const fetchAccountIds = async (publicKey: string, options?: Option): Promise<string[]> => {
-  // retrieve from firebase
-  let accountIds = [];
-  if (publicKey) {
-    if (window.firestoreController) {
-      const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
-      if (accountId) {
-        return [accountId];
-      }
-    }
-    // retrieve from kitwallet
-    const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    accountIds = await res.json();
+export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
+  const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
   }
 
-  if (accountIds.length === 0 && !options?.returnEmpty) {
-    throw new Error('Unable to retrieve account id');
+  let accountIds: string[] = await res.json();
+
+  if (accountIds.length === 0) {
+    const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
+    accountIds =  accountId ? [accountId] : [];
+  }
+
+  if (accountIds.length === 0) {
+    const noAccountIdError = new Error('Unable to retrieve account id');
+    captureException(noAccountIdError);
+    throw noAccountIdError;
   }
 
   return accountIds;

@@ -103,11 +103,10 @@ export const onSignIn = async ({
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetchAccountIds(recoveryPK);
-
-  if (!accountIds.length) {
+  const accountIds = await fetchAccountIds(recoveryPK).catch(() => {
     throw new Error('Account not found, please create an account and try again');
-  }
+  });
+
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
