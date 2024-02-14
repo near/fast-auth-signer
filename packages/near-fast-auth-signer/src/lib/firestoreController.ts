@@ -35,11 +35,6 @@ class FirestoreController {
   async getAccountIdFromOidcToken() {
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
     const accountIds = await fetchAccountIds(recoveryPK);
-    if (!accountIds.length) {
-      const noAccountIdError = new Error('Unable to retrieve account Id');
-      captureException(noAccountIdError);
-      throw noAccountIdError;
-    }
     return accountIds[0];
   }
 
@@ -123,39 +118,37 @@ class FirestoreController {
       await (window as any).fastAuthController.claimOidcToken(this.oidcToken);
     }
 
-    if (!window.fastAuthController.getAccountId()) {
-      const accountId = await this.getAccountIdFromOidcToken();
-      window.fastAuthController.setAccountId(accountId);
-    }
+    const accountId = await this.getAccountIdFromOidcToken();
+    window.fastAuthController.setAccountId(accountId);
 
     const accessKeysWithoutRecoveryKey = await window.fastAuthController
       .getAllAccessKeysExceptRecoveryKey(this.oidcToken);
 
     // TODO: from the list, exclude record that has same key from recovery service
-    return accessKeysWithoutRecoveryKey.reduce((list, key) => {
-      const exist = list.find((c) => c.publicKeys.includes(key));
-      if (exist) {
-        return list;
+    return accessKeysWithoutRecoveryKey.map((key) => {
+      const item = collections.find((col) => col.publicKeys.includes(key));
+      if (item) {
+        return item;
       }
-
-      // If there are any keys that are absent from firestore, show them as unknown
-      return [
-        ...list,
-        {
-          id:         key,
-          firebaseId: null,
-          label:      'Unknown Device',
-          createdAt:  'Unknown',
-          publicKeys: [key],
-        }
-      ];
-    }, collections);
+      return {
+        id:         key,
+        firebaseId: null,
+        label:      'Unknown Device',
+        createdAt:  'Unknown',
+        publicKeys: [key],
+      };
+    });
   }
 
   async deleteDeviceCollections(list) {
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
     const accountIds = await fetchAccountIds(recoveryPK);
 
+    if (!accountIds.length) {
+      const noAccountIdError = new Error('Unable to retrieve account Id');
+      captureException(noAccountIdError);
+      throw noAccountIdError;
+    }
     // delete firebase records
     try {
       const firestoreIds = list
