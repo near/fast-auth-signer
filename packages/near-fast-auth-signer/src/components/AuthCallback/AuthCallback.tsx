@@ -13,7 +13,6 @@ import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
-import { getCookieValue } from '../../utils/cookie';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
@@ -204,7 +203,7 @@ function AuthCallbackPage() {
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
-        const email = getCookieValue('emailForSignIn');
+        const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {
           const parsedUrl = new URL(

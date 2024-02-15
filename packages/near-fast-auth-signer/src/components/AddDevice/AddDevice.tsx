@@ -23,7 +23,6 @@ import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';
 import { basePath } from '../../utils/config';
-import { setCookie } from '../../utils/cookie';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
@@ -48,8 +47,7 @@ export const handleCreateAccount = async ({
     handleCodeInApp: true,
   });
 
-  setCookie('emailForSignIn', email, 1);
-
+  window.localStorage.setItem('emailForSignIn', email);
   return {
     accountId,
   };
@@ -98,7 +96,6 @@ function AddDevicePage() {
     (async function () {
       try {
         const isPasskeySupported = await isPassKeyAvailable();
-        console.log('isPasskeySupported ', isPasskeySupported);
         if (isPasskeySupported) {
           setValue('email', safeGetLocalStorage('webauthn_username') ?? '');
         }
