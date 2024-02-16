@@ -22,7 +22,6 @@ import { openToast } from '../../lib/Toast';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';
-import { isSafariBrowser } from '../../utils/browser';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
@@ -40,10 +39,6 @@ export const handleCreateAccount = async ({
     ...(contract_id ? { contract_id } : {}),
     ...(methodNames ? { methodNames } : {})
   });
-
-  if (isSafariBrowser()) {
-    searchParams.set('email', email);
-  }
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(

@@ -12,7 +12,6 @@ import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
-import { isSafariBrowser } from '../../utils/browser';
 import { basePath, networkId } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
@@ -207,13 +206,10 @@ function AuthCallbackPage() {
         let email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {
-          let defaultPromptValue = '';
-          if (isSafariBrowser()) {
-            defaultPromptValue = decodeIfTruthy(searchParams.get('email'));
-            // eslint-disable-next-line no-alert
-            email = window.prompt('Please provide your email for confirmation', defaultPromptValue);
-          }
-          /*          if (!email) {
+          const defaultPromptValue = '';
+          // eslint-disable-next-line no-alert
+          email = window.prompt('Please provide your email for confirmation', defaultPromptValue);
+          if (!email) {
             const parsedUrl = new URL(
               failure_url && isUrlNotJavascriptProtocol(failure_url)
                 ? failure_url
@@ -222,7 +218,7 @@ function AuthCallbackPage() {
             parsedUrl.searchParams.set('code', '500');
             parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
             window.location.replace(parsedUrl.href);
-          } */
+          }
         }
 
         if (!window.firestoreController) {
