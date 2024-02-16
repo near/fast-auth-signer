@@ -69,7 +69,8 @@ function VerifyEmailPage() {
         url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,
       });
-      window.localStorage.setItem('emailForSignIn', email);
+      window.setLocalStorageItem('emailForSignIn', email);
+      // window.localStorage.setItem('emailForSignIn', email);
 
       openToast({
         type:  'SUCCESS',
