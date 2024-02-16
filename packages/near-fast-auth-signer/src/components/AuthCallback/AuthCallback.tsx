@@ -210,9 +210,9 @@ function AuthCallbackPage() {
           let defaultPromptValue = '';
           if (isSafariBrowser()) {
             defaultPromptValue = decodeIfTruthy(searchParams.get('email'));
+            // eslint-disable-next-line no-alert
+            email = window.prompt('Please provide your email for confirmation', defaultPromptValue);
           }
-          // eslint-disable-next-line no-alert
-          email = window.prompt('Please provide your email for confirmation', defaultPromptValue);
           if (!email) {
             const parsedUrl = new URL(
               failure_url && isUrlNotJavascriptProtocol(failure_url)
