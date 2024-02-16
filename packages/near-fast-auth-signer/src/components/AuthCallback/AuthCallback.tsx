@@ -213,7 +213,7 @@ function AuthCallbackPage() {
             // eslint-disable-next-line no-alert
             email = window.prompt('Please provide your email for confirmation', defaultPromptValue);
           }
-          if (!email) {
+          /*          if (!email) {
             const parsedUrl = new URL(
               failure_url && isUrlNotJavascriptProtocol(failure_url)
                 ? failure_url
@@ -222,7 +222,7 @@ function AuthCallbackPage() {
             parsedUrl.searchParams.set('code', '500');
             parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
             window.location.replace(parsedUrl.href);
-          }
+          } */
         }
 
         if (!window.firestoreController) {
