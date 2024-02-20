@@ -13,16 +13,18 @@ import {
  * @throws Will throw an error if the fetch request fails.
  */
 export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
-  const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
+  let accountIds: string[] = [];
+  if (publicKey) {
+    const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
+    accountIds = accountId ? [accountId] : [];
   }
 
-  let accountIds: string[] = await res.json();
-
   if (accountIds.length === 0) {
-    const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
-    accountIds =  accountId ? [accountId] : [];
+    const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    accountIds = await res.json();
   }
 
   if (accountIds.length === 0) {

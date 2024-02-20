@@ -34,8 +34,8 @@ class FirestoreController {
 
   async getAccountIdFromOidcToken() {
     const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
-    const accountIds = await fetchAccountIds(recoveryPK);
-
+    const cachedAccountIds = await window.fastAuthController.getAccounts();
+    const accountIds = cachedAccountIds.length ? cachedAccountIds : await fetchAccountIds(recoveryPK);
     if (!accountIds.length) {
       const noAccountIdError = new Error('Unable to retrieve account Id');
       captureException(noAccountIdError);
