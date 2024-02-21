@@ -21,7 +21,7 @@ type Option= {
   returnEmpty?: boolean;
 }
 export const fetchAccountIds = async (publicKey: string, options?: Option): Promise<string[]> => {
-  if (window.firestoreController && !options?.skipCache) {
+  if (window.fastAuthController && !options?.skipCache) {
     const cachedAccountIds = await window.fastAuthController.getAccounts();
 
     if (cachedAccountIds.length) {
@@ -30,19 +30,19 @@ export const fetchAccountIds = async (publicKey: string, options?: Option): Prom
   }
 
   // retrieve from firebase
+  let accountIds = [];
   if (publicKey) {
     const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
     if (accountId) {
       return [accountId];
     }
+    // retrieve from kitwallet
+    const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    accountIds = await res.json();
   }
-
-  // retrieve from kitwallet
-  const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  const accountIds = await res.json();
 
   if (accountIds.length === 0 && !options?.returnEmpty) {
     throw new Error('Unable to retrieve account id');
