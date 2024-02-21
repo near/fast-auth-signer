@@ -102,8 +102,7 @@ export const onSignIn = async ({
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const cachedAccountIds = await window.fastAuthController.getAccounts();
-  const accountIds = cachedAccountIds.length ? cachedAccountIds : await fetchAccountIds(recoveryPK);
+  const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
 
   if (!accountIds.length) {
     throw new Error('Account not found, please create an account and try again');

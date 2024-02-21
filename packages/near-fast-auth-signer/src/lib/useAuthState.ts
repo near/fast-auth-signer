@@ -42,7 +42,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
           const keypairs = await getKeys(webauthnUsername);
           const accounts = await Promise.allSettled(
             keypairs.map(async (k) => {
-              const accIds = await fetchAccountIds(k.getPublicKey().toString());
+              const accIds = await fetchAccountIds(k.getPublicKey().toString(), { skipCache: true, returnEmpty: true });
               return accIds.map((accId) => { return { accId, keyPair: k }; });
             })
           );
