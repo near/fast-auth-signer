@@ -9,25 +9,42 @@ import {
  * Fetches the account IDs associated with a given public key.
  *
  * @param publicKey - The public key to fetch the account IDs for.
+ * @param options - An object containing the following properties:
+ * - skipCache: A boolean indicating whether to skip the cache and fetch the account IDs from the external source.
+ * - returnEmpty: A boolean indicating whether to return an empty array if no account IDs are found.
  * @returns A promise that resolves to an array of account IDs.
  * @throws Will throw an error if the fetch request fails.
  */
-export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
-  let accountIds: string[] = [];
+
+type Option= {
+  skipCache?: boolean;
+  returnEmpty?: boolean;
+}
+export const fetchAccountIds = async (publicKey: string, options?: Option): Promise<string[]> => {
+  if (window.firestoreController && !options?.skipCache) {
+    const cachedAccountIds = await window.fastAuthController.getAccounts();
+
+    if (cachedAccountIds.length) {
+      return cachedAccountIds;
+    }
+  }
+
+  // retrieve from firebase
   if (publicKey) {
     const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
-    accountIds = accountId ? [accountId] : [];
-  }
-
-  if (accountIds.length === 0) {
-    const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    if (accountId) {
+      return [accountId];
     }
-    accountIds = await res.json();
   }
 
-  if (accountIds.length === 0) {
+  // retrieve from kitwallet
+  const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  const accountIds = await res.json();
+
+  if (accountIds.length === 0 && !options?.returnEmpty) {
     throw new Error('Unable to retrieve account id');
   }
 
