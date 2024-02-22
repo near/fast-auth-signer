@@ -1,5 +1,4 @@
 import { captureException } from '@sentry/react';
-import { User } from 'firebase/auth';
 import {
   getFirestore, Firestore, collection, setDoc, getDoc, getDocs, query, doc, CollectionReference,
   deleteDoc,
@@ -7,33 +6,19 @@ import {
 import UAParser from 'ua-parser-js';
 
 import { fetchAccountIds } from '../api';
-import { checkFirestoreReady, firebaseApp, firebaseAuth } from '../utils/firebase';
+import { firebaseApp, firebaseAuth } from '../utils/firebase';
 import { getDeleteKeysAction } from '../utils/mpc-service';
 import { Device } from '../utils/types';
 
 class FirestoreController {
   private firestore: Firestore;
 
-  private userUid: string;
-
-  private oidcToken: string;
-
   constructor() {
     this.firestore = getFirestore(firebaseApp);
-
-    firebaseAuth.onIdTokenChanged(async (user: User) => {
-      if (!user) {
-        return;
-      }
-      this.userUid = user.uid;
-      this.oidcToken = await user.getIdToken();
-    });
-
-    checkFirestoreReady();
   }
 
-  async getAccountIdFromOidcToken() {
-    const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
+  static async getAccountIdFromOidcToken() {
+    const recoveryPK = await window.fastAuthController.getUserCredential(await firebaseAuth.currentUser?.getIdToken());
     const accountIds = await fetchAccountIds(recoveryPK);
     if (!accountIds.length) {
       const noAccountIdError = new Error('Unable to retrieve account Id');
@@ -68,12 +53,12 @@ class FirestoreController {
       }
 
       if (fakPublicKey) {
-        const fakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, fakPublicKey), {
+        const fakDoc = setDoc(doc(this.firestore, `/users/${firebaseAuth.currentUser?.uid}/devices`, fakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
           publicKeys: [fakPublicKey],
-          uid:        this.userUid,
+          uid:        firebaseAuth.currentUser?.uid,
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'fak',
@@ -82,12 +67,12 @@ class FirestoreController {
       }
 
       if (lakPublicKey) {
-        const lakDoc = setDoc(doc(this.firestore, `/users/${this.userUid}/devices`, lakPublicKey), {
+        const lakDoc = setDoc(doc(this.firestore, `/users/${firebaseAuth.currentUser?.uid}/devices`, lakPublicKey), {
           device:     `${device.vendor} ${device.model}`,
           os:         `${os.name} ${os.version}`,
           browser:    `${browser.name} ${browser.version}`,
           publicKeys: [lakPublicKey],
-          uid:        this.userUid,
+          uid:        firebaseAuth.currentUser?.uid,
           gateway:    gateway || 'Unknown Gateway',
           dateTime,
           keyType:    'lak',
@@ -103,7 +88,7 @@ class FirestoreController {
   }
 
   async listDevices() {
-    const q = query(collection(this.firestore, `/users/${this.userUid}/devices`) as CollectionReference<Device>);
+    const q = query(collection(this.firestore, `/users/${firebaseAuth.currentUser?.uid}/devices`) as CollectionReference<Device>);
     const querySnapshot = await getDocs(q);
     const collections = [];
 
@@ -118,18 +103,18 @@ class FirestoreController {
       });
     });
 
-    const existingKeyPair = window.fastAuthController.findInKeyStores(`oidc_keypair_${this.oidcToken}`);
+    const existingKeyPair = window.fastAuthController.findInKeyStores(`oidc_keypair_${await firebaseAuth.currentUser?.getIdToken()}`);
     if (!existingKeyPair) {
-      await (window as any).fastAuthController.claimOidcToken(this.oidcToken);
+      await window.fastAuthController.claimOidcToken(await firebaseAuth.currentUser?.getIdToken());
     }
 
     if (!window.fastAuthController.getAccountId()) {
-      const accountId = await this.getAccountIdFromOidcToken();
+      const accountId = await FirestoreController.getAccountIdFromOidcToken();
       window.fastAuthController.setAccountId(accountId);
     }
 
     const accessKeysWithoutRecoveryKey = await window.fastAuthController
-      .getAllAccessKeysExceptRecoveryKey(this.oidcToken);
+      .getAllAccessKeysExceptRecoveryKey(await firebaseAuth.currentUser?.getIdToken());
 
     // TODO: from the list, exclude record that has same key from recovery service
     return accessKeysWithoutRecoveryKey.reduce((list, key) => {
@@ -153,7 +138,7 @@ class FirestoreController {
   }
 
   async deleteDeviceCollections(list) {
-    const recoveryPK = await window.fastAuthController.getUserCredential(this.oidcToken);
+    const recoveryPK = await window.fastAuthController.getUserCredential(await firebaseAuth.currentUser?.getIdToken());
     const accountIds = await fetchAccountIds(recoveryPK);
 
     // delete firebase records
@@ -164,7 +149,7 @@ class FirestoreController {
       if (firestoreIds.length) {
         // delete all records except the one that has LAK
         const deletePromises = firestoreIds.flatMap((id) => [
-          deleteDoc(doc(this.firestore, `/users/${this.userUid}/devices`, id)),
+          deleteDoc(doc(this.firestore, `/users/${firebaseAuth.currentUser?.uid}/devices`, id)),
           deleteDoc(doc(this.firestore, '/publicKeys', id))
         ]);
         await Promise.allSettled(deletePromises);
@@ -179,7 +164,7 @@ class FirestoreController {
       const publicKeys = list.reduce((acc, curr) => acc.concat(curr.publicKeys), []);
       const deleteAction = getDeleteKeysAction(publicKeys);
       await (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-        oidcToken: this.oidcToken,
+        oidcToken: await firebaseAuth.currentUser?.getIdToken(),
         accountId: accountIds[0],
         recoveryPK,
         actions:   deleteAction
@@ -191,7 +176,7 @@ class FirestoreController {
   }
 
   async getDeviceCollection(fakPublicKey) {
-    const docRef = doc(this.firestore, 'users', this.userUid, 'devices', fakPublicKey);
+    const docRef = doc(this.firestore, 'users', firebaseAuth.currentUser?.uid, 'devices', fakPublicKey);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -200,15 +185,9 @@ class FirestoreController {
     return null;
   }
 
-  updateUser = async ({
-    userUid,
-    oidcToken,
-  }) => {
-    this.userUid = userUid;
-    this.oidcToken = oidcToken;
-  };
-
-  getUserOidcToken = () => this.oidcToken;
+  static async getUserOidcToken() {
+    return firebaseAuth.currentUser?.getIdToken();
+  }
 
   async addAccountIdPublicKey(publicKey: string, accountId: string) {
     await setDoc(doc(this.firestore, 'publicKeys', publicKey), {

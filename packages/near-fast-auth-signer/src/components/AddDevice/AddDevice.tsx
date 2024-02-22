@@ -94,9 +94,6 @@ function SignInPage() {
   const skipGetKey = decodeIfTruthy(searchParams.get('skipGetKey'));
   const { authenticated } = useAuthState(skipGetKey);
   const [renderRedirectButton, setRenderRedirectButton] = useState('');
-  if (!window.firestoreController) {
-    window.firestoreController = new FirestoreController();
-  }
 
   const addDevice = useCallback(async (data: any) => {
     if (!data.email) return;
@@ -177,9 +174,8 @@ function SignInPage() {
           : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
-        // @ts-ignore
-        const oidcToken = user.accessToken;
-        const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
+        const recoveryPK = await window.fastAuthController
+          .getUserCredential(await FirestoreController.getUserOidcToken());
 
         // if given lak key is already attached to webAuthN public key, no need to add it again
         const noNeedToAddKey = existingDeviceLakKey === public_key;
@@ -208,13 +204,6 @@ function SignInPage() {
             navigate(`/devices?${searchParams.toString()}`);
             return null;
           }
-
-          // Add device
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            // User type is missing accessToken but it exist
-            oidcToken,
-          });
 
           // Since FAK is already added, we only add LAK
           return window.firestoreController.addDeviceCollection({

@@ -1,5 +1,5 @@
 import { captureException } from '@sentry/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 
@@ -48,7 +48,6 @@ function Devices() {
   const [isAddingKey, setIsAddingKey] = useState(false);
   const [isVerifyEmailRequired, setVerifyEmailRequired] = useState(false);
   const [deleteCollections, setDeleteCollections] = useState([]);
-  const controller = useMemo(() => new FirestoreController(), []);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak')) || decodeIfTruthy(searchParams.get('public_key'));
@@ -64,34 +63,42 @@ function Devices() {
 
   useEffect(() => {
     const getCollection = async () => {
-      const deviceCollections = await controller.listDevices();
+      const deviceCollections = await window.firestoreController.listDevices();
       setIsLoaded(false);
       setCollections(deviceCollections);
     };
 
-    const getKeypairOrLogout = () => window.fastAuthController.findInKeyStores(`oidc_keypair_${controller.getUserOidcToken()}`).then((keypair) => {
-      if (keypair) {
-        getCollection();
-      } else {
-        window.fastAuthController.clearUser().then(() => {
-          setVerifyEmailRequired(true);
-          setIsLoaded(false);
-        });
-      }
-    });
-    setIsLoaded(true);
-    if (controller.getUserOidcToken()) {
-      getKeypairOrLogout();
-    } else {
-      (new Promise((resolve) => { setTimeout(resolve, 5000); })).then(controller.getUserOidcToken).then((token) => {
-        if (!token) {
-          setVerifyEmailRequired(true);
+    const getKeypairOrLogout = async () => window.fastAuthController
+      .findInKeyStores(`oidc_keypair_${await FirestoreController.getUserOidcToken()}`)
+      .then((keypair) => {
+        if (keypair) {
+          getCollection();
         } else {
-          getKeypairOrLogout();
+          window.fastAuthController.clearUser().then(() => {
+            setVerifyEmailRequired(true);
+            setIsLoaded(false);
+          });
         }
       });
-    }
-  }, [controller]);
+    setIsLoaded(true);
+
+    const verifyUserAuthenticationStatus = async () => {
+      if (await FirestoreController.getUserOidcToken()) {
+        getKeypairOrLogout();
+      } else {
+        (new Promise((resolve) => { setTimeout(resolve, 5000); }))
+          .then(FirestoreController.getUserOidcToken).then((token) => {
+            if (!token) {
+              setVerifyEmailRequired(true);
+            } else {
+              getKeypairOrLogout();
+            }
+          });
+      }
+    };
+
+    verifyUserAuthenticationStatus();
+  }, []);
 
   const redirectToSignin = () => {
     if (inIframe()) {
@@ -115,7 +122,7 @@ function Devices() {
         };
       });
 
-    return controller.deleteDeviceCollections(list)
+    return window.firestoreController.deleteDeviceCollections(list)
       .then(async () => {
         setisDeleted(false);
         setCollections(collections.filter((collection) => (!deleteCollections.includes(collection.id))));
@@ -128,7 +135,7 @@ function Devices() {
           const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
-          const oidcToken = await controller.getUserOidcToken();
+          const oidcToken = await FirestoreController.getUserOidcToken();
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,

@@ -174,7 +174,6 @@ class FastAuthController {
       });
     } catch {
       // fallback, non webAuthN supported browser
-      // @ts-ignore
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
       const recoveryPK = await this.getUserCredential(oidcToken);
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
@@ -284,8 +283,7 @@ class FastAuthController {
     }
   }
 
-  async getUserCredential(oidcToken) {
-    // @ts-ignore
+  async getUserCredential(oidcToken: string) {
     const GET_USER_SALT = CLAIM + 2;
     const keypair = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
 
