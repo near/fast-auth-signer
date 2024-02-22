@@ -22,9 +22,11 @@ export const fetchAccountIds = async (publicKey: string, options?: Option): Prom
   // retrieve from firebase
   let accountIds = [];
   if (publicKey) {
-    const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
-    if (accountId) {
-      return [accountId];
+    if (window.firestoreController) {
+      const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
+      if (accountId) {
+        return [accountId];
+      }
     }
     // retrieve from kitwallet
     const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
