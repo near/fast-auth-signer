@@ -258,6 +258,7 @@ function SignInPage() {
         // once it has email but not authenicated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
         window.localStorage.removeItem('webauthn_username');
         addDevice({ email });
+        window.fastAuthController.setAccountId('');
       }
     };
 
