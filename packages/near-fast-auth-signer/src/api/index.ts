@@ -10,25 +10,15 @@ import {
  *
  * @param publicKey - The public key to fetch the account IDs for.
  * @param options - An object containing the following properties:
- * - skipCache: A boolean indicating whether to skip the cache and fetch the account IDs from the external source.
  * - returnEmpty: A boolean indicating whether to return an empty array if no account IDs are found.
  * @returns A promise that resolves to an array of account IDs.
  * @throws Will throw an error if the fetch request fails.
  */
 
 type Option= {
-  skipCache?: boolean;
   returnEmpty?: boolean;
 }
 export const fetchAccountIds = async (publicKey: string, options?: Option): Promise<string[]> => {
-  if (window.fastAuthController && !options?.skipCache) {
-    const cachedAccountIds = await window.fastAuthController.getAccounts();
-
-    if (cachedAccountIds.length) {
-      return cachedAccountIds;
-    }
-  }
-
   // retrieve from firebase
   let accountIds = [];
   if (publicKey) {
