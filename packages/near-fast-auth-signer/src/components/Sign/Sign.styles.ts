@@ -18,7 +18,7 @@ export const ModalSignWrapper = styled.div`
     font-weight: 500;
     color: #1b1b1b;
       &.error {
-		    color: #A81500;
+        color: #A81500;
       }
     }
   .modal-top {

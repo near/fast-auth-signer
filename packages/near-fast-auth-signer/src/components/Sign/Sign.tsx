@@ -267,9 +267,12 @@ function Sign() {
               />
             </div>
           </div>
-          {/* eslint-disable-next-line */}
-      <div className="more-details" onClick={() => setShowDetails(!showDetails)}>
-        More details
+          {/*          eslint-disable-next-line */}
+          <div
+            className="more-details"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            More details
             <span>{showDetails ? <ArrowUpSvg /> : <ArrowDownSvg />}</span>
           </div>
           {showDetails && (

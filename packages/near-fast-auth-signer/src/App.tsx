@@ -1,7 +1,7 @@
 import debug from 'debug';
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  Navigate, Route, BrowserRouter as Router, Routes, useLocation
+  Route, BrowserRouter as Router, Routes
 } from 'react-router-dom';
 
 import AddDevice from './components/AddDevice/AddDevice';

@@ -4,7 +4,7 @@ import {
   useCallback, useEffect, useRef, useState
 } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
@@ -140,8 +140,6 @@ function CreateAccount() {
 
   const formsEmail = watch('email');
   const formsUsername = watch('username');
-
-  const navigate = useNavigate();
 
   const createAccount = useCallback(async (data: { email: string; username: string; }) => {
     setInFlight(true);
