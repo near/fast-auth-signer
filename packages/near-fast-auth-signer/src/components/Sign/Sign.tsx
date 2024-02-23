@@ -12,13 +12,14 @@ import {
 } from './Values/fiatValueManager';
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
-import { useAuthState } from '../../hooks/useAuthState';
+import { getAuthState } from '../../hooks/useAuthState';
+import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
 import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
-import { isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
+import { inIframe, isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
@@ -78,9 +79,16 @@ function Sign() {
     element: signTransactionRef.current,
     onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
   });
+  // const { authenticated } = useAuthState();
+  const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
+  const [inFlight, setInFlight] = useState(false);
+  const [error, setError] = useState(null);
 
   const [searchParams] = useSearchParams();
-  const callbackUrl = useMemo(() => searchParams.get('success_url') || searchParams.get('failure_url'), [searchParams]);
+  const callbackUrl = useMemo(() => {
+    const url = new URL(searchParams.get('success_url') || searchParams.get('failure_url'));
+    return url.origin;
+  }, [searchParams]);
   const [transactionDetails, setTransactionDetails] =    useState<TransactionDetails>({
     signerId:    '',
     receiverId:  '',
@@ -93,7 +101,6 @@ function Sign() {
     transactions: [],
     actions:      [],
   });
-  const { authenticated } = useAuthState();
   const [showDetails, setShowDetails] = useState(false);
 
   const storeFetchedUsdValues = fiatValuesStore(
@@ -101,14 +108,23 @@ function Sign() {
   );
 
   useEffect(() => {
-    if (!authenticated) {
-      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
-      const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      url.searchParams.append('error', 'User not authenticated');
-      window.location.replace(url);
-      window.parent.postMessage({ signedDelegates: '', error: 'User not authenticated' }, '*');
-    }
+    (async function () {
+      console.log('Running effects ');
+      const authenticated = getAuthState(firebaseUser?.email);
+      if (!authenticated) {
+        const errorMessage = 'User not authenticated';
+        if (inIframe()) {
+          setError(errorMessage);
+        } else {
+          const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+          const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
+          const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+          url.searchParams.append('error', errorMessage);
+          window.location.replace(url);
+          window.parent.postMessage({ signedDelegates: '', error: errorMessage }, '*');
+        }
+      }
+    }());
 
     const transactionHashes = searchParams.get('transactions');
     try {
@@ -134,12 +150,16 @@ function Sign() {
         actions:      allActions,
       });
     } catch (err) {
-      const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
-      const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('code', err.code);
-      parsedUrl.searchParams.set('reason', err.message);
-      window.location.replace(parsedUrl.href);
-      window.parent.postMessage({ signedDelegates: '', error: err.message, code: err.code }, '*');
+      if (inIframe()) {
+        window.parent.postMessage({ signedDelegates: '', error: err.message, code: err.code }, '*');
+        setError(err.message);
+      } else {
+        const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
+        const parsedUrl = new URL(failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+        parsedUrl.searchParams.set('code', err.code);
+        parsedUrl.searchParams.set('reason', err.message);
+        window.location.replace(parsedUrl.href);
+      }
       return;
     }
 
@@ -150,8 +170,7 @@ function Sign() {
       .catch(() => {
         console.warn('Coin Gecko Error');
       });
-  // eslint-disable-next-line
-  }, []);
+  }, [firebaseUser?.email, searchParams, storeFetchedUsdValues]);
 
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
@@ -177,109 +196,129 @@ function Sign() {
   };
 
   const onConfirm = async () => {
-    if (authenticated === true) {
-      const signedTransactions = [];
-      const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-      for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
-        try {
-          // eslint-disable-next-line
-          const signed = await (
-            window as any
-          ).fastAuthController.signDelegateAction(
-            transactionDetails.transactions[i]
-          );
-          const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
-            'base64'
-          );
-          signedTransactions.push(base64);
-        } catch (err) {
+    setError(null);
+    setInFlight(true);
+    const isUserAuthenticated = await getAuthState(firebaseUser?.email, true);
+    if (isUserAuthenticated !== true) {
+      setError('You are not authenticated!');
+      setInFlight(false);
+      return;
+    }
+    const signedTransactions = [];
+    const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+    for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const signed = await window.fastAuthController.signDelegateAction(
+          transactionDetails.transactions[i]
+        );
+        const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
+          'base64'
+        );
+        signedTransactions.push(base64);
+      } catch (err) {
+        console.log('Sign error ', err);
+        if (inIframe()) {
+          setError(`An error occurred: ${err.message}`);
+          setInFlight(false);
+          window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
+        } else {
           const failure_url = searchParams.get('failure_url');
           redirectWithError({ success_url, failure_url, error: err });
-          window.parent.postMessage({ signedDelegates: '', error: err.message }, '*');
-          return;
         }
+        return;
       }
+    }
+    if (inIframe()) {
+      window.parent.postMessage({ signedDelegates: signedTransactions.join(',') }, '*');
+    } else {
       const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
-      window.parent.postMessage({ signedDelegates: signedTransactions.join(',') }, '*');
     }
+
+    setInFlight(false);
   };
 
   return (
     <ModalSignWrapper ref={signTransactionRef}>
-      <div className="modal-top">
-        <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
-        <h4>Confirm transaction</h4>
+      {firebaseUser && (
+        <>
+          <div className="modal-top">
+            <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
+            <h4>Confirm transaction</h4>
 
-        <div className="transaction-details">
-          <InternetSvg />
-          {callbackUrl || 'Unknown App'}
-        </div>
-      </div>
-      <div className="modal-middle">
-        <div className="table-wrapper">
-          <TableContent
-            leftSide="From"
-            rightSide={transactionDetails.signerId}
-          />
-          <TableContent
-            leftSide="Total"
-            infoText="The estimated total of your transaction including fees."
-            rightSide={`${totalNearAmount()} NEAR`}
-            currencyValue={`$${totalUsdAmount}`}
-          />
-        </div>
-      </div>
-      {/* eslint-disable-next-line */}
-      <div
-        className="more-details"
-        onClick={() => setShowDetails(!showDetails)}
-      >
-        More details
-        <span>{showDetails ? <ArrowUpSvg /> : <ArrowDownSvg />}</span>
-      </div>
-      {showDetails && (
-        <div className="more-details-opened">
-          <div className="table-wrapper">
-            <h4>Network fees</h4>
-            <TableContent
-              leftSide="Fee limit"
-              rightSide={`${transactionDetails.fees.gasLimit} Tgas`}
-            />
-            <TableContent
-              leftSide="Estimated Fees"
-              infoText="The estimated cost of processing your transaction."
-              rightSide={`${estimatedNearFees} NEAR`}
-              currencyValue={`${estimatedUsdFees()}`}
-            />
+            <div className="transaction-details">
+              <InternetSvg />
+              {callbackUrl || 'Unknown App'}
+            </div>
           </div>
-          <div className="table-wrapper">
-            <h4>Actions</h4>
-            {transactionDetails.actions.map((action, i) => (
+          <div className="modal-middle">
+            <div className="table-wrapper">
               <TableContent
-              // eslint-disable-next-line
-                key={i}
-                leftSide={transactionDetails.transactions[i].receiverId}
-                hasFunctionCall
-                isFunctionCallOpen
-                rightSide={formatActionType(action.enum)}
-                functionDesc={action.functionCall.args}
-                openLink={`${network.explorerUrl}/accounts/${transactionDetails.transactions[i].receiverId}`}
+                leftSide="From"
+                rightSide={transactionDetails.signerId}
               />
-            ))}
+              <TableContent
+                leftSide="Total"
+                infoText="The estimated total of your transaction including fees."
+                rightSide={`${totalNearAmount()} NEAR`}
+                currencyValue={`$${totalUsdAmount}`}
+              />
+            </div>
           </div>
-        </div>
-      )}
+          {/* eslint-disable-next-line */}
+      <div className="more-details" onClick={() => setShowDetails(!showDetails)}>
+        More details
+            <span>{showDetails ? <ArrowUpSvg /> : <ArrowDownSvg />}</span>
+          </div>
+          {showDetails && (
+            <div className="more-details-opened">
+              <div className="table-wrapper">
+                <h4>Network fees</h4>
+                <TableContent
+                  leftSide="Fee limit"
+                  rightSide={`${transactionDetails.fees.gasLimit} Tgas`}
+                />
+                <TableContent
+                  leftSide="Estimated Fees"
+                  infoText="The estimated cost of processing your transaction."
+                  rightSide={`${estimatedNearFees} NEAR`}
+                  currencyValue={`${estimatedUsdFees()}`}
+                />
+              </div>
+              <div className="table-wrapper">
+                <h4>Actions</h4>
+                {transactionDetails.actions.map((action, i) => (
+                  <TableContent
+                  // eslint-disable-next-line
+                key={i}
+                    leftSide={transactionDetails.transactions[i].receiverId}
+                    hasFunctionCall
+                    isFunctionCallOpen
+                    rightSide={formatActionType(action.enum)}
+                    functionDesc={action.functionCall.args}
+                    openLink={`${network.explorerUrl}/accounts/${transactionDetails.transactions[i].receiverId}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-      <div className="modal-footer">
-        <Button
-          variant="primary"
-          size="large"
-          label="Confirm"
-          onClick={onConfirm}
-        />
-      </div>
+          <div className="modal-footer">
+            <Button
+              variant="primary"
+              size="large"
+              label={inFlight ? 'Loading...' : 'Confirm'}
+              disabled={inFlight}
+              onClick={onConfirm}
+            />
+          </div>
+        </>
+      )}
+      {firebaseUserLoading && <p className="info-text">Loading...</p>}
+      {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
+      {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
 }

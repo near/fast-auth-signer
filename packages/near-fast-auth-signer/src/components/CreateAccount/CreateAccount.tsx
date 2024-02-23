@@ -214,7 +214,7 @@ function CreateAccount() {
     } finally {
       setInFlight(false);
     }
-  }, [navigate, searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     const email = searchParams.get('email');

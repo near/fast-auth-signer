@@ -71,7 +71,13 @@ function AddDevicePage() {
   useIframeDialogConfig({ element: addDeviceFormRef.current });
 
   const [searchParams] = useSearchParams();
+  // Load user from firebase
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
+  // Set loading for either actions: addDevice or handleAuthCallback
+  const [inFlight, setInFlight] = useState(false);
+  // Set loading for the authentication process after submit
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false);
+  const loading = isProcessingAuth || firebaseUserLoading || inFlight;
 
   const {
     register, handleSubmit, setValue, formState: { errors }
@@ -85,8 +91,6 @@ function AddDevicePage() {
 
   const navigate = useNavigate();
 
-  const [inFlight, setInFlight] = useState(false);
-  const loading = firebaseUserLoading || inFlight;
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
@@ -139,7 +143,16 @@ function AddDevicePage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}}`);
+      window.parent.postMessage({
+        type:   'method',
+        method: 'query',
+        id:     1234,
+        params: {
+          request_type: 'complete_authentication',
+        }
+      }, '*');
+      window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
+      // navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
@@ -155,7 +168,7 @@ function AddDevicePage() {
     } finally {
       setInFlight(false);
     }
-  }, [searchParams, navigate]);
+  }, [searchParams]);
 
   const handleAuthCallback = useCallback(async () => {
     setInFlight(true);
@@ -268,8 +281,10 @@ function AddDevicePage() {
 
   const onSubmit = async (data: { email: string }) => {
     if (!data.email) return;
+    setIsProcessingAuth(true);
     try {
       const authenticated = await getAuthState(data.email);
+      console.log('authenticated ', authenticated);
       const isFirestoreReady = await checkFirestoreReady();
       const isPasskeySupported = await isPassKeyAvailable();
       const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
@@ -289,6 +304,8 @@ function AddDevicePage() {
         type:  'ERROR',
         title: 'An error occurred. Please try again later.',
       });
+    } finally {
+      setIsProcessingAuth(false);
     }
   };
 
