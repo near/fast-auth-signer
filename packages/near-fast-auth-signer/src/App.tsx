@@ -1,5 +1,5 @@
 import debug from 'debug';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Navigate, Route, BrowserRouter as Router, Routes, useLocation
 } from 'react-router-dom';
@@ -9,20 +9,16 @@ import AuthCallbackPage from './components/AuthCallback/AuthCallback';
 import AuthIndicator from './components/AuthIndicator/AuthIndicator';
 import CreateAccount from './components/CreateAccount/CreateAccount';
 import Devices from './components/Devices/Devices';
+import InitializeGlobals from './components/InitializeGlobals/InitializeGlobals';
 import Login from './components/Login/Login';
+import RemoveTrailingSlash from './components/RemoveTrailingSlash/RemoveTrailingSlash';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
-import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
-import { basePath, networkId } from './utils/config';
-
-(window as any).fastAuthController = new FastAuthController({
-  accountId: 'harisvalj.testnet',
-  networkId
-});
+import { basePath } from './utils/config';
 
 const faLog = debug('fastAuth');
 const log = faLog.extend('App');
@@ -36,24 +32,6 @@ console.log('faLog', faLog.enabled);
 // @ts-ignore
 console.log('log', log.enabled);
 
-function RemoveTrailingSlash({ ...rest }) {
-  const location = useLocation();
-
-  // If the last character of the url is '/'
-  if (location.pathname.match('/.*/$')) {
-    return (
-      <Navigate
-        replace
-        {...rest}
-        to={{
-          pathname: location.pathname.replace(/\/+$/, ''),
-          search:   location.search
-        }}
-      />
-    );
-  } return null;
-}
-
 export default function App() {
   faLog('init');
   log('faLog');
@@ -65,6 +43,7 @@ export default function App() {
       <GlobalStyle />
       <Router basename={basePath || ''}>
         <RemoveTrailingSlash />
+        <InitializeGlobals />
         <Routes>
           <Route path="/">
             <Route index element={<AuthIndicator />} />
