@@ -36,6 +36,13 @@ function VerifyEmailPage() {
 
   const [query] = useSearchParams();
 
+  const email = query.get('email');
+
+  useEffect(() => {
+    console.log('useEffect email ', email);
+    window.localStorage.setItem('emailForSignIn', email);
+  }, [email]);
+
   const handleResendEmail = async () => {
     const accountRequiredButNotThere = !query.get('accountId') && query.get('isRecovery') !== 'true';
     if (
@@ -46,7 +53,6 @@ function VerifyEmailPage() {
     setInFlight(true);
 
     const accountId = query.get('accountId');
-    const email = query.get('email');
     const isRecovery = query.get('isRecovery');
     const success_url = query.get('success_url');
     const failure_url = query.get('failure_url');
