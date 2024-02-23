@@ -257,6 +257,8 @@ function AuthCallbackPage() {
             oidcToken: accessToken,
           });
 
+          console.log('publicKeyFak......', publicKeyFak);
+
           const callback = isRecovery ? onSignIn : onCreateAccount;
           await callback({
             oidcKeypair,

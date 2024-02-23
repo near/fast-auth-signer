@@ -284,7 +284,6 @@ function AddDevicePage() {
     setIsProcessingAuth(true);
     try {
       const authenticated = await getAuthState(data.email);
-      console.log('authenticated ', authenticated);
       const isFirestoreReady = await checkFirestoreReady();
       const isPasskeySupported = await isPassKeyAvailable();
       const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;

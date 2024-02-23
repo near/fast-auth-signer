@@ -39,7 +39,6 @@ function VerifyEmailPage() {
   const email = query.get('email');
 
   useEffect(() => {
-    console.log('useEffect email ', email);
     window.localStorage.setItem('emailForSignIn', email);
   }, [email]);
 
