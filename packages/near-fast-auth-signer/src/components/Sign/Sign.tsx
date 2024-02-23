@@ -109,7 +109,6 @@ function Sign() {
 
   useEffect(() => {
     (async function () {
-      console.log('Running effects ');
       const authenticated = getAuthState(firebaseUser?.email);
       if (!authenticated) {
         const errorMessage = 'User not authenticated';
@@ -198,7 +197,7 @@ function Sign() {
   const onConfirm = async () => {
     setError(null);
     setInFlight(true);
-    const isUserAuthenticated = await getAuthState(firebaseUser?.email, true);
+    const isUserAuthenticated = await getAuthState(firebaseUser?.email);
     if (isUserAuthenticated !== true) {
       setError('You are not authenticated!');
       setInFlight(false);
