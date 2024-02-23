@@ -204,7 +204,7 @@ function AuthCallbackPage() {
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
         // eslint-disable-next-line no-alert
-        const email = window.localStorage.getItem('emailForSignIn') || window.prompt('Please provide your email for confirmation');
+        const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {
           const parsedUrl = new URL(

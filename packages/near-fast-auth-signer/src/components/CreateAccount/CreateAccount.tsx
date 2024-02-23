@@ -175,7 +175,16 @@ function CreateAccount() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}`);
+      window.parent.postMessage({
+        type:   'method',
+        method: 'query',
+        id:     1234,
+        params: {
+          request_type: 'complete_authentication',
+        }
+      }, '*');
+      window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
+      // navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
 
