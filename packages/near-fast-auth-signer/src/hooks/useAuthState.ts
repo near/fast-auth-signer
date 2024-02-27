@@ -13,7 +13,7 @@ import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = 'loading' | boolean | Error
 
-export const getAuthState = async (email?: string | null, skipGetKeys = false): Promise<AuthState> => {
+export const getAuthState = async (email?: string | null): Promise<AuthState> => {
   try {
     const controllerState = await window.fastAuthController.isSignedIn();
     const isFirestoreReady = await checkFirestoreReady();
@@ -23,10 +23,7 @@ export const getAuthState = async (email?: string | null, skipGetKeys = false): 
     if (webauthnUsername === undefined) {
       return new Error('Please allow third party cookies');
     }
-
-    if (skipGetKeys) {
-      return false;
-    } if (controllerState === true) {
+    if (controllerState === true) {
       return true;
     } if (isPasskeySupported && (!webauthnUsername || (email && email !== webauthnUsername))) {
       return false;
@@ -77,18 +74,18 @@ export const getAuthState = async (email?: string | null, skipGetKeys = false): 
   return false;
 };
 
-export const useAuthState = (skipGetKeys = false): {authenticated: AuthState} => {
+export const useAuthState = (): {authenticated: AuthState} => {
   const [authenticated, setAuthenticated] = useState<AuthState>('loading');
   const [query] = useSearchParams();
   const email = query.get('email');
 
   useEffect(() => {
     const handleAuthState = async () => {
-      setAuthenticated(await getAuthState(email, skipGetKeys));
+      setAuthenticated(await getAuthState(email));
     };
 
     handleAuthState();
-  }, [email, skipGetKeys]);
+  }, [email]);
 
   return { authenticated };
 };
