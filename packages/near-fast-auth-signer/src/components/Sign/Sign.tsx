@@ -79,7 +79,6 @@ function Sign() {
     element: signTransactionRef.current,
     onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
   });
-  // const { authenticated } = useAuthState();
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
@@ -108,23 +107,6 @@ function Sign() {
   );
 
   useEffect(() => {
-    (async function () {
-      const authenticated = getAuthState(firebaseUser?.email);
-      if (!authenticated) {
-        const errorMessage = 'User not authenticated';
-        if (inIframe()) {
-          setError(errorMessage);
-        } else {
-          const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
-          const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
-          const url = new URL(success_url || failure_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-          url.searchParams.append('error', errorMessage);
-          window.location.replace(url);
-          window.parent.postMessage({ signedDelegates: '', error: errorMessage }, '*');
-        }
-      }
-    }());
-
     const transactionHashes = searchParams.get('transactions');
     try {
       const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
@@ -199,7 +181,9 @@ function Sign() {
     setInFlight(true);
     const isUserAuthenticated = await getAuthState(firebaseUser?.email);
     if (isUserAuthenticated !== true) {
-      setError('You are not authenticated!');
+      const errorMessage = 'You are not authenticated or there has been an indexer failure';
+      setError(errorMessage);
+      window.parent.postMessage({ signedDelegates: '', error: errorMessage }, '*');
       setInFlight(false);
       return;
     }
@@ -216,7 +200,6 @@ function Sign() {
         );
         signedTransactions.push(base64);
       } catch (err) {
-        console.log('Sign error ', err);
         if (inIframe()) {
           setError(`An error occurred: ${err.message}`);
           setInFlight(false);
