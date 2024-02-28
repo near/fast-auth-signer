@@ -1,10 +1,5 @@
 import styled from 'styled-components';
 
-export const InfoWrapper = styled.div`
-    width: 100%;
-    display: flex;
-`;
-
 export const ModalSignWrapper = styled.div`
   width: 550px;
   margin: 0 auto;
@@ -17,6 +12,7 @@ export const ModalSignWrapper = styled.div`
     font-size: 12px;
     font-weight: 500;
     color: #1b1b1b;
+    text-align: center;
       &.error {
         color: #A81500;
       }
