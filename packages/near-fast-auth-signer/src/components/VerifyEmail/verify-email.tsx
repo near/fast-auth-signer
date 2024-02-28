@@ -70,6 +70,7 @@ function VerifyEmailPage() {
     });
 
     try {
+      console.log('searchParams ', searchParams.toString());
       await sendSignInLinkToEmail(firebaseAuth, email as string, {
         url:             `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
         handleCodeInApp: true,

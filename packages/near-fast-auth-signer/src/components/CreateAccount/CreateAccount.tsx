@@ -213,7 +213,6 @@ function CreateAccount() {
       setInFlight(false);
     }
   }, [searchParams]);
-
   useEffect(() => {
     const email = searchParams.get('email');
     const username = searchParams.get('accountId');
