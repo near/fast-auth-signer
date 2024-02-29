@@ -66,7 +66,7 @@ const onCreateAccount = async ({
   setStatusMessage('Account created successfully!');
 
   // TODO: Check if account ID matches the one from email
-
+  console.log('publicKeyFak ', publicKeyFak);
   if (publicKeyFak) {
     window.localStorage.setItem('webauthn_username', email);
   }
@@ -102,9 +102,7 @@ export const onSignIn = async ({
   gateway,
 }) => {
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetchAccountIds(recoveryPK).catch(() => {
-    throw new Error('Account not found, please create an account and try again');
-  });
+  const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
 
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
