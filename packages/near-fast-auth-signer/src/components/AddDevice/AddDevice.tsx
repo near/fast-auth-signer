@@ -109,7 +109,6 @@ function AddDevicePage() {
   }, [setValue]);
 
   const addDevice = useCallback(async (data: any) => {
-    if (!data.email) return;
     setInFlight(true);
 
     // if different user is logged in, sign out
@@ -152,7 +151,6 @@ function AddDevicePage() {
         }
       }, '*');
       window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
-      // navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
@@ -173,7 +171,6 @@ function AddDevicePage() {
   const handleAuthCallback = useCallback(async () => {
     setInFlight(true);
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
-    // const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && decodeIfTruthy(searchParams.get('failure_url'));
     const public_key =  decodeIfTruthy(searchParams.get('public_key'));
     const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
     const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
@@ -189,16 +186,11 @@ function AddDevicePage() {
       : null;
     const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
-    // @ts-ignore
     const oidcToken = firebaseUser?.accessToken;
     const recoveryPk = oidcToken && (await window.fastAuthController.getUserCredential(oidcToken).catch(() => false));
     const allKeys = [public_key, publicKeyFak].concat(recoveryPk || []);
     // if given lak key is already attached to webAuthN public key, no need to add it again
     const noNeedToAddKey = existingDeviceLakKey === public_key;
-    const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-    parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
-    parsedUrl.searchParams.set('public_key', public_key);
-    parsedUrl.searchParams.set('all_keys', allKeys.join(','));
 
     if (noNeedToAddKey) {
       window.parent.postMessage({
@@ -276,11 +268,10 @@ function AddDevicePage() {
           title: error.message,
         });
       })
-      .finally(() => setInFlight(false)); // @ts-ignore
+      .finally(() => setInFlight(false));
   }, [firebaseUser, navigate, searchParams]);
 
   const onSubmit = async (data: { email: string }) => {
-    if (!data.email) return;
     setIsProcessingAuth(true);
     try {
       const authenticated = await getAuthState(data.email);
@@ -339,7 +330,6 @@ function AddDevicePage() {
         <Button
           type="submit"
           size="large"
-          // @ts-ignore
           label={loading ? 'Loading...' : 'Continue'}
           variant="affirmative"
           data-test-id="add-device-continue-button"
