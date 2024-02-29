@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519/lib';
 import { KeyPairEd25519 } from '@near-js/crypto';
 import { captureException } from '@sentry/react';

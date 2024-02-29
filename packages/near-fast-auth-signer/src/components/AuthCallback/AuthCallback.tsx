@@ -66,7 +66,6 @@ const onCreateAccount = async ({
   setStatusMessage('Account created successfully!');
 
   // TODO: Check if account ID matches the one from email
-  console.log('publicKeyFak ', publicKeyFak);
   if (publicKeyFak) {
     window.localStorage.setItem('webauthn_username', email);
   }
