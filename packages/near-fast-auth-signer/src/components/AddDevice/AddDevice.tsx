@@ -142,15 +142,7 @@ function AddDevicePage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      window.parent.postMessage({
-        type:   'method',
-        method: 'query',
-        id:     1234,
-        params: {
-          request_type: 'complete_authentication',
-        }
-      }, '*');
-      window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
+      navigate(`/verify-email?${newSearchParams.toString()}}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
@@ -166,7 +158,7 @@ function AddDevicePage() {
     } finally {
       setInFlight(false);
     }
-  }, [searchParams]);
+  }, [navigate, searchParams]);
 
   const handleAuthCallback = useCallback(async () => {
     setInFlight(true);
@@ -281,9 +273,18 @@ function AddDevicePage() {
       const shouldUseCurrentUser = authenticated === true
         && (isPasskeySupported || !firebaseAuthInvalid)
         && isFirestoreReady;
-
       if (shouldUseCurrentUser) {
         await handleAuthCallback();
+      } else if (inIframe()) {
+        window.parent.postMessage({
+          type:   'method',
+          method: 'query',
+          id:     1234,
+          params: {
+            request_type: 'complete_authentication',
+          }
+        }, '*');
+        window.open(window.location.href, '_parent');
       } else {
         await addDevice({ email: data.email });
       }
@@ -298,6 +299,15 @@ function AddDevicePage() {
       setIsProcessingAuth(false);
     }
   };
+
+  // In case we come back to the AddDevice page via the root browser, trigger submit
+  useEffect(() => {
+    (async function () {
+      if (!inIframe()) {
+        await handleSubmit(onSubmit)();
+      }
+    }());
+  }, [handleSubmit, onSubmit]);
 
   const handleConnectWallet = () => {
     if (!inIframe()) return;
