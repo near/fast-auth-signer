@@ -78,15 +78,15 @@ function AddDevicePage() {
   // Set loading for the authentication process after submit
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
   const loading = isProcessingAuth || firebaseUserLoading || inFlight;
-
+  const defaultValues = {
+    email: searchParams.get('email') ?? '',
+  };
   const {
-    register, handleSubmit, setValue, formState: { errors }
+    register, handleSubmit, setValue, getValues, formState: { errors }
   } = useForm({
     resolver:      yupResolver(schema),
     mode:          'all',
-    defaultValues: {
-      email: searchParams.get('email') ?? '',
-    }
+    defaultValues
   });
 
   const navigate = useNavigate();
@@ -94,19 +94,6 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
-
-  useEffect(() => {
-    (async function () {
-      try {
-        const isPasskeySupported = await isPassKeyAvailable();
-        if (isPasskeySupported) {
-          setValue('email', safeGetLocalStorage('webauthn_username') ?? '');
-        }
-      } catch (e) {
-        setValue('email', '');
-      }
-    }());
-  }, [setValue]);
 
   const addDevice = useCallback(async (data: any) => {
     setInFlight(true);
@@ -196,6 +183,13 @@ function AddDevicePage() {
           accountId:    (window as any).fastAuthController.getAccountId()
         }
       }, '*');
+      if (!inIframe()) {
+        const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+        parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+        parsedUrl.searchParams.set('public_key', public_key);
+        parsedUrl.searchParams.set('all_keys', allKeys.join(','));
+        window.location.replace(parsedUrl.href);
+      }
       setInFlight(false);
       return;
     }
@@ -245,6 +239,13 @@ function AddDevicePage() {
               accountId:    (window as any).fastAuthController.getAccountId()
             }
           }, '*');
+          if (!inIframe()) {
+            const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
+            parsedUrl.searchParams.set('account_id', (window as any).fastAuthController.getAccountId());
+            parsedUrl.searchParams.set('public_key', public_key);
+            parsedUrl.searchParams.set('all_keys', allKeys.join(','));
+            window.location.replace(parsedUrl.href);
+          }
         }
       })
       .catch((error) => {
@@ -284,7 +285,9 @@ function AddDevicePage() {
             request_type: 'complete_authentication',
           }
         }, '*');
-        window.open(window.location.href, '_parent');
+        const url = new URL(window.location.href);
+        url.searchParams.set('email', data.email);
+        window.open(url.toString(), '_parent');
       } else {
         await addDevice({ email: data.email });
       }
@@ -300,14 +303,28 @@ function AddDevicePage() {
     }
   };
 
-  // In case we come back to the AddDevice page via the root browser, trigger submit
   useEffect(() => {
     (async function () {
-      if (!inIframe()) {
+      const email = decodeIfTruthy(searchParams.get('email'));
+      const formValues = getValues();
+
+      if (!inIframe() && email && formValues.email === email) {
+        setValue('email', email);
         await handleSubmit(onSubmit)();
+      } else {
+        try {
+          const isPasskeySupported = await isPassKeyAvailable();
+          if (isPasskeySupported) {
+            setValue('email', safeGetLocalStorage('webauthn_username') ?? defaultValues.email);
+          }
+        } catch (e) {
+          setValue('email', defaultValues.email);
+        }
       }
     }());
-  }, [handleSubmit, onSubmit]);
+    // We want this to run just once
+    // eslint-disable-next-line
+  }, []);
 
   const handleConnectWallet = () => {
     if (!inIframe()) return;
