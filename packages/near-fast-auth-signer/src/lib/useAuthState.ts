@@ -52,6 +52,7 @@ export const useAuthState = (skipGetKeys = false): AuthState => {
 
           if (accountsList.length === 0) {
             setAuthenticated(false);
+            return;
           }
 
           window.fastAuthController = new FastAuthController({

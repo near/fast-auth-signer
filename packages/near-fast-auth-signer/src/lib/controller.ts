@@ -153,12 +153,17 @@ class FastAuthController {
     return this.accountId;
   }
 
-  async getAccounts() {
-    if (this.accountId) {
-      return [this.accountId];
-    }
+  async accountExist(accountId: string): Promise<boolean> {
+    try {
+      const accountState = await new Account(this.connection, accountId).state();
+      return !!accountState;
+    } catch (error) {
+      if (error?.type === 'AccountDoesNotExist') {
+        return false;
+      }
 
-    return [];
+      return true;
+    }
   }
 
   async signDelegateAction({ receiverId, actions, signerId }) {

@@ -177,8 +177,7 @@ function SignInPage() {
           : null;
         const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
 
-        // @ts-ignore
-        const oidcToken = user.accessToken;
+        const oidcToken = await user.getIdToken();
         const recoveryPK = await window.fastAuthController.getUserCredential(oidcToken);
 
         // if given lak key is already attached to webAuthN public key, no need to add it again
@@ -202,7 +201,7 @@ function SignInPage() {
           methodNames,
           allowance:  new BN('250000000000000'),
           publicKey:  public_key,
-        }).then((res) => res && res.json()).then((res) => {
+        }).then((res) => res && res.json()).then(async (res) => {
           const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
           if (failure?.ActionError?.kind?.LackBalanceForState) {
             navigate(`/devices?${searchParams.toString()}`);
@@ -212,7 +211,6 @@ function SignInPage() {
           // Add device
           window.firestoreController.updateUser({
             userUid:   user.uid,
-            // User type is missing accessToken but it exist
             oidcToken,
           });
 

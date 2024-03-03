@@ -11,7 +11,6 @@ import FormContainer from './styles/FormContainer';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
-import { openToast } from '../../lib/Toast';
 import { inIframe, redirectWithError } from '../../utils';
 import { network } from '../../utils/config';
 import {
@@ -36,44 +35,6 @@ const StyledContainer = styled.div`
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
-
-const checkIsAccountAvailable = async (desiredUsername: string): Promise<boolean> => {
-  try {
-    const response = await fetch(network.nodeUrl, {
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id:      'dontcare',
-        method:  'query',
-        params:  {
-          request_type: 'view_account',
-          finality:     'final',
-          account_id:   `${desiredUsername}.${network.fastAuth.accountIdSuffix}`,
-        },
-      }),
-    });
-    const data = await response.json();
-    if (data?.error?.cause?.name === 'UNKNOWN_ACCOUNT') {
-      return true;
-    }
-
-    if (data?.result?.code_hash) {
-      return false;
-    }
-
-    return false;
-  } catch (error: any) {
-    console.log(error);
-    openToast({
-      title: error.message,
-      type:  'ERROR'
-    });
-    return false;
-  }
-};
 
 const schema = yup.object().shape({
   email:    yup
@@ -105,14 +66,11 @@ const schema = yup.object().shape({
     .test(
       'is-account-available',
       async (username, context) => {
-        if (username) {
-          const isAvailable = await checkIsAccountAvailable(username);
-          if (!isAvailable) {
-            return context.createError({
-              message: `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`,
-              path:    context.path
-            });
-          }
+        if (username && await window.fastAuthController.accountExist(username)) {
+          return context.createError({
+            message: `${username}.${network.fastAuth.accountIdSuffix} is taken, try something else.`,
+            path:    context.path
+          });
         }
 
         return true;
