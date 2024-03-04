@@ -19,11 +19,16 @@ import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
+import FirestoreController from './lib/firestoreController';
 
 (window as any).fastAuthController = new FastAuthController({
-  accountId: 'harisvalj.testnet',
+  accountId: '',
   networkId
 });
+
+if (!window.firestoreController) {
+  window.firestoreController = new FirestoreController();
+}
 
 const faLog = debug('fastAuth');
 const log = faLog.extend('App');
