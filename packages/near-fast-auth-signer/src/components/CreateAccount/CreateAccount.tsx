@@ -1,38 +1,29 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import {
+  useCallback, useEffect, useRef, useState
+} from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
-import FormContainer from './styles/FormContainer';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
-import { inIframe, redirectWithError } from '../../utils';
+import { inIframe } from '../../utils';
 import { network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
+import { FormContainer, StyledContainer } from '../Layout';
 
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f2f1ea;
-  padding: 0 16px;
-  padding-bottom: 60px;
-
-  header {
-    text-align: center;
-    margin-top: 1em;
-  }
+const CreateAccountForm = styled(FormContainer)`
+  height: 500px;
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
@@ -121,7 +112,12 @@ const schema = yup.object().shape({
 });
 
 function CreateAccount() {
+  const createAccountFormRef = useRef(null);
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({ element: createAccountFormRef.current });
+
   const [searchParams] = useSearchParams();
+  const [inFlight, setInFlight] = useState(false);
 
   const {
     register,
@@ -145,9 +141,8 @@ function CreateAccount() {
   const formsEmail = watch('email');
   const formsUsername = watch('username');
 
-  const navigate = useNavigate();
-
   const createAccount = useCallback(async (data: { email: string; username: string; }) => {
+    setInFlight(true);
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
@@ -178,10 +173,29 @@ function CreateAccount() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}`);
+      window.parent.postMessage({
+        type:   'method',
+        method: 'query',
+        id:     1234,
+        params: {
+          request_type: 'complete_authentication',
+        }
+      }, '*');
+      window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
+      // navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
-      redirectWithError({ success_url, failure_url, error });
+
+      window.parent.postMessage({
+        type:    'CreateAccountError',
+        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
+      }, '*');
+
+      openToast({
+        type:  'ERROR',
+        title: error.message,
+      });
+      // redirectWithError({ success_url, failure_url, error });
       // currently running handleCreateAccount() will throw an error as:
       // error DOMException: The following credential operations can only occur in a document which is same-origin with all of its ancestors: storage/retrieval of 'PasswordCredential' and 'FederatedCredential', storage of 'PublicKeyCredential'.
 
@@ -195,9 +209,10 @@ function CreateAccount() {
       //   type:  'ERROR',
       //   title: message,
       // });
+    } finally {
+      setInFlight(false);
     }
-  }, [navigate, searchParams]);
-
+  }, [searchParams]);
   useEffect(() => {
     const email = searchParams.get('email');
     const username = searchParams.get('accountId');
@@ -223,20 +238,9 @@ function CreateAccount() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formsEmail, setValue]);
 
-  if (inIframe()) {
-    return (
-      <Button
-        label="Continue on fast auth"
-        onClick={() => {
-          window.open(window.location.href, '_parent');
-        }}
-      />
-    );
-  }
-
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleSubmit(createAccount)}>
+    <StyledContainer inIframe={inIframe()}>
+      <CreateAccountForm ref={createAccountFormRef} inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
         <header>
           <h1 data-test-id="heading_create">Create account</h1>
           <p className="desc">
@@ -296,14 +300,14 @@ function CreateAccount() {
           }}
         />
         <Button
-          disabled={!isValid}
-          label="Continue"
+          disabled={!isValid || inFlight}
+          label={inFlight ? 'Sending...' : 'Continue'}
           variant="affirmative"
           type="submit"
           size="large"
           data-test-id="continue_button_create"
         />
-      </FormContainer>
+      </CreateAccountForm>
     </StyledContainer>
   );
 }

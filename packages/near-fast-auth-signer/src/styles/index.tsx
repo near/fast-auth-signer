@@ -1,5 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
 
+import { inIframe } from '../utils';
+
 export default createGlobalStyle`
 
   * {
@@ -9,6 +11,7 @@ export default createGlobalStyle`
   #root {
     min-height: 100vh;
     position: relative;
+    ${inIframe() ? 'display: flex; align-items: center; justify-content: center;' : ''}
   }
 
   html {

@@ -1,17 +1,22 @@
 import styled from 'styled-components';
 
 export const ModalSignWrapper = styled.div`
-  max-width: 550px;
-  width: auto;
+  width: 550px;
   margin: 0 auto;
-  box-shadow: 0px 4px 8px 0px #0000000f;
-  box-shadow: 0px 0px 0px 1px #0000000f;
   border-radius: 8px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   row-gap: 8px;
-
+    .info-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1b1b1b;
+    text-align: center;
+      &.error {
+        color: #A81500;
+      }
+    }
   .modal-top {
     display: flex;
     flex-direction: column;

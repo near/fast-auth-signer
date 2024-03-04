@@ -1,68 +1,46 @@
 import { sendSignInLinkToEmail } from 'firebase/auth';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import EmailSvg from './icons/EmailSvg';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { redirectWithError } from '../../utils';
+import { inIframe, redirectWithError } from '../../utils';
 import { basePath } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
+import { FormContainer, StyledContainer } from '../Layout';
 
-const StyledContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  display: flex;
+const VerifyForm = styled(FormContainer)`
+  height: 275px;
+  text-align: center;
+  gap: 7px;
   align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  padding-bottom: 60px;
-`;
-
-const FormContainer = styled.form`
-  box-shadow: 0px 4px 8px 0px #0000000F;
-  box-shadow: 0px 0px 0px 1px #0000000F;
-  max-width: 360px;
-  width: 100%;
-  margin: 16px auto;
-  background-color: #ffffff;
-  padding: 25px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  header p {
+    color: #604CC8;
+    margin-bottom: 1px;
+  }
 
   svg {
     width: 100px;
   }
-
-  & > p {
-    color: #706F6C;
-    font-size: 14px;
-  }
-
-  header {
-    text-align: center;
-  }
-
-  header h1 {
-    font: var(--text-xl);
-    font-weight: bold;
-  }
-
-  header p {
-    color: #604CC8;
-  }
-
-  button {
-    width: 100%;
-  }
 `;
 
 function VerifyEmailPage() {
+  const verifyRef = useRef(null);
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({ element: verifyRef.current });
+
+  const [inFlight, setInFlight] = useState(false);
+
   const [query] = useSearchParams();
+
+  const email = query.get('email');
+
+  useEffect(() => {
+    window.localStorage.setItem('emailForSignIn', email);
+  }, [email]);
 
   const handleResendEmail = async () => {
     const accountRequiredButNotThere = !query.get('accountId') && query.get('isRecovery') !== 'true';
@@ -71,9 +49,9 @@ function VerifyEmailPage() {
       || !query.get('email')
       || !query.get('email').length
     ) return;
+    setInFlight(true);
 
     const accountId = query.get('accountId');
-    const email = query.get('email');
     const isRecovery = query.get('isRecovery');
     const success_url = query.get('success_url');
     const failure_url = query.get('failure_url');
@@ -97,6 +75,7 @@ function VerifyEmailPage() {
         handleCodeInApp: true,
       });
       window.localStorage.setItem('emailForSignIn', email);
+
       openToast({
         type:  'SUCCESS',
         title: 'Email resent successfully!',
@@ -116,12 +95,25 @@ function VerifyEmailPage() {
         type:  'ERROR',
         title: 'Something went wrong',
       });
+    } finally {
+      setInFlight(false);
     }
   };
 
+  useEffect(() => {
+    window.parent.postMessage({
+      type:   'method',
+      method: 'query',
+      id:     1234,
+      params: {
+        request_type: 'complete_authentication',
+      }
+    }, '*');
+  }, []);
+
   return (
-    <StyledContainer>
-      <FormContainer onSubmit={handleResendEmail}>
+    <StyledContainer inIframe={inIframe()}>
+      <VerifyForm ref={verifyRef} inIframe={inIframe()} onSubmit={handleResendEmail}>
         <EmailSvg />
         <header>
           <h1>Verify Your Email</h1>
@@ -130,8 +122,8 @@ function VerifyEmailPage() {
 
         <p>Check your inbox to activate your account.</p>
 
-        <Button size="large" label="Resend" data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
-      </FormContainer>
+        <Button size="large" label={inFlight ? 'Sending...' : 'Resend'} disabled={inFlight} data-test-id="resend-verify-email-button" onClick={handleResendEmail} />
+      </VerifyForm>
     </StyledContainer>
   );
 }

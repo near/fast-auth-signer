@@ -66,7 +66,6 @@ const onCreateAccount = async ({
   setStatusMessage('Account created successfully!');
 
   // TODO: Check if account ID matches the one from email
-
   if (publicKeyFak) {
     window.localStorage.setItem('webauthn_username', email);
   }
@@ -104,9 +103,6 @@ export const onSignIn = async ({
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
 
-  if (!accountIds.length) {
-    throw new Error('Account not found, please create an account and try again');
-  }
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -168,7 +164,17 @@ export const onSignIn = async ({
         parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
 
         if (inIframe()) {
-          window.open(parsedUrl.href, '_parent');
+          window.parent.postMessage({
+            type:   'method',
+            method: 'query',
+            id:     1234,
+            params: {
+              request_type: 'complete_authentication',
+              publicKey:    public_key_lak,
+              allKeys:      (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','),
+              accountId:    accountIds[0]
+            }
+          }, '*');
         } else {
           window.location.replace(parsedUrl.href);
         }
@@ -194,6 +200,7 @@ function AuthCallbackPage() {
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
 
+        // eslint-disable-next-line no-alert
         const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {

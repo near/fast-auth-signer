@@ -26,6 +26,7 @@ export function inIframe() {
 }
 
 export const decodeIfTruthy = (paramVal) => {
+  if (paramVal === 'true' || paramVal === 'false') return paramVal === 'true';
   if (paramVal) {
     return decodeURIComponent(paramVal);
   }

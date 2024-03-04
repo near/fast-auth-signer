@@ -1,12 +1,17 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import styled from 'styled-components';
 import * as yup from 'yup';
 
-import { LoginWrapper } from './Login.style';
+import { SeparatorWrapper, Separator } from './Login.style';
+import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
+import { inIframe } from '../../utils';
+import { FormContainer, StyledContainer } from '../Layout';
 
 const schema = yup.object().shape({
   email: yup
@@ -15,24 +20,25 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+const LoginForm = styled(FormContainer)`
+  height: 400px;
+`;
+
 function Login() {
+  const loginFormRef = useRef(null);
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({ element: loginFormRef.current });
+
   const [currentSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     const isRecovery = currentSearchParams.get('isRecovery');
     if (isRecovery) {
-      if (isRecovery === 'true') {
-        navigate({
-          pathname: '/add-device',
-          search:   currentSearchParams.toString(),
-        });
-      } else {
-        navigate({
-          pathname: '/create-account',
-          search:   currentSearchParams.toString(),
-        });
-      }
+      navigate({
+        pathname: isRecovery === 'true' ? '/add-device' : '/create-account',
+        search:   currentSearchParams.toString(),
+      });
     }
   }, [currentSearchParams, navigate]);
 
@@ -45,24 +51,35 @@ function Login() {
   });
 
   const emailCheck = async (
-    params: { email: string }
+    data: { email: string }
   ) => {
+    const newParams = new URLSearchParams(currentSearchParams);
+    newParams.set('email', data.email);
     navigate({
       pathname: '/add-device',
-      search:   `email=${params.email}`,
+      search:   newParams.toString(),
     });
   };
 
+  const handleConnectWallet = () => {
+    if (!inIframe()) return;
+    window.parent.postMessage({
+      closeIframe:        true,
+      showWalletSelector:    true,
+    }, '*');
+  };
+
   return (
-    <LoginWrapper>
-      <form onSubmit={handleSubmit(emailCheck)}>
+    <StyledContainer inIframe={inIframe()}>
+
+      <LoginForm ref={loginFormRef} inIframe={inIframe()} onSubmit={handleSubmit(emailCheck)}>
         <header>
           <h1 data-test-id="heading_login">Log In</h1>
           <p className="desc">Please enter your email</p>
         </header>
         <Input
           {...register('email')}
-          placeholder="user_name@email.com"
+          placeholder="your@email.com"
           type="email"
           dataTest={{ input: 'email_login' }}
           required
@@ -75,8 +92,28 @@ function Login() {
           variant="affirmative"
           data-test-id="login_button"
         />
-      </form>
-    </LoginWrapper>
+
+        <SeparatorWrapper>
+          <Separator />
+          Or
+          <Separator />
+        </SeparatorWrapper>
+        <Button
+          size="large"
+          label={(
+            <>
+              <WalletSvg />
+              {' '}
+              Connect Wallet
+            </>
+          )}
+          variant="secondary"
+          data-test-id="connect_wallet_button"
+          iconLeft="bi bi-wallet"
+          onClick={handleConnectWallet}
+        />
+      </LoginForm>
+    </StyledContainer>
   );
 }
 

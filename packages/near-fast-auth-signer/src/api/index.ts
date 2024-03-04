@@ -52,35 +52,35 @@ type LimitedAccessKey = {
 
 type NewAccountResponse =
   | {
-      type: 'ok',
-      create_account_options: {
-        full_access_keys: string[] | null,
-        limited_access_keys: LimitedAccessKey[] | null,
-        contract_bytes: string[] | null
-      },
-      user_recovery_public_key: string,
-      near_account_id: string
-    }
+  type: 'ok',
+  create_account_options: {
+    full_access_keys: string[] | null,
+    limited_access_keys: LimitedAccessKey[] | null,
+    contract_bytes: string[] | null
+  },
+  user_recovery_public_key: string,
+  near_account_id: string
+}
   | {
-      type: 'err',
-      msg: string
-    };
+  type: 'err',
+  msg: string
+};
 
 /**
-     * This function creates a new account on the NEAR blockchain by sending a request to the /new_account endpoint of the MPC recovery service.
-     *
-     * @param accountId - The ID of the new account to be created on the NEAR blockchain.
-     * @param fullAccessKeys - An array of full access keys to be added to the account.
-     * @param limitedAccessKeys - An array of objects, each representing a limited access key to be associated with the account. Each object has the following properties:
-     * - public_key: The public key of the limited access key.
-     * - receiver_id: The contract_ID that the limited access key is authorized to call.
-     * - allowance: The maximum amount of NEAR tokens that the limited access key is allowed to spend on gas fees.
-     * - method_names: A string of comma-separated method names that the limited access key is allowed to call.
-     * @param accessToken - The OIDC access token.
-     * @param oidcKeypair - The public and private key pair of the FRP.
-     * @returns A promise that resolves to an object of type NewAccountResponse. This object contains the result of the account creation process. It can either be of type 'ok' with the account details or of type 'err' with an error message.
-     * @throws An error if the fetch request fails.
-     */
+ * This function creates a new account on the NEAR blockchain by sending a request to the /new_account endpoint of the MPC recovery service.
+ *
+ * @param accountId - The ID of the new account to be created on the NEAR blockchain.
+ * @param fullAccessKeys - An array of full access keys to be added to the account.
+ * @param limitedAccessKeys - An array of objects, each representing a limited access key to be associated with the account. Each object has the following properties:
+ * - public_key: The public key of the limited access key.
+ * - receiver_id: The contract_ID that the limited access key is authorized to call.
+ * - allowance: The maximum amount of NEAR tokens that the limited access key is allowed to spend on gas fees.
+ * - method_names: A string of comma-separated method names that the limited access key is allowed to call.
+ * @param accessToken - The OIDC access token.
+ * @param oidcKeypair - The public and private key pair of the FRP.
+ * @returns A promise that resolves to an object of type NewAccountResponse. This object contains the result of the account creation process. It can either be of type 'ok' with the account details or of type 'err' with an error message.
+ * @throws An error if the fetch request fails.
+ */
 export const createNEARAccount = async ({
   accountId,
   fullAccessKeys = [],

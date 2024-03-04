@@ -14,7 +14,7 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> & {
   icon?: string;
   iconLeft?: string;
   iconRight?: string;
-  label?: string;
+  label?: string | React.ReactNode;
   loading?: boolean;
   size?: Size;
   type?: 'button' | 'submit';
@@ -288,7 +288,11 @@ const Inner = styled.span<StyledProps>`
       `}
 `;
 
-const Label = styled.span``;
+const Label = styled.span`
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+`;
 
 const Spinner = styled.i<StyledProps>`
   position: absolute;
