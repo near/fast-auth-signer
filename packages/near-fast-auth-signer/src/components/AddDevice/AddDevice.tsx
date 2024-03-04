@@ -129,7 +129,7 @@ function AddDevicePage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}}`);
+      navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
