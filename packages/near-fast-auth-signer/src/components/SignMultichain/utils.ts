@@ -192,6 +192,7 @@ const convertTokenToReadable = (value : MultichainIframeMessage['value'], asset:
   if (asset === 'ETH') {
     return parseFloat(formatEther(value));
   }
+  return null;
 };
 
 export const getTokenAndTotalPrice = async (asset: DerivationPathDeserialized['asset'], value: MultichainIframeMessage['value']) => {

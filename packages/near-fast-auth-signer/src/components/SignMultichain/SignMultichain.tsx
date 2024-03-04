@@ -13,8 +13,7 @@ import {
 } from './utils';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
-import { Button } from '../../lib/Button';
-import CloseButton from '../../lib/Button/CloseButton';
+import { Button, CloseButton } from '../../lib/Button';
 import { useAuthState } from '../../lib/useAuthState';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';

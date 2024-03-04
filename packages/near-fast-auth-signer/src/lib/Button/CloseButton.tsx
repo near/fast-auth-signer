@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import type { Props } from './Button';
 import CrossSvg from '../../Images/cross';
 
 const Button = styled.button`
@@ -14,6 +15,6 @@ const Button = styled.button`
   box-shadow: none;
 `;
 
-export default function CloseButton(props) {
+export function CloseButton(props: Props) {
   return (<Button {...props}><CrossSvg /></Button>);
-};
+}

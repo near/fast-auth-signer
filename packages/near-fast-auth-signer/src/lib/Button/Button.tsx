@@ -7,7 +7,7 @@ type Fill = 'solid' | 'outline' | 'ghost';
 type Size = 'small' | 'default' | 'large';
 type Variant = 'primary' | 'secondary' | 'affirmative' | 'destructive';
 
-type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> & {
+export type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'size'> & {
   disabled?: boolean;
   fill?: Fill;
   href?: string;

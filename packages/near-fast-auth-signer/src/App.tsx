@@ -18,9 +18,9 @@ import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
+import FirestoreController from './lib/firestoreController';
 import GlobalStyle from './styles/index';
 import { basePath, networkId } from './utils/config';
-import FirestoreController from './lib/firestoreController';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: '',
