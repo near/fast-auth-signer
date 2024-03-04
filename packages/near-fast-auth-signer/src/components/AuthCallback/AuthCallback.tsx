@@ -17,6 +17,7 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
+import { getMultiChainContract } from '../SignMultichain/utils';
 
 const StyledStatusMessage = styled.div`
   display: flex;
@@ -40,11 +41,14 @@ const onCreateAccount = async ({
   email,
   gateway,
 }) => {
+  // Stop from LAK with multi-chain contract
+  const containBlacklistedContractId = getMultiChainContract() === contract_id;
+  const publicKeyLak = !containBlacklistedContractId ? public_key_lak : null;
   const res = await createNEARAccount({
     accountId,
     fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
-    limitedAccessKeys: public_key_lak ? [{
-      public_key:   public_key_lak,
+    limitedAccessKeys: publicKeyLak ? [{
+      public_key:   publicKeyLak,
       receiver_id:  contract_id,
       allowance:    '250000000000000',
       method_names: methodNames ?? '',
@@ -58,7 +62,7 @@ const onCreateAccount = async ({
   // Add device
   await window.firestoreController.addDeviceCollection({
     fakPublicKey: publicKeyFak,
-    lakPublicKey: public_key_lak,
+    lakPublicKey: publicKeyLak,
     gateway,
     accountId
   });
@@ -81,8 +85,8 @@ const onCreateAccount = async ({
       : window.location.origin + (basePath ? `/${basePath}` : '')
   );
   parsedUrl.searchParams.set('account_id', res.near_account_id);
-  parsedUrl.searchParams.set('public_key', public_key_lak);
-  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
+  parsedUrl.searchParams.set('public_key', publicKeyLak);
+  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [publicKeyLak, publicKeyFak, recoveryPK] : [publicKeyLak, recoveryPK]).join(','));
 
   window.location.replace(parsedUrl.href);
 };
@@ -100,6 +104,9 @@ export const onSignIn = async ({
   navigate,
   gateway,
 }) => {
+  // Stop from LAK with multi-chain contract
+  const containBlacklistedContractId = getMultiChainContract() === contract_id;
+  const publicKeyLak = !containBlacklistedContractId ? public_key_lak : null;
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
 
@@ -113,12 +120,12 @@ export const onSignIn = async ({
   const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
   const addKeyActions = onlyAddLak
     ? getAddLAKAction({
-      publicKeyLak: public_key_lak,
+      publicKeyLak,
       contractId:   contract_id,
       methodNames,
       allowance:    new BN('250000000000000'),
     }) : getAddKeyAction({
-      publicKeyLak:      public_key_lak,
+      publicKeyLak,
       webAuthNPublicKey: publicKeyFak,
       contractId:        contract_id,
       methodNames,
@@ -141,7 +148,7 @@ export const onSignIn = async ({
         await checkFirestoreReady();
         await window.firestoreController.addDeviceCollection({
           fakPublicKey: onlyAddLak ? null : publicKeyFak,
-          lakPublicKey: public_key_lak,
+          lakPublicKey: publicKeyLak,
           gateway,
           accountId:    accountIds[0],
         });
@@ -160,8 +167,8 @@ export const onSignIn = async ({
             : window.location.origin + (basePath ? `/${basePath}` : '')
         );
         parsedUrl.searchParams.set('account_id', accountIds[0]);
-        parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
+        parsedUrl.searchParams.set('public_key', publicKeyLak);
+        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [publicKeyLak, publicKeyFak, recoveryPK] : [publicKeyLak, recoveryPK]).join(','));
 
         if (inIframe()) {
           window.parent.postMessage({
