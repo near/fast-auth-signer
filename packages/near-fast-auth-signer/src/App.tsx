@@ -13,6 +13,7 @@ import Login from './components/Login/Login';
 import RemoveTrailingSlash from './components/RemoveTrailingSlash/RemoveTrailingSlash';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
+import SignMultichain from './components/SignMultichain/SignMultichain';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
@@ -61,6 +62,7 @@ export default function App() {
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
+            <Route path="sign-multichain" element={<SignMultichain />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
             <Route path="devices" element={<Devices />} />

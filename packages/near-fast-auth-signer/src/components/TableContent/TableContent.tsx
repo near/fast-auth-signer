@@ -13,8 +13,8 @@ interface TableContentProps {
   isFunctionCallOpen?: boolean;
   currencyValue?: string;
   functionDesc?: any;
-  leftSide?: string;
-  rightSide?: string;
+  leftSide?: string | React.ReactElement;
+  rightSide?: string| React.ReactElement;
   infoText?: string;
   openLink?: string;
 }
