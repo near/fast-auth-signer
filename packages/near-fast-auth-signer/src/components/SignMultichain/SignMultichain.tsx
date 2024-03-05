@@ -1,6 +1,6 @@
 import { borshDeserialize } from 'borsher';
 import React, {
-  useEffect, useState, useCallback
+  useEffect, useState, useCallback, useRef
 } from 'react';
 
 import { derivationPathSchema } from './schema';
@@ -13,12 +13,12 @@ import {
   shortenAddress,
   getGasFee
 } from './utils';
-import InternetSvg from '../../Images/Internet';
-import ModalIconSvg from '../../Images/ModalIcon';
-import { Button, CloseButton } from '../../lib/Button';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import InternetSvg from '../../Images/Internet';
+import ModalIconSvg from '../../Images/ModalIcon';
+import { Button, CloseButton } from '../../lib/Button';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
@@ -34,11 +34,18 @@ const sampleMessageForEthereum: MultichainIframeMessage = {
 
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
+  const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<{ price: string | number, tokenAmount: string | number }>({ price: '...', tokenAmount: 0 });
   const [message, setMessage] = useState<MultichainIframeMessage>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
   const [deserializedDerivationPath, setDeserializedDerivationPath] = useState<DerivationPathDeserialized>(null);
+
+  // Send form height to modal if in iframe
+  useIframeDialogConfig({
+    element: signTransactionRef.current,
+    onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
+  });
 
   const onError = (text: string) => {
     window.parent.postMessage({ signedDelegates: '', text }, '*');
@@ -153,7 +160,7 @@ function SignMultichain() {
   };
 
   return (
-    <ModalSignWrapper>
+    <ModalSignWrapper ref={signTransactionRef}>
       <CloseButton onClick={onCancel} />
       <div className="modal-top">
         <ModalIconSvg />
