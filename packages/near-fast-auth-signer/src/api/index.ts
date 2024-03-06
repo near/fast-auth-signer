@@ -5,22 +5,24 @@ import {
   CLAIM, getUserCredentialsFrpSignature
 } from '../utils/mpc-service';
 
+// Use this function to implement wait logic for async process
+const withTimeout = async (promise, timeoutMs) => {
+  // Create a promise that resolves with false after timeoutMs milliseconds
+  const timeoutPromise = new Promise((resolve) => { setTimeout(() => resolve(false), timeoutMs); });
+
+  // Race the input promise against the timeout
+  return Promise.race([promise, timeoutPromise]);
+};
+
 /**
  * Fetches the account IDs associated with a given public key.
  *
  * @param publicKey - The public key to fetch the account IDs for.
- * @param options - An object containing the following properties:
- * - returnEmpty: A boolean indicating whether to return an empty array if no account IDs are found.
  * @returns A promise that resolves to an array of account IDs.
  * @throws Will throw an error if the fetch request fails.
  */
-
-type Option= {
-  returnEmpty?: boolean;
-}
-export const fetchAccountIds = async (publicKey: string, options?: Option): Promise<string[]> => {
-  // retrieve from firebase
-  let accountIds = [];
+const KIT_WALLET_WAIT_DURATION = 10000; // 10s
+export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
   if (publicKey) {
     if (window.firestoreController) {
       const accountId = await window.firestoreController.getAccountIdByPublicKey(publicKey);
@@ -28,19 +30,57 @@ export const fetchAccountIds = async (publicKey: string, options?: Option): Prom
         return [accountId];
       }
     }
-    // retrieve from kitwallet
-    const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    accountIds = await res.json();
+
+    return withTimeout(await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION)
+      .then(async (res) => {
+        if (res) {
+          const ids = await res.json();
+          return ids;
+        }
+        return [];
+      });
   }
 
-  if (accountIds.length === 0 && !options?.returnEmpty) {
-    throw new Error('Unable to retrieve account id');
+  return [];
+};
+
+/**
+ * This function fetches account id from given two public keys.
+ * Webuathn currently prompts two public keys by default and we need to discover which key is currently on chain.
+ * Since we store public key <-> account id in firestore, one of the public key will return the result fast and we do not need to wait for both request to resolve.
+ * It is possible that both public keys are not on chain, in that case we return null.
+ * @param publicKeyA
+ * @param publicKeyB
+ * @returns object with account id and public key
+ */
+export const fetchAccountIdsFromTwoKeys = async (
+  publicKeyA,
+  publicKeyB
+): Promise<{ accId: string, publicKey: string}> => {
+  const accountIdsFromPublicKeyA = fetchAccountIds(publicKeyA);
+  const accountIdsFromPublicKeyB = fetchAccountIds(publicKeyB);
+
+  const firstResult = await Promise.race([accountIdsFromPublicKeyA, accountIdsFromPublicKeyB]);
+  const firstKey = firstResult === await accountIdsFromPublicKeyA ? publicKeyA : publicKeyB;
+  if (firstResult.length > 0) {
+    return {
+      accId:     firstResult[0],
+      publicKey: firstKey
+    };
   }
 
-  return accountIds;
+  const secondResult = await (
+    firstResult === await accountIdsFromPublicKeyA ? accountIdsFromPublicKeyB : accountIdsFromPublicKeyA
+  );
+  const secondKey = firstKey === publicKeyA ? publicKeyB : publicKeyA;
+  if (secondResult.length > 0) {
+    return {
+      accId:     secondResult[0],
+      publicKey: secondKey
+    };
+  }
+
+  return null;
 };
 
 type LimitedAccessKey = {

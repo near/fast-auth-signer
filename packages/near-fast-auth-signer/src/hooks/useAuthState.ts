@@ -4,7 +4,7 @@ import { captureException } from '@sentry/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
-import { fetchAccountIds } from '../api';
+import { fetchAccountIdsFromTwoKeys } from '../api';
 import FastAuthController from '../lib/controller';
 import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
@@ -28,26 +28,25 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
       return false;
     } if (isPasskeySupported && webauthnUsername) {
       const keypairs = await getKeys(webauthnUsername);
-      const accounts = await Promise.allSettled(
-        keypairs.map(async (k) => {
-          const accIds = await fetchAccountIds(k.getPublicKey().toString(), { returnEmpty: true });
-          return accIds.map((accId) => { return { accId, keyPair: k }; });
-        })
+      const accountInfo = await fetchAccountIdsFromTwoKeys(
+        keypairs[0].getPublicKey().toString(),
+        keypairs[1].getPublicKey().toString(),
       );
 
-      const accountsList = accounts
-        .flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-
-      if (accountsList.length === 0) {
+      if (!accountInfo.accId) {
         return false;
       }
 
-      window.fastAuthController = new FastAuthController({
-        accountId: accountsList[0].accId,
-        networkId
-      });
+      if (!window.fastAuthController) {
+        window.fastAuthController = new FastAuthController({
+          accountId: accountInfo.accId,
+          networkId
+        });
+      } else {
+        window.fastAuthController.setAccountId(accountInfo.accId);
+      }
 
-      await window.fastAuthController.setKey(new KeyPairEd25519(accountsList[0].keyPair.toString().split(':')[1]));
+      await window.fastAuthController.setKey(new KeyPairEd25519(accountInfo.publicKey.split(':')[1]));
       return true;
     } if (isFirestoreReady && firebaseAuth.currentUser) {
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
@@ -58,10 +57,15 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
 
         if (!account) return false;
 
-        window.fastAuthController = new FastAuthController({
-          accountId: account?.accountId,
-          networkId
-        });
+        if (window.fastAuthController) {
+          window.fastAuthController.setAccountId(account?.accountId);
+        } else {
+          window.fastAuthController = new FastAuthController({
+            accountId: account?.accountId,
+            networkId
+          });
+        }
+
         return true;
       }
     }
