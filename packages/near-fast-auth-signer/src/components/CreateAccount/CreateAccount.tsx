@@ -15,7 +15,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe } from '../../utils';
-import { network } from '../../utils/config';
+import { basePath, network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
 } from '../../utils/form-validation';
@@ -181,7 +181,7 @@ function CreateAccount() {
           request_type: 'complete_authentication',
         }
       }, '*');
-      window.open(`${window.location.origin}/verify-email?${newSearchParams.toString()}`, '_parent');
+      window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/verify-email?${newSearchParams.toString()}`, '_parent');
       // navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
