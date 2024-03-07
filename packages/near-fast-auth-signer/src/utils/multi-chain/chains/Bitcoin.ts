@@ -1,8 +1,5 @@
 import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
-import BN from 'bn.js';
-import { ethers } from 'ethers';
-import * as nearAPI from 'near-api-js';
 import { Account } from 'near-api-js';
 
 // import { KeyDerivation } from '../kdf';
@@ -384,26 +381,9 @@ export class Bitcoin {
     const mpcKeyPair = {
       publicKey,
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
-        const functionCall = nearAPI.transactions.functionCall(
-          'sign',
-          {
-            payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
-            path:    derivedPath,
-          },
-          new BN('300000000000000'),
-          new BN(0)
-        );
-
-        const signed = await window.fastAuthController.signDelegateAction(
-          {
-            receiverId: 'multichain-testnet-2.testnet',
-            actions:    [functionCall],
-            signerId:   account.accountId
-          }
-        );
-
         const signature = await signMPC(
-          signed,
+          transactionHash,
+          derivedPath,
           account,
           this.relayerUrl
         );

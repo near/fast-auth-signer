@@ -1,5 +1,6 @@
-import { SignedDelegate } from '@near-js/transactions';
-import { Account } from 'near-api-js';
+import BN from 'bn.js';
+import { ethers } from 'ethers';
+import { Account, transactions } from 'near-api-js';
 
 import { RSVSignature } from './types';
 import { parseSignedDelegateForRelayer } from '../relayer';
@@ -8,17 +9,35 @@ const toRVS = (signature: string): RSVSignature => {
   const parsedJSON = JSON.parse(signature) as [string, string];
 
   return {
-    v: parsedJSON[0].slice(0, 2) === '02' ? 0 : 1,
     r: parsedJSON[0].slice(2),
     s: parsedJSON[1],
   };
 };
 
 export const signMPC = async (
-  signedDelegate: SignedDelegate,
+  transactionHash: string | ethers.BytesLike,
+  path: string,
   account: Account,
   relayerUrl: string
 ): Promise<RSVSignature> => {
+  const functionCall = transactions.functionCall(
+    'sign',
+    {
+      payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
+      path,
+    },
+    new BN('300000000000000'),
+    new BN(0)
+  );
+
+  const signedDelegate = await window.fastAuthController.signDelegateAction(
+    {
+      receiverId: 'multichain-testnet-2.testnet',
+      actions:    [functionCall],
+      signerId:   account.accountId
+    }
+  );
+
   const res = await fetch(`${relayerUrl}/send_meta_tx_async`, {
     method:  'POST',
     mode:    'cors',

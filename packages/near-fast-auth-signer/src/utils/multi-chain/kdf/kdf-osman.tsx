@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as bitcoin from 'bitcoinjs-lib';
 import BN from 'bn.js';
 import { ec as EC } from 'elliptic';
@@ -15,7 +14,7 @@ async function sha256Hash(str) {
 
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
 
-  const hashArray = [...new Uint8Array(hashBuffer)];
+  const hashArray = [...new Uint8Array(hashBuffer) as any];
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -36,7 +35,7 @@ async function deriveChildPublicKey(
   let scalar = await sha256Hash(
     `near-mpc-recovery v0.1.0 epsilon derivation:${signerId},${path}`
   );
-  scalar = sha256StringToScalarLittleEndian(scalar);
+  scalar = sha256StringToScalarLittleEndian(scalar) as any;
 
   const x = parentUncompressedPublicKeyHex.substring(2, 66);
   const y = parentUncompressedPublicKeyHex.substring(66);

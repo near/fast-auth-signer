@@ -1,8 +1,7 @@
-import BN from 'bn.js';
 import {
   ethers, keccak256, parseEther
 } from 'ethers';
-import { Account, transactions } from 'near-api-js';
+import { Account } from 'near-api-js';
 
 // import { KeyDerivation } from '../kdf';
 import { generateEthereumAddress } from '../kdf/kdf-osman';
@@ -191,26 +190,9 @@ class EVM {
 
     const transactionHash = EVM.prepareTransactionForSignature(transaction);
 
-    const functionCall = transactions.functionCall(
-      'sign',
-      {
-        payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
-        path:    derivedPath,
-      },
-      new BN('300000000000000'),
-      new BN(0)
-    );
-
-    const signed = await window.fastAuthController.signDelegateAction(
-      {
-        receiverId: 'multichain-testnet-2.testnet',
-        actions:    [functionCall],
-        signerId:   account.accountId
-      }
-    );
-
     const signature = await signMPC(
-      signed,
+      transactionHash,
+      derivedPath,
       account,
       this.relayerUrl
     );
@@ -225,13 +207,7 @@ class EVM {
           v: currV,
         });
 
-        if (from.toLowerCase() === address.toLowerCase()) {
-          console.log(`BE Address: ${address}`);
-
-          return true;
-        }
-
-        return false;
+        return from.toLowerCase() === address.toLowerCase();
       });
 
       if (v === undefined) {
