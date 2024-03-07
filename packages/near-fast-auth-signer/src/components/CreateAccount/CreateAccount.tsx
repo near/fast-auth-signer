@@ -120,15 +120,15 @@ function CreateAccount() {
   const [searchParams] = useSearchParams();
   const [inFlight, setInFlight] = useState(false);
 
-  const contract_id = searchParams.get('contract_id');
+  const contractId = searchParams.get('contract_id');
   useEffect(() => {
-    if (contract_id && getMultiChainContract() === contract_id) {
+    if (contractId && getMultiChainContract() === contractId) {
       window.parent.postMessage({
         type:    'CreateAccountError',
         message: 'Invalid contract_id'
       }, '*');
     }
-  }, [contract_id]);
+  }, [contractId]);
 
   const {
     register,
@@ -157,8 +157,8 @@ function CreateAccount() {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+    const contract_id = searchParams.get('contract_id');
 
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;

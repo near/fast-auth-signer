@@ -17,7 +17,6 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
-import { getMultiChainContract } from '../SignMultichain/utils';
 
 const StyledStatusMessage = styled.div`
   display: flex;
@@ -120,7 +119,7 @@ export const onSignIn = async ({
       methodNames,
       allowance:    new BN('250000000000000'),
     }) : getAddKeyAction({
-      publicKeyLak: public_key_lak,
+      publicKeyLak:      public_key_lak,
       webAuthNPublicKey: publicKeyFak,
       contractId:        contract_id,
       methodNames,

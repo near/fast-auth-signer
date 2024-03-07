@@ -95,16 +95,15 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
-
-  const contract_id = searchParams.get('contract_id');
+  const contractId = searchParams.get('contract_id');
   useEffect(() => {
-    if (contract_id && getMultiChainContract() === contract_id) {
+    if (contractId && getMultiChainContract() === contractId) {
       window.parent.postMessage({
         type:    'addDeviceError',
         message: 'Invalid contract_id'
       }, '*');
     }
-  }, [contract_id]);
+  }, [contractId]);
 
   const addDevice = useCallback(async (data: any) => {
     setInFlight(true);
@@ -117,8 +116,8 @@ function AddDevicePage() {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+    const contract_id = searchParams.get('contract_id');
 
     try {
       await handleCreateAccount({
@@ -145,7 +144,7 @@ function AddDevicePage() {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
       window.parent.postMessage({
-        type:    'AddDeviceError',
+        type:    'addDeviceError',
         message: errorMessage
       }, '*');
 
@@ -162,8 +161,8 @@ function AddDevicePage() {
     setInFlight(true);
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
     const public_key =  decodeIfTruthy(searchParams.get('public_key'));
-    const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
     const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+    const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
 
     const isPasskeySupported = await isPassKeyAvailable();
     if (!public_key || !contract_id) {

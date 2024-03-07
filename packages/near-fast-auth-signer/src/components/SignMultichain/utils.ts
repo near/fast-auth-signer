@@ -88,8 +88,8 @@ export const deriveChildPublicKey = async (
   const newPublicKeyPoint = oldPublicKeyPoint.add(scalarTimesG);
 
   return `04${
-    newPublicKeyPoint.getX().toString('hex')
-    + newPublicKeyPoint.getY().toString('hex')}`;
+    newPublicKeyPoint.getX().toString('hex').padStart(64, '0')
+    + newPublicKeyPoint.getY().toString('hex').padStart(64, '0')}`;
 };
 
 export const uncompressedHexPointToEvmAddress = (uncompressedHexPoint) => {
