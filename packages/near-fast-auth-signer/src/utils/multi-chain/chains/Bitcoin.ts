@@ -5,7 +5,8 @@ import { ethers } from 'ethers';
 import * as nearAPI from 'near-api-js';
 import { Account } from 'near-api-js';
 
-import { KeyDerivation } from '../kdf';
+// import { KeyDerivation } from '../kdf';
+import { generateBTCAddress } from '../kdf/kdf-osman';
 import { signMPC } from '../signature';
 
 type Transaction = {
@@ -215,23 +216,25 @@ export class Bitcoin {
    * @param {string} signerContractPublicKey - The public key in base58 format.
    * @returns {{ address: string; publicKey: Buffer }} An object containing the derived spoofed Bitcoin address and public key.
    */
-  static deriveProductionAddress(
+  static async deriveProductionAddress(
     signerId: string,
     path: string,
     signerContractPublicKey: string
-  ): { address: string; publicKey: Buffer } {
-    const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
-    const derivedKey = KeyDerivation.deriveKey(
-      signerContractPublicKey,
-      epsilon
-    );
+  ): Promise<{ address: string; publicKey: Buffer; }> {
+    // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
+    // const derivedKey = KeyDerivation.deriveKey(
+    //   signerContractPublicKey,
+    //   epsilon
+    // );
 
-    const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
+    // const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
 
-    const { address } = bitcoin.payments.p2pkh({
-      pubkey:  publicKeyBuffer,
-      network: bitcoin.networks.testnet,
-    });
+    // const { address } = bitcoin.payments.p2pkh({
+    //   pubkey:  publicKeyBuffer,
+    //   network: bitcoin.networks.testnet,
+    // });
+
+    const { address, publicKey } = await generateBTCAddress(signerId, path, signerContractPublicKey);
 
     if (!address) {
       throw new Error('Unable to derive BTC address');
@@ -239,7 +242,7 @@ export class Bitcoin {
 
     return {
       address,
-      publicKey: publicKeyBuffer,
+      publicKey,
     };
   }
 
@@ -323,7 +326,7 @@ export class Bitcoin {
     signerContractPublicKey: string
   ) {
     const satoshis = Bitcoin.toSatoshi(data.value);
-    const { address, publicKey } = Bitcoin.deriveProductionAddress(
+    const { address, publicKey } = await Bitcoin.deriveProductionAddress(
       account.accountId,
       derivedPath,
       signerContractPublicKey

@@ -84,4 +84,16 @@ const signAndSend = async (data: Interface) => {
   console.log({ txid });
 };
 
+export const getDerivedAddress =   async (signerId: string, path: string, chain: string) => {
+  let derivedAddress: string;
+
+  if (['BNB', 'ETH'].includes(chain)) {
+    derivedAddress =  await EVM.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
+  } else {
+    derivedAddress =  (await Bitcoin.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
+  }
+
+  console.log({ derivedAddress });
+};
+
 export default signAndSend;

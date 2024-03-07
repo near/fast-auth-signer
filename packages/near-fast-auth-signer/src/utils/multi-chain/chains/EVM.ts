@@ -4,7 +4,8 @@ import {
 } from 'ethers';
 import { Account, transactions } from 'near-api-js';
 
-import { KeyDerivation } from '../kdf';
+// import { KeyDerivation } from '../kdf';
+import { generateEthereumAddress } from '../kdf/kdf-osman';
 import { signMPC } from '../signature';
 
 class EVM {
@@ -38,7 +39,7 @@ class EVM {
   static prepareTransactionForSignature(
     transaction: ethers.TransactionLike
   ): string {
-    const serializedTransaction =      ethers.Transaction.from(transaction).serialized;
+    const serializedTransaction =      ethers.Transaction.from(transaction).unsignedSerialized;
     const transactionHash = keccak256(serializedTransaction);
 
     return transactionHash;
@@ -94,8 +95,8 @@ class EVM {
       ...rest,
       gasLimit,
       gasPrice:             feeData.gasPrice,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
-      maxFeePerGas:         feeData.maxFeePerGas,
+      // maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+      // maxFeePerGas:         feeData.maxFeePerGas,
       chainId:              this.provider._network.chainId,
       nonce,
       type:                 0,
@@ -140,23 +141,25 @@ class EVM {
    * const address = deriveProductionAddress(signerId, path, signerContractPublicKey);
    * console.log(address); // 0x...
    */
-  static deriveProductionAddress(
+  static async deriveProductionAddress(
     signerId: string,
     path: string,
     signerContractPublicKey: string
-  ): string {
-    const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
-    const derivedKey = KeyDerivation.deriveKey(
-      signerContractPublicKey,
-      epsilon
-    );
+  ): Promise<string> {
+    // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
+    // const derivedKey = KeyDerivation.deriveKey(
+    //   signerContractPublicKey,
+    //   epsilon
+    // );
 
-    const publicKeyNoPrefix = derivedKey.startsWith('04')
-      ? derivedKey.substring(2)
-      : derivedKey;
-    const hash = ethers.keccak256(Buffer.from(publicKeyNoPrefix, 'hex'));
+    // const publicKeyNoPrefix = derivedKey.startsWith('04')
+    //   ? derivedKey.substring(2)
+    //   : derivedKey;
+    // const hash = ethers.keccak256(Buffer.from(publicKeyNoPrefix, 'hex'));
 
-    return `0x${hash.substring(hash.length - 40)}`;
+    // return `0x${hash.substring(hash.length - 40)}`;
+
+    return generateEthereumAddress(signerId, path, signerContractPublicKey);
   }
 
   /**
@@ -176,7 +179,7 @@ class EVM {
     derivedPath: string,
     signerContractPublicKey: string
   ): Promise<ethers.TransactionResponse | undefined> {
-    const from = EVM.deriveProductionAddress(
+    const from = await EVM.deriveProductionAddress(
       account?.accountId,
       derivedPath,
       signerContractPublicKey
@@ -223,6 +226,8 @@ class EVM {
           s,
           v: currV,
         });
+
+        console.log({ address });
 
         if (from.toLowerCase() === address.toLowerCase()) {
           console.log(`BE Address: ${address}`);
