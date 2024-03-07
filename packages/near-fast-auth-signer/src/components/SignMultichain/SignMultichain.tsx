@@ -44,11 +44,11 @@ function SignMultichain() {
   // Send form height to modal if in iframe
   useIframeDialogConfig({
     element: signTransactionRef.current,
-    onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
+    onClose: () => window.parent.postMessage({ type: 'method', message: 'User cancelled action' }, '*')
   });
 
   const onError = (text: string) => {
-    window.parent.postMessage({ signedDelegates: '', text }, '*');
+    window.parent.postMessage({ type: 'multichainError', message: text }, '*');
     setError(text);
   };
 
@@ -64,7 +64,7 @@ function SignMultichain() {
     };
 
     window.addEventListener(
-      'multichain-message',
+      'message',
       handleMessage,
     );
     // TODO: test code, delete later
@@ -72,7 +72,7 @@ function SignMultichain() {
     setMessage(sampleMessageForEthereum);
 
     return () => {
-      window.removeEventListener('multichain-message', handleMessage);
+      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
@@ -127,7 +127,7 @@ function SignMultichain() {
         deserializedDerivationPath,
       });
       console.log('signedDelegateBase64', signedDelegateBase64);
-      window.parent.postMessage({ signedDelegates: signedDelegateBase64 }, '*');
+      window.parent.postMessage({ type: 'response', signedDelegates: signedDelegateBase64 }, '*');
       setInFlight(false);
     } catch (e) {
       setInFlight(false);
@@ -156,7 +156,7 @@ function SignMultichain() {
   };
 
   const onCancel = () => {
-    window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' });
+    window.parent.postMessage({ type: 'method', message:  'User cancelled action' }, '*');
   };
 
   return (

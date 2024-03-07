@@ -100,7 +100,7 @@ function AddDevicePage() {
   useEffect(() => {
     if (contract_id && getMultiChainContract() === contract_id) {
       window.parent.postMessage({
-        type:    'AddDeviceError',
+        type:    'addDeviceError',
         message: 'Invalid contract_id'
       }, '*');
     }
