@@ -210,17 +210,17 @@ export class Bitcoin {
    *
    * @param {string} signerId - A string representing the initial input or seed for the spoofed key generation.
    * @param {string} path - A derivation path that influences the final generated spoofed key.
-   * @param {string} signerContractPublicKey - The public key in base58 format.
+   * @param {string} contractRootPublicKey - The root public key from which new keys are derived based on the specified path.
    * @returns {{ address: string; publicKey: Buffer }} An object containing the derived spoofed Bitcoin address and public key.
    */
   static async deriveProductionAddress(
     signerId: string,
     path: string,
-    signerContractPublicKey: string
+    contractRootPublicKey: string
   ): Promise<{ address: string; publicKey: Buffer; }> {
     // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
     // const derivedKey = KeyDerivation.deriveKey(
-    //   signerContractPublicKey,
+    //   contractRootPublicKey,
     //   epsilon
     // );
 
@@ -231,7 +231,7 @@ export class Bitcoin {
     //   network: bitcoin.networks.testnet,
     // });
 
-    const { address, publicKey } = await generateBTCAddress(signerId, path, signerContractPublicKey);
+    const { address, publicKey } = await generateBTCAddress(signerId, path, contractRootPublicKey);
 
     if (!address) {
       throw new Error('Unable to derive BTC address');
@@ -311,7 +311,7 @@ export class Bitcoin {
    * @param {string} data.to - The recipient's Bitcoin address.
    * @param {number} data.value - The amount of Bitcoin to send (in BTC).
    * @param {Account} account - The account object containing the user's account information.
-   * @param {string} derivedPath - The BIP32 derivation path for the account.
+   * @param {string} keyPath - The key derivation path for the account.
    */
   async handleTransaction(
     data: {
@@ -319,14 +319,14 @@ export class Bitcoin {
       value: number;
     },
     account: Account,
-    derivedPath: string,
-    signerContractPublicKey: string
+    keyPath: string,
+    contractRootPublicKey: string
   ) {
     const satoshis = Bitcoin.toSatoshi(data.value);
     const { address, publicKey } = await Bitcoin.deriveProductionAddress(
       account.accountId,
-      derivedPath,
-      signerContractPublicKey
+      keyPath,
+      contractRootPublicKey
     );
 
     const utxos = await this.fetchUTXOs(address);
@@ -383,7 +383,7 @@ export class Bitcoin {
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
         const signature = await sign(
           transactionHash,
-          derivedPath,
+          keyPath,
           account,
           this.relayerUrl
         );
