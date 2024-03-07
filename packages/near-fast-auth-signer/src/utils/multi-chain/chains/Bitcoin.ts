@@ -56,11 +56,14 @@ export class Bitcoin {
 
   private scanUrl: string;
 
+  private relayerUrl: string;
+
   constructor(config: {
     networkType: 'bitcoin' | 'testnet';
     rpcEndpoint: string;
     scanUrl: string;
     name: string;
+    relayerUrl: string
   }) {
     this.network =      config.networkType === 'testnet'
       ? bitcoin.networks.testnet
@@ -68,6 +71,7 @@ export class Bitcoin {
     this.rpcEndpoint = config.rpcEndpoint;
     this.scanUrl = config.scanUrl;
     this.name = config.name;
+    this.relayerUrl = config.relayerUrl;
   }
 
   /**
@@ -398,7 +402,7 @@ export class Bitcoin {
         const signature = await signMPC(
           signed,
           account,
-          derivedPath
+          this.relayerUrl
         );
 
         if (!signature) {

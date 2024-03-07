@@ -55,6 +55,7 @@ class EVM {
     // signature: string
   ): Promise<ethers.TransactionResponse> {
     try {
+      // TODO: maybe this is not working
       const serializedTransaction = ethers.Transaction.from(
         transaction
       ).serialized;
