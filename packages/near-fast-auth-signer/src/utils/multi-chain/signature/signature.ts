@@ -14,7 +14,7 @@ const toRVS = (signature: string): RSVSignature => {
   };
 };
 
-export const signMPC = async (
+export const sign = async (
   transactionHash: string | ethers.BytesLike,
   path: string,
   account: Account,

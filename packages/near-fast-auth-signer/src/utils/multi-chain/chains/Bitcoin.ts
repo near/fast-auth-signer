@@ -4,7 +4,7 @@ import { Account } from 'near-api-js';
 
 // import { KeyDerivation } from '../kdf';
 import { generateBTCAddress } from '../kdf/kdf-osman';
-import { signMPC } from '../signature';
+import { sign } from '../signature';
 
 type Transaction = {
   txid: string;
@@ -381,7 +381,7 @@ export class Bitcoin {
     const mpcKeyPair = {
       publicKey,
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
-        const signature = await signMPC(
+        const signature = await sign(
           transactionHash,
           derivedPath,
           account,
