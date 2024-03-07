@@ -24,9 +24,8 @@ function AuthIndicator() {
             type="button"
             onClick={() => signAndSend({
               transaction:      {
-                to:      '0x4174678c78fEaFd778c1ff319D5D326701449b25',
-                value:   '0.002',
-                chainId: 11155111
+                to:      'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+                value:   '0.00003',
               },
               derivedAddress:   '',
               derivedPublicKey: '',
@@ -34,7 +33,7 @@ function AuthIndicator() {
                 window.fastAuthController.getConnection(),
                 window.fastAuthController.getAccountId()
               ),
-              derivedPath:      ',ethereum,near.org'
+              derivedPath:      ',bitcoin,felipe.org'
             })}
           >
             Submit
@@ -43,8 +42,8 @@ function AuthIndicator() {
             type="button"
             onClick={() => getDerivedAddress(
               window.fastAuthController.getAccountId(),
-              ',ethereum,near.org',
-              'ETH'
+              ',bitcoin,felipe.org',
+              'BTC'
             )}
           >
             Get address

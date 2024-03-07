@@ -74,7 +74,7 @@ const signAndSend = async (data: Interface) => {
     const btc = new Bitcoin({ ...CHAIN_CONFIG.btc, relayerUrl: 'http://34.136.82.88:3030' });
 
     txid = await btc.handleTransaction(
-      { ...data.transaction, value: parseInt(data.transaction.value, 10) },
+      { ...data.transaction, value: parseFloat(data.transaction.value) },
       data.account,
       data.derivedPath,
       MPC_ROOT_PUBLIC_KEY
