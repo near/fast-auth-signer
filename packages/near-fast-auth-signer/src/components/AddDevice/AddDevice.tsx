@@ -26,6 +26,7 @@ import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
+import { getMultiChainContract } from '../SignMultichain/utils';
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -94,6 +95,16 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
+
+  const contract_id = searchParams.get('contract_id');
+  useEffect(() => {
+    if (contract_id && getMultiChainContract() === contract_id) {
+      window.parent.postMessage({
+        type:    'AddDeviceError',
+        message: 'Invalid contract_id'
+      }, '*');
+    }
+  }, [contract_id]);
 
   const addDevice = useCallback(async (data: any) => {
     setInFlight(true);

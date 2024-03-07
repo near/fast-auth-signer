@@ -21,6 +21,7 @@ import {
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
 import { FormContainer, StyledContainer } from '../Layout';
+import { getMultiChainContract } from '../SignMultichain/utils';
 
 const CreateAccountForm = styled(FormContainer)`
   height: 500px;
@@ -118,6 +119,16 @@ function CreateAccount() {
 
   const [searchParams] = useSearchParams();
   const [inFlight, setInFlight] = useState(false);
+
+  const contract_id = searchParams.get('contract_id');
+  useEffect(() => {
+    if (contract_id && getMultiChainContract() === contract_id) {
+      window.parent.postMessage({
+        type:    'CreateAccountError',
+        message: 'Invalid contract_id'
+      }, '*');
+    }
+  }, [contract_id]);
 
   const {
     register,
