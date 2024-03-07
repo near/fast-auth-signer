@@ -1,6 +1,6 @@
 import BN from 'bn.js';
 import {
-  ethers, keccak256, parseEther,
+  ethers, keccak256, parseEther
 } from 'ethers';
 import { Account, transactions } from 'near-api-js';
 
@@ -52,11 +52,9 @@ class EVM {
    * @returns {Promise<string>} The transaction hash of the executed transaction.
    */
   async sendSignedTransaction(
-    transaction: ethers.TransactionLike,
-    // signature: string
+    transaction: ethers.TransactionLike
   ): Promise<ethers.TransactionResponse> {
     try {
-      // TODO: maybe this is not working
       const serializedTransaction = ethers.Transaction.from(
         transaction
       ).serialized;
@@ -197,7 +195,7 @@ class EVM {
       'sign',
       {
         payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
-        path:    'test',
+        path:    derivedPath,
       },
       new BN('300000000000000'),
       new BN(0)
@@ -227,8 +225,6 @@ class EVM {
           v: currV,
         });
 
-        console.log({ address });
-
         if (from.toLowerCase() === address.toLowerCase()) {
           console.log(`BE Address: ${address}`);
 
@@ -242,10 +238,10 @@ class EVM {
         throw new Error('Failed to recover address from signature.');
       }
 
-      const transactionResponse = await this.sendSignedTransaction(
-        transaction,
-        // ethers.utils.joinSignature({ r, s, v })
-      );
+      const transactionResponse = await this.sendSignedTransaction({
+        ...transaction,
+        signature: ethers.Signature.from({ r, s, v })
+      });
 
       return transactionResponse;
     }

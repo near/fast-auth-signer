@@ -388,7 +388,7 @@ export class Bitcoin {
           'sign',
           {
             payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
-            path:    'test',
+            path:    derivedPath,
           },
           new BN('300000000000000'),
           new BN(0)
