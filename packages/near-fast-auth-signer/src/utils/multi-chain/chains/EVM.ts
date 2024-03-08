@@ -12,8 +12,6 @@ class EVM {
 
   private scanUrl: string;
 
-  private name: string;
-
   private relayerUrl: string;
 
   /**
@@ -22,10 +20,9 @@ class EVM {
    * @param {object} config - The configuration object for the EVM instance.
    * @param {string} [config.providerUrl] - The URL for the EVM JSON RPC provider.
    */
-  constructor(config: { providerUrl: string; scanUrl: string; name: string, relayerUrl: string }) {
+  constructor(config: { providerUrl: string; scanUrl: string; relayerUrl: string }) {
     this.provider = new ethers.JsonRpcProvider(config.providerUrl);
     this.scanUrl = config.scanUrl;
-    this.name = config.name;
     this.relayerUrl = config.relayerUrl;
   }
 

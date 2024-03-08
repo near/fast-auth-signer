@@ -46,29 +46,25 @@ type Transaction = {
   };
 };
 export class Bitcoin {
-  private name: string;
-
   private network: bitcoin.networks.Network;
 
-  private rpcEndpoint: string;
+  private providerUrl: string;
 
   private scanUrl: string;
 
   private relayerUrl: string;
 
   constructor(config: {
-    networkType: 'bitcoin' | 'testnet';
-    rpcEndpoint: string;
+    networkType: 'mainnet' | 'testnet';
+    providerUrl: string;
     scanUrl: string;
-    name: string;
     relayerUrl: string
   }) {
     this.network =      config.networkType === 'testnet'
       ? bitcoin.networks.testnet
       : bitcoin.networks.bitcoin;
-    this.rpcEndpoint = config.rpcEndpoint;
+    this.providerUrl = config.providerUrl;
     this.scanUrl = config.scanUrl;
-    this.name = config.name;
     this.relayerUrl = config.relayerUrl;
   }
 
@@ -122,7 +118,7 @@ export class Bitcoin {
   ): Promise<Array<{ txid: string; vout: number; value: number }>> {
     try {
       const response = await axios.get(
-        `${this.rpcEndpoint}address/${address}/utxo`
+        `${this.providerUrl}address/${address}/utxo`
       );
       const utxos = response.data.map((utxo: any) => {
         return {
@@ -149,7 +145,7 @@ export class Bitcoin {
    * @throws {Error} Throws an error if the fee rate data for the specified confirmation target is missing.
    */
   async fetchFeeRate(): Promise<number> {
-    const response = await axios.get(`${this.rpcEndpoint}fee-estimates`);
+    const response = await axios.get(`${this.providerUrl}fee-estimates`);
     const confirmationTarget = 6;
     if (response.data && response.data[confirmationTarget]) {
       return response.data[confirmationTarget];
@@ -169,7 +165,7 @@ export class Bitcoin {
    */
   async fetchTransaction(transactionId: string): Promise<bitcoin.Transaction> {
     const { data } = await axios.get<Transaction>(
-      `${this.rpcEndpoint}tx/${transactionId}`
+      `${this.providerUrl}tx/${transactionId}`
     );
     const tx = new bitcoin.Transaction();
 
@@ -231,16 +227,7 @@ export class Bitcoin {
     //   network: bitcoin.networks.testnet,
     // });
 
-    const { address, publicKey } = await generateBTCAddress(signerId, path, contractRootPublicKey);
-
-    if (!address) {
-      throw new Error('Unable to derive BTC address');
-    }
-
-    return {
-      address,
-      publicKey,
-    };
+    return generateBTCAddress(signerId, path, contractRootPublicKey);
   }
 
   /**
@@ -288,7 +275,7 @@ export class Bitcoin {
     try {
       const proxyUrl = options?.proxy ? 'https://corsproxy.io/?' : '';
       const response = await axios.post(
-        `${proxyUrl}${this.rpcEndpoint}tx`,
+        `${proxyUrl}${this.providerUrl}tx`,
         txHex
       );
 

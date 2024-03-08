@@ -6,6 +6,24 @@ import AuthIndicatorButton from './AuthIndicatorButton';
 import { useAuthState } from '../../hooks/useAuthState';
 import signAndSend, { getDerivedAddress } from '../../utils/multi-chain/multiChain';
 
+const CHAIN_CONFIG = {
+  ethereum: {
+    providerUrl:
+      'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
+    scanUrl: 'https://sepolia.etherscan.io',
+  },
+  bsc: {
+    providerUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+    scanUrl:     'https://testnet.bscscan.com',
+  },
+  btc: {
+    networkType: 'testnet' as const,
+    // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
+    providerUrl: 'https://blockstream.info/testnet/api/',
+    scanUrl:     'https://blockstream.info/testnet',
+  },
+};
+
 function AuthIndicator() {
   const { authenticated } = useAuthState();
   const navigate = useNavigate();
@@ -22,19 +40,28 @@ function AuthIndicator() {
         <div>
           <button
             type="button"
-            onClick={() => signAndSend({
-              transaction:      {
-                to:      'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-                value:   '0.00003',
-              },
-              derivedAddress:   '',
-              derivedPublicKey: '',
-              account:          new Account(
-                window.fastAuthController.getConnection(),
-                window.fastAuthController.getAccountId()
-              ),
-              derivedPath:      ',bitcoin,felipe.org'
-            })}
+            onClick={async () => {
+              const res = await signAndSend({
+                transaction:      {
+                  to:          '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+                  value:       '0.001',
+                  derivedPath:      ',bnb,felipe.org'
+                },
+                account:          new Account(
+                  window.fastAuthController.getConnection(),
+                  window.fastAuthController.getAccountId()
+                ),
+                fastAuthRelayerUrl: 'http://34.136.82.88:3030',
+                chainConfig:        {
+                  type: 'EVM',
+                  ...CHAIN_CONFIG.bsc
+                }
+              });
+
+              if (res.transactionHash) {
+                console.log(res.transactionHash);
+              }
+            }}
           >
             Submit
           </button>
@@ -42,8 +69,8 @@ function AuthIndicator() {
             type="button"
             onClick={() => getDerivedAddress(
               window.fastAuthController.getAccountId(),
-              ',bitcoin,felipe.org',
-              'BTC'
+              ',ethereum,felipe.org',
+              'EVM'
             )}
           >
             Get address

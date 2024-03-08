@@ -6,91 +6,86 @@ import EVM from './chains/EVM';
 type BaseTransaction = {
   to: string;
   value: string;
-};
-
-type EVMTransaction = BaseTransaction & {
-  chainId: number;
-  gas?: number;
-  gasLimit?: number;
-};
-
-type BTCTransaction = BaseTransaction &
-  (
-    | {
-        fee?: never;
-        utxos?: never;
-      }
-    | {
-        fee: number;
-        utxos: any[];
-      }
-  );
-
-type Interface = {
-  transaction: EVMTransaction | BTCTransaction;
-  derivedAddress: string;
-  // Uncompressed hex format
-  derivedPublicKey: string;
-  account: Account;
   derivedPath: string
 };
 
-const CHAIN_CONFIG = {
-  ethereum: {
-    providerUrl:
-      'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
-    scanUrl: 'https://sepolia.etherscan.io',
-    name:    'ETH',
-  },
-  bsc: {
-    providerUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
-    scanUrl:     'https://testnet.bscscan.com',
-    name:        'BNB',
-  },
-  btc: {
-    name:        'BTC',
-    networkType: 'testnet' as const,
-    // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
-    rpcEndpoint: 'https://blockstream.info/testnet/api/',
-    scanUrl:     'https://blockstream.info/testnet',
-  },
+type EVMTransaction = BaseTransaction
+
+type BTCTransaction = BaseTransaction
+
+type BaseChainConfig = {
+  providerUrl: string,
+  scanUrl: string,
+}
+
+type EVMChainConfig = BaseChainConfig & {
+  type: 'EVM'
+
+}
+
+type BTCChainConfig = BaseChainConfig & {
+  type: 'BTC'
+  networkType: 'mainnet' | 'testnet'
+}
+
+type Request = {
+  transaction: EVMTransaction | BTCTransaction;
+  chainConfig: EVMChainConfig | BTCChainConfig
+  account: Account;
+  fastAuthRelayerUrl: string;
 };
+
+type Response = {
+  success: Boolean;
+  transactionHash?: string;
+  errorMessage?: string;
+}
 
 const MPC_ROOT_PUBLIC_KEY =  'secp256k1:4HFcTSodRLVCGNVcGc4Mf2fwBBBxv9jxkGdiW2S2CA1y6UpVVRWKj6RX7d7TDt65k2Bj3w9FU4BGtt43ZvuhCnNt';
 
-const signAndSend = async (data: Interface) => {
+const signAndSend = async (req: Request): Promise<Response> => {
   let txid: string;
-  if ('chainId' in data.transaction) {
-    let evm: EVM;
 
-    if (data.transaction.chainId === 11155111) {
-      evm = new EVM({ ...CHAIN_CONFIG.ethereum, relayerUrl: 'http://34.136.82.88:3030' });
-    } else if (data.transaction.chainId === 97) {
-      evm = new EVM({ ...CHAIN_CONFIG.bsc, relayerUrl: 'http://34.136.82.88:3030' });
-    }
+  if (req.chainConfig.type === 'EVM') {
+    const evm = new EVM({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
-    txid = (await evm.handleTransaction(data.transaction, data.account, data.derivedPath, MPC_ROOT_PUBLIC_KEY)).hash;
-  } else {
-    const btc = new Bitcoin({ ...CHAIN_CONFIG.btc, relayerUrl: 'http://34.136.82.88:3030' });
+    txid = (await evm.handleTransaction(
+      req.transaction,
+      req.account,
+      req.transaction.derivedPath,
+      MPC_ROOT_PUBLIC_KEY
+    )).hash;
+  }
+
+  if (req.chainConfig.type === 'BTC') {
+    const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
     txid = await btc.handleTransaction(
-      { ...data.transaction, value: parseFloat(data.transaction.value) },
-      data.account,
-      data.derivedPath,
+      { ...req.transaction, value: parseFloat(req.transaction.value) },
+      req.account,
+      req.transaction.derivedPath,
       MPC_ROOT_PUBLIC_KEY
     );
   }
 
-  console.log({ txid });
+  return {
+    transactionHash: txid,
+    success:         true,
+  };
 };
 
-export const getDerivedAddress =   async (signerId: string, path: string, chain: string) => {
+export const getDerivedAddress = async (signerId: string, path: string, type: string) => {
   let derivedAddress: string;
 
-  if (['BNB', 'ETH'].includes(chain)) {
-    derivedAddress =  await EVM.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
-  } else {
-    derivedAddress =  (await Bitcoin.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
+  switch (type) {
+    case 'EVM':
+      derivedAddress = await EVM.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
+      break;
+    case 'BTC':
+      derivedAddress = (await Bitcoin.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
+      break;
+    default:
+      throw new Error(`Unsupported type: ${type}. Only 'EVM' and 'BTC' are supported.`);
   }
 
   console.log({ derivedAddress });
