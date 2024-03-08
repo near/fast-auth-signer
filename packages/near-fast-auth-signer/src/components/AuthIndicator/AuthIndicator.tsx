@@ -58,7 +58,7 @@ function AuthIndicator() {
                 }
               });
 
-              if (res.transactionHash) {
+              if ('transactionHash' in res) {
                 console.log(res.transactionHash);
               }
             }}

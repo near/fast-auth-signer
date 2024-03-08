@@ -35,43 +35,56 @@ type Request = {
   fastAuthRelayerUrl: string;
 };
 
-type Response = {
-  success: Boolean;
-  transactionHash?: string;
-  errorMessage?: string;
+type SuccessResponse = {
+  transactionHash: string;
+  success: true;
 }
+
+type FailureResponse = {
+  success: false;
+  errorMessage: string;
+}
+
+type Response = SuccessResponse | FailureResponse
 
 const MPC_ROOT_PUBLIC_KEY =  'secp256k1:4HFcTSodRLVCGNVcGc4Mf2fwBBBxv9jxkGdiW2S2CA1y6UpVVRWKj6RX7d7TDt65k2Bj3w9FU4BGtt43ZvuhCnNt';
 
 const signAndSend = async (req: Request): Promise<Response> => {
-  let txid: string;
+  try {
+    let txid: string;
 
-  if (req.chainConfig.type === 'EVM') {
-    const evm = new EVM({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
+    if (req.chainConfig.type === 'EVM') {
+      const evm = new EVM({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
-    txid = (await evm.handleTransaction(
-      req.transaction,
-      req.account,
-      req.transaction.derivedPath,
-      MPC_ROOT_PUBLIC_KEY
-    )).hash;
+      txid = (await evm.handleTransaction(
+        req.transaction,
+        req.account,
+        req.transaction.derivedPath,
+        MPC_ROOT_PUBLIC_KEY
+      )).hash;
+    }
+
+    if (req.chainConfig.type === 'BTC') {
+      const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
+
+      txid = await btc.handleTransaction(
+        { ...req.transaction, value: parseFloat(req.transaction.value) },
+        req.account,
+        req.transaction.derivedPath,
+        MPC_ROOT_PUBLIC_KEY
+      );
+    }
+
+    return {
+      transactionHash: txid,
+      success:         true,
+    };
+  } catch (e) {
+    return {
+      success:      false,
+      errorMessage: e.message
+    };
   }
-
-  if (req.chainConfig.type === 'BTC') {
-    const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
-
-    txid = await btc.handleTransaction(
-      { ...req.transaction, value: parseFloat(req.transaction.value) },
-      req.account,
-      req.transaction.derivedPath,
-      MPC_ROOT_PUBLIC_KEY
-    );
-  }
-
-  return {
-    transactionHash: txid,
-    success:         true,
-  };
 };
 
 export const getDerivedAddress = async (signerId: string, path: string, type: string) => {
