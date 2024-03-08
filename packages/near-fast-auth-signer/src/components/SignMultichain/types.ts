@@ -1,14 +1,55 @@
-// eslint-disable-next-line import/no-cycle
-import { EthTxParams } from './ethereum/types';
+import { KeyPair } from 'near-api-js';
 
-export type DerivationPathDeserialized = {
+export interface DerivationPathDeserialized {
   asset: 'ETH' | 'BNB' | 'BTC';
   domain?: string;
-};
-
-export interface BaseTxParams {
-  nearAccountId: string;
-  derivationPath: string;
 }
 
-export type MultichainIframeMessage = EthTxParams
+export interface MultichainExecutionResponse {
+  success: Boolean;
+  transactionHash?: string;
+  errorMessage?: string;
+}
+
+export interface ChainUrls {
+ [chain: string]: {
+    providerUrl: string;
+    scanUrl: string;
+    name: string;
+ };
+}
+
+export interface InitializationConfig {
+ chainUrls: ChainUrls;
+ mpcRecoveryUrl?: string;
+ authInfo: KeyPair | { frp_keypair: KeyPair; oidc_token: string; };
+ mpcContractAccountId: string;
+ fastAuthRelayerUrl: string;
+}
+
+export interface BaseChainInterface {
+ to: string;
+ value: bigint;
+ derivationPath: string;
+}
+
+export interface EVMInterface extends BaseChainInterface {
+ chainId: bigint;
+ maxFeePerGas?: bigint;
+ maxPriorityFeePerGas?: bigint;
+ gasLimit?: number;
+}
+
+export type BTCInterface = BaseChainInterface &
+ (
+   | {
+       derivedPublicKey: string;
+     }
+   | {
+       fee: number;
+       utxos: any[];
+       derivedPublicKey: string;
+     }
+ )
+
+export type MultichainInterface = BTCInterface | EVMInterface;

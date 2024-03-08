@@ -8,10 +8,11 @@ import hash from 'hash.js';
 import keccak from 'keccak';
 import { base_decode } from 'near-api-js/lib/utils/serialize';
 
-import { ethereumSchema } from './ethereum/schema';
+import { bitcoinSchema } from './bitcoin/schema';
+import { evmSchema } from './evm/schema';
 // eslint-disable-next-line import/no-cycle
-import { getEthereumGasFee, getEthereumMessageToSign } from './ethereum/sign';
-import { MultichainIframeMessage, DerivationPathDeserialized } from './types';
+import { getEthereumGasFee, getEthereumMessageToSign } from './evm/sign';
+import { DerivationPathDeserialized, MultichainInterface } from './types';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
@@ -22,14 +23,17 @@ export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet'
 
 const getSchema = (asset: DerivationPathDeserialized['asset']) => {
   switch (asset) {
+    case 'BTC':
+      return bitcoinSchema;
     case 'ETH':
-      return ethereumSchema;
+    case 'BNB':
+      return evmSchema;
     default:
       return null;
   }
 };
 
-export const validateMessage = async (message: MultichainIframeMessage, asset: DerivationPathDeserialized['asset']): Promise<boolean
+export const validateMessage = async (message: MultichainInterface, asset: DerivationPathDeserialized['asset']): Promise<boolean
 | Error> => {
   const schema = getSchema(asset);
   if (!schema) {
@@ -127,7 +131,7 @@ export const uncompressedHexPointToBtcAddress = async (publicKeyHex) => {
 
 type SignedDelegateBase64 = {
   najPublicKeyStr: string;
-  message: MultichainIframeMessage;
+  message: MultichainInterface;
   deserializedDerivationPath: DerivationPathDeserialized;
 }
 
@@ -169,7 +173,7 @@ export const getSignedDelegateBase64 = async ({
 export const multichainAssetToCoinGeckoId = (asset: DerivationPathDeserialized['asset']) => {
   const map = {
     ETH:  'ethereum',
-    BNB:  'binance',
+    BNB:  'binancecoin',
     BTC:  'bitcoin',
   };
 
@@ -188,17 +192,18 @@ export const multichainAssetToNetworkName = (asset: DerivationPathDeserialized['
 
 export const getMultichainCoinGeckoPrice = async (asset: DerivationPathDeserialized['asset']) => fetchGeckoPrices(multichainAssetToCoinGeckoId(asset));
 
-const convertTokenToReadable = (value : MultichainIframeMessage['value'], asset: DerivationPathDeserialized['asset']) => {
+const convertTokenToReadable = (value : MultichainInterface['value'], asset: DerivationPathDeserialized['asset']) => {
   if (asset === 'ETH') {
     return parseFloat(formatEther(value));
   }
   return null;
 };
 
-export const getTokenAndTotalPrice = async (asset: DerivationPathDeserialized['asset'], value: MultichainIframeMessage['value']) => {
+export const getTokenAndTotalPrice = async (asset: DerivationPathDeserialized['asset'], value: MultichainInterface['value']) => {
   const id = multichainAssetToCoinGeckoId(asset);
   if (id) {
     const res = await getMultichainCoinGeckoPrice(asset);
+    console.log('res', res);
     const tokenPrice: number = res[id].usd;
     const tokenAmount = convertTokenToReadable(value, asset);
     return {
@@ -221,17 +226,17 @@ export const shortenAddress = (address: string): string => {
 };
 
 type GasFee = {
-  message: MultichainIframeMessage,
+  chainId?: bigint,
   asset: DerivationPathDeserialized['asset'],
   usdCostOfToken: number
 }
 
 export const getGasFee = async ({
-  message, asset, usdCostOfToken
+  chainId, asset, usdCostOfToken
 }: GasFee) => {
-  if (asset === 'ETH') {
+  if (asset === 'ETH' && chainId) {
     return getEthereumGasFee({
-      chainId:      message.chainId,
+      chainId,
       usdCostOfEth: usdCostOfToken,
     });
   }
