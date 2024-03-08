@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import BinanceIcon from '../../Images/BinanceIcon';
+import BitcoinIcon from '../../Images/BitcoinIcon';
 import EthereumIcon from '../../Images/EthereumIcon';
 import { DerivationPathDeserialized } from '../SignMultichain/types';
 
@@ -24,7 +26,14 @@ const getAssetIcon = ({ asset, height, width }) => {
       return (
         <EthereumIcon height={height} width={width} />
       );
-
+    case 'BTC':
+      return (
+        <BitcoinIcon height={height} width={width} />
+      );
+    case 'BNB':
+      return (
+        <BinanceIcon height={height} width={width} />
+      );
     default:
       return null;
   }
