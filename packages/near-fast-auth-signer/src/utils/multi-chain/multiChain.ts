@@ -92,10 +92,10 @@ export const getDerivedAddress = async (signerId: string, path: string, type: st
 
   switch (type) {
     case 'EVM':
-      derivedAddress = await EVM.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
+      derivedAddress = await EVM.deriveAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
       break;
     case 'BTC':
-      derivedAddress = (await Bitcoin.deriveProductionAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
+      derivedAddress = (await Bitcoin.deriveAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
       break;
     default:
       throw new Error(`Unsupported type: ${type}. Only 'EVM' and 'BTC' are supported.`);

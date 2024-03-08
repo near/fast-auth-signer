@@ -123,10 +123,10 @@ class EVM {
    * const signerId = "felipe.near";
    * const path = ",ethereum,near.org";
    * const contractRootPublicKey = "secp256k1:37aFybhUHCxRdDkuCcB3yHzxqK7N8EQ745MujyAQohXSsYymVeHzhLxKvZ2qYeRHf3pGFiAsxqFJZjpF9gP2JV5u";
-   * const address = deriveProductionAddress(signerId, path, contractRootPublicKey);
+   * const address = deriveAddress(signerId, path, contractRootPublicKey);
    * console.log(address); // 0x...
    */
-  static async deriveProductionAddress(
+  static async deriveAddress(
     signerId: string,
     path: string,
     contractRootPublicKey: string
@@ -164,7 +164,7 @@ class EVM {
     keyPath: string,
     contractRootPublicKey: string
   ): Promise<ethers.TransactionResponse | undefined> {
-    const from = await EVM.deriveProductionAddress(
+    const from = await EVM.deriveAddress(
       account?.accountId,
       keyPath,
       contractRootPublicKey

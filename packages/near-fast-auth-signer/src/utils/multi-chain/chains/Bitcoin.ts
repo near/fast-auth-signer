@@ -209,7 +209,7 @@ export class Bitcoin {
    * @param {string} contractRootPublicKey - The root public key from which new keys are derived based on the specified path.
    * @returns {{ address: string; publicKey: Buffer }} An object containing the derived spoofed Bitcoin address and public key.
    */
-  static async deriveProductionAddress(
+  static async deriveAddress(
     signerId: string,
     path: string,
     contractRootPublicKey: string
@@ -310,7 +310,7 @@ export class Bitcoin {
     contractRootPublicKey: string
   ) {
     const satoshis = Bitcoin.toSatoshi(data.value);
-    const { address, publicKey } = await Bitcoin.deriveProductionAddress(
+    const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
       keyPath,
       contractRootPublicKey
