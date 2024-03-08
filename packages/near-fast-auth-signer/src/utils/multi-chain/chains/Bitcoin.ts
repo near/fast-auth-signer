@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
+import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
 // import { KeyDerivation } from '../kdf';
@@ -45,6 +46,12 @@ type Transaction = {
     block_time: number | null;
   };
 };
+
+type UTXO = {
+  txid: string;
+  vout: number;
+  value: number
+}
 
 type NetworkType = 'bitcoin' | 'testnet'
 
@@ -112,13 +119,13 @@ export class Bitcoin {
    * and are necessary for constructing new transactions.
    *
    * @param {string} address - The Bitcoin address for which to fetch the UTXOs.
-   * @returns {Promise<Array<{ txid: string; vout: number; value: number }>>} A promise that resolves to an array of UTXOs.
+   * @returns {Promise<UTXO[]>} A promise that resolves to an array of UTXOs.
    * Each UTXO is represented as an object containing the transaction ID (`txid`), the output index within that transaction (`vout`),
    * and the value of the output in satoshis (`value`).
    */
   async fetchUTXOs(
     address: string
-  ): Promise<Array<{ txid: string; vout: number; value: number }>> {
+  ): Promise<UTXO[]> {
     try {
       const response = await axios.get(
         `${this.providerUrl}address/${address}/utxo`
@@ -147,9 +154,8 @@ export class Bitcoin {
    * @returns {Promise<number>} A promise that resolves to the fee rate in satoshis per byte.
    * @throws {Error} Throws an error if the fee rate data for the specified confirmation target is missing.
    */
-  async fetchFeeRate(): Promise<number> {
+  async fetchFeeRate(confirmationTarget = 6): Promise<number> {
     const response = await axios.get(`${this.providerUrl}fee-estimates`);
-    const confirmationTarget = 6;
     if (response.data && response.data[confirmationTarget]) {
       return response.data[confirmationTarget];
     }
@@ -299,6 +305,42 @@ export class Bitcoin {
   }
 
   /**
+   * Calculates the fee properties for a Bitcoin transaction.
+   * This function fetches the Unspent Transaction Outputs (UTXOs) for the given address,
+   * and the fee rate for the specified confirmation target. It then uses the `coinselect` algorithm
+   * to select the UTXOs to be spent and calculates the fee required for the transaction.
+   *
+   * @param {string} from - The Bitcoin address from which the transaction is to be sent.
+   * @param {Array<{address: string, value: number}>} targets - An array of target addresses and values (in satoshis) to send.
+   * @param {number} [confirmationTarget=6] - The desired number of blocks in which the transaction should be confirmed.
+   * @returns {Promise<Object>} A promise that resolves to an object containing the selected UTXOs, the total value, the fee, and the change.
+   */
+  async getFeeProperties(
+    from: string,
+    targets: {
+      address: string;
+      value: number;
+    }[],
+    confirmationTarget = 6
+  ): Promise<{
+    inputs: UTXO[],
+    outputs: {address: string, value: number}[],
+    // TODO: return it in USD
+    fee: number
+  }> {
+    const utxos = await this.fetchUTXOs(from);
+    const feeRate = await this.fetchFeeRate(confirmationTarget);
+
+    const ret = coinselect(utxos, targets, feeRate);
+
+    if (!ret.inputs || !ret.outputs) {
+      throw new Error('Invalid transaction');
+    }
+
+    return ret;
+  }
+
+  /**
    * Handles the process of creating and broadcasting a Bitcoin transaction.
    * This function takes the recipient's address, the amount to send, the account details,
    * and the derived path for the account to create a transaction. It then signs the transaction
@@ -327,16 +369,15 @@ export class Bitcoin {
       this.network
     );
 
-    const utxos = await this.fetchUTXOs(address);
-    const feeRate = await this.fetchFeeRate();
+    const { inputs, outputs } = await this.getFeeProperties(address, [{
+      address: data.to,
+      value:   satoshis
+    }]);
 
     const psbt = new bitcoin.Psbt({ network: this.network });
 
-    let totalInput = 0;
     await Promise.all(
-      utxos.map(async (utxo) => {
-        totalInput += utxo.value;
-
+      inputs.map(async (utxo) => {
         const transaction = await this.fetchTransaction(utxo.txid);
         let inputOptions;
         if (transaction.outs[utxo.vout].script.includes('0014')) {
@@ -360,21 +401,16 @@ export class Bitcoin {
       })
     );
 
-    psbt.addOutput({
-      address: data.to,
-      value:   satoshis,
-    });
+    outputs.forEach((out) => {
+      if (!out.address) {
+        out.address = address;
+      }
 
-    const estimatedSize = utxos.length * 178 + 2 * 34 + 10;
-    const fee = estimatedSize * feeRate;
-
-    const change = totalInput - satoshis - fee;
-    if (change > 0) {
       psbt.addOutput({
-        address,
-        value:   change,
+        address: out.address,
+        value:   out.value,
       });
-    }
+    });
 
     const mpcKeyPair = {
       publicKey,
@@ -395,7 +431,7 @@ export class Bitcoin {
     };
 
     await Promise.all(
-      utxos.map(async (_, index) => {
+      inputs.map(async (_, index) => {
         await psbt.signInputAsync(index, mpcKeyPair);
       })
     );

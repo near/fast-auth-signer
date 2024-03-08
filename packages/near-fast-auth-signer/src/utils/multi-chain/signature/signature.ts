@@ -49,6 +49,7 @@ export const sign = async (
 
   let attempts = 0;
 
+  // TODO: maybe we can remove this
   const getSignature = async (): Promise<RSVSignature> => {
     if (attempts >= 3) {
       throw new Error('Signature error, please retry');

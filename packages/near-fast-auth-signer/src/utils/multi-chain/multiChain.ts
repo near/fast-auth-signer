@@ -20,8 +20,7 @@ type BaseChainConfig = {
 }
 
 type EVMChainConfig = {
-  type: 'EVM'
-
+  type: 'EVM',
 }
 
 type BTCChainConfig = {
@@ -121,7 +120,7 @@ export const getDerivedAddress = async (signerId: string, path: string, chainCon
  * @param {string} chainType - The type of chain, e.g., 'EVM'.
  * @returns {Promise<bigint>} The estimated gas required for the transaction.
  */
-// export const getEstimatedGas = async (transaction: object, chainType: string): Promise<bigint> => {
+// export const getEstimatedFee = async (transaction: object, chainType: string): Promise<bigint> => {
 //   if (chainType === 'EVM') {
 //     try {
 //       // Assuming CHAIN_CONFIG is defined elsewhere and accessible here

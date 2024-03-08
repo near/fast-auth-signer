@@ -70,13 +70,30 @@ class EVM {
    * predict how much gas the transaction will use. This is useful for setting
    * gas limits when sending a transaction to ensure it does not run out of gas.
    *
-   * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas.
+   * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas. // Add to docs that this func only needs: to, value, data
    * @returns {Promise<bigint>} A promise that resolves to the estimated gas amount as a bigint.
    */
-  async estimateGas(
+  async getFeeProperties(
     transaction: ethers.TransactionLike
-  ): Promise<bigint> {
-    return this.provider.estimateGas(transaction);
+  ): Promise<{
+  gasLimit: bigint;
+  maxFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
+  maxFee: bigint;
+  }> {
+    const gasLimit = await this.provider.estimateGas(transaction);
+    const feeData = await this.provider.getFeeData();
+
+    const maxFeePerGas =         feeData.maxFeePerGas ?? ethers.parseUnits('10', 'gwei');
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei');
+
+    return {
+      gasLimit,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      // TODO: maybe return in USD
+      maxFee: maxFeePerGas * gasLimit
+    };
   }
 
   /**
@@ -92,8 +109,7 @@ class EVM {
       from: string;
     }
   ): Promise<ethers.TransactionLike> {
-    const feeData = await this.provider.getFeeData();
-    const gasLimit = await this.estimateGas(transaction);
+    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = await this.getFeeProperties(transaction);
     const nonce = await this.provider.getTransactionCount(transaction.from, 'latest');
 
     const { from, ...rest } = transaction;
@@ -101,8 +117,8 @@ class EVM {
     return {
       ...rest,
       gasLimit,
-      maxFeePerGas:         feeData.maxFeePerGas ?? ethers.parseUnits('10', 'gwei'),
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei'),
+      maxFeePerGas,
+      maxPriorityFeePerGas,
       chainId:              this.provider._network.chainId,
       nonce,
       type:                 2,
