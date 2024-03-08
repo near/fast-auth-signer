@@ -1,10 +1,10 @@
-import { borshDeserialize } from 'borsher';
+import { borshDeserialize, borshSerialize } from 'borsher';
 import React, {
   useEffect, useState, useCallback, useRef
 } from 'react';
 
 import { derivationPathSchema } from './schema';
-import { DerivationPathDeserialized, MultichainIframeMessage } from './types';
+import { DerivationPathDeserialized, EVMInterface, MultichainInterface } from './types';
 import {
   validateMessage,
   getSignedDelegateBase64,
@@ -24,19 +24,34 @@ import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
 // TODO: Delete after demo
-const sampleMessageForEthereum: MultichainIframeMessage = {
-  nearAccountId:    'osman.testnet',
+const sampleMessageForEthereum: MultichainInterface = {
   chainId:          BigInt('5'),
   derivationPath:   'AwAAAEVUSAAXAAAAdGVzdC1tY2hhaW4tZTJlLnRlc3RuZXQ=',
   to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
   value:            BigInt('10000000000000000')
 };
 
+const binanceDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
+const sampleMessageForBinance: MultichainInterface = {
+  chainId:          BigInt('97'),
+  derivationPath:   binanceDerivationPath,
+  to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
+  value:            BigInt('10000000000000000')
+};
+
+const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
+const sampleMessageForBitcoin: MultichainInterface = {
+  derivationPath:   bitcoinDerivationPath,
+  to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
+  value:            BigInt('10000000000000000'),
+  derivedPublicKey: 'abc'
+};
+
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<{ price: string | number, tokenAmount: string | number }>({ price: '...', tokenAmount: 0 });
-  const [message, setMessage] = useState<MultichainIframeMessage>(null);
+  const [message, setMessage] = useState<MultichainInterface>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
   const [deserializedDerivationPath, setDeserializedDerivationPath] = useState<DerivationPathDeserialized>(null);
@@ -69,7 +84,7 @@ function SignMultichain() {
     );
     // TODO: test code, delete later
     console.log('set temp message');
-    setMessage(sampleMessageForEthereum);
+    setMessage(sampleMessageForBitcoin);
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -93,9 +108,11 @@ function SignMultichain() {
       }
       setDeserializedDerivationPath(deserialize);
       const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, message.value);
+
+      const { chainId } = (message as EVMInterface);
       const transactionCost = await getGasFee({
         asset:          deserialize.asset,
-        message,
+        ...(chainId ? { chainId } : {}),
         usdCostOfToken: tokenPrice,
       });
       setAmountInfo({
