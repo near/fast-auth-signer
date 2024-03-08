@@ -101,7 +101,7 @@ class EVM {
     return {
       ...rest,
       gasLimit,
-      maxFeePerGas:         feeData.maxFeePerGas ?? ethers.parseUnits('20', 'gwei'),
+      maxFeePerGas:         feeData.maxFeePerGas ?? ethers.parseUnits('10', 'gwei'),
       maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei'),
       chainId:              this.provider._network.chainId,
       nonce,

@@ -45,7 +45,7 @@ function AuthIndicator() {
                 transaction:      {
                   to:          '0x4174678c78fEaFd778c1ff319D5D326701449b25',
                   value:       '0.001',
-                  derivedPath:      ',bnb,felipe.org'
+                  derivedPath:      ',ethereum,felipe.org'
                 },
                 account:          new Account(
                   window.fastAuthController.getConnection(),
@@ -54,7 +54,7 @@ function AuthIndicator() {
                 fastAuthRelayerUrl: 'http://34.136.82.88:3030',
                 chainConfig:        {
                   type: 'EVM',
-                  ...CHAIN_CONFIG.bsc
+                  ...CHAIN_CONFIG.ethereum
                 }
               });
 
@@ -72,7 +72,7 @@ function AuthIndicator() {
             onClick={async () => {
               const derivedAddress = await getDerivedAddress(
                 window.fastAuthController.getAccountId(),
-                ',bnb,felipe.org',
+                ',ethereum,felipe.org',
                 {
                   type: 'EVM'
                 }
