@@ -64,6 +64,22 @@ class EVM {
   }
 
   /**
+   * Estimates the amount of gas that a transaction will consume.
+   *
+   * This function calls the underlying JSON RPC's `estimateGas` method to
+   * predict how much gas the transaction will use. This is useful for setting
+   * gas limits when sending a transaction to ensure it does not run out of gas.
+   *
+   * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas.
+   * @returns {Promise<bigint>} A promise that resolves to the estimated gas amount as a bigint.
+   */
+  async estimateGas(
+    transaction: ethers.TransactionLike
+  ): Promise<bigint> {
+    return this.provider.estimateGas(transaction);
+  }
+
+  /**
    * Enhances a transaction with current gas price, estimated gas limit, chain ID, and nonce.
    *
    * This method fetches the current gas price, estimates the gas limit required for the transaction, and retrieves the nonce for the transaction sender's address. It then returns a new transaction object that includes the original transaction details along with the fetched gas price, estimated gas limit, the chain ID of the EVM object, and the nonce.
@@ -72,12 +88,12 @@ class EVM {
    * @returns {Promise<ethers.providers.TransactionRequest>} A new transaction object augmented with gas price, gas limit, chain ID, and nonce.
    */
   async attachGasAndNonce(
-    transaction: Omit<ethers.TransactionLike, 'from'> & {
+    transaction: ethers.TransactionLike & {
       from: string;
     }
   ): Promise<ethers.TransactionLike> {
     const feeData = await this.provider.getFeeData();
-    const gasLimit = await this.provider.estimateGas(transaction);
+    const gasLimit = await this.estimateGas(transaction);
     const nonce = await this.provider.getTransactionCount(transaction.from, 'latest');
 
     const { from, ...rest } = transaction;
@@ -85,10 +101,11 @@ class EVM {
     return {
       ...rest,
       gasLimit,
-      gasPrice: feeData.gasPrice,
-      chainId:  this.provider._network.chainId,
+      maxFeePerGas:         feeData.maxFeePerGas ?? ethers.parseUnits('20', 'gwei'),
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei'),
+      chainId:              this.provider._network.chainId,
       nonce,
-      type:     0,
+      type:                 2,
     };
   }
 

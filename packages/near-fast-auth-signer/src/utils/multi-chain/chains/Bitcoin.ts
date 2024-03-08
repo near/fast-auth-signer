@@ -45,6 +45,9 @@ type Transaction = {
     block_time: number | null;
   };
 };
+
+type NetworkType = 'bitcoin' | 'testnet'
+
 export class Bitcoin {
   private network: bitcoin.networks.Network;
 
@@ -55,7 +58,7 @@ export class Bitcoin {
   private relayerUrl: string;
 
   constructor(config: {
-    networkType: 'mainnet' | 'testnet';
+    networkType: NetworkType;
     providerUrl: string;
     scanUrl: string;
     relayerUrl: string
@@ -212,7 +215,8 @@ export class Bitcoin {
   static async deriveAddress(
     signerId: string,
     path: string,
-    contractRootPublicKey: string
+    contractRootPublicKey: string,
+    network: bitcoin.networks.Network,
   ): Promise<{ address: string; publicKey: Buffer; }> {
     // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
     // const derivedKey = KeyDerivation.deriveKey(
@@ -220,14 +224,20 @@ export class Bitcoin {
     //   epsilon
     // );
 
-    // const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
+    const derivedKey = await generateBTCAddress(
+      signerId,
+      path,
+      contractRootPublicKey,
+    );
 
-    // const { address } = bitcoin.payments.p2pkh({
-    //   pubkey:  publicKeyBuffer,
-    //   network: bitcoin.networks.testnet,
-    // });
+    const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
 
-    return generateBTCAddress(signerId, path, contractRootPublicKey);
+    const { address } = bitcoin.payments.p2pkh({
+      pubkey:  publicKeyBuffer,
+      network,
+    });
+
+    return { address, publicKey: publicKeyBuffer };
   }
 
   /**
@@ -313,7 +323,8 @@ export class Bitcoin {
     const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
       keyPath,
-      contractRootPublicKey
+      contractRootPublicKey,
+      this.network
     );
 
     const utxos = await this.fetchUTXOs(address);

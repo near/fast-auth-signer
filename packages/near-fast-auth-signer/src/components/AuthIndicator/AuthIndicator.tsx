@@ -60,6 +60,8 @@ function AuthIndicator() {
 
               if ('transactionHash' in res) {
                 console.log(res.transactionHash);
+              } else if ('errorMessage' in res) {
+                console.error(res.errorMessage);
               }
             }}
           >
@@ -67,11 +69,17 @@ function AuthIndicator() {
           </button>
           <button
             type="button"
-            onClick={() => getDerivedAddress(
-              window.fastAuthController.getAccountId(),
-              ',ethereum,felipe.org',
-              'EVM'
-            )}
+            onClick={async () => {
+              const derivedAddress = await getDerivedAddress(
+                window.fastAuthController.getAccountId(),
+                ',bnb,felipe.org',
+                {
+                  type: 'EVM'
+                }
+              );
+
+              console.log({ derivedAddress });
+            }}
           >
             Get address
           </button>

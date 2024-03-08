@@ -1,4 +1,3 @@
-import * as bitcoin from 'bitcoinjs-lib';
 import BN from 'bn.js';
 import { ec as EC } from 'elliptic';
 import { ethers } from 'ethers';
@@ -76,28 +75,13 @@ export const generateEthereumAddress = async (
 export const generateBTCAddress = async (
   signerId: string,
   path: string,
-  publicKey: string
-): Promise<{
-  address: string;
-  publicKey: Buffer;
-}> => {
+  publicKey: string,
+
+): Promise<string> => {
   const uncompressedHexPoint = najPublicKeyStrToUncompressedHexPoint(publicKey);
-  const childPublicKey = await deriveChildPublicKey(
+  return deriveChildPublicKey(
     uncompressedHexPoint,
     signerId,
     path
   );
-
-  const publicKeyBuffer = Buffer.from(childPublicKey, 'hex');
-
-  const { address } = bitcoin.payments.p2pkh({
-    pubkey:  publicKeyBuffer,
-    network: bitcoin.networks.testnet,
-  });
-
-  if (!address) {
-    throw new Error('BTC address not found');
-  }
-
-  return { address, publicKey: publicKeyBuffer };
 };

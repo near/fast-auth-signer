@@ -1,3 +1,4 @@
+import * as bitcoin from 'bitcoinjs-lib';
 import { Account } from 'near-api-js';
 
 import { Bitcoin } from './chains/Bitcoin';
@@ -18,19 +19,23 @@ type BaseChainConfig = {
   scanUrl: string,
 }
 
-type EVMChainConfig = BaseChainConfig & {
+type EVMChainConfig = {
   type: 'EVM'
 
 }
 
-type BTCChainConfig = BaseChainConfig & {
+type BTCChainConfig = {
   type: 'BTC'
-  networkType: 'mainnet' | 'testnet'
+  networkType: 'bitcoin' | 'testnet'
 }
+
+type ChainConfig = EVMChainConfig | BTCChainConfig
+
+type RequestChainConfig = BaseChainConfig & ChainConfig
 
 type Request = {
   transaction: EVMTransaction | BTCTransaction;
-  chainConfig: EVMChainConfig | BTCChainConfig
+  chainConfig: RequestChainConfig;
   account: Account;
   fastAuthRelayerUrl: string;
 };
@@ -62,9 +67,7 @@ const signAndSend = async (req: Request): Promise<Response> => {
         req.transaction.derivedPath,
         MPC_ROOT_PUBLIC_KEY
       )).hash;
-    }
-
-    if (req.chainConfig.type === 'BTC') {
+    } else if (req.chainConfig.type === 'BTC') {
       const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
       txid = await btc.handleTransaction(
@@ -73,6 +76,8 @@ const signAndSend = async (req: Request): Promise<Response> => {
         req.transaction.derivedPath,
         MPC_ROOT_PUBLIC_KEY
       );
+    } else {
+      throw new Error('Unsupported chain type');
     }
 
     return {
@@ -87,21 +92,49 @@ const signAndSend = async (req: Request): Promise<Response> => {
   }
 };
 
-export const getDerivedAddress = async (signerId: string, path: string, type: string) => {
+export const getDerivedAddress = async (signerId: string, path: string, chainConfig: ChainConfig) => {
   let derivedAddress: string;
 
-  switch (type) {
+  switch (chainConfig.type) {
     case 'EVM':
       derivedAddress = await EVM.deriveAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
       break;
     case 'BTC':
-      derivedAddress = (await Bitcoin.deriveAddress(signerId, path, MPC_ROOT_PUBLIC_KEY)).address;
+      derivedAddress = (await Bitcoin.deriveAddress(
+        signerId,
+        path,
+        MPC_ROOT_PUBLIC_KEY,
+        chainConfig.networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
+      )).address;
       break;
     default:
-      throw new Error(`Unsupported type: ${type}. Only 'EVM' and 'BTC' are supported.`);
+      throw new Error('Unsupported chain config');
   }
 
-  console.log({ derivedAddress });
+  return derivedAddress;
 };
+
+/**
+ * Estimates the gas required for a transaction on the EVM chain.
+ *
+ * @param {object} transaction - The transaction object to estimate gas for.
+ * @param {string} chainType - The type of chain, e.g., 'EVM'.
+ * @returns {Promise<bigint>} The estimated gas required for the transaction.
+ */
+// export const getEstimatedGas = async (transaction: object, chainType: string): Promise<bigint> => {
+//   if (chainType === 'EVM') {
+//     try {
+//       // Assuming CHAIN_CONFIG is defined elsewhere and accessible here
+//       const evm = new EVM({ ...CHAIN_CONFIG.evm, relayerUrl: '' }); // Updated to use CHAIN_CONFIG
+//       const estimatedGas = await evm.estimateGas(transaction);
+//       return estimatedGas;
+//     } catch (error) {
+//       console.error('Error estimating gas:', error);
+//       throw new Error('Failed to estimate gas.');
+//     }
+//   } else {
+//     throw new Error(`Unsupported chain type: ${chainType}`);
+//   }
+// };
 
 export default signAndSend;
