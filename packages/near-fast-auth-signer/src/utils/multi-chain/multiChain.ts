@@ -4,7 +4,7 @@ import { BigNumberish } from 'ethers';
 
 import { Bitcoin } from './chains/Bitcoin';
 import EVM from './chains/EVM';
-import { BTCChainConfigWithProviders, BTCTransaction, ChainConfig, EVMChainConfigWithProviders, Request, Response } from './chains/types';
+import { BTCChainConfigWithProviders, BTCTransaction, ChainConfig, EVMChainConfigWithProviders, EVMTransaction, Request, Response } from './chains/types';
 import { ChainSignatureContracts } from './signature';
 
 const signAndSend = async (req: Request): Promise<Response> => {
@@ -15,7 +15,7 @@ const signAndSend = async (req: Request): Promise<Response> => {
       const evm = new EVM({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
       txid = (await evm.handleTransaction(
-        req.transaction,
+        req.transaction as EVMTransaction,
         req.account,
         req.transaction.derivedPath,
       )).hash;
@@ -113,7 +113,8 @@ export const getEstimatedFeeBTC = async (transaction: {
   await Bitcoin.getFeeProperties(
     chainConfig.providerUrl,
     transaction.from,
-    transaction.targets)
+    transaction.targets
+  )
 ).fee;
 
 export const getBitcoinFeeProperties = Bitcoin.getFeeProperties;
