@@ -3,8 +3,10 @@ import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
+import { BTCTransaction } from './types';
 import { generateBTCAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+// import { KeyDerivation } from '../kdf';
 
 type Transaction = {
   txid: string;
@@ -107,7 +109,7 @@ export class Bitcoin {
    * @returns {Promise<string>} A promise that resolves to the balance of the address as a string.
    */
   async fetchBalance(address: string): Promise<string> {
-    const utxos = await this.fetchUTXOs(address);
+    const utxos = await Bitcoin.fetchUTXOs(this.providerUrl, address);
     return Bitcoin.toBTC(
       utxos.reduce((acc, utxo) => acc + utxo.value, 0)
     ).toString();
@@ -121,12 +123,13 @@ export class Bitcoin {
    * Each UTXO is represented as an object containing the transaction ID (`txid`), the output index within that transaction (`vout`),
    * the value of the output in satoshis (`value`) and the locking script (`script`).
    */
-  async fetchUTXOs(
+  static async fetchUTXOs(
+    providerUrl: string,
     address: string
   ): Promise<UTXO[]> {
     try {
       const response = await axios.get(
-        `${this.providerUrl}address/${address}/utxo`
+        `${providerUrl}address/${address}/utxo`
       );
       const utxos = response.data.map((utxo: any) => {
         return {
@@ -153,8 +156,8 @@ export class Bitcoin {
    * @returns {Promise<number>} A promise that resolves to the fee rate in satoshis per byte.
    * @throws {Error} Throws an error if the fee rate data for the specified confirmation target is missing.
    */
-  async fetchFeeRate(confirmationTarget = 6): Promise<number> {
-    const response = await axios.get(`${this.providerUrl}fee-estimates`);
+  static async fetchFeeRate(providerUrl: string, confirmationTarget = 6): Promise<number> {
+    const response = await axios.get(`${providerUrl}fee-estimates`);
     if (response.data && response.data[confirmationTarget]) {
       return response.data[confirmationTarget];
     }
@@ -312,7 +315,8 @@ export class Bitcoin {
    * @param {number} [confirmationTarget=6] - The desired number of blocks in which the transaction should be confirmed.
    * @returns {Promise<{inputs: UTXO[], outputs: {address: string, value: number}[], fee: number}>} A promise that resolves to an object containing the inputs (selected UTXOs), outputs (destination addresses and values), and the transaction fee in satoshis.
    */
-  async getFeeProperties(
+  static async getFeeProperties(
+    providerUrl: string,
     from: string,
     targets: {
       address: string;
@@ -324,8 +328,8 @@ export class Bitcoin {
     outputs: {address: string, value: number}[],
     fee: number,
   }> {
-    const utxos = await this.fetchUTXOs(from);
-    const feeRate = await this.fetchFeeRate(confirmationTarget);
+    const utxos = await Bitcoin.fetchUTXOs(providerUrl, from);
+    const feeRate = await Bitcoin.fetchFeeRate(providerUrl, confirmationTarget);
 
     // Add a small amount to the fee rate to ensure the transaction is confirmed
     const ret = coinselect(utxos, targets, feeRate + 1);
@@ -350,13 +354,11 @@ export class Bitcoin {
    * @param {string} path - The key derivation path for the account.
    */
   async handleTransaction(
-    data: {
-      to: string;
-      value: number;
-    },
+    data: BTCTransaction,
     account: Account,
     path: string,
   ) {
+    const satoshis = Bitcoin.toSatoshi(parseFloat(data.value));
     const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
       path,
@@ -366,10 +368,12 @@ export class Bitcoin {
       this.relayerUrl
     );
 
-    const { inputs, outputs } = await this.getFeeProperties(address, [{
-      address: data.to,
-      value:   data.value,
-    }]);
+    const { inputs, outputs } = data.inputs && data.outputs
+      ? data
+      : await Bitcoin.getFeeProperties(this.providerUrl, address, [{
+        address: data.to,
+        value:   satoshis
+      }]);
 
     const psbt = new bitcoin.Psbt({ network: this.network });
 

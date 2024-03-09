@@ -3,8 +3,10 @@ import {
 } from 'ethers';
 import { Account } from 'near-api-js';
 
+import { EVMTransaction } from './types';
 import { generateEthereumAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+// import { KeyDerivation } from '../kdf';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
@@ -106,17 +108,19 @@ class EVM {
    * @returns {Promise<ethers.providers.TransactionRequest>} A new transaction object augmented with gas price, gas limit, chain ID, and nonce.
    */
   async attachGasAndNonce(
-    transaction: ethers.TransactionLike & {
-      from: string;
-    }
+    transaction: EVMTransaction & { from: string }
   ): Promise<ethers.TransactionLike> {
-    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = await this.getFeeProperties(transaction);
+    const userProvidedGas = transaction.gasLimit && transaction.maxFeePerGas && transaction.maxPriorityFeePerGas;
+    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = userProvidedGas
+      ? transaction
+      : await this.getFeeProperties(transaction);
     const nonce = await this.provider.getTransactionCount(transaction.from, 'latest');
 
     const { from, ...rest } = transaction;
 
     return {
       ...rest,
+      value:               parseEther(rest.value),
       gasLimit,
       maxFeePerGas,
       maxPriorityFeePerGas,
@@ -181,7 +185,7 @@ class EVM {
    * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction fails to execute.
    */
   async handleTransaction(
-    data: {to: string, value: string},
+    data: EVMTransaction,
     account: Account,
     path: string,
   ): Promise<ethers.TransactionResponse | undefined> {
@@ -194,9 +198,8 @@ class EVM {
     );
 
     const transaction = await this.attachGasAndNonce({
+      ...data,
       from,
-      to:    data.to,
-      value: data.value.toString(),
     });
 
     const transactionHash = EVM.prepareTransactionForSignature(transaction);

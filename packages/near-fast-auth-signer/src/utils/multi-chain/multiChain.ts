@@ -1,58 +1,11 @@
+import { Account } from '@near-js/accounts';
 import * as bitcoin from 'bitcoinjs-lib';
 import { BigNumberish } from 'ethers';
-import { Account } from 'near-api-js';
 
 import { Bitcoin } from './chains/Bitcoin';
 import EVM from './chains/EVM';
+import { BTCChainConfigWithProviders, BTCTransaction, ChainConfig, EVMChainConfigWithProviders, Request, Response } from './chains/types';
 import { ChainSignatureContracts } from './signature';
-
-type BaseTransaction = {
-  to: string;
-  value: string;
-  derivedPath: string
-};
-
-type EVMTransaction = BaseTransaction
-
-type BTCTransaction = BaseTransaction
-
-type ChainProviders = {
-  providerUrl: string,
-  contract: ChainSignatureContracts
-}
-
-type EVMChainConfig = {
-  type: 'EVM',
-}
-
-type BTCChainConfig = {
-  type: 'BTC'
-  networkType: 'bitcoin' | 'testnet'
-}
-
-type ChainConfig = EVMChainConfig | BTCChainConfig
-
-type EVMChainConfigWithProviders = ChainProviders & EVMChainConfig
-type BTCChainConfigWithProviders = ChainProviders & BTCChainConfig
-
-type Request = {
-  transaction: EVMTransaction | BTCTransaction;
-  chainConfig: EVMChainConfigWithProviders | BTCChainConfigWithProviders;
-  account: Account;
-  fastAuthRelayerUrl: string;
-};
-
-type SuccessResponse = {
-  transactionHash: string;
-  success: true;
-}
-
-type FailureResponse = {
-  success: false;
-  errorMessage: string;
-}
-
-type Response = SuccessResponse | FailureResponse
 
 const signAndSend = async (req: Request): Promise<Response> => {
   try {
@@ -70,7 +23,7 @@ const signAndSend = async (req: Request): Promise<Response> => {
       const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
 
       txid = await btc.handleTransaction(
-        { ...req.transaction, value: parseFloat(req.transaction.value) },
+        req.transaction as BTCTransaction,
         req.account,
         req.transaction.derivedPath,
       );
@@ -156,11 +109,13 @@ export const getEstimatedFeeBTC = async (transaction: {
     address: string,
     value: number
   }[]
-}, chainConfig: BTCChainConfigWithProviders, relayerUrl: string): Promise<number> => {
-  const btc = new Bitcoin({
-    ...chainConfig, networkType: chainConfig.networkType, relayerUrl
-  });
-  return (await btc.getFeeProperties(transaction.from, transaction.targets)).fee;
-};
+}, chainConfig: BTCChainConfigWithProviders): Promise<number> => (
+  await Bitcoin.getFeeProperties(
+    chainConfig.providerUrl,
+    transaction.from,
+    transaction.targets)
+).fee;
+
+export const getBitcoinFeeProperties = Bitcoin.getFeeProperties;
 
 export default signAndSend;

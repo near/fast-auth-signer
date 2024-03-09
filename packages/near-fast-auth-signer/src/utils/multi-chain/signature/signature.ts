@@ -1,6 +1,9 @@
+import { Account } from '@near-js/accounts';
+import {
+  actionCreators,
+} from '@near-js/transactions';
 import BN from 'bn.js';
 import { ethers } from 'ethers';
-import { Account, transactions } from 'near-api-js';
 
 import { RSVSignature } from './types';
 import { parseSignedDelegateForRelayer } from '../relayer';
@@ -38,7 +41,7 @@ export const sign = async (
   relayerUrl: string,
   contract: ChainSignatureContracts
 ): Promise<RSVSignature> => {
-  const functionCall = transactions.functionCall(
+  const functionCall = actionCreators.functionCall(
     'sign',
     {
       payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
@@ -48,13 +51,15 @@ export const sign = async (
     new BN(0)
   );
 
-  const signedDelegate = await window.fastAuthController.signDelegateAction(
+  const signedDelegate = await account.signedDelegate(
     {
-      receiverId: contract,
-      actions:    [functionCall],
-      signerId:   account.accountId
+      receiverId:     contract,
+      actions:        [functionCall],
+      blockHeightTtl: 60,
     }
   );
+
+  // TODO: add support for creating the signed delegate using the mpc recovery service with an oidc_token
 
   const res = await fetch(`${relayerUrl}/send_meta_tx_async`, {
     method:  'POST',
@@ -107,7 +112,7 @@ export async function getRootPublicKey(
   account: Account,
   relayerUrl: string
 ): Promise<string | undefined> {
-  const functionCall = transactions.functionCall(
+  const functionCall = actionCreators.functionCall(
     'public_key',
     {},
     NEAR_MAX_GAS,
