@@ -18,9 +18,9 @@ export type EVMTransaction = BaseTransaction & ({
   maxFeePerGas: bigint;
   maxPriorityFeePerGas: bigint;
 } | {
-  gasLimit: never;
-  maxFeePerGas: never;
-  maxPriorityFeePerGas: never;
+  gasLimit?: never;
+  maxFeePerGas?: never;
+  maxPriorityFeePerGas?: never;
 });
 
 type BtcInputsAndOutputs = {
@@ -29,8 +29,8 @@ type BtcInputsAndOutputs = {
 };
 
 export type BTCTransaction = BaseTransaction & (BtcInputsAndOutputs | {
-  inputs: never;
-  outputs: never;
+  inputs?: never;
+  outputs?: never;
 });
 
 type ChainProviders = {
