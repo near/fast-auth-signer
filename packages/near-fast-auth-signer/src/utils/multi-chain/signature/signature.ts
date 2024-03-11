@@ -5,7 +5,7 @@ import { Account, transactions } from 'near-api-js';
 import { RSVSignature } from './types';
 import { parseSignedDelegateForRelayer } from '../relayer';
 
-type ChainSignatureContract = 'multichain-testnet-2.testnet'
+export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
 
 const toRVS = (signature: string): RSVSignature => {
   const parsedJSON = JSON.parse(signature) as [string, string];
@@ -20,7 +20,8 @@ export const sign = async (
   transactionHash: string | ethers.BytesLike,
   path: string,
   account: Account,
-  relayerUrl: string
+  relayerUrl: string,
+  contract: ChainSignatureContracts
 ): Promise<RSVSignature> => {
   const functionCall = transactions.functionCall(
     'sign',
@@ -34,7 +35,7 @@ export const sign = async (
 
   const signedDelegate = await window.fastAuthController.signDelegateAction(
     {
-      receiverId: 'multichain-testnet-2.testnet',
+      receiverId: contract,
       actions:    [functionCall],
       signerId:   account.accountId
     }
@@ -88,7 +89,7 @@ export const sign = async (
 };
 
 export async function getRootPublicKey(
-  contract: ChainSignatureContract,
+  contract: ChainSignatureContracts,
   account: Account
 ): Promise<string | undefined> {
   const result = await account.functionCall({

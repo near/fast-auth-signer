@@ -55,8 +55,9 @@ function AuthIndicator() {
                 account,
                 fastAuthRelayerUrl: 'http://34.136.82.88:3030',
                 chainConfig:        {
-                  type: 'BTC',
-                  ...CHAIN_CONFIG.btc
+                  contract: 'multichain-testnet-2.testnet',
+                  type:     'BTC',
+                  ...CHAIN_CONFIG.btc,
                 }
               });
 
@@ -79,7 +80,8 @@ function AuthIndicator() {
                   type:        'BTC',
                   networkType: 'testnet'
                 },
-                account
+                account,
+                'multichain-testnet-2.testnet'
               );
 
               console.log({ derivedAddress });

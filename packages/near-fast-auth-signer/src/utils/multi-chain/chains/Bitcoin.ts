@@ -4,7 +4,7 @@ import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
 import { generateBTCAddress } from '../kdf/kdf-osman';
-import { getRootPublicKey, sign } from '../signature';
+import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
 
 type Transaction = {
   txid: string;
@@ -23,9 +23,9 @@ type Transaction = {
     inner_witnessscript_asm: string;
     sequence: number;
     witness: string[];
-    prevout: any; // Keeping it as any to simplify, replace with actual type if known
+    prevout: any;
     is_pegin: boolean;
-    issuance: any; // Keeping it as any to simplify, replace with actual type if known
+    issuance: any;
   }>;
   vout: Array<{
     scriptpubkey: string;
@@ -36,7 +36,7 @@ type Transaction = {
     valuecommitment: string;
     asset: string;
     assetcommitment: string;
-    pegout: any; // Keeping it as any to simplify, replace with actual type if known
+    pegout: any;
   }>;
   status: {
     confirmed: boolean;
@@ -62,16 +62,20 @@ export class Bitcoin {
 
   private relayerUrl: string;
 
+  private contract: ChainSignatureContracts;
+
   constructor(config: {
     networkType: NetworkType;
     providerUrl: string;
-    relayerUrl: string
+    relayerUrl: string,
+    contract: ChainSignatureContracts
   }) {
     this.network =      config.networkType === 'testnet'
       ? bitcoin.networks.testnet
       : bitcoin.networks.bitcoin;
     this.providerUrl = config.providerUrl;
     this.relayerUrl = config.relayerUrl;
+    this.contract = config.contract;
   }
 
   /**
@@ -111,13 +115,11 @@ export class Bitcoin {
 
   /**
    * Fetches the Unspent Transaction Outputs (UTXOs) for a given Bitcoin address.
-   * UTXOs are important for understanding the available balance of a Bitcoin address
-   * and are necessary for constructing new transactions.
    *
    * @param {string} address - The Bitcoin address for which to fetch the UTXOs.
    * @returns {Promise<UTXO[]>} A promise that resolves to an array of UTXOs.
    * Each UTXO is represented as an object containing the transaction ID (`txid`), the output index within that transaction (`vout`),
-   * and the value of the output in satoshis (`value`).
+   * the value of the output in satoshis (`value`) and the locking script (`script`).
    */
   async fetchUTXOs(
     address: string
@@ -205,23 +207,24 @@ export class Bitcoin {
   }
 
   /**
-   * Derives a spoofed Bitcoin address and public key for testing purposes using a Multi-Party Computation (MPC) approach.
-   * This method simulates the derivation of a Bitcoin address and public key from a given predecessor and path,
-   * using a spoofed key generation process. It is intended for use in test environments where actual Bitcoin transactions
-   * are not feasible.
+   * Derives a Bitcoin address and its corresponding public key for a given signer ID and derivation path.
+   * This method utilizes the root public key associated with the signer ID to generate a Bitcoin address
+   * and public key buffer based on the specified derivation path and network.
    *
-   * @param {string} signerId - A string representing the initial input or seed for the spoofed key generation.
-   * @param {string} path - A derivation path that influences the final generated spoofed key.
-   * @param {string} contractRootPublicKey - The root public key from which new keys are derived based on the specified path.
-   * @returns {{ address: string; publicKey: Buffer }} An object containing the derived spoofed Bitcoin address and public key.
+   * @param {string} signerId - The unique identifier of the signer.
+   * @param {string} path - The derivation path used to generate the address.
+   * @param {bitcoin.networks.Network} network - The Bitcoin network (e.g., mainnet, testnet).
+   * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @returns {Promise<{ address: string; publicKey: Buffer }>} An object containing the derived Bitcoin address and its corresponding public key buffer.
    */
   static async deriveAddress(
     signerId: string,
     path: string,
     network: bitcoin.networks.Network,
-    account: Account
+    account: Account,
+    contract: ChainSignatureContracts
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    const contractRootPublicKey = await getRootPublicKey('multichain-testnet-2.testnet', account);
+    const contractRootPublicKey = await getRootPublicKey(contract, account);
 
     const derivedKey = await generateBTCAddress(
       signerId,
@@ -236,6 +239,7 @@ export class Bitcoin {
       network,
     });
 
+    // Return the derived Bitcoin address and its corresponding public key buffer.
     return { address, publicKey: publicKeyBuffer };
   }
 
@@ -323,6 +327,7 @@ export class Bitcoin {
     const utxos = await this.fetchUTXOs(from);
     const feeRate = await this.fetchFeeRate(confirmationTarget);
 
+    // TODO: test net won't work with feeRate fetched, it need to add 1
     const ret = coinselect(utxos, targets, feeRate + 1);
 
     if (!ret.inputs || !ret.outputs) {
@@ -358,6 +363,7 @@ export class Bitcoin {
       keyPath,
       this.network,
       account,
+      this.contract
     );
 
     const { inputs, outputs } = await this.getFeeProperties(address, [{
@@ -410,7 +416,8 @@ export class Bitcoin {
           transactionHash,
           keyPath,
           account,
-          this.relayerUrl
+          this.relayerUrl,
+          this.contract
         );
 
         if (!signature) {

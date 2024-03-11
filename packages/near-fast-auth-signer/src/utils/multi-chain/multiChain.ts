@@ -3,6 +3,7 @@ import { Account } from 'near-api-js';
 
 import { Bitcoin } from './chains/Bitcoin';
 import EVM from './chains/EVM';
+import { ChainSignatureContracts } from './signature';
 
 type BaseTransaction = {
   to: string;
@@ -16,6 +17,7 @@ type BTCTransaction = BaseTransaction
 
 type ChainProviders = {
   providerUrl: string,
+  contract: ChainSignatureContracts
 }
 
 type EVMChainConfig = {
@@ -87,19 +89,26 @@ const signAndSend = async (req: Request): Promise<Response> => {
   }
 };
 
-export const getDerivedAddress = async (signerId: string, path: string, chainConfig: ChainConfig, account: Account) => {
+export const getDerivedAddress = async (
+  signerId: string,
+  path: string,
+  chainConfig: ChainConfig,
+  account: Account,
+  contract: ChainSignatureContracts
+) => {
   let derivedAddress: string;
 
   switch (chainConfig.type) {
     case 'EVM':
-      derivedAddress = await EVM.deriveAddress(signerId, path, account);
+      derivedAddress = await EVM.deriveAddress(signerId, path, account, contract);
       break;
     case 'BTC':
       derivedAddress = (await Bitcoin.deriveAddress(
         signerId,
         path,
         chainConfig.networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin,
-        account
+        account,
+        contract
       )).address;
       break;
     default:

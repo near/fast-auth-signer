@@ -4,12 +4,14 @@ import {
 import { Account } from 'near-api-js';
 
 import { generateEthereumAddress } from '../kdf/kdf-osman';
-import { getRootPublicKey, sign } from '../signature';
+import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
 
   private relayerUrl: string;
+
+  private contract: ChainSignatureContracts;
 
   /**
    * Initializes an EVM object with a specified configuration.
@@ -17,9 +19,10 @@ class EVM {
    * @param {object} config - The configuration object for the EVM instance.
    * @param {string} [config.providerUrl] - The URL for the EVM JSON RPC provider.
    */
-  constructor(config: { providerUrl: string; relayerUrl: string }) {
+  constructor(config: { providerUrl: string; relayerUrl: string, contract: ChainSignatureContracts }) {
     this.provider = new ethers.JsonRpcProvider(config.providerUrl);
     this.relayerUrl = config.relayerUrl;
+    this.contract = config.contract;
   }
 
   /**
@@ -157,9 +160,10 @@ class EVM {
   static async deriveAddress(
     signerId: string,
     path: string,
-    account: Account
+    account: Account,
+    contract: ChainSignatureContracts
   ): Promise<string> {
-    const contractRootPublicKey = await getRootPublicKey('multichain-testnet-2.testnet', account);
+    const contractRootPublicKey = await getRootPublicKey(contract, account);
 
     return generateEthereumAddress(signerId, path, contractRootPublicKey);
   }
@@ -183,7 +187,8 @@ class EVM {
     const from = await EVM.deriveAddress(
       account?.accountId,
       keyPath,
-      account
+      account,
+      this.contract
     );
 
     const transaction = await this.attachGasAndNonce({
@@ -198,7 +203,8 @@ class EVM {
       transactionHash,
       keyPath,
       account,
-      this.relayerUrl
+      this.relayerUrl,
+      this.contract
     );
 
     if (signature) {
