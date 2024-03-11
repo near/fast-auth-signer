@@ -14,10 +14,12 @@ class EVM {
   private contract: ChainSignatureContracts;
 
   /**
-   * Initializes an EVM object with a specified configuration.
+   * Constructs an instance of the EVM class with specified configuration.
    *
-   * @param {object} config - The configuration object for the EVM instance.
-   * @param {string} [config.providerUrl] - The URL for the EVM JSON RPC provider.
+   * @param {Object} config - The configuration object for the EVM instance.
+   * @param {string} config.providerUrl - The URL of the Ethereum JSON RPC provider.
+   * @param {string} config.relayerUrl - The URL of the relayer service.
+   * @param {ChainSignatureContracts} config.contract - The contract identifier for chain signature operations.
    */
   constructor(config: { providerUrl: string; relayerUrl: string, contract: ChainSignatureContracts }) {
     this.provider = new ethers.JsonRpcProvider(config.providerUrl);
@@ -97,7 +99,8 @@ class EVM {
   /**
    * Enhances a transaction with current gas price, estimated gas limit, chain ID, and nonce.
    *
-   * This method fetches the current gas price, estimates the gas limit required for the transaction, and retrieves the nonce for the transaction sender's address. It then returns a new transaction object that includes the original transaction details along with the fetched gas price, estimated gas limit, the chain ID of the EVM object, and the nonce.
+   * This method fetches the current gas price, estimates the gas limit required for the transaction, and retrieves the nonce for the transaction sender's address.
+   * It then returns a new transaction object that includes the original transaction details along with the fetched gas price, estimated gas limit, the chain ID of the EVM object, and the nonce.
    *
    * @param {ethers.providers.TransactionRequest} transaction - The initial transaction object without gas details or nonce.
    * @returns {Promise<ethers.providers.TransactionRequest>} A new transaction object augmented with gas price, gas limit, chain ID, and nonce.
@@ -143,19 +146,16 @@ class EVM {
   }
 
   /**
-   * Derives an EVM address from a given signer ID, derivation path, and public key.
+   * Derives an Ethereum address for a given signer ID and derivation path.
    *
-   * @param {string} signerId - The unique identifier of the signer.
-   * @param {string} path - The derivation path.
-   * @param {string} contractRootPublicKey - The public key in base58 format.
-   * @returns {string} The derived EVM address.
+   * This method leverages the root public key associated with the signer ID to generate an Ethereum address
+   * and public key based on the specified derivation path.
    *
-   * @example
-   * const signerId = "felipe.near";
-   * const path = ",ethereum,near.org";
-   * const contractRootPublicKey = "secp256k1:37aFybhUHCxRdDkuCcB3yHzxqK7N8EQ745MujyAQohXSsYymVeHzhLxKvZ2qYeRHf3pGFiAsxqFJZjpF9gP2JV5u";
-   * const address = deriveAddress(signerId, path, contractRootPublicKey);
-   * console.log(address); // 0x...
+   * @param {string} signerId - The identifier of the signer.
+   * @param {string} path - The derivation path used for generating the address.
+   * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @param {ChainSignatureContracts} contract - The contract identifier used to get the root public key.
+   * @returns {Promise<string>} A promise that resolves to the derived Ethereum address.
    */
   static async deriveAddress(
     signerId: string,
@@ -169,24 +169,23 @@ class EVM {
   }
 
   /**
-   * This method oversees the transaction's entire lifecycle, from preparation to execution on the blockchain. It handles gas and nonce calculation, digital signing, and broadcasting the transaction. Utilizing the provided chain instance, transaction details, account credentials, and a signing derivation path, it ensures seamless transaction execution.
+   * Manages the lifecycle of an EVM transaction, encompassing preparation, signing, and broadcasting. This method calculates gas and nonce, digitally signs the transaction using on-chain mechanisms, and broadcasts it for execution.
    *
-   * The signing is performed on-chain as detailed in @signature.ts, where a transaction hash is signed using the account's credentials and derivation path.
+   * The digital signing process is detailed in @signature.ts, involving the signing of a transaction hash with the derivation path.
    *
-   * @param {Transaction} data - The transaction details, including the recipient's address and the amount to be transferred.
-   * @param {Account} account - Contains the account's credentials, such as the unique account ID.
-   * @param {string} keyPath - The derivation path used for the transaction's signing process.
-   * @param {string} contractRootPublicKey - The root public key from which new keys are derived based on the specified path.
-   * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction could not be executed.
+   * @param {Transaction} data - Contains the transaction details such as the recipient's address and the amount to be transferred.
+   * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @param {string} path - The derivation path utilized for the signing of the transaction.
+   * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction fails to execute.
    */
   async handleTransaction(
     data: {to: string, value: string},
     account: Account,
-    keyPath: string,
+    path: string,
   ): Promise<ethers.TransactionResponse | undefined> {
     const from = await EVM.deriveAddress(
       account?.accountId,
-      keyPath,
+      path,
       account,
       this.contract
     );
@@ -201,7 +200,7 @@ class EVM {
 
     const signature = await sign(
       transactionHash,
-      keyPath,
+      path,
       account,
       this.relayerUrl,
       this.contract

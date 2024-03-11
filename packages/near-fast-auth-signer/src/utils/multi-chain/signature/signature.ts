@@ -16,6 +16,19 @@ const toRVS = (signature: string): RSVSignature => {
   };
 };
 
+/**
+ * Signs a transaction hash using a specified account and path, then sends the signed transaction
+ * to a relayer service for execution. It attempts to fetch the signature from the transaction
+ * receipt up to 3 times with a delay of 10 seconds between each attempt.
+ *
+ * @param {string | ethers.BytesLike} transactionHash - The hash of the transaction to be signed.
+ * @param {string} path - The derivation path used for signing the transaction.
+ * @param {Account} account - The NEAR account object used for signing the transaction.
+ * @param {string} relayerUrl - The URL of the relayer service to which the signed transaction is sent.
+ * @param {ChainSignatureContracts} contract - The contract identifier for chain signature operations.
+ * @returns {Promise<RSVSignature>} A promise that resolves to the RSV signature of the signed transaction.
+ * @throws {Error} Throws an error if the signature cannot be fetched after 3 attempts.
+ */
 export const sign = async (
   transactionHash: string | ethers.BytesLike,
   path: string,
@@ -52,7 +65,6 @@ export const sign = async (
 
   let attempts = 0;
 
-  // TODO: maybe we can remove this
   const getSignature = async (): Promise<RSVSignature> => {
     if (attempts >= 3) {
       throw new Error('Signature error, please retry');

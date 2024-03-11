@@ -239,12 +239,10 @@ export class Bitcoin {
       network,
     });
 
-    // Return the derived Bitcoin address and its corresponding public key buffer.
     return { address, publicKey: publicKeyBuffer };
   }
 
   /**
-   * Joins the r and s components of a signature into a single Buffer.
    * This function takes an object containing the r and s components of a signature,
    * pads them to ensure they are each 64 characters long, concatenates them,
    * and then converts the concatenated string into a Buffer. This Buffer represents
@@ -310,7 +308,7 @@ export class Bitcoin {
    * @param {string} from - The Bitcoin address from which the transaction is to be sent.
    * @param {Array<{address: string, value: number}>} targets - An array of target addresses and values (in satoshis) to send.
    * @param {number} [confirmationTarget=6] - The desired number of blocks in which the transaction should be confirmed.
-   * @returns {Promise<Object>} A promise that resolves to an object containing the selected UTXOs, the total value, the fee (satoshis) and the change.
+   * @returns {Promise<{inputs: UTXO[], outputs: {address: string, value: number}[], fee: number}>} A promise that resolves to an object containing the inputs (selected UTXOs), outputs (destination addresses and values), and the transaction fee in satoshis.
    */
   async getFeeProperties(
     from: string,
@@ -341,13 +339,13 @@ export class Bitcoin {
    * Handles the process of creating and broadcasting a Bitcoin transaction.
    * This function takes the recipient's address, the amount to send, the account details,
    * and the derived path for the account to create a transaction. It then signs the transaction
-   * using the account's private key and broadcasts it to the Bitcoin network.
+   * using the chain signature contract and broadcasts it to the Bitcoin network.
    *
    * @param {Object} data - The transaction data.
    * @param {string} data.to - The recipient's Bitcoin address.
    * @param {number} data.value - The amount of Bitcoin to send (in BTC).
    * @param {Account} account - The account object containing the user's account information.
-   * @param {string} keyPath - The key derivation path for the account.
+   * @param {string} path - The key derivation path for the account.
    */
   async handleTransaction(
     data: {
@@ -355,12 +353,12 @@ export class Bitcoin {
       value: number;
     },
     account: Account,
-    keyPath: string,
+    path: string,
   ) {
     const satoshis = Bitcoin.toSatoshi(data.value);
     const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
-      keyPath,
+      path,
       this.network,
       account,
       this.contract
@@ -414,7 +412,7 @@ export class Bitcoin {
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
         const signature = await sign(
           transactionHash,
-          keyPath,
+          path,
           account,
           this.relayerUrl,
           this.contract
