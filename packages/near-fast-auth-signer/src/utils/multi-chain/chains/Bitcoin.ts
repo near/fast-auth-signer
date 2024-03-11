@@ -51,6 +51,7 @@ type UTXO = {
   txid: string;
   vout: number;
   value: number
+  script: string
 }
 
 type NetworkType = 'bitcoin' | 'testnet'
@@ -132,9 +133,10 @@ export class Bitcoin {
       );
       const utxos = response.data.map((utxo: any) => {
         return {
-          txid:  utxo.txid,
-          vout:  utxo.vout,
-          value: utxo.value,
+          txid:   utxo.txid,
+          vout:   utxo.vout,
+          value:  utxo.value,
+          script: utxo.script,
         };
       });
       return utxos;
@@ -331,7 +333,7 @@ export class Bitcoin {
     const utxos = await this.fetchUTXOs(from);
     const feeRate = await this.fetchFeeRate(confirmationTarget);
 
-    const ret = coinselect(utxos, targets, feeRate);
+    const ret = coinselect(utxos, targets, feeRate + 1);
 
     if (!ret.inputs || !ret.outputs) {
       throw new Error('Invalid transaction');

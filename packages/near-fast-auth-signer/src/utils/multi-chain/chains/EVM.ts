@@ -70,7 +70,7 @@ class EVM {
    * predict how much gas the transaction will use. This is useful for setting
    * gas limits when sending a transaction to ensure it does not run out of gas.
    *
-   * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas. // Add to docs that this func only needs: to, value, data
+   * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas. This function only requires the `to`, `value`, and `data` fields of the transaction object.
    * @returns {Promise<bigint>} A promise that resolves to the estimated gas amount as a bigint.
    */
   async getFeeProperties(
