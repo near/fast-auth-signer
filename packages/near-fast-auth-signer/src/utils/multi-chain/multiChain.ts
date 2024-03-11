@@ -14,9 +14,8 @@ type EVMTransaction = BaseTransaction
 
 type BTCTransaction = BaseTransaction
 
-type BaseChainConfig = {
+type ChainProviders = {
   providerUrl: string,
-  scanUrl: string,
 }
 
 type EVMChainConfig = {
@@ -30,11 +29,12 @@ type BTCChainConfig = {
 
 type ChainConfig = EVMChainConfig | BTCChainConfig
 
-type RequestChainConfig = BaseChainConfig & ChainConfig
+type EVMChainConfigWithProviders = ChainProviders & EVMChainConfig
+type BTCChainConfigWithProviders = ChainProviders & BTCChainConfig
 
 type Request = {
   transaction: EVMTransaction | BTCTransaction;
-  chainConfig: RequestChainConfig;
+  chainConfig: EVMChainConfigWithProviders | BTCChainConfigWithProviders;
   account: Account;
   fastAuthRelayerUrl: string;
 };
@@ -51,8 +51,6 @@ type FailureResponse = {
 
 type Response = SuccessResponse | FailureResponse
 
-const MPC_ROOT_PUBLIC_KEY =  'secp256k1:4HFcTSodRLVCGNVcGc4Mf2fwBBBxv9jxkGdiW2S2CA1y6UpVVRWKj6RX7d7TDt65k2Bj3w9FU4BGtt43ZvuhCnNt';
-
 const signAndSend = async (req: Request): Promise<Response> => {
   try {
     let txid: string;
@@ -64,7 +62,6 @@ const signAndSend = async (req: Request): Promise<Response> => {
         req.transaction,
         req.account,
         req.transaction.derivedPath,
-        MPC_ROOT_PUBLIC_KEY
       )).hash;
     } else if (req.chainConfig.type === 'BTC') {
       const btc = new Bitcoin({ ...req.chainConfig, relayerUrl: req.fastAuthRelayerUrl });
@@ -73,7 +70,6 @@ const signAndSend = async (req: Request): Promise<Response> => {
         { ...req.transaction, value: parseFloat(req.transaction.value) },
         req.account,
         req.transaction.derivedPath,
-        MPC_ROOT_PUBLIC_KEY
       );
     } else {
       throw new Error('Unsupported chain type');
@@ -91,19 +87,19 @@ const signAndSend = async (req: Request): Promise<Response> => {
   }
 };
 
-export const getDerivedAddress = async (signerId: string, path: string, chainConfig: ChainConfig) => {
+export const getDerivedAddress = async (signerId: string, path: string, chainConfig: ChainConfig, account: Account) => {
   let derivedAddress: string;
 
   switch (chainConfig.type) {
     case 'EVM':
-      derivedAddress = await EVM.deriveAddress(signerId, path, MPC_ROOT_PUBLIC_KEY);
+      derivedAddress = await EVM.deriveAddress(signerId, path, account);
       break;
     case 'BTC':
       derivedAddress = (await Bitcoin.deriveAddress(
         signerId,
         path,
-        MPC_ROOT_PUBLIC_KEY,
-        chainConfig.networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
+        chainConfig.networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin,
+        account
       )).address;
       break;
     default:
@@ -114,26 +110,49 @@ export const getDerivedAddress = async (signerId: string, path: string, chainCon
 };
 
 /**
- * Estimates the gas required for a transaction on the EVM chain.
+ * Calculates the estimated maximum fee for an EVM transaction.
  *
- * @param {object} transaction - The transaction object to estimate gas for.
- * @param {string} chainType - The type of chain, e.g., 'EVM'.
- * @returns {Promise<bigint>} The estimated gas required for the transaction.
+ * This function takes a transaction object, which includes the recipient's address, the value to be sent, and any data to be included in the transaction,
+ * and a chain configuration object specific to EVM chains. It then calculates the maximum fee that could be required for the transaction based on the current network conditions
+ * and returns the fee in wei as a bigint.
+ *
+ * @param {Object} transaction - The transaction details including the recipient's address, value, and data.
+ * @param {EVMChainConfigWithProviders} chainConfig - The configuration object for the EVM chain, including provider URLs and other relevant settings.
+ * @returns {Promise<bigint>} The estimated maximum transaction fee in wei.
  */
-// export const getEstimatedFee = async (transaction: object, chainType: string): Promise<bigint> => {
-//   if (chainType === 'EVM') {
-//     try {
-//       // Assuming CHAIN_CONFIG is defined elsewhere and accessible here
-//       const evm = new EVM({ ...CHAIN_CONFIG.evm, relayerUrl: '' }); // Updated to use CHAIN_CONFIG
-//       const estimatedGas = await evm.estimateGas(transaction);
-//       return estimatedGas;
-//     } catch (error) {
-//       console.error('Error estimating gas:', error);
-//       throw new Error('Failed to estimate gas.');
-//     }
-//   } else {
-//     throw new Error(`Unsupported chain type: ${chainType}`);
-//   }
-// };
+export const getEstimatedFeeEVM = async (transaction: {
+  to: string;
+  value?: string;
+  data?: string;
+}, chainConfig: EVMChainConfigWithProviders): Promise<bigint> => {
+  const evm = new EVM({ ...chainConfig, relayerUrl: '' });
+  return (await evm.getFeeProperties(transaction)).maxFee;
+};
+
+/**
+ * Calculates the estimated fee for a Bitcoin transaction in satoshis.
+ *
+ * This function takes a transaction object, which includes the sender's address and an array of target addresses with their respective values,
+ * and a chain configuration object specific to Bitcoin. It then calculates the fee required for the transaction based on the current network fee rate
+ * and returns the fee in satoshis.
+ *
+ * @param {Object} transaction - The transaction details including the sender's address and the targets.
+ * @param {string} transaction.from - The Bitcoin address from which the transaction is sent.
+ * @param {Array} transaction.targets - An array of objects, each containing the target address and value in satoshis to send.
+ * @param {BTCChainConfigWithProviders} chainConfig - The configuration object for the Bitcoin chain, including network type and providers.
+ * @returns {Promise<number>} The estimated transaction fee in satoshis.
+ */
+export const getEstimatedFeeBTC = async (transaction: {
+  from: string,
+  targets: {
+    address: string,
+    value: number
+  }[]
+}, chainConfig: BTCChainConfigWithProviders): Promise<number> => {
+  const btc = new Bitcoin({
+    ...chainConfig, networkType: chainConfig.networkType, relayerUrl: ''
+  });
+  return (await btc.getFeeProperties(transaction.from, transaction.targets)).fee;
+};
 
 export default signAndSend;

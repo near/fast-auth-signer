@@ -5,6 +5,8 @@ import { Account, transactions } from 'near-api-js';
 import { RSVSignature } from './types';
 import { parseSignedDelegateForRelayer } from '../relayer';
 
+type ChainSignatureContract = 'multichain-testnet-2.testnet'
+
 const toRVS = (signature: string): RSVSignature => {
   const parsedJSON = JSON.parse(signature) as [string, string];
 
@@ -84,3 +86,25 @@ export const sign = async (
 
   return getSignature();
 };
+
+export async function getRootPublicKey(
+  contract: ChainSignatureContract,
+  account: Account
+): Promise<string | undefined> {
+  const result = await account.functionCall({
+    contractId:      contract,
+    methodName:      'public_key',
+    args:            {},
+    gas:             new BN('300000000000000'),
+    attachedDeposit: new BN('0'),
+  });
+
+  if ('SuccessValue' in (result.status as any)) {
+    const successValue = (result.status as any).SuccessValue;
+    const publicKey = Buffer.from(successValue, 'base64').toString('utf-8');
+
+    return publicKey.replace(/^"|"$/g, '');
+  }
+
+  return undefined;
+}

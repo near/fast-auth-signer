@@ -4,7 +4,7 @@ import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
 import { generateBTCAddress } from '../kdf/kdf-osman';
-import { sign } from '../signature';
+import { getRootPublicKey, sign } from '../signature';
 
 type Transaction = {
   txid: string;
@@ -218,9 +218,11 @@ export class Bitcoin {
   static async deriveAddress(
     signerId: string,
     path: string,
-    contractRootPublicKey: string,
     network: bitcoin.networks.Network,
+    account: Account
   ): Promise<{ address: string; publicKey: Buffer; }> {
+    const contractRootPublicKey = await getRootPublicKey('multichain-testnet-2.testnet', account);
+
     const derivedKey = await generateBTCAddress(
       signerId,
       path,
@@ -317,7 +319,6 @@ export class Bitcoin {
     inputs: UTXO[],
     outputs: {address: string, value: number}[],
     fee: number,
-    feeUSD: number
   }> {
     const utxos = await this.fetchUTXOs(from);
     const feeRate = await this.fetchFeeRate(confirmationTarget);
@@ -350,14 +351,13 @@ export class Bitcoin {
     },
     account: Account,
     keyPath: string,
-    contractRootPublicKey: string
   ) {
     const satoshis = Bitcoin.toSatoshi(data.value);
     const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
       keyPath,
-      contractRootPublicKey,
-      this.network
+      this.network,
+      account,
     );
 
     const { inputs, outputs } = await this.getFeeProperties(address, [{

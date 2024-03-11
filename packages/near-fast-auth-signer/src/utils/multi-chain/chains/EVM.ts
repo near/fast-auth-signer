@@ -4,7 +4,7 @@ import {
 import { Account } from 'near-api-js';
 
 import { generateEthereumAddress } from '../kdf/kdf-osman';
-import { sign } from '../signature';
+import { getRootPublicKey, sign } from '../signature';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
@@ -157,8 +157,10 @@ class EVM {
   static async deriveAddress(
     signerId: string,
     path: string,
-    contractRootPublicKey: string
+    account: Account
   ): Promise<string> {
+    const contractRootPublicKey = await getRootPublicKey('multichain-testnet-2.testnet', account);
+
     return generateEthereumAddress(signerId, path, contractRootPublicKey);
   }
 
@@ -177,12 +179,11 @@ class EVM {
     data: {to: string, value: string},
     account: Account,
     keyPath: string,
-    contractRootPublicKey: string
   ): Promise<ethers.TransactionResponse | undefined> {
     const from = await EVM.deriveAddress(
       account?.accountId,
       keyPath,
-      contractRootPublicKey
+      account
     );
 
     const transaction = await this.attachGasAndNonce({

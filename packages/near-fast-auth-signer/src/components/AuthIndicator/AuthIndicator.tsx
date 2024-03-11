@@ -24,6 +24,11 @@ const CHAIN_CONFIG = {
   },
 };
 
+const account =  new Account(
+  window.fastAuthController.getConnection(),
+  window.fastAuthController.getAccountId()
+);
+
 function AuthIndicator() {
   const { authenticated } = useAuthState();
   const navigate = useNavigate();
@@ -47,10 +52,7 @@ function AuthIndicator() {
                   value:       '0.00003',
                   derivedPath:      ',ethereum,felipe.org'
                 },
-                account:          new Account(
-                  window.fastAuthController.getConnection(),
-                  window.fastAuthController.getAccountId()
-                ),
+                account,
                 fastAuthRelayerUrl: 'http://34.136.82.88:3030',
                 chainConfig:        {
                   type: 'BTC',
@@ -76,7 +78,8 @@ function AuthIndicator() {
                 {
                   type:        'BTC',
                   networkType: 'testnet'
-                }
+                },
+                account
               );
 
               console.log({ derivedAddress });
