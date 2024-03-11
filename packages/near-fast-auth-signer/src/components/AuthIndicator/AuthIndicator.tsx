@@ -24,11 +24,6 @@ const CHAIN_CONFIG = {
   },
 };
 
-const account =  new Account(
-  window.fastAuthController.getConnection(),
-  window.fastAuthController.getAccountId()
-);
-
 function AuthIndicator() {
   const { authenticated } = useAuthState();
   const navigate = useNavigate();
@@ -38,6 +33,11 @@ function AuthIndicator() {
       navigate('/login');
     }
   }, [authenticated, navigate]);
+
+  const account =  new Account(
+    window.fastAuthController.getConnection(),
+    window.fastAuthController.getAccountId()
+  );
 
   return (
     <AuthIndicatorButton data-test-id="auth-indicator-button" $buttonType="secondary" $isSignedIn={authenticated && authenticated !== 'loading'}>
@@ -81,7 +81,8 @@ function AuthIndicator() {
                   networkType: 'testnet'
                 },
                 account,
-                'multichain-testnet-2.testnet'
+                'multichain-testnet-2.testnet',
+                'http://34.136.82.88:3030'
               );
 
               console.log({ derivedAddress });

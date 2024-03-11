@@ -215,6 +215,7 @@ export class Bitcoin {
    * @param {string} path - The derivation path used to generate the address.
    * @param {bitcoin.networks.Network} network - The Bitcoin network (e.g., mainnet, testnet).
    * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @param {string} relayerUrl - The URL of the relayer service.
    * @returns {Promise<{ address: string; publicKey: Buffer }>} An object containing the derived Bitcoin address and its corresponding public key buffer.
    */
   static async deriveAddress(
@@ -222,9 +223,10 @@ export class Bitcoin {
     path: string,
     network: bitcoin.networks.Network,
     account: Account,
-    contract: ChainSignatureContracts
+    contract: ChainSignatureContracts,
+    relayerUrl: string,
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    const contractRootPublicKey = await getRootPublicKey(contract, account);
+    const contractRootPublicKey = await getRootPublicKey(contract, account, relayerUrl);
 
     const derivedKey = await generateBTCAddress(
       signerId,
@@ -361,7 +363,8 @@ export class Bitcoin {
       path,
       this.network,
       account,
-      this.contract
+      this.contract,
+      this.relayerUrl
     );
 
     const { inputs, outputs } = await this.getFeeProperties(address, [{

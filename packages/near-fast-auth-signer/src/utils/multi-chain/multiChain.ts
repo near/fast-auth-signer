@@ -94,13 +94,14 @@ export const getDerivedAddress = async (
   path: string,
   chainConfig: ChainConfig,
   account: Account,
-  contract: ChainSignatureContracts
+  contract: ChainSignatureContracts,
+  relayerUrl: string
 ) => {
   let derivedAddress: string;
 
   switch (chainConfig.type) {
     case 'EVM':
-      derivedAddress = await EVM.deriveAddress(signerId, path, account, contract);
+      derivedAddress = await EVM.deriveAddress(signerId, path, account, contract, relayerUrl);
       break;
     case 'BTC':
       derivedAddress = (await Bitcoin.deriveAddress(
@@ -108,7 +109,8 @@ export const getDerivedAddress = async (
         path,
         chainConfig.networkType === 'testnet' ? bitcoin.networks.testnet : bitcoin.networks.bitcoin,
         account,
-        contract
+        contract,
+        relayerUrl
       )).address;
       break;
     default:

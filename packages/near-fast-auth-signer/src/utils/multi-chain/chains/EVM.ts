@@ -155,15 +155,17 @@ class EVM {
    * @param {string} path - The derivation path used for generating the address.
    * @param {Account} account - The account object used to interact with the NEAR blockchain.
    * @param {ChainSignatureContracts} contract - The contract identifier used to get the root public key.
+   * @param {string} relayerUrl - The URL of the relayer service.
    * @returns {Promise<string>} A promise that resolves to the derived Ethereum address.
    */
   static async deriveAddress(
     signerId: string,
     path: string,
     account: Account,
-    contract: ChainSignatureContracts
+    contract: ChainSignatureContracts,
+    relayerUrl: string
   ): Promise<string> {
-    const contractRootPublicKey = await getRootPublicKey(contract, account);
+    const contractRootPublicKey = await getRootPublicKey(contract, account, relayerUrl);
 
     return generateEthereumAddress(signerId, path, contractRootPublicKey);
   }
@@ -187,7 +189,8 @@ class EVM {
       account?.accountId,
       path,
       account,
-      this.contract
+      this.contract,
+      this.relayerUrl
     );
 
     const transaction = await this.attachGasAndNonce({
