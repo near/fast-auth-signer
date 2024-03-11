@@ -3,7 +3,6 @@ import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
-// import { KeyDerivation } from '../kdf';
 import { generateBTCAddress } from '../kdf/kdf-osman';
 import { sign } from '../signature';
 
@@ -61,21 +60,17 @@ export class Bitcoin {
 
   private providerUrl: string;
 
-  private scanUrl: string;
-
   private relayerUrl: string;
 
   constructor(config: {
     networkType: NetworkType;
     providerUrl: string;
-    scanUrl: string;
     relayerUrl: string
   }) {
     this.network =      config.networkType === 'testnet'
       ? bitcoin.networks.testnet
       : bitcoin.networks.bitcoin;
     this.providerUrl = config.providerUrl;
-    this.scanUrl = config.scanUrl;
     this.relayerUrl = config.relayerUrl;
   }
 
@@ -226,12 +221,6 @@ export class Bitcoin {
     contractRootPublicKey: string,
     network: bitcoin.networks.Network,
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
-    // const derivedKey = KeyDerivation.deriveKey(
-    //   contractRootPublicKey,
-    //   epsilon
-    // );
-
     const derivedKey = await generateBTCAddress(
       signerId,
       path,
@@ -315,7 +304,7 @@ export class Bitcoin {
    * @param {string} from - The Bitcoin address from which the transaction is to be sent.
    * @param {Array<{address: string, value: number}>} targets - An array of target addresses and values (in satoshis) to send.
    * @param {number} [confirmationTarget=6] - The desired number of blocks in which the transaction should be confirmed.
-   * @returns {Promise<Object>} A promise that resolves to an object containing the selected UTXOs, the total value, the fee, and the change.
+   * @returns {Promise<Object>} A promise that resolves to an object containing the selected UTXOs, the total value, the fee (satoshis) and the change.
    */
   async getFeeProperties(
     from: string,
@@ -327,8 +316,8 @@ export class Bitcoin {
   ): Promise<{
     inputs: UTXO[],
     outputs: {address: string, value: number}[],
-    // TODO: return it in USD
-    fee: number
+    fee: number,
+    feeUSD: number
   }> {
     const utxos = await this.fetchUTXOs(from);
     const feeRate = await this.fetchFeeRate(confirmationTarget);

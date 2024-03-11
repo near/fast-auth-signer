@@ -3,14 +3,11 @@ import {
 } from 'ethers';
 import { Account } from 'near-api-js';
 
-// import { KeyDerivation } from '../kdf';
 import { generateEthereumAddress } from '../kdf/kdf-osman';
 import { sign } from '../signature';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
-
-  private scanUrl: string;
 
   private relayerUrl: string;
 
@@ -20,9 +17,8 @@ class EVM {
    * @param {object} config - The configuration object for the EVM instance.
    * @param {string} [config.providerUrl] - The URL for the EVM JSON RPC provider.
    */
-  constructor(config: { providerUrl: string; scanUrl: string; relayerUrl: string }) {
+  constructor(config: { providerUrl: string; relayerUrl: string }) {
     this.provider = new ethers.JsonRpcProvider(config.providerUrl);
-    this.scanUrl = config.scanUrl;
     this.relayerUrl = config.relayerUrl;
   }
 
@@ -91,7 +87,6 @@ class EVM {
       gasLimit,
       maxFeePerGas,
       maxPriorityFeePerGas,
-      // TODO: maybe return in USD
       maxFee: maxFeePerGas * gasLimit
     };
   }
@@ -164,19 +159,6 @@ class EVM {
     path: string,
     contractRootPublicKey: string
   ): Promise<string> {
-    // const epsilon = KeyDerivation.deriveEpsilon(signerId, path);
-    // const derivedKey = KeyDerivation.deriveKey(
-    //   contractRootPublicKey,
-    //   epsilon
-    // );
-
-    // const publicKeyNoPrefix = derivedKey.startsWith('04')
-    //   ? derivedKey.substring(2)
-    //   : derivedKey;
-    // const hash = ethers.keccak256(Buffer.from(publicKeyNoPrefix, 'hex'));
-
-    // return `0x${hash.substring(hash.length - 40)}`;
-
     return generateEthereumAddress(signerId, path, contractRootPublicKey);
   }
 
