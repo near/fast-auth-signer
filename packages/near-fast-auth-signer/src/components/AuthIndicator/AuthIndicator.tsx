@@ -48,16 +48,16 @@ function AuthIndicator() {
             onClick={async () => {
               const res = await signAndSend({
                 transaction:      {
-                  to:          'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-                  value:       '0.00003',
+                  to:          '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+                  value:       '0.001',
                   derivedPath:      ',ethereum,felipe.org'
                 },
                 account,
                 fastAuthRelayerUrl: 'http://34.136.82.88:3030',
                 chainConfig:        {
                   contract: 'multichain-testnet-2.testnet',
-                  type:     'BTC',
-                  ...CHAIN_CONFIG.btc,
+                  type:     'EVM',
+                  ...CHAIN_CONFIG.bsc,
                 }
               });
 
@@ -77,8 +77,7 @@ function AuthIndicator() {
                 window.fastAuthController.getAccountId(),
                 ',ethereum,felipe.org',
                 {
-                  type:        'BTC',
-                  networkType: 'testnet'
+                  type:        'EVM',
                 },
                 account,
                 'multichain-testnet-2.testnet',
