@@ -121,10 +121,6 @@ export const getDerivedAddress = async (
 /**
  * Calculates the estimated maximum fee for an EVM transaction.
  *
- * This function takes a transaction object, which includes the recipient's address, the value to be sent, and any data to be included in the transaction,
- * and a chain configuration object specific to EVM chains. It then calculates the maximum fee that could be required for the transaction based on the current network conditions
- * and returns the fee in wei as a bigint.
- *
  * @param {Object} transaction - The transaction details including the recipient's address, value, and data.
  * @param {EVMChainConfigWithProviders} chainConfig - The configuration object for the EVM chain, including provider URLs and other relevant settings.
  * @returns {Promise<bigint>} The estimated maximum transaction fee in wei.
@@ -140,10 +136,6 @@ export const getEstimatedFeeEVM = async (transaction: {
 
 /**
  * Calculates the estimated fee for a Bitcoin transaction in satoshis.
- *
- * This function takes a transaction object, which includes the sender's address and an array of target addresses with their respective values,
- * and a chain configuration object specific to Bitcoin. It then calculates the fee required for the transaction based on the current network fee rate
- * and returns the fee in satoshis.
  *
  * @param {Object} transaction - The transaction details including the sender's address and the targets.
  * @param {string} transaction.from - The Bitcoin address from which the transaction is sent.
