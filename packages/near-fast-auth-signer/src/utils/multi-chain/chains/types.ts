@@ -1,4 +1,5 @@
 import { Account } from '@near-js/accounts';
+
 import { ChainSignatureContracts } from '../signature';
 
 export type UTXO = {
