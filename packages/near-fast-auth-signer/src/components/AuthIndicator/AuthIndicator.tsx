@@ -45,16 +45,17 @@ function AuthIndicator() {
             onClick={async () => {
               const res = await signAndSend({
                 transaction:      {
-                  to:          '0x4174678c78fEaFd778c1ff319D5D326701449b25',
-                  value:       '0.001',
+                  to:          'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+                  value:       '0.00003',
                   derivedPath:      ',ethereum,felipe.org'
                 },
                 account,
                 fastAuthRelayerUrl: 'http://34.136.82.88:3030',
                 chainConfig:        {
-                  contract: 'multichain-testnet-2.testnet',
-                  type:     'EVM',
-                  ...CHAIN_CONFIG.bsc,
+                  contract:    'multichain-testnet-2.testnet',
+                  type:        'BTC',
+                  networkType: 'testnet',
+                  ...CHAIN_CONFIG.btc,
                 }
               });
 
@@ -129,7 +130,7 @@ function AuthIndicator() {
               console.log(fee);
             }}
           >
-            ETH
+            BTC
           </button>
         </div>
       )

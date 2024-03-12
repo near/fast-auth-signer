@@ -3,7 +3,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
-import { generateBTCAddress } from '../kdf/kdf-osman';
+import { generateBTCAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
 
 type Transaction = {
@@ -331,7 +331,7 @@ export class Bitcoin {
     const ret = coinselect(utxos, targets, feeRate + 1);
 
     if (!ret.inputs || !ret.outputs) {
-      throw new Error('Invalid transaction');
+      throw new Error('Invalid transaction: coinselect failed to find a suitable set of inputs and outputs. This could be due to insufficient funds, or no inputs being available that meet the criteria.');
     }
 
     return ret;

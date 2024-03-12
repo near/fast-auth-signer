@@ -3,7 +3,7 @@ import {
 } from 'ethers';
 import { Account } from 'near-api-js';
 
-import { generateEthereumAddress } from '../kdf/kdf-osman';
+import { generateEthereumAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
 
 class EVM {

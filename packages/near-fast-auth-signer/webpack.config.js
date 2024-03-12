@@ -94,7 +94,6 @@ module.exports = (env, argv) => {
         http:              require.resolve('stream-http'),
         // crypto:   require.resolve('crypto-browserify'),
         crypto:            false,
-        assert:            false,
         stream:            require.resolve('stream-browserify'),
         process:           require.resolve('process/browser'),
         'process/browser': require.resolve('process/browser'),
