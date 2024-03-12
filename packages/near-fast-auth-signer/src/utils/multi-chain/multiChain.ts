@@ -1,4 +1,5 @@
 import * as bitcoin from 'bitcoinjs-lib';
+import { BigNumberish } from 'ethers';
 import { Account } from 'near-api-js';
 
 import { Bitcoin } from './chains/Bitcoin';
@@ -127,12 +128,16 @@ export const getDerivedAddress = async (
  * @param {EVMChainConfigWithProviders} chainConfig - The configuration object for the EVM chain, including provider URLs and other relevant settings.
  * @returns {Promise<bigint>} The estimated maximum transaction fee in wei.
  */
-export const getEstimatedFeeEVM = async (transaction: {
+export const getEstimatedFeeEVM = async (
+  transaction: {
   to: string;
-  value?: string;
+  value?: BigNumberish;
   data?: string;
-}, chainConfig: EVMChainConfigWithProviders): Promise<bigint> => {
-  const evm = new EVM({ ...chainConfig, relayerUrl: '' });
+},
+  chainConfig: EVMChainConfigWithProviders,
+  relayerUrl: string
+): Promise<bigint> => {
+  const evm = new EVM({ ...chainConfig, relayerUrl });
   return (await evm.getFeeProperties(transaction)).maxFee;
 };
 
@@ -151,9 +156,9 @@ export const getEstimatedFeeBTC = async (transaction: {
     address: string,
     value: number
   }[]
-}, chainConfig: BTCChainConfigWithProviders): Promise<number> => {
+}, chainConfig: BTCChainConfigWithProviders, relayerUrl: string): Promise<number> => {
   const btc = new Bitcoin({
-    ...chainConfig, networkType: chainConfig.networkType, relayerUrl: ''
+    ...chainConfig, networkType: chainConfig.networkType, relayerUrl
   });
   return (await btc.getFeeProperties(transaction.from, transaction.targets)).fee;
 };

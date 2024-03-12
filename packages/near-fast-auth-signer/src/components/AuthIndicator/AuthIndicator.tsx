@@ -4,23 +4,20 @@ import { useNavigate } from 'react-router';
 
 import AuthIndicatorButton from './AuthIndicatorButton';
 import { useAuthState } from '../../hooks/useAuthState';
-import signAndSend, { getDerivedAddress } from '../../utils/multi-chain/multiChain';
+import signAndSend, { getDerivedAddress, getEstimatedFeeBTC, getEstimatedFeeEVM } from '../../utils/multi-chain/multiChain';
 
 const CHAIN_CONFIG = {
   ethereum: {
     providerUrl:
       'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
-    scanUrl: 'https://sepolia.etherscan.io',
   },
   bsc: {
     providerUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
-    scanUrl:     'https://testnet.bscscan.com',
   },
   btc: {
     networkType: 'testnet' as const,
     // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
     providerUrl: 'https://blockstream.info/testnet/api/',
-    scanUrl:     'https://blockstream.info/testnet',
   },
 };
 
@@ -77,7 +74,8 @@ function AuthIndicator() {
                 window.fastAuthController.getAccountId(),
                 ',ethereum,felipe.org',
                 {
-                  type:        'EVM',
+                  type:        'BTC',
+                  networkType: 'testnet'
                 },
                 account,
                 'multichain-testnet-2.testnet',
@@ -88,6 +86,50 @@ function AuthIndicator() {
             }}
           >
             Get address
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const fee = await getEstimatedFeeEVM(
+                {
+                  to:          '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+                  value:       '1000000',
+                },
+                {
+                  type:     'EVM',
+                  contract: 'multichain-testnet-2.testnet',
+                  ...CHAIN_CONFIG.ethereum,
+                },
+                'http://34.136.82.88:3030'
+              );
+              console.log(fee);
+            }}
+          >
+            EVM
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const fee = await getEstimatedFeeBTC(
+                {
+                  from:    'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc',
+                  targets: [{
+                    address: 'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+                    value:   3000
+                  }]
+                },
+                {
+                  type:        'BTC',
+                  networkType: 'testnet',
+                  contract:    'multichain-testnet-2.testnet',
+                  ...CHAIN_CONFIG.btc,
+                },
+                'http://34.136.82.88:3030'
+              );
+              console.log(fee);
+            }}
+          >
+            ETH
           </button>
         </div>
       )
