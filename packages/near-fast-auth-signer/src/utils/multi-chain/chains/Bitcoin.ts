@@ -327,7 +327,7 @@ export class Bitcoin {
     const utxos = await this.fetchUTXOs(from);
     const feeRate = await this.fetchFeeRate(confirmationTarget);
 
-    // TODO: test net won't work with feeRate fetched, it need to add 1
+    // Add a small amount to the fee rate to ensure the transaction is confirmed
     const ret = coinselect(utxos, targets, feeRate + 1);
 
     if (!ret.inputs || !ret.outputs) {

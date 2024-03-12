@@ -7,6 +7,8 @@ import { parseSignedDelegateForRelayer } from '../relayer';
 
 export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
 
+const NEAR_MAX_GAS = new BN('300000000000000');
+
 const toRVS = (signature: string): RSVSignature => {
   const parsedJSON = JSON.parse(signature) as [string, string];
 
@@ -42,7 +44,7 @@ export const sign = async (
       payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
       path,
     },
-    new BN('300000000000000'),
+    NEAR_MAX_GAS,
     new BN(0)
   );
 
@@ -107,9 +109,8 @@ export async function getRootPublicKey(
 ): Promise<string | undefined> {
   const functionCall = transactions.functionCall(
     'public_key',
-    {
-    },
-    new BN('300000000000000'),
+    {},
+    NEAR_MAX_GAS,
     new BN(0)
   );
 
