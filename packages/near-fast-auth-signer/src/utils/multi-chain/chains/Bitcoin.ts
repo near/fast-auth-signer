@@ -6,7 +6,6 @@ import { Account } from 'near-api-js';
 import { BTCTransaction } from './types';
 import { generateBTCAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
-// import { KeyDerivation } from '../kdf';
 
 type Transaction = {
   txid: string;

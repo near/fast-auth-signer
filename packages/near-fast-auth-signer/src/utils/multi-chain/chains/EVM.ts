@@ -6,7 +6,6 @@ import { Account } from 'near-api-js';
 import { EVMTransaction } from './types';
 import { generateEthereumAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
-// import { KeyDerivation } from '../kdf';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
