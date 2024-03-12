@@ -448,6 +448,10 @@ class FastAuthController {
       return undefined;
     }
   }
+
+  getConnection() {
+    return this.connection;
+  }
 }
 
 export default FastAuthController;
