@@ -1,4 +1,4 @@
-export interface FunctionCall {
+interface FunctionCallRelayer {
   FunctionCall: {
     method_name: string;
     args: string;
@@ -7,10 +7,10 @@ export interface FunctionCall {
   };
 }
 
-export type Actions = FunctionCall;
+type ActionsRelayer = FunctionCallRelayer;
 
-export interface DelegateActionRelayerFormat {
-  actions: Actions[];
+interface DelegateActionRelayerFormat {
+  actions: ActionsRelayer[];
   nonce: number;
   max_block_height: number;
   public_key: string;
