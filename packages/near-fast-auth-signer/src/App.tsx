@@ -50,7 +50,7 @@ export default function App() {
   log2('faLogzzzzz');
 
   useEffect(() => {
-    initAnalytics();
+    initAnalytics().catch((error) => console.error('Error initializing analytics:', error));
   }, []);
 
   // @ts-ignore

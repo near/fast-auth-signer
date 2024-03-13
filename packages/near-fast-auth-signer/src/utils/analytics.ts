@@ -8,7 +8,7 @@ const ANALYTICS_KEYS = {
   mainnet: '2RIih8mrVPUTQ9uWe6TFfwXzcMe'
 };
 
-const rudderAnalyticsKey = ANALYTICS_KEYS[networkId === 'testnet' ? 'testnet' : 'mainnet'];
+const rudderAnalyticsKey = ANALYTICS_KEYS[networkId];
 const DATA_PLANE_URL = 'https://near.dataplane.rudderstack.com';
 
 let userAgentDetail: string;
@@ -18,7 +18,7 @@ async function getUserAgentDetails() {
     if (navigator.userAgentData) {
       const ua = await navigator.userAgentData.getHighEntropyValues(['platformVersion', 'model']);
       const { model, platformVersion } = ua;
-      userAgentDetail = `${navigator.userAgent}; Platform Version: ${platformVersion}; Model: ${model}`;
+      userAgentDetail = JSON.stringify({ userAgent: navigator.userAgent, platformVersion, model });
     } else {
       userAgentDetail = navigator.userAgent;
     }
@@ -36,7 +36,7 @@ export async function initAnalytics() {
     rudderAnalytics.setAnonymousId(nanoid());
     window.rudderAnalytics = rudderAnalytics;
   } catch (e) {
-    console.error(e);
+    console.error('Error initializing analytics:', e);
   }
 }
 
@@ -49,6 +49,6 @@ export function recordEvent(eventLabel: string, properties?: Record<string, stri
       userAgentDetail
     });
   } catch (e) {
-    console.error(e);
+    console.error('Error recording event:', e);
   }
 }
