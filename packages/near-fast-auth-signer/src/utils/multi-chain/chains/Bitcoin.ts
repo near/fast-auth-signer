@@ -3,7 +3,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
 import { Account } from 'near-api-js';
 
-import { BTCTransaction } from './types';
+import { BTCTransaction, Request } from './types';
 import { generateBTCAddress } from '../kdf/kdf';
 import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
 
@@ -216,19 +216,18 @@ export class Bitcoin {
    * @param {string} signerId - The unique identifier of the signer.
    * @param {string} path - The derivation path used to generate the address.
    * @param {bitcoin.networks.Network} network - The Bitcoin network (e.g., mainnet, testnet).
-   * @param {Account} account - The account object used to interact with the NEAR blockchain.
-   * @param {string} relayerUrl - The URL of the relayer service.
+   * @param {string} nearNetworkId - The network id used to interact with the NEAR blockchain.
+   * @param {ChainSignatureContracts} contract - The mpc contract's accountId on the NEAR blockchain.
    * @returns {Promise<{ address: string; publicKey: Buffer }>} An object containing the derived Bitcoin address and its corresponding public key buffer.
    */
   static async deriveAddress(
     signerId: string,
     path: string,
     network: bitcoin.networks.Network,
-    account: Account,
+    nearNetworkId: string,
     contract: ChainSignatureContracts,
-    relayerUrl: string,
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    const contractRootPublicKey = await getRootPublicKey(contract, account, relayerUrl);
+    const contractRootPublicKey = await getRootPublicKey(contract, nearNetworkId);
 
     const derivedKey = await generateBTCAddress(
       signerId,
@@ -354,17 +353,16 @@ export class Bitcoin {
    */
   async handleTransaction(
     data: BTCTransaction,
-    account: Account,
+    nearAuthentication: Request['nearAuthentication'],
     path: string,
   ) {
     const satoshis = Bitcoin.toSatoshi(parseFloat(data.value));
     const { address, publicKey } = await Bitcoin.deriveAddress(
-      account.accountId,
+      nearAuthentication.accountId,
       path,
       this.network,
-      account,
-      this.contract,
-      this.relayerUrl
+      nearAuthentication.networkId,
+      this.contract
     );
 
     const { inputs, outputs } = data.inputs && data.outputs
@@ -418,7 +416,7 @@ export class Bitcoin {
         const signature = await sign(
           transactionHash,
           path,
-          account,
+          nearAuthentication,
           this.relayerUrl,
           this.contract
         );

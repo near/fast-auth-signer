@@ -1,4 +1,4 @@
-import { Account } from '@near-js/accounts';
+import { KeyPair } from '@near-js/crypto';
 
 import { ChainSignatureContracts } from '../signature';
 
@@ -39,24 +39,19 @@ type ChainProviders = {
   contract: ChainSignatureContracts
 }
 
-type EVMChainConfig = {
-  type: 'EVM',
-}
-
-type BTCChainConfig = {
-  type: 'BTC'
-  networkType: 'bitcoin' | 'testnet'
-}
-
-export type ChainConfig = EVMChainConfig | BTCChainConfig
-
-export type EVMChainConfigWithProviders = ChainProviders & EVMChainConfig
-export type BTCChainConfigWithProviders = ChainProviders & BTCChainConfig
+export type EVMChainConfigWithProviders = ChainProviders;
+export type BTCChainConfigWithProviders = ChainProviders & {
+  networkType: "bitcoin" | "testnet";
+};
 
 export type Request = {
   transaction: EVMTransaction | BTCTransaction;
   chainConfig: EVMChainConfigWithProviders | BTCChainConfigWithProviders;
-  account: Account;
+  nearAuthentication: {
+    networkId: "testnet" | "mainnet";
+    keypair: KeyPair;
+    accountId: string;
+  };
   fastAuthRelayerUrl: string;
 };
 
