@@ -15,6 +15,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { inIframe } from '../../utils';
+import { recordEvent } from '../../utils/analytics';
 import { basePath, network } from '../../utils/config';
 import {
   accountAddressPatternNoSubAccount, getEmailId
@@ -142,6 +143,7 @@ function CreateAccount() {
   const formsUsername = watch('username');
 
   const createAccount = useCallback(async (data: { email: string; username: string; }) => {
+    recordEvent('click-signup-continue');
     setInFlight(true);
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
@@ -185,7 +187,7 @@ function CreateAccount() {
       // navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log('error', error);
-
+      recordEvent('signup-error', { errorMessage: error.message });
       window.parent.postMessage({
         type:    'CreateAccountError',
         message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
@@ -238,6 +240,10 @@ function CreateAccount() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formsEmail, setValue]);
 
+  const handleSignInClick = () => {
+    recordEvent('click-has-account-sign-in');
+  };
+
   return (
     <StyledContainer inIframe={inIframe()}>
       <CreateAccountForm ref={createAccountFormRef} inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
@@ -246,7 +252,7 @@ function CreateAccount() {
           <p className="desc">
             <span>Have an account?</span>
             {' '}
-            <Link to="/login" data-test-id="create_login_link">Sign in</Link>
+            <Link to="/login" data-test-id="create_login_link" onClick={handleSignInClick}>Sign in</Link>
           </p>
         </header>
         <Input
