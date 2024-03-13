@@ -1,5 +1,5 @@
 import debug from 'debug';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Route, BrowserRouter as Router, Routes,
 } from 'react-router-dom';
@@ -18,6 +18,7 @@ import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
 import GlobalStyle from './styles/index';
+import { initAnalytics } from './utils/analytics';
 import { basePath, networkId } from './utils/config';
 
 (window as any).fastAuthController = new FastAuthController({
@@ -41,6 +42,10 @@ export default function App() {
   faLog('init');
   log('faLog');
   log2('faLogzzzzz');
+
+  useEffect(() => {
+    initAnalytics().then(() => console.log('Analytics initialized'));
+  }, []);
 
   // @ts-ignore
   return (
