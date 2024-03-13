@@ -23,6 +23,7 @@ import { openToast } from '../../lib/Toast';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
 } from '../../utils';
+import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
@@ -268,6 +269,7 @@ function AddDevicePage() {
   }, [firebaseUser, navigate, searchParams]);
 
   const onSubmit = async (data: { email: string }) => {
+    recordEvent('click-login-continue');
     setIsProcessingAuth(true);
     try {
       const authenticated = await getAuthState(data.email);
@@ -295,6 +297,7 @@ function AddDevicePage() {
         await addDevice({ email: data.email });
       }
     } catch (e) {
+      recordEvent('login-error', { errorMessage: e.message });
       console.error('Error occurred during form submission:', e);
       // Display error to the user
       openToast({
@@ -330,6 +333,7 @@ function AddDevicePage() {
   }, []);
 
   const handleConnectWallet = () => {
+    recordEvent('click-connect-wallet');
     if (!inIframe()) return;
     window.parent.postMessage({
       closeIframe:        true,
