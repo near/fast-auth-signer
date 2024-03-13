@@ -7,6 +7,12 @@ export {};
 declare global {
     interface Window {
         fastAuthController: FastAuthController;
-        firestoreController: FirestoreController
+        firestoreController: FirestoreController;
+        rudderAnalytics: any;
+    }
+    interface Navigator {
+        userAgentData?: {
+            getHighEntropyValues(keys: string[]): Promise<{ [key: string]: string }>;
+        }
     }
 }

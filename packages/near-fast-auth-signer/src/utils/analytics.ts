@@ -1,5 +1,5 @@
+import { nanoid } from 'nanoid';
 import * as rudderAnalytics from 'rudder-sdk-js';
-import { v4 as uuidv4 } from 'uuid';
 
 import { networkId } from './config';
 
@@ -12,17 +12,6 @@ const rudderAnalyticsKey = ANALYTICS_KEYS[networkId === 'testnet' ? 'testnet' : 
 const DATA_PLANE_URL = 'https://near.dataplane.rudderstack.com';
 
 let userAgentDetail: string;
-
-declare global {
-  interface Window {
-    rudderAnalytics: any;
-  }
-  interface Navigator {
-    userAgentData?: {
-      getHighEntropyValues(keys: string[]): Promise<{ [key: string]: string }>;
-    }
-  }
-}
 
 async function getUserAgentDetails() {
   try {
@@ -44,7 +33,7 @@ export async function initAnalytics() {
   await getUserAgentDetails();
   try {
     rudderAnalytics.load(rudderAnalyticsKey, DATA_PLANE_URL);
-    rudderAnalytics.setAnonymousId(uuidv4());
+    rudderAnalytics.setAnonymousId(nanoid());
     window.rudderAnalytics = rudderAnalytics;
   } catch (e) {
     console.error(e);
