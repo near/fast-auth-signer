@@ -44,7 +44,7 @@ export default function App() {
   log2('faLogzzzzz');
 
   useEffect(() => {
-    initAnalytics().then(() => console.log('Analytics initialized'));
+    initAnalytics();
   }, []);
 
   // @ts-ignore
