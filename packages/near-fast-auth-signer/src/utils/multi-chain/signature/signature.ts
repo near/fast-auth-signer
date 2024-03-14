@@ -1,4 +1,5 @@
 import { Account, Connection, Contract } from '@near-js/accounts';
+import { InMemoryKeyStore } from '@near-js/keystores';
 import {
   actionCreators,
 } from '@near-js/transactions';
@@ -6,11 +7,8 @@ import BN from 'bn.js';
 import { ethers } from 'ethers';
 
 import { RSVSignature } from './types';
+import { ChainSignatureContracts, Request } from '../chains/types';
 import { parseSignedDelegateForRelayer } from '../relayer';
-import { InMemoryKeyStore } from '@near-js/keystores';
-import { Request } from '../chains/types';
-
-export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
 
 const NEAR_MAX_GAS = new BN('300000000000000');
 
@@ -62,19 +60,19 @@ export const sign = async (
 
   const connection = Connection.fromConfig({
     networkId: nearAuthentication.networkId,
-    provider: {
-      type: "JsonRpcProvider",
-      args: {  
+    provider:  {
+      type: 'JsonRpcProvider',
+      args: {
         url: {
-          testnet: "https://rpc.testnet.near.org",
-          mainnet: "https://rpc.mainnet.near.org",
+          testnet: 'https://rpc.testnet.near.org',
+          mainnet: 'https://rpc.mainnet.near.org',
         }[nearAuthentication.networkId],
       },
     },
-    signer: { type: "InMemorySigner", keyStore },
+    signer: { type: 'InMemorySigner', keyStore },
   });
 
-  const account = new Account(connection, nearAuthentication.accountId)
+  const account = new Account(connection, nearAuthentication.accountId);
 
   const signedDelegate = await account.signedDelegate(
     {
@@ -138,25 +136,25 @@ export async function getRootPublicKey(
 ): Promise<string | undefined> {
   const nearConnection = Connection.fromConfig({
     networkId: nearNetworkId,
-    provider: {
-      type: "JsonRpcProvider",
+    provider:  {
+      type: 'JsonRpcProvider',
       args: {
         url: {
-          testnet: "https://rpc.testnet.near.org",
-          mainnet: "https://rpc.mainnet.near.org",
+          testnet: 'https://rpc.testnet.near.org',
+          mainnet: 'https://rpc.mainnet.near.org',
         }[nearNetworkId],
       },
     },
-    signer: { type: "InMemorySigner", keyStore: new InMemoryKeyStore() },
+    signer: { type: 'InMemorySigner', keyStore: new InMemoryKeyStore() },
   });
-  
+
   const nearAccount = new Account(nearConnection, 'dontcare');
   const multichainContractAcc = new Contract(
     nearAccount,
     contract,
     {
       changeMethods: [],
-      viewMethods: ['public_key']
+      viewMethods:   ['public_key']
     }
   ) as Contract & { public_key: () => Promise<string>; };
 

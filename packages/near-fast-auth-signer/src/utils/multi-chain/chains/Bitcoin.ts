@@ -1,11 +1,10 @@
 import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
-import { Account } from 'near-api-js';
 
-import { BTCTransaction, Request } from './types';
+import { BTCTransaction, ChainSignatureContracts, Request } from './types';
 import { generateBTCAddress } from '../kdf/kdf';
-import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+import { getRootPublicKey, sign } from '../signature';
 
 type Transaction = {
   txid: string;

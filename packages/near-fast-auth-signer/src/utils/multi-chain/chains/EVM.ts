@@ -1,11 +1,10 @@
 import {
   ethers, keccak256
 } from 'ethers';
-import { Account } from 'near-api-js';
 
-import { EVMTransaction, Request } from './types';
+import { ChainSignatureContracts, EVMTransaction, Request } from './types';
 import { generateEthereumAddress } from '../kdf/kdf';
-import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+import { getRootPublicKey, sign } from '../signature';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
@@ -180,7 +179,7 @@ class EVM {
    * The digital signing process is detailed in @signature.ts, involving the signing of a transaction hash with the derivation path.
    *
    * @param {Transaction} data - Contains the transaction details such as the recipient's address and the amount to be transferred.
-   * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @param {Request['nearAuthentication']} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
    * @param {string} path - The derivation path utilized for the signing of the transaction.
    * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction fails to execute.
    */

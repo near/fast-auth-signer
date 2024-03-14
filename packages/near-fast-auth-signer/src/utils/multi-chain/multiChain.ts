@@ -1,17 +1,17 @@
-import * as bitcoin from "bitcoinjs-lib";
-import { BigNumberish } from "ethers";
+import * as bitcoin from 'bitcoinjs-lib';
+import { BigNumberish } from 'ethers';
 
-import { Bitcoin } from "./chains/Bitcoin";
-import EVM from "./chains/EVM";
+import { Bitcoin } from './chains/Bitcoin';
+import EVM from './chains/EVM';
 import {
   BTCChainConfigWithProviders,
   BTCTransaction,
+  ChainSignatureContracts,
   EVMChainConfigWithProviders,
   EVMTransaction,
   Request,
   Response,
-} from "./chains/types";
-import { ChainSignatureContracts } from "./signature";
+} from './chains/types';
 
 export const signAndSendEVMTransaction = async (
   req: Request
@@ -30,11 +30,11 @@ export const signAndSendEVMTransaction = async (
 
     return {
       transactionHash: hash,
-      success: true,
+      success:         true,
     };
   } catch (e) {
     return {
-      success: false,
+      success:      false,
       errorMessage: e.message,
     };
   }
@@ -57,11 +57,11 @@ export const signAndSendBTCTransaction = async (
 
     return {
       transactionHash: txid,
-      success: true,
+      success:         true,
     };
   } catch (e) {
     return {
-      success: false,
+      success:      false,
       errorMessage: e.message,
     };
   }
@@ -70,22 +70,20 @@ export const signAndSendBTCTransaction = async (
 export const getDerivedBTCAddress = async (
   signerId: string,
   derivationPath: string,
-  bitcoinNetwork: "mainnet" | "testnet",
-  nearNetworkId: "mainnet" | "testnet",
+  bitcoinNetwork: 'mainnet' | 'testnet',
+  nearNetworkId: 'mainnet' | 'testnet',
   multichainContractId: ChainSignatureContracts
-) => {
-  return (
-    await Bitcoin.deriveAddress(
-      signerId,
-      derivationPath,
-      bitcoinNetwork === "testnet"
-        ? bitcoin.networks.testnet
-        : bitcoin.networks.bitcoin,
-      nearNetworkId,
-      multichainContractId
-    )
-  ).address;
-};
+) => (
+  await Bitcoin.deriveAddress(
+    signerId,
+    derivationPath,
+    bitcoinNetwork === 'testnet'
+      ? bitcoin.networks.testnet
+      : bitcoin.networks.bitcoin,
+    nearNetworkId,
+    multichainContractId
+  )
+).address;
 
 export const getDerivedEVMAddress = EVM.deriveAddress;
 
@@ -103,8 +101,7 @@ export const getEstimatedFeeEVM = async (
     data?: string;
   },
   chainConfig: EVMChainConfigWithProviders
-): Promise<bigint> =>
-  (await EVM.getFeeProperties(chainConfig.providerUrl, transaction)).maxFee;
+): Promise<bigint> => (await EVM.getFeeProperties(chainConfig.providerUrl, transaction)).maxFee;
 
 /**
  * Calculates the estimated fee for a Bitcoin transaction in satoshis.

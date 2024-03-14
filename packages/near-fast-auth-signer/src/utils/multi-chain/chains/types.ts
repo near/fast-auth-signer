@@ -1,6 +1,6 @@
 import { KeyPair } from '@near-js/crypto';
 
-import { ChainSignatureContracts } from '../signature';
+export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
 
 export type UTXO = {
   txid: string;
@@ -41,14 +41,14 @@ type ChainProviders = {
 
 export type EVMChainConfigWithProviders = ChainProviders;
 export type BTCChainConfigWithProviders = ChainProviders & {
-  networkType: "bitcoin" | "testnet";
+  networkType: 'bitcoin' | 'testnet';
 };
 
 export type Request = {
   transaction: EVMTransaction | BTCTransaction;
   chainConfig: EVMChainConfigWithProviders | BTCChainConfigWithProviders;
   nearAuthentication: {
-    networkId: "testnet" | "mainnet";
+    networkId: 'testnet' | 'mainnet';
     keypair: KeyPair;
     accountId: string;
   };
