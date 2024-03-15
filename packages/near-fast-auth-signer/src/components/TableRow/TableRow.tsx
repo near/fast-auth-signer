@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import BinanceIcon from '../../Images/BinanceIcon';
 import BitcoinIcon from '../../Images/BitcoinIcon';
 import EthereumIcon from '../../Images/EthereumIcon';
-import { DerivationPathDeserialized } from '../SignMultichain/types';
+import { assertNever } from '../../utils';
+import { Chain, DerivationPathDeserialized } from '../SignMultichain/types';
 
 const Container = styled.div`
   display: flex;
@@ -20,7 +21,11 @@ interface TableRowProps {
   content?: string | React.ReactElement;
 }
 
-const getAssetIcon = ({ asset, height, width }) => {
+const getAssetIcon = ({ asset, height, width }: {
+  asset: Chain;
+  height: number;
+  width: number;
+}) => {
   switch (asset) {
     case 'ETH':
       return (
@@ -35,7 +40,7 @@ const getAssetIcon = ({ asset, height, width }) => {
         <BinanceIcon height={height} width={width} />
       );
     default:
-      return null;
+      return assertNever(asset);
   }
 };
 

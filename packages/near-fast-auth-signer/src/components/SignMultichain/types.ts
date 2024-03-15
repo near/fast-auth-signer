@@ -1,30 +1,21 @@
-import { KeyPair } from 'near-api-js';
+export type EVMChain = 'ETH' | 'BNB';
+export type Chain = EVMChain | 'BTC';
+
+export type EVMChainMap<T = any> = {
+  // Disabling because the key needs to be defined but not used
+  // eslint-disable-next-line no-unused-vars
+  [key in EVMChain]: T
+};
+
+export type ChainMap<T = any> = {
+  // Disabling because the key needs to be defined but not used
+  // eslint-disable-next-line no-unused-vars
+  [key in Chain]: T
+};
 
 export interface DerivationPathDeserialized {
-  asset: 'ETH' | 'BNB' | 'BTC';
+  asset: Chain;
   domain?: string;
-}
-
-export interface MultichainExecutionResponse {
-  success: Boolean;
-  transactionHash?: string;
-  errorMessage?: string;
-}
-
-export interface ChainUrls {
- [chain: string]: {
-    providerUrl: string;
-    scanUrl: string;
-    name: string;
- };
-}
-
-export interface InitializationConfig {
- chainUrls: ChainUrls;
- mpcRecoveryUrl?: string;
- authInfo: KeyPair | { frp_keypair: KeyPair; oidc_token: string; };
- mpcContractAccountId: string;
- fastAuthRelayerUrl: string;
 }
 
 export interface BaseChainInterface {
@@ -43,13 +34,11 @@ export interface EVMInterface extends BaseChainInterface {
 export type BTCInterface = BaseChainInterface &
  (
    | {
-       derivedPublicKey: string;
        from: string;
      }
    | {
        fee: number;
        utxos: any[];
-       derivedPublicKey: string;
        from: string;
      }
  )

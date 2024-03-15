@@ -23,42 +23,13 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-// TODO: Delete after demo
-// eslint-disable-next-line no-unused-vars
-const sampleMessageForEthereum: MultichainInterface = {
-  chainId:          BigInt('5'),
-  derivationPath:   'AwAAAEVUSAAXAAAAdGVzdC1tY2hhaW4tZTJlLnRlc3RuZXQ=',
-  to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
-  value:            BigInt('10000000000000000')
-};
-
-const binanceDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
-// eslint-disable-next-line no-unused-vars
-const sampleMessageForBinance: MultichainInterface = {
-  chainId:          BigInt('97'),
-  derivationPath:   binanceDerivationPath,
-  to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
-  value:            BigInt('10000000000000000')
-};
-
 const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
 // eslint-disable-next-line no-unused-vars
 const sampleMessageForBitcoin: MultichainInterface = {
   derivationPath:   bitcoinDerivationPath,
   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
   value:            BigInt('3000'),
-  derivedPublicKey: 'abc',
-  from:             'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc'
-};
 
-// eslint-disable-next-line no-unused-vars
-const sampleMessageForBitcoin2: MultichainInterface = {
-  derivationPath:   bitcoinDerivationPath,
-  to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
-  value:            BigInt('3000'),
-  derivedPublicKey: 'abc',
-  fee:              123,
-  utxos:            [],
   from:             'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc'
 };
 
