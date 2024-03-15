@@ -44,11 +44,13 @@ export type BTCInterface = BaseChainInterface &
  (
    | {
        derivedPublicKey: string;
+       from: string;
      }
    | {
        fee: number;
        utxos: any[];
        derivedPublicKey: string;
+       from: string;
      }
  )
 

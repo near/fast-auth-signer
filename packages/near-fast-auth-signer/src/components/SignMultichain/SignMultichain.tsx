@@ -4,14 +4,14 @@ import React, {
 } from 'react';
 
 import { derivationPathSchema } from './schema';
-import { DerivationPathDeserialized, EVMInterface, MultichainInterface } from './types';
+import { DerivationPathDeserialized, MultichainInterface } from './types';
 import {
   validateMessage,
-  getSignedDelegateBase64,
   getTokenAndTotalPrice,
   multichainAssetToNetworkName,
   shortenAddress,
-  getGasFee
+  multichainSignAndSend,
+  multichainGetTotalGas
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
@@ -42,9 +42,20 @@ const sampleMessageForBinance: MultichainInterface = {
 const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
 const sampleMessageForBitcoin: MultichainInterface = {
   derivationPath:   bitcoinDerivationPath,
+  to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+  value:            BigInt('3000'),
+  derivedPublicKey: 'abc',
+  from:             'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc'
+};
+
+const sampleMessageForBitcoin2: MultichainInterface = {
+  derivationPath:   bitcoinDerivationPath,
   to:               '0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4',
-  value:            BigInt('10000000000000000'),
-  derivedPublicKey: 'abc'
+  value:            BigInt('3000'),
+  derivedPublicKey: 'abc',
+  fee:              123,
+  utxos:            [],
+  from:             'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc'
 };
 
 function SignMultichain() {
@@ -54,6 +65,7 @@ function SignMultichain() {
   const [message, setMessage] = useState<MultichainInterface>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
+  const [isValid, setValid] = useState(null);
   const [deserializedDerivationPath, setDeserializedDerivationPath] = useState<DerivationPathDeserialized>(null);
 
   // Send form height to modal if in iframe
@@ -91,6 +103,17 @@ function SignMultichain() {
     };
   }, []);
 
+  const deserializeDerivationPath = useCallback((path: string): DerivationPathDeserialized => {
+    try {
+      const deserialize: DerivationPathDeserialized = borshDeserialize(derivationPathSchema, Buffer.from(path, 'base64'));
+      setDeserializedDerivationPath(deserialize);
+      return deserialize;
+    } catch (e) {
+      onError(`fail to deserialize derivation path: ${e.message}`);
+      return e;
+    }
+  }, []);
+
   // when we have message and price is not set, retrieve price info
   useEffect(() => {
     if (message === null) return;
@@ -101,20 +124,23 @@ function SignMultichain() {
     }
 
     const init = async () => {
-      const deserialize: DerivationPathDeserialized = borshDeserialize(derivationPathSchema, Buffer.from(message.derivationPath, 'base64'));
+      const deserialize = deserializeDerivationPath(message.derivationPath);
       const validation = await validateMessage(message, deserialize.asset);
-      if (!validation) {
+      if (validation instanceof Error || !validation) {
+        setValid(false);
         return onError(validation.toString());
       }
-      setDeserializedDerivationPath(deserialize);
+      setValid(true);
       const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, message.value);
-
-      const { chainId } = (message as EVMInterface);
-      const transactionCost = await getGasFee({
-        asset:          deserialize.asset,
-        ...(chainId ? { chainId } : {}),
-        usdCostOfToken: tokenPrice,
+      const totalGas = await multichainGetTotalGas({
+        asset: deserialize?.asset,
+        to:    message.to,
+        value: message.value,
+        ...('from' in message ? { from: message.from } : {}),
       });
+      const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;
+      const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
+
       setAmountInfo({
         price: transactionCost,
         tokenAmount,
@@ -123,41 +149,47 @@ function SignMultichain() {
     };
 
     try {
-      if (!amountInfo.tokenAmount && message) {
+      if (amountInfo.tokenAmount === 0 && message) {
         setInFlight(true);
         init();
       }
     } catch (e) {
       console.error('Error in init', e);
     }
-  }, [message, amountInfo.tokenAmount]);
+  }, [message, amountInfo.tokenAmount, deserializeDerivationPath]);
 
-  const signDelegate = useCallback(async () => {
+  const signMultichainTransaction = useCallback(async () => {
     setError(null);
     setInFlight(true);
-    try {
-      const controller = window.fastAuthController;
-      const publicKey = await controller.getPublicKey();
-      const signedDelegateBase64 = await getSignedDelegateBase64({
-        najPublicKeyStr:            publicKey,
-        message,
-        deserializedDerivationPath,
-      });
-      console.log('signedDelegateBase64', signedDelegateBase64);
-      window.parent.postMessage({ type: 'response', signedDelegates: signedDelegateBase64 }, '*');
-      setInFlight(false);
-    } catch (e) {
-      setInFlight(false);
-      throw new Error('Failed to sign delegate');
+    if (isValid && message) {
+      try {
+        const response = await multichainSignAndSend({
+          domain: deserializedDerivationPath?.domain,
+          asset:  deserializedDerivationPath?.asset,
+          to:     message?.to,
+          value:  message?.value,
+        });
+        setInFlight(false);
+        if (response.success) {
+          window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+        } else {
+          // @ts-ignore
+          onError(response?.errorMessage);
+        }
+      } catch (e) {
+        setInFlight(false);
+        onError(e.message);
+        throw new Error('Failed to sign delegate');
+      }
     }
-  }, [deserializedDerivationPath, message]);
+  }, [deserializedDerivationPath?.asset, deserializedDerivationPath?.domain, isValid, message]);
 
   // If domain info passed from derivation path is same as window.parent.orgin, post message to parent directly
   useEffect(() => {
-    if (deserializedDerivationPath?.domain === window.parent.origin) {
-      signDelegate();
+    if (deserializedDerivationPath?.domain === window.parent.origin && isValid && message) {
+      signMultichainTransaction();
     }
-  }, [deserializedDerivationPath?.domain, signDelegate]);
+  }, [deserializedDerivationPath?.domain, isValid, message, signMultichainTransaction]);
 
   const onConfirm = async () => {
     setError(null);
@@ -169,7 +201,7 @@ function SignMultichain() {
       setInFlight(false);
       return;
     }
-    await signDelegate();
+    await signMultichainTransaction();
   };
 
   const onCancel = () => {
@@ -231,7 +263,7 @@ function SignMultichain() {
           size="large"
           label={inFlight ? 'Loading...' : 'Approve'}
           onClick={onConfirm}
-          disabled={!amountInfo.price || inFlight}
+          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number'}
         />
       </div>
       {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
