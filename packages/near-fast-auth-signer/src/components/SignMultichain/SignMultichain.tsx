@@ -83,30 +83,6 @@ function SignMultichain() {
     setError(text);
   };
 
-  // event listener setup
-  useEffect(() => {
-    const handleMessage = (event) => {
-      console.log('event', event);
-      // Maybe add origin check here? if url of origin is available, maybe update below
-      console.log('Message received in iframe: ', event.data);
-      if (event.data.data) {
-        setMessage(event.data.data);
-      }
-    };
-
-    window.addEventListener(
-      'message',
-      handleMessage,
-    );
-    // TODO: test code, delete later
-    console.log('set temp message');
-    setMessage(sampleMessageForBitcoin);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
-
   const deserializeDerivationPath = useCallback((path: string): DerivationPathDeserialized => {
     try {
       const deserialize: DerivationPathDeserialized = borshDeserialize(derivationPathSchema, Buffer.from(path, 'base64'));
@@ -118,53 +94,7 @@ function SignMultichain() {
     }
   }, []);
 
-  // when we have message and price is not set, retrieve price info
-  useEffect(() => {
-    if (message === null) return;
-
-    if (message !== null && !('derivationPath' in message)) {
-      onError('derivationPath is missing');
-      return;
-    }
-
-    const init = async () => {
-      const deserialize = deserializeDerivationPath(message.derivationPath);
-      const validation = await validateMessage(message, deserialize.asset);
-      if (validation instanceof Error || !validation) {
-        setValid(false);
-        return onError(validation.toString());
-      }
-      setValid(true);
-      const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, message.value);
-      const totalGas = await multichainGetTotalGas({
-        asset: deserialize?.asset,
-        to:    message.to,
-        value: message.value,
-        ...('from' in message ? { from: message.from } : {}),
-      });
-      const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;
-      const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
-
-      setAmountInfo({
-        price: transactionCost,
-        tokenAmount,
-      });
-      return setInFlight(false);
-    };
-
-    try {
-      if (amountInfo.tokenAmount === 0 && message) {
-        setInFlight(true);
-        init();
-      }
-    } catch (e) {
-      console.error('Error in init', e);
-    }
-  }, [message, amountInfo.tokenAmount, deserializeDerivationPath]);
-
   const signMultichainTransaction = useCallback(async () => {
-    setError(null);
-    setInFlight(true);
     if (isValid && message) {
       try {
         const response = await multichainSignAndSend({
@@ -173,39 +103,88 @@ function SignMultichain() {
           to:     message?.to,
           value:  message?.value,
         });
-        setInFlight(false);
         if (response.success) {
           window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
-        } else {
-          // @ts-ignore
-          onError(response?.errorMessage);
+        } else if (response.success === false) {
+          onError(response.errorMessage);
         }
       } catch (e) {
-        setInFlight(false);
         onError(e.message);
         throw new Error('Failed to sign delegate');
       }
     }
   }, [deserializedDerivationPath?.asset, deserializedDerivationPath?.domain, isValid, message]);
 
-  // If domain info passed from derivation path is same as window.parent.orgin, post message to parent directly
   useEffect(() => {
-    if (deserializedDerivationPath?.domain === window.parent.origin && isValid && message) {
-      signMultichainTransaction();
-    }
-  }, [deserializedDerivationPath?.domain, isValid, message, signMultichainTransaction]);
+    const handleMessage = async (event: {data: {data: any}}) => {
+      setInFlight(true);
+      try {
+        if (event.data.data) {
+          const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
+          const validation = await validateMessage(event.data.data, deserialize.asset);
+          if (validation instanceof Error || !validation) {
+            onError(validation.toString());
+            return;
+          }
+
+          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, event.data.data.value);
+          const totalGas = await multichainGetTotalGas({
+            asset: deserialize?.asset,
+            to:    event.data.data.to,
+            value: event.data.data.value,
+            ...('from' in event.data.data ? { from: event.data.data.from } : {}),
+          });
+          const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;
+          const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
+
+          setAmountInfo({
+            price: transactionCost,
+            tokenAmount,
+          });
+
+          if (deserializedDerivationPath?.domain === window.parent.origin && event.data.data) {
+            await signMultichainTransaction();
+          } else {
+            setValid(true);
+            setMessage(event.data.data);
+          }
+        }
+      } catch (e) {
+        onError(e.message);
+      } finally {
+        setInFlight(false);
+      }
+    };
+
+    window.addEventListener(
+      'message',
+      handleMessage,
+    );
+
+    // TODO: test code, delete later
+    console.log('set temp message');
+    handleMessage({ data: { data: sampleMessageForBitcoin } });
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [deserializeDerivationPath, deserializedDerivationPath?.domain, signMultichainTransaction]);
 
   const onConfirm = async () => {
     setError(null);
     setInFlight(true);
-    const isUserAuthenticated = await getAuthState(firebaseUser?.email);
-    if (isUserAuthenticated !== true) {
-      const errorMessage = 'You are not authenticated or there has been an indexer failure';
-      onError(errorMessage);
+    try {
+      const isUserAuthenticated = await getAuthState(firebaseUser?.email);
+      if (isUserAuthenticated !== true) {
+        onError('You are not authenticated or there has been an indexer failure');
+      } else {
+        await signMultichainTransaction();
+      }
+    } catch (e) {
+      onError(e.message);
+    } finally {
       setInFlight(false);
-      return;
     }
-    await signMultichainTransaction();
   };
 
   const onCancel = () => {
