@@ -31,10 +31,10 @@ import { TableRow } from '../TableRow/TableRow';
 //   value:            BigInt('1000000000000000')
 // };
 
-// const bnbDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
+// const BNBDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
 // const sampleMessageForBNB: MultichainInterface = {
 //   chainId:          BigInt('97'),
-//   derivationPath:   bnbDerivationPath,
+//   derivationPath:   BNBDerivationPath,
 //   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
 //   value:            BigInt('1000000000000000')
 // };
