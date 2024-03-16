@@ -19,7 +19,6 @@ import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
 import { Button, CloseButton } from '../../lib/Button';
-import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
@@ -29,7 +28,7 @@ const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC
 const sampleMessageForBitcoin: MultichainInterface = {
   derivationPath:   bitcoinDerivationPath,
   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-  value:            '0.00003',
+  value:            BigInt('3000'),
   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
 };
 
@@ -110,7 +109,7 @@ function SignMultichain() {
           const totalGas = await multichainGetTotalGas({
             asset: deserialize?.asset,
             to:    event.data.data.to,
-            value: Bitcoin.toSatoshi(parseFloat(event.data.data.value)),
+            value: event.data.data.value,
             ...('from' in event.data.data ? { from: event.data.data.from } : {}),
           });
           const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;

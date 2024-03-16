@@ -20,7 +20,7 @@ export interface DerivationPathDeserialized {
 
 export interface BaseChainInterface {
  to: string;
- value: string;
+ value: bigint;
  derivationPath: string;
 }
 
