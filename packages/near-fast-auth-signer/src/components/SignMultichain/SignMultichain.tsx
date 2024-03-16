@@ -31,21 +31,21 @@ import { TableRow } from '../TableRow/TableRow';
 //   value:            BigInt('1000000000000000')
 // };
 
-const bnbDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
-const sampleMessageForBNB: MultichainInterface = {
-  chainId:          BigInt('97'),
-  derivationPath:   bnbDerivationPath,
-  to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
-  value:            BigInt('1000000000000000')
-};
-
-// const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-// const sampleMessageForBTC: MultichainInterface = {
-//   derivationPath:   BTCDerivationPath,
-//   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-//   value:            BigInt('3000'),
-//   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
+// const bnbDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
+// const sampleMessageForBNB: MultichainInterface = {
+//   chainId:          BigInt('97'),
+//   derivationPath:   bnbDerivationPath,
+//   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+//   value:            BigInt('1000000000000000')
 // };
+
+const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
+const sampleMessageForBTC: MultichainInterface = {
+  derivationPath:   BTCDerivationPath,
+  to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+  value:            BigInt('3000'),
+  from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
+};
 
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
@@ -79,34 +79,39 @@ function SignMultichain() {
     }
   }, []);
 
-  const signMultichainTransaction = useCallback(async (derivationPath: {
+  const signMultichainTransaction = useCallback(async (
+    derivationPath: {
     asset?: Chain,
     domain?: string
-  }) => {
-    if (message) {
-      try {
-        const response = await multichainSignAndSend({
-          domain: derivationPath?.domain,
-          asset:  derivationPath?.asset,
-          to:     message?.to,
-          value:  message?.value.toString(),
-        });
-        if (response.success) {
-          window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
-        } else if (response.success === false) {
-          onError(response.errorMessage);
-        }
-      } catch (e) {
-        onError(e.message);
-        throw new Error('Failed to sign delegate');
-      }
+  },
+    transaction: {
+      to: string,
+      value: bigint,
     }
-  }, [message]);
+  ) => {
+    try {
+      const response = await multichainSignAndSend({
+        domain: derivationPath?.domain,
+        asset:  derivationPath?.asset,
+        to:     transaction?.to,
+        value:  transaction?.value.toString(),
+      });
+      if (response.success) {
+        window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+      } else if (response.success === false) {
+        onError(response.errorMessage);
+      }
+    } catch (e) {
+      onError(e.message);
+      throw new Error('Failed to sign delegate');
+    }
+  }, []);
 
   useEffect(() => {
     const handleMessage = async (event: {data: {data: any, type: string}}) => {
       try {
         if (event.data.type === 'multi-chain') {
+          const { data: transaction } = event.data;
           setInFlight(true);
           const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
           if (deserialize instanceof Error) {
@@ -136,10 +141,10 @@ function SignMultichain() {
           });
 
           if (deserialize?.domain === window.parent.origin && event.data.data) {
-            await signMultichainTransaction(deserialize);
+            await signMultichainTransaction(deserialize, transaction);
           } else {
             setValid(true);
-            setMessage(event.data.data);
+            setMessage(transaction);
           }
         }
       } catch (e) {
@@ -156,7 +161,7 @@ function SignMultichain() {
 
     // TODO: test code, delete later
     console.log('set temp message');
-    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBNB } });
+    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBTC } });
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -171,7 +176,7 @@ function SignMultichain() {
       if (isUserAuthenticated !== true) {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
-        await signMultichainTransaction(deserializedDerivationPath);
+        await signMultichainTransaction(deserializedDerivationPath, message);
       }
     } catch (e) {
       onError(e.message);
