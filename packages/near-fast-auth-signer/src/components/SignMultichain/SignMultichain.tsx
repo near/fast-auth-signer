@@ -108,6 +108,7 @@ function SignMultichain() {
   }, []);
 
   useEffect(() => {
+    // TODO: properly type the incoming data
     const handleMessage = async (event: {data: {data: any, type: string}}) => {
       if (event.data.type === 'multi-chain') {
         try {

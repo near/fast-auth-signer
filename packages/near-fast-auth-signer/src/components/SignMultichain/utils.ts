@@ -35,6 +35,7 @@ const CHAIN_CONFIG: ChainMap = {
   },
   BTC: {
     networkType: 'testnet',
+    // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
     providerUrl: 'https://blockstream.info/testnet/api/',
   },
 };
