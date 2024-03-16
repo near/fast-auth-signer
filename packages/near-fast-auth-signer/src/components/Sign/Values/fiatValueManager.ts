@@ -3,7 +3,6 @@ import { stringifyUrl } from 'query-string';
 // @ts-ignore
 import sendJson from './tmp_fetch_send_json';
 
-// TODO: Remove proxy URL
 const COINGECKO_PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price';
 const ACCOUNT_ID_SUFFIX = 'mainnet';
 const REF_FINANCE_API_ENDPOINT = `https://${ACCOUNT_ID_SUFFIX}-indexer.ref-finance.com/`;

@@ -109,8 +109,8 @@ function SignMultichain() {
 
   useEffect(() => {
     const handleMessage = async (event: {data: {data: any, type: string}}) => {
-      try {
-        if (event.data.type === 'multi-chain') {
+      if (event.data.type === 'multi-chain') {
+        try {
           const { data: transaction } = event.data;
           setInFlight(true);
           const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
@@ -146,11 +146,11 @@ function SignMultichain() {
             setValid(true);
             setMessage(transaction);
           }
+        } catch (e) {
+          onError(e.message);
+        } finally {
+          setInFlight(false);
         }
-      } catch (e) {
-        onError(e.message);
-      } finally {
-        setInFlight(false);
       }
     };
 
