@@ -10,6 +10,7 @@ import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import { useInvalidContractId } from '../../hooks/useInvalidContractId';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
@@ -120,15 +121,7 @@ function CreateAccount() {
   const [searchParams] = useSearchParams();
   const [inFlight, setInFlight] = useState(false);
 
-  const contractId = searchParams.get('contract_id');
-  useEffect(() => {
-    if (contractId && getMultiChainContract() === contractId) {
-      window.parent.postMessage({
-        type:    'CreateAccountError',
-        message: 'Invalid contract_id'
-      }, '*');
-    }
-  }, [contractId]);
+  useInvalidContractId(getMultiChainContract(), 'CreateAccountError');
 
   const {
     register,
