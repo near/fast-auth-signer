@@ -1,5 +1,5 @@
 import {
-  ethers, keccak256, parseEther
+  ethers, keccak256
 } from 'ethers';
 import { Account } from 'near-api-js';
 
@@ -196,7 +196,7 @@ class EVM {
     const transaction = await this.attachGasAndNonce({
       from,
       to:    data.to,
-      value: parseEther(data.value),
+      value: data.value.toString(),
     });
 
     const transactionHash = EVM.prepareTransactionForSignature(transaction);

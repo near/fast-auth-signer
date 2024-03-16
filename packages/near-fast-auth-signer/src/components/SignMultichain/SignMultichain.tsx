@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 
 import { derivationPathSchema } from './schema';
-import { DerivationPathDeserialized, MultichainInterface } from './types';
+import { Chain, DerivationPathDeserialized, MultichainInterface } from './types';
 import {
   validateMessage,
   getTokenAndTotalPrice,
@@ -23,14 +23,21 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-
-const sampleMessageForBitcoin: MultichainInterface = {
-  derivationPath:   bitcoinDerivationPath,
-  to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-  value:            BigInt('3000'),
-  from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
+const binanceDerivationPath = borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
+const sampleMessageForEthereum: MultichainInterface = {
+  chainId:          BigInt('11155111'),
+  derivationPath:   binanceDerivationPath,
+  to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+  value:            BigInt('1000000000000000')
 };
+
+// const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
+// const sampleMessageForBitcoin: MultichainInterface = {
+//   derivationPath:   bitcoinDerivationPath,
+//   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+//   value:            BigInt('3000'),
+//   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
+// };
 
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
@@ -65,7 +72,7 @@ function SignMultichain() {
   }, []);
 
   const signMultichainTransaction = useCallback(async (derivationPath: {
-    asset?: string,
+    asset?: Chain,
     domain?: string
   }) => {
     if (message) {
@@ -74,7 +81,7 @@ function SignMultichain() {
           domain: derivationPath?.domain,
           asset:  derivationPath?.asset,
           to:     message?.to,
-          value:  message?.value,
+          value:  message?.value.toString(),
         });
         if (response.success) {
           window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
@@ -141,7 +148,7 @@ function SignMultichain() {
 
     // TODO: test code, delete later
     console.log('set temp message');
-    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBitcoin } });
+    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForEthereum } });
 
     return () => {
       window.removeEventListener('message', handleMessage);
