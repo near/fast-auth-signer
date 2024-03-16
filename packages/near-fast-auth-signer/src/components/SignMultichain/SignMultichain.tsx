@@ -19,18 +19,18 @@ import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
 import { Button, CloseButton } from '../../lib/Button';
+import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
 const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-// eslint-disable-next-line no-unused-vars
+
 const sampleMessageForBitcoin: MultichainInterface = {
   derivationPath:   bitcoinDerivationPath,
   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-  value:            BigInt('3000'),
-
-  from:             'n1GBudBaFWz3HE3sUJ5mE8JqozjxGeJhLc'
+  value:            '0.00003',
+  from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
 };
 
 function SignMultichain() {
@@ -54,7 +54,7 @@ function SignMultichain() {
     setError(text);
   };
 
-  const deserializeDerivationPath = useCallback((path: string): DerivationPathDeserialized => {
+  const deserializeDerivationPath = useCallback((path: string): DerivationPathDeserialized | Error => {
     try {
       const deserialize: DerivationPathDeserialized = borshDeserialize(derivationPathSchema, Buffer.from(path, 'base64'));
       setDeserializedDerivationPath(deserialize);
@@ -65,12 +65,15 @@ function SignMultichain() {
     }
   }, []);
 
-  const signMultichainTransaction = useCallback(async () => {
-    if (isValid && message) {
+  const signMultichainTransaction = useCallback(async (derivationPath: {
+    asset?: string,
+    domain?: string
+  }) => {
+    if (message) {
       try {
         const response = await multichainSignAndSend({
-          domain: deserializedDerivationPath?.domain,
-          asset:  deserializedDerivationPath?.asset,
+          domain: derivationPath?.domain,
+          asset:  derivationPath?.asset,
           to:     message?.to,
           value:  message?.value,
         });
@@ -84,14 +87,19 @@ function SignMultichain() {
         throw new Error('Failed to sign delegate');
       }
     }
-  }, [deserializedDerivationPath?.asset, deserializedDerivationPath?.domain, isValid, message]);
+  }, [message]);
 
   useEffect(() => {
-    const handleMessage = async (event: {data: {data: any}}) => {
-      setInFlight(true);
+    const handleMessage = async (event: {data: {data: any, type: string}}) => {
       try {
-        if (event.data.data) {
+        if (event.data.type === 'multi-chain') {
+          setInFlight(true);
           const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
+          if (deserialize instanceof Error) {
+            onError(deserialize.message);
+            return;
+          }
+
           const validation = await validateMessage(event.data.data, deserialize.asset);
           if (validation instanceof Error || !validation) {
             onError(validation.toString());
@@ -102,7 +110,7 @@ function SignMultichain() {
           const totalGas = await multichainGetTotalGas({
             asset: deserialize?.asset,
             to:    event.data.data.to,
-            value: event.data.data.value,
+            value: Bitcoin.toSatoshi(parseFloat(event.data.data.value)),
             ...('from' in event.data.data ? { from: event.data.data.from } : {}),
           });
           const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;
@@ -113,8 +121,8 @@ function SignMultichain() {
             tokenAmount,
           });
 
-          if (deserializedDerivationPath?.domain === window.parent.origin && event.data.data) {
-            await signMultichainTransaction();
+          if (deserialize?.domain === window.parent.origin && event.data.data) {
+            await signMultichainTransaction(deserialize);
           } else {
             setValid(true);
             setMessage(event.data.data);
@@ -134,12 +142,12 @@ function SignMultichain() {
 
     // TODO: test code, delete later
     console.log('set temp message');
-    handleMessage({ data: { data: sampleMessageForBitcoin } });
+    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBitcoin } });
 
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [deserializeDerivationPath, deserializedDerivationPath?.domain, signMultichainTransaction]);
+  }, [deserializeDerivationPath, signMultichainTransaction]);
 
   const onConfirm = async () => {
     setError(null);
@@ -149,7 +157,7 @@ function SignMultichain() {
       if (isUserAuthenticated !== true) {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
-        await signMultichainTransaction();
+        await signMultichainTransaction(deserializedDerivationPath);
       }
     } catch (e) {
       onError(e.message);

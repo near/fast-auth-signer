@@ -47,7 +47,7 @@ const getAssetIcon = ({ asset, height, width }: {
 export function TableRow({ asset, content }: TableRowProps) {
   return (
     <Container>
-      {getAssetIcon({ asset, height: 18, width: 18 })}
+      {asset && getAssetIcon({ asset, height: 18, width: 18 })}
       <Content>
         {content}
       </Content>

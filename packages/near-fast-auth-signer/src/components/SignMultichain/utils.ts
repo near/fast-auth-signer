@@ -141,7 +141,7 @@ export const multichainSignAndSend = async ({
 }) => {
   const type = isEVMChain(asset) ? 'EVM' : 'BTC';
   const accountId = window.fastAuthController.getAccountId();
-  const derivedPath = `${accountId},${multichainAssetToCoinGeckoId(asset)},${domain}`;
+  const derivedPath = `,${multichainAssetToCoinGeckoId(asset)},${domain}`;
   const account = new Account(
     window.fastAuthController.getConnection(),
     accountId
