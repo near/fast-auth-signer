@@ -54,7 +54,7 @@ function Login() {
     data: { email: string }
   ) => {
     const newParams = new URLSearchParams(currentSearchParams);
-    newParams.set('email', encodeURIComponent(data.email));
+    newParams.set('email', data.email);
     navigate({
       pathname: '/add-device',
       search:   newParams.toString(),

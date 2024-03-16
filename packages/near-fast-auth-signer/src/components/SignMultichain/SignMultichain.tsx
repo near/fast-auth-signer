@@ -245,7 +245,7 @@ function SignMultichain() {
           size="large"
           label={inFlight ? 'Loading...' : 'Approve'}
           onClick={onConfirm}
-          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number'}
+          disabled={inFlight || !isValid || !firebaseUserLoading || !firebaseUser || typeof amountInfo.price !== 'number'}
         />
       </div>
       {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
