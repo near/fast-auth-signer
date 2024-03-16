@@ -11,7 +11,6 @@ import {
 } from './types';
 import { assertNever } from '../../utils';
 import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin';
-import EVM from '../../utils/multi-chain/chains/EVM';
 import signAndSend, { getEstimatedFeeBTC, getEstimatedFeeEVM } from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 

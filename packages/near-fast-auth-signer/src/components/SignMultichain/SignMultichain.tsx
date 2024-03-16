@@ -23,17 +23,25 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-const binanceDerivationPath = borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
-const sampleMessageForEthereum: MultichainInterface = {
-  chainId:          BigInt('11155111'),
-  derivationPath:   binanceDerivationPath,
+// const ETHDerivationPath = borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
+// const sampleMessageForETH: MultichainInterface = {
+//   chainId:          BigInt('11155111'),
+//   derivationPath:   ETHDerivationPath,
+//   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
+//   value:            BigInt('1000000000000000')
+// };
+
+const bnbDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
+const sampleMessageForBNB: MultichainInterface = {
+  chainId:          BigInt('97'),
+  derivationPath:   bnbDerivationPath,
   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
   value:            BigInt('1000000000000000')
 };
 
-// const bitcoinDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-// const sampleMessageForBitcoin: MultichainInterface = {
-//   derivationPath:   bitcoinDerivationPath,
+// const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
+// const sampleMessageForBTC: MultichainInterface = {
+//   derivationPath:   BTCDerivationPath,
 //   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
 //   value:            BigInt('3000'),
 //   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
@@ -148,7 +156,7 @@ function SignMultichain() {
 
     // TODO: test code, delete later
     console.log('set temp message');
-    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForEthereum } });
+    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBNB } });
 
     return () => {
       window.removeEventListener('message', handleMessage);
