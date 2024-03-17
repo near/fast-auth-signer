@@ -62,7 +62,8 @@ export default function App() {
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
-            <Route path="sign-multichain" element={<SignMultichain />} />
+            {/* TODO: This isn't available on mainnet, and isn't production ready, clean the code for production release */}
+            {process.env.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
             <Route path="devices" element={<Devices />} />
