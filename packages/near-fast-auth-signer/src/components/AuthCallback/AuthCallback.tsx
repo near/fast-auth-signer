@@ -100,6 +100,7 @@ export const onSignIn = async ({
   navigate,
   gateway,
 }) => {
+  // Stop from LAK with multi-chain contract
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
 

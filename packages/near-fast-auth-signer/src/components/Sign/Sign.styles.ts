@@ -7,6 +7,7 @@ export const ModalSignWrapper = styled.div`
   padding: 24px;
   display: flex;
   flex-direction: column;
+  position: relative;
   row-gap: 8px;
     .info-text {
     font-size: 12px;
@@ -17,12 +18,14 @@ export const ModalSignWrapper = styled.div`
         color: #A81500;
       }
     }
+
   .modal-top {
     display: flex;
     flex-direction: column;
     gap: 12px;
     align-items: center;
     line-height: 17px;
+    text-align: center;
     svg {
       height: 48px;
       width:48px;
@@ -55,6 +58,10 @@ export const ModalSignWrapper = styled.div`
     background-color: #fdfdfc;
     border: 1px solid #eeeeec;
     border-radius: 4px;
+
+    &.margin-top {
+      margin-top: 20px;
+    }
 
     h4 {
       font-size: 12px;

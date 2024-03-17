@@ -64,28 +64,40 @@ class FastAuthController {
     return keyPair;
   }
 
-  async getCorrectAccessKey(accountId, firstKeyPair, secondKeyPair) {
-    const account = new Account(this.connection, this.accountId);
-
-    const accessKeys = await account.getAccessKeys();
-
+  async getCorrectAccessKey(firstKeyPair, secondKeyPair) {
     const firstPublicKeyB58 = `ed25519:${baseEncode((firstKeyPair.getPublicKey().data))}`;
     const secondPublicKeyB58 = `ed25519:${baseEncode((secondKeyPair.getPublicKey().data))}`;
 
-    const accessKey = accessKeys.find((key) => key.public_key === firstPublicKeyB58 || secondPublicKeyB58);
-    if (!accessKey) {
-      throw new Error('No access key found');
-    } else if (accessKey.public_key === firstPublicKeyB58) {
+    if (this.accountId) {
+      const account = new Account(this.connection, this.accountId);
+      const accessKeys = await account.getAccessKeys();
+      const accessKey = accessKeys.find((key) => key.public_key === firstPublicKeyB58 || secondPublicKeyB58);
+      if (!accessKey) {
+        throw new Error('No access key found');
+      } else if (accessKey.public_key === firstPublicKeyB58) {
+        return firstKeyPair;
+      } else {
+        return secondKeyPair;
+      }
+    }
+
+    // If no account id, then we guess by checking if which key exists
+    const accountIdsFromFirstKey = await fetchAccountIds(firstPublicKeyB58);
+    if (accountIdsFromFirstKey.length) {
+      this.setAccountId(accountIdsFromFirstKey[0]);
       return firstKeyPair;
-    } else {
+    }
+    const accountIdsFromSecondKey = await fetchAccountIds(secondPublicKeyB58);
+    if (accountIdsFromSecondKey.length) {
+      this.setAccountId(accountIdsFromSecondKey[0]);
       return secondKeyPair;
     }
+    throw new Error('both key paris are invalid');
   }
 
   private async getBiometricKey() {
     const [firstKeyPair, secondKeyPair] = await getKeys(this.accountId);
-    const privKeyStr = await this.getCorrectAccessKey(this.accountId, firstKeyPair, secondKeyPair);
-
+    const privKeyStr = await this.getCorrectAccessKey(firstKeyPair, secondKeyPair);
     return new KeyPairEd25519(privKeyStr.split(':')[1]);
   }
 

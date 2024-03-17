@@ -14,6 +14,7 @@ import * as yup from 'yup';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import { useInvalidContractId } from '../../hooks/useInvalidContractId';
 import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
@@ -26,6 +27,7 @@ import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
+import { getMultiChainContract } from '../SignMultichain/utils';
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -94,6 +96,7 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
+  useInvalidContractId(getMultiChainContract(), 'addDeviceError');
 
   const addDevice = useCallback(async (data: any) => {
     setInFlight(true);
@@ -106,8 +109,8 @@ function AddDevicePage() {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+    const contract_id = searchParams.get('contract_id');
 
     try {
       await handleCreateAccount({
@@ -129,12 +132,12 @@ function AddDevicePage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}}`);
+      navigate(`/verify-email?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';
       window.parent.postMessage({
-        type:    'AddDeviceError',
+        type:    'addDeviceError',
         message: errorMessage
       }, '*');
 
@@ -151,8 +154,8 @@ function AddDevicePage() {
     setInFlight(true);
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && decodeIfTruthy(searchParams.get('success_url'));
     const public_key =  decodeIfTruthy(searchParams.get('public_key'));
-    const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
     const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+    const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
 
     const isPasskeySupported = await isPassKeyAvailable();
     if (!public_key || !contract_id) {

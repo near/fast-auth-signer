@@ -10,6 +10,7 @@ import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import { useInvalidContractId } from '../../hooks/useInvalidContractId';
 import { BadgeProps } from '../../lib/Badge/Badge';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
@@ -21,6 +22,7 @@ import {
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
 import { FormContainer, StyledContainer } from '../Layout';
+import { getMultiChainContract } from '../SignMultichain/utils';
 
 const CreateAccountForm = styled(FormContainer)`
   height: 500px;
@@ -119,6 +121,8 @@ function CreateAccount() {
   const [searchParams] = useSearchParams();
   const [inFlight, setInFlight] = useState(false);
 
+  useInvalidContractId(getMultiChainContract(), 'CreateAccountError');
+
   const {
     register,
     handleSubmit,
@@ -146,8 +150,8 @@ function CreateAccount() {
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
     const public_key =  searchParams.get('public_key');
-    const contract_id = searchParams.get('contract_id');
     const methodNames = searchParams.get('methodNames');
+    const contract_id = searchParams.get('contract_id');
 
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
