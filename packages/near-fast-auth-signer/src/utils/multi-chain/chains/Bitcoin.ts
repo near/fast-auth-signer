@@ -345,7 +345,7 @@ export class Bitcoin {
    *
    * @param {Object} data - The transaction data.
    * @param {string} data.to - The recipient's Bitcoin address.
-   * @param {number} data.value - The amount of Bitcoin to send (in BTC).
+   * @param {number} data.value - The amount of Bitcoin to send (in satoshis).
    * @param {Account} account - The account object containing the user's account information.
    * @param {string} path - The key derivation path for the account.
    */
@@ -357,7 +357,6 @@ export class Bitcoin {
     account: Account,
     path: string,
   ) {
-    const satoshis = Bitcoin.toSatoshi(data.value);
     const { address, publicKey } = await Bitcoin.deriveAddress(
       account.accountId,
       path,
@@ -369,7 +368,7 @@ export class Bitcoin {
 
     const { inputs, outputs } = await this.getFeeProperties(address, [{
       address: data.to,
-      value:   satoshis
+      value:   data.value,
     }]);
 
     const psbt = new bitcoin.Psbt({ network: this.network });

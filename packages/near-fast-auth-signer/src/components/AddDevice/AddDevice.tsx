@@ -14,6 +14,7 @@ import * as yup from 'yup';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import { useInvalidContractId } from '../../hooks/useInvalidContractId';
 import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
@@ -95,15 +96,7 @@ function AddDevicePage() {
   if (!window.firestoreController) {
     window.firestoreController = new FirestoreController();
   }
-  const contractId = searchParams.get('contract_id');
-  useEffect(() => {
-    if (contractId && getMultiChainContract() === contractId) {
-      window.parent.postMessage({
-        type:    'addDeviceError',
-        message: 'Invalid contract_id'
-      }, '*');
-    }
-  }, [contractId]);
+  useInvalidContractId(getMultiChainContract(), 'addDeviceError');
 
   const addDevice = useCallback(async (data: any) => {
     setInFlight(true);

@@ -4,8 +4,12 @@ import { formatEther, formatUnits } from 'ethers';
 import { bitcoinSchema } from './bitcoin/schema';
 import { evmSchema } from './evm/schema';
 import {
-  DerivationPathDeserialized, MultichainInterface
+  Chain,
+  ChainMap,
+  EVMChainMap,
+  MultichainInterface
 } from './types';
+import { assertNever } from '../../utils';
 import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin';
 import signAndSend, { getEstimatedFeeBTC, getEstimatedFeeEVM } from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
@@ -14,18 +18,23 @@ import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
 const MULTICHAIN_CONTRACT_MAINNET = 'multichain-testnet-2.testnet';
 
-const EVM_LIST = ['BNB', 'ETH'];
+const EVMChains: EVMChainMap<boolean> = {
+  ETH: true,
+  BNB: true,
+};
+const isEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
+
 const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
-const CHAIN_CONFIG = {
+
+const CHAIN_CONFIG: ChainMap = {
   ETH: {
-    providerUrl:
-      'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
+    providerUrl: 'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
   },
   BNB: {
     providerUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
   },
   BTC: {
-    networkType: 'testnet' as const,
+    networkType: 'testnet',
     // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
     providerUrl: 'https://blockstream.info/testnet/api/',
   },
@@ -33,7 +42,7 @@ const CHAIN_CONFIG = {
 
 export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
-const getSchema = (asset: DerivationPathDeserialized['asset']) => {
+const getSchema = (asset: Chain) => {
   switch (asset) {
     case 'BTC':
       return bitcoinSchema;
@@ -41,11 +50,11 @@ const getSchema = (asset: DerivationPathDeserialized['asset']) => {
     case 'BNB':
       return evmSchema;
     default:
-      return null;
+      return assertNever(asset);
   }
 };
 
-export const validateMessage = async (message: MultichainInterface, asset: DerivationPathDeserialized['asset']): Promise<boolean
+export const validateMessage = async (message: MultichainInterface, asset: Chain): Promise<boolean
 | Error> => {
   const schema = getSchema(asset);
   if (!schema) {
@@ -60,8 +69,8 @@ export const validateMessage = async (message: MultichainInterface, asset: Deriv
   }
 };
 
-export const multichainAssetToCoinGeckoId = (asset: DerivationPathDeserialized['asset']) => {
-  const map = {
+export const multichainAssetToCoinGeckoId = (asset: Chain) => {
+  const map: ChainMap = {
     ETH:  'ethereum',
     BNB:  'binancecoin',
     BTC:  'bitcoin',
@@ -70,8 +79,8 @@ export const multichainAssetToCoinGeckoId = (asset: DerivationPathDeserialized['
   return map[asset] || null;
 };
 
-export const multichainAssetToNetworkName = (asset: DerivationPathDeserialized['asset']) => {
-  const map = {
+export const multichainAssetToNetworkName = (asset: Chain) => {
+  const map: ChainMap = {
     ETH:  'Ethereum Network',
     BNB:  'Binance Smart Chain',
     BTC:  'Bitcoin Network',
@@ -80,10 +89,12 @@ export const multichainAssetToNetworkName = (asset: DerivationPathDeserialized['
   return map[asset] || null;
 };
 
-export const getMultichainCoinGeckoPrice = async (asset: DerivationPathDeserialized['asset']) => fetchGeckoPrices(multichainAssetToCoinGeckoId(asset));
+export async function getMultichainCoinGeckoPrice(asset: Chain) {
+  return fetchGeckoPrices(multichainAssetToCoinGeckoId(asset));
+}
 
-const convertTokenToReadable = (value : MultichainInterface['value'], asset: DerivationPathDeserialized['asset']) => {
-  if (EVM_LIST.includes(asset)) {
+const convertTokenToReadable = (value : MultichainInterface['value'], asset: Chain) => {
+  if (isEVMChain(asset)) {
     return parseFloat(formatEther(value));
   }
   if (asset === 'BTC') {
@@ -92,7 +103,7 @@ const convertTokenToReadable = (value : MultichainInterface['value'], asset: Der
   return Number(value);
 };
 
-export const getTokenAndTotalPrice = async (asset: DerivationPathDeserialized['asset'], value: MultichainInterface['value']) => {
+export const getTokenAndTotalPrice = async (asset: Chain, value: MultichainInterface['value']) => {
   const id = multichainAssetToCoinGeckoId(asset);
   if (id) {
     const res = await getMultichainCoinGeckoPrice(asset);
@@ -128,10 +139,15 @@ export const multichainSignAndSend = async ({
   asset,
   to,
   value,
+}: {
+  domain: string;
+  asset: Chain;
+  to: string;
+  value: string;
 }) => {
-  const type = EVM_LIST.includes(asset) ? 'EVM' : 'BTC';
+  const type = isEVMChain(asset) ? 'EVM' : 'BTC';
   const accountId = window.fastAuthController.getAccountId();
-  const derivedPath = `${accountId},${multichainAssetToCoinGeckoId(asset)},${domain}`;
+  const derivedPath = `,${multichainAssetToCoinGeckoId(asset)},${domain}`;
   const account = new Account(
     window.fastAuthController.getConnection(),
     accountId
@@ -159,6 +175,11 @@ export const multichainGetTotalGas = async ({
   to,
   value,
   from = null,
+}: {
+  asset: Chain;
+  to: string;
+  value: string;
+  from?: string;
 }) => {
   if (asset === 'BTC') {
     const satoshis =  await getEstimatedFeeBTC(
@@ -178,7 +199,7 @@ export const multichainGetTotalGas = async ({
       FAST_AUTH_RELAYER_URL,
     );
     return Bitcoin.toBTC(satoshis);
-  } if (EVM_LIST.includes(asset)) {
+  } if (isEVMChain(asset)) {
     const wei = await getEstimatedFeeEVM({
       to,
       value
