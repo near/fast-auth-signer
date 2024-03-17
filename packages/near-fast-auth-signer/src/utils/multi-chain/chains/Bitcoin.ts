@@ -428,11 +428,12 @@ export class Bitcoin {
       },
     };
 
-    await Promise.all(
-      inputs.map(async (_, index) => {
-        await psbt.signInputAsync(index, mpcKeyPair);
-      })
-    );
+    // TODO: it should be done in parallel,
+    // but for now it's causing nonce issues on the signDelegate so we will run sequentially to avoid the issue for now
+    for (let index = 0; index < inputs.length; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await psbt.signInputAsync(index, mpcKeyPair);
+    }
 
     psbt.finalizeAllInputs();
     const txid = await this.sendTransaction(psbt.extractTransaction().toHex(), {
