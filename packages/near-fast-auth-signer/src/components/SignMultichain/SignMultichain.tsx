@@ -177,6 +177,8 @@ function SignMultichain() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
+    // add amountInfo.feeProperties to the dependency array when the test code is removed and remove the eslint-disable-next-line
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deserializeDerivationPath, signMultichainTransaction]);
 
   const onConfirm = async () => {
