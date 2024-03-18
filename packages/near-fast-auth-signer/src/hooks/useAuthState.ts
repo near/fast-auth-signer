@@ -4,13 +4,19 @@ import { captureException } from '@sentry/react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
-import { fetchAccountIdsFromTwoKeys } from '../api';
+import { fetchAccountIds } from '../api';
 import FastAuthController from '../lib/controller';
 import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = 'loading' | boolean | Error
+
+function timeoutPromise(duration: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Timeout')), duration);
+  });
+}
 
 export const getAuthState = async (email?: string | null): Promise<AuthState> => {
   try {
@@ -28,10 +34,22 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
       return false;
     } if (isPasskeySupported && webauthnUsername) {
       const keypairs = await getKeys(webauthnUsername);
-      const accountInfo = await fetchAccountIdsFromTwoKeys(
-        keypairs[0].getPublicKey().toString(),
-        keypairs[1].getPublicKey().toString(),
-      );
+
+      const accountPromises = keypairs.map((keypair) => Promise.race([
+        fetchAccountIds(keypair.getPublicKey().toString()),
+        timeoutPromise(10000)
+      ]).catch(() => null));
+
+      const accountResults = await Promise.all(accountPromises);
+      const accountInfo = accountResults.reduce((acc, result, index) => {
+        if (result && result.length > 0) {
+          return {
+            accId:     result[0],
+            publicKey: keypairs[index].toString(),
+          };
+        }
+        return acc;
+      }, null);
 
       if (!accountInfo.accId) {
         return false;
