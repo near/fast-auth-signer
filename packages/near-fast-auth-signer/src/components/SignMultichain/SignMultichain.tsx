@@ -1,4 +1,4 @@
-import { borshDeserialize, borshSerialize } from 'borsher';
+import { borshDeserialize } from 'borsher';
 import React, {
   useEffect, useState, useCallback, useRef
 } from 'react';
@@ -23,6 +23,8 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
+// TODO: thes are test code for the multichain, use handleMessage with one of sampleMessage variable to test
+// Also replace import with import { borshDeserialize, borshSerialize } from 'borsher';
 // const ETHDerivationPath = borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
 // const sampleMessageForETH: MultichainInterface = {
 //   chainId:          BigInt('11155111'),
@@ -39,13 +41,13 @@ import { TableRow } from '../TableRow/TableRow';
 //   value:            BigInt('1000000000000000')
 // };
 
-const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-const sampleMessageForBTC: MultichainInterface = {
-  derivationPath:   BTCDerivationPath,
-  to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-  value:            BigInt('3000'),
-  from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
-};
+// const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
+// const sampleMessageForBTC: MultichainInterface = {
+//   derivationPath:   BTCDerivationPath,
+//   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
+//   value:            BigInt('3000'),
+//   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
+// };
 
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
@@ -161,8 +163,7 @@ function SignMultichain() {
     );
 
     // TODO: test code, delete later
-    console.log('set temp message');
-    handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBTC } });
+    // handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBTC } });
 
     return () => {
       window.removeEventListener('message', handleMessage);
