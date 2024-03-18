@@ -1,5 +1,5 @@
 import {
-  ethers, keccak256, parseEther
+  ethers, keccak256
 } from 'ethers';
 
 import { EVMTransaction } from './types';
@@ -98,27 +98,22 @@ class EVM {
   async attachGasAndNonce(
     transaction: EVMTransaction & { from: string }
   ): Promise<ethers.TransactionLike> {
-    const parsedValueTransaction = {
-      ...transaction,
-      value: parseEther(transaction.value),
-    };
-
-    const hasUserProvidedGas = parsedValueTransaction.gasLimit
-      && parsedValueTransaction.maxFeePerGas
-      && parsedValueTransaction.maxPriorityFeePerGas;
+    const hasUserProvidedGas = transaction.gasLimit
+      && transaction.maxFeePerGas
+      && transaction.maxPriorityFeePerGas;
 
     const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = hasUserProvidedGas
-      ? parsedValueTransaction
+      ? transaction
       : await this.getFeeProperties(
-        parsedValueTransaction
+        transaction
       );
 
     const nonce = await this.provider.getTransactionCount(
-      parsedValueTransaction.from,
+      transaction.from,
       'latest'
     );
 
-    const { from, ...rest } = parsedValueTransaction;
+    const { from, ...rest } = transaction;
 
     return {
       ...rest,

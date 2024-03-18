@@ -295,7 +295,7 @@ export class Bitcoin {
    *
    * @param {BTCTransaction} data - The transaction data.
    * @param {string} data.to - The recipient's Bitcoin address.
-   * @param {number} data.value - The amount of Bitcoin to send (in BTC).
+   * @param {string} data.value - The amount of Bitcoin to send (in BTC).
    * @param {NearAuthentication} nearAuthentication - The object containing the user's authentication information.
    * @param {string} path - The key derivation path for the account.
    */
@@ -304,7 +304,6 @@ export class Bitcoin {
     nearAuthentication: NearAuthentication,
     path: string,
   ) {
-    const satoshis = Bitcoin.toSatoshi(parseFloat(data.value));
     const { address, publicKey } = await this.deriveAddress(
       nearAuthentication.accountId,
       path,
@@ -315,7 +314,7 @@ export class Bitcoin {
       ? data
       : await this.getFeeProperties(address, [{
         address: data.to,
-        value:   satoshis
+        value:   parseFloat(data.value)
       }]);
 
     const psbt = new bitcoin.Psbt({ network: this.network });
@@ -375,11 +374,12 @@ export class Bitcoin {
       },
     };
 
-    await Promise.all(
-      inputs.map(async (_, index) => {
-        await psbt.signInputAsync(index, mpcKeyPair);
-      })
-    );
+    // TODO: it should be done in parallel,
+    // but for now it's causing nonce issues on the signDelegate so we will run sequentially to avoid the issue for now
+    for (let index = 0; index < inputs.length; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await psbt.signInputAsync(index, mpcKeyPair);
+    }
 
     psbt.finalizeAllInputs();
     const txid = await this.sendTransaction(psbt.extractTransaction().toHex(), {

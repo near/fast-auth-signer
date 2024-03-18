@@ -10,18 +10,21 @@ import {
 } from './types';
 import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
-import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin/Bitcoin';
 import {
   fetchBTCFeeProperties,
+  fetchEVMFeeProperties,
   signAndSendBTCTransaction,
-  signAndSendEVMTransaction
+  signAndSendEVMTransaction,
 } from '../../utils/multi-chain/multiChain';
-import { fetchEVMFeeProperties } from '../../utils/multi-chain/utils';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
 const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
 const MULTICHAIN_CONTRACT_MAINNET = 'multichain-testnet-2.testnet';
+
+function toBTC(satoshis: number): number {
+  return satoshis / 100000000;
+}
 
 type BTCFeeProperites = {
   inputs: {
@@ -127,7 +130,7 @@ const convertTokenToReadable = (value : MultichainInterface['value'], asset: Cha
     return parseFloat(formatEther(value));
   }
   if (asset === 'BTC') {
-    return Bitcoin.toBTC(Number(value));
+    return toBTC(Number(value));
   }
   return Number(value);
 };
@@ -232,7 +235,7 @@ export const multichainGetFeeProperties = async ({
       value:   Number(value)
     }]));
 
-    return { ...feeProperties, feeDisplay: Bitcoin.toBTC(feeProperties.fee) };
+    return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (isEVMChain(asset)) {
     const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, {
       to,
