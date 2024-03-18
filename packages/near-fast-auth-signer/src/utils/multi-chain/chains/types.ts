@@ -2,58 +2,22 @@ import { KeyPair } from '@near-js/crypto';
 
 export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
 
-export type UTXO = {
-  txid: string;
-  vout: number;
-  value: number
-}
-
-type BaseTransaction = {
+export type BaseTransaction = {
   to: string;
   value: string;
   derivedPath: string
 };
 
-export type EVMTransaction = BaseTransaction & ({
-  gasLimit: bigint;
-  maxFeePerGas: bigint;
-  maxPriorityFeePerGas: bigint;
-} | {
-  gasLimit?: never;
-  maxFeePerGas?: never;
-  maxPriorityFeePerGas?: never;
-});
-
-type BtcInputsAndOutputs = {
-  inputs: UTXO[];
-  outputs: { address: string, value: number }[];
-};
-
-export type BTCTransaction = BaseTransaction & (BtcInputsAndOutputs | {
-  inputs?: never;
-  outputs?: never;
-});
-
-type ChainProviders = {
+export type ChainProvider = {
   providerUrl: string,
   contract: ChainSignatureContracts
 }
 
-export type EVMChainConfigWithProviders = ChainProviders;
-export type BTCChainConfigWithProviders = ChainProviders & {
-  networkType: 'bitcoin' | 'testnet';
-};
-
-export type Request = {
-  transaction: EVMTransaction | BTCTransaction;
-  chainConfig: EVMChainConfigWithProviders | BTCChainConfigWithProviders;
-  nearAuthentication: {
-    networkId: 'testnet' | 'mainnet';
-    keypair: KeyPair;
-    accountId: string;
-  };
-  fastAuthRelayerUrl: string;
-};
+export type NearAuthentication = {
+  networkId: 'testnet' | 'mainnet';
+  keypair: KeyPair;
+  accountId: string;
+}
 
 type SuccessResponse = {
   transactionHash: string;
@@ -66,3 +30,5 @@ type FailureResponse = {
 }
 
 export type Response = SuccessResponse | FailureResponse
+
+export type NearNetworkIds = 'mainnet' | 'testnet';

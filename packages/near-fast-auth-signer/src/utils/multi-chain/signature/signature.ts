@@ -7,7 +7,7 @@ import BN from 'bn.js';
 import { ethers } from 'ethers';
 
 import { RSVSignature } from './types';
-import { ChainSignatureContracts, Request } from '../chains/types';
+import { ChainSignatureContracts, NearAuthentication } from '../chains/types';
 import { parseSignedDelegateForRelayer } from '../relayer';
 
 const NEAR_MAX_GAS = new BN('300000000000000');
@@ -28,7 +28,7 @@ const toRVS = (signature: string): RSVSignature => {
  *
  * @param {string | ethers.BytesLike} transactionHash - The hash of the transaction to be signed.
  * @param {string} path - The derivation path used for signing the transaction.
- * @param {Request['nearAuthentication']} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
+ * @param {NearAuthentication} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
  * @param {string} relayerUrl - The URL of the relayer service to which the signed transaction is sent.
  * @param {ChainSignatureContracts} contract - The contract identifier for chain signature operations.
  * @returns {Promise<RSVSignature>} A promise that resolves to the RSV signature of the signed transaction.
@@ -37,7 +37,7 @@ const toRVS = (signature: string): RSVSignature => {
 export const sign = async (
   transactionHash: string | ethers.BytesLike,
   path: string,
-  nearAuthentication: Request['nearAuthentication'],
+  nearAuthentication: NearAuthentication,
   relayerUrl: string,
   contract: ChainSignatureContracts
 ): Promise<RSVSignature> => {

@@ -1,20 +1,19 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { BigNumberish } from 'ethers';
 
-import { Bitcoin } from './chains/Bitcoin';
-import EVM from './chains/EVM';
+import { Bitcoin } from './chains/Bitcoin/Bitcoin';
+import { BTCNetworks, BitcoinRequest } from './chains/Bitcoin/types';
+import EVM from './chains/EVM/EVM';
+import { EVMChainConfigWithProviders, EVMRequest } from './chains/EVM/types';
 import {
-  BTCChainConfigWithProviders,
-  BTCTransaction,
   ChainSignatureContracts,
-  EVMChainConfigWithProviders,
-  EVMTransaction,
-  Request,
+  NearNetworkIds,
   Response,
 } from './chains/types';
+import { getEVMFeeProperties } from './utils';
 
 export const signAndSendEVMTransaction = async (
-  req: Request
+  req: EVMRequest
 ): Promise<Response> => {
   try {
     const evm = new EVM({
@@ -23,7 +22,7 @@ export const signAndSendEVMTransaction = async (
     });
 
     const { hash } = await evm.handleTransaction(
-      req.transaction as EVMTransaction,
+      req.transaction,
       req.nearAuthentication,
       req.transaction.derivedPath
     );
@@ -41,16 +40,16 @@ export const signAndSendEVMTransaction = async (
 };
 
 export const signAndSendBTCTransaction = async (
-  req: Request
+  req: BitcoinRequest
 ): Promise<Response> => {
   try {
     const btc = new Bitcoin({
-      ...(req.chainConfig as BTCChainConfigWithProviders),
+      ...req.chainConfig,
       relayerUrl: req.fastAuthRelayerUrl,
     });
 
     const txid = await btc.handleTransaction(
-      req.transaction as BTCTransaction,
+      req.transaction,
       req.nearAuthentication,
       req.transaction.derivedPath
     );
@@ -70,8 +69,8 @@ export const signAndSendBTCTransaction = async (
 export const getDerivedBTCAddress = async (
   signerId: string,
   derivationPath: string,
-  bitcoinNetwork: 'mainnet' | 'testnet',
-  nearNetworkId: 'mainnet' | 'testnet',
+  bitcoinNetwork: BTCNetworks,
+  nearNetworkId: NearNetworkIds,
   multichainContractId: ChainSignatureContracts
 ) => (
   await Bitcoin.deriveAddress(
@@ -101,7 +100,7 @@ export const getEstimatedFeeEVM = async (
     data?: string;
   },
   chainConfig: EVMChainConfigWithProviders
-): Promise<bigint> => (await EVM.getFeeProperties(chainConfig.providerUrl, transaction)).maxFee;
+): Promise<bigint> => (await getEVMFeeProperties(chainConfig.providerUrl, transaction)).maxFee;
 
 /**
  * Calculates the estimated fee for a Bitcoin transaction in satoshis.

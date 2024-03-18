@@ -1,10 +1,12 @@
 import {
-  ethers, keccak256
+  ethers, keccak256, parseEther
 } from 'ethers';
 
-import { ChainSignatureContracts, EVMTransaction, Request } from './types';
-import { generateEthereumAddress } from '../kdf/kdf';
-import { getRootPublicKey, sign } from '../signature';
+import { EVMTransaction } from './types';
+import { generateEthereumAddress } from '../../kdf/kdf';
+import { getRootPublicKey, sign } from '../../signature';
+import { getEVMFeeProperties } from '../../utils';
+import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
@@ -71,12 +73,10 @@ class EVM {
    * predict how much gas the transaction will use. This is useful for setting
    * gas limits when sending a transaction to ensure it does not run out of gas.
    *
-   * @param {string} providerUrl - The providerUrl of the EVM network to query the fee properties from.
    * @param {ethers.TransactionLike} transaction - The transaction object for which to estimate gas. This function only requires the `to`, `value`, and `data` fields of the transaction object.
    * @returns {Promise<bigint>} A promise that resolves to the estimated gas amount as a bigint.
    */
-  static async getFeeProperties(
-    providerUrl: string,
+  async getFeeProperties(
     transaction: ethers.TransactionLike
   ): Promise<{
   gasLimit: bigint;
@@ -84,19 +84,7 @@ class EVM {
   maxPriorityFeePerGas: bigint;
   maxFee: bigint;
   }> {
-    const provider = new ethers.JsonRpcProvider(providerUrl);
-    const gasLimit = await provider.estimateGas(transaction);
-    const feeData = await provider.getFeeData();
-
-    const maxFeePerGas =         feeData.maxFeePerGas ?? ethers.parseUnits('10', 'gwei');
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei');
-
-    return {
-      gasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      maxFee: maxFeePerGas * gasLimit
-    };
+    return getEVMFeeProperties(this.provider._getConnection().url, transaction);
   }
 
   /**
@@ -111,17 +99,30 @@ class EVM {
   async attachGasAndNonce(
     transaction: EVMTransaction & { from: string }
   ): Promise<ethers.TransactionLike> {
-    const userProvidedGas = transaction.gasLimit && transaction.maxFeePerGas && transaction.maxPriorityFeePerGas;
-    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = userProvidedGas
-      ? transaction
-      : await EVM.getFeeProperties(this.provider._getConnection().url, transaction);
-    const nonce = await this.provider.getTransactionCount(transaction.from, 'latest');
+    const parsedValueTransaction = {
+      ...transaction,
+      value: parseEther(transaction.value),
+    };
 
-    const { from, ...rest } = transaction;
+    const hasUserProvidedGas = parsedValueTransaction.gasLimit
+      && parsedValueTransaction.maxFeePerGas
+      && parsedValueTransaction.maxPriorityFeePerGas;
+
+    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = hasUserProvidedGas
+      ? parsedValueTransaction
+      : await this.getFeeProperties(
+        parsedValueTransaction
+      );
+
+    const nonce = await this.provider.getTransactionCount(
+      parsedValueTransaction.from,
+      'latest'
+    );
+
+    const { from, ...rest } = parsedValueTransaction;
 
     return {
       ...rest,
-      value:               parseEther(rest.value),
       gasLimit,
       maxFeePerGas,
       maxPriorityFeePerGas,
@@ -165,7 +166,7 @@ class EVM {
   static async deriveAddress(
     signerId: string,
     path: string,
-    nearNetworkId: string,
+    nearNetworkId: NearNetworkIds,
     multichainContractId: ChainSignatureContracts
   ): Promise<string> {
     const contractRootPublicKey = await getRootPublicKey(multichainContractId, nearNetworkId);
@@ -179,13 +180,13 @@ class EVM {
    * The digital signing process is detailed in @signature.ts, involving the signing of a transaction hash with the derivation path.
    *
    * @param {Transaction} data - Contains the transaction details such as the recipient's address and the amount to be transferred.
-   * @param {Request['nearAuthentication']} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
+   * @param {NearAuthentication} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
    * @param {string} path - The derivation path utilized for the signing of the transaction.
    * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction fails to execute.
    */
   async handleTransaction(
     data: EVMTransaction,
-    nearAuthentication: Request['nearAuthentication'],
+    nearAuthentication: NearAuthentication,
     path: string,
   ): Promise<ethers.TransactionResponse | undefined> {
     const from = await EVM.deriveAddress(

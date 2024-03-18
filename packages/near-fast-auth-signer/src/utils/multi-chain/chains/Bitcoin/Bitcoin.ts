@@ -2,9 +2,10 @@ import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
 import coinselect from 'coinselect';
 
-import { BTCTransaction, ChainSignatureContracts, Request } from './types';
-import { generateBTCAddress } from '../kdf/kdf';
-import { getRootPublicKey, sign } from '../signature';
+import { BTCTransaction, UTXO } from './types';
+import { generateBTCAddress } from '../../kdf/kdf';
+import { getRootPublicKey, sign } from '../../signature';
+import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 type Transaction = {
   txid: string;
@@ -45,13 +46,6 @@ type Transaction = {
     block_time: number | null;
   };
 };
-
-type UTXO = {
-  txid: string;
-  vout: number;
-  value: number
-  script: string
-}
 
 type NetworkType = 'bitcoin' | 'testnet'
 
@@ -223,7 +217,7 @@ export class Bitcoin {
     signerId: string,
     path: string,
     network: bitcoin.networks.Network,
-    nearNetworkId: string,
+    nearNetworkId: NearNetworkIds,
     contract: ChainSignatureContracts,
   ): Promise<{ address: string; publicKey: Buffer; }> {
     const contractRootPublicKey = await getRootPublicKey(contract, nearNetworkId);
@@ -344,15 +338,15 @@ export class Bitcoin {
    * and the derived path for the account to create a transaction. It then signs the transaction
    * using the chain signature contract and broadcasts it to the Bitcoin network.
    *
-   * @param {Object} data - The transaction data.
+   * @param {BTCTransaction} data - The transaction data.
    * @param {string} data.to - The recipient's Bitcoin address.
-   * @param {number} data.value - The amount of Bitcoin to send (in satoshis).
-   * @param {Account} account - The account object containing the user's account information.
+   * @param {number} data.value - The amount of Bitcoin to send (in BTC).
+   * @param {NearAuthentication} nearAuthentication - The object containing the user's authentication information.
    * @param {string} path - The key derivation path for the account.
    */
   async handleTransaction(
     data: BTCTransaction,
-    nearAuthentication: Request['nearAuthentication'],
+    nearAuthentication: NearAuthentication,
     path: string,
   ) {
     const satoshis = Bitcoin.toSatoshi(parseFloat(data.value));
@@ -428,12 +422,11 @@ export class Bitcoin {
       },
     };
 
-    // TODO: it should be done in parallel,
-    // but for now it's causing nonce issues on the signDelegate so we will run sequentially to avoid the issue for now
-    for (let index = 0; index < inputs.length; index += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      await psbt.signInputAsync(index, mpcKeyPair);
-    }
+    await Promise.all(
+      inputs.map(async (_, index) => {
+        await psbt.signInputAsync(index, mpcKeyPair);
+      })
+    );
 
     psbt.finalizeAllInputs();
     const txid = await this.sendTransaction(psbt.extractTransaction().toHex(), {
