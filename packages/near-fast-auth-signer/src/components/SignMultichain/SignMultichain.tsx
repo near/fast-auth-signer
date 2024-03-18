@@ -11,7 +11,8 @@ import {
   multichainAssetToNetworkName,
   shortenAddress,
   multichainSignAndSend,
-  multichainGetTotalGas
+  multichainGetFeeProperties,
+  TransactionFeeProperties
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
@@ -47,10 +48,16 @@ const sampleMessageForBTC: MultichainInterface = {
   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
 };
 
+type TransactionAmountDisplay = {
+  price: string | number;
+  tokenAmount: string | number;
+  feeProperties?: TransactionFeeProperties;
+};
+
 function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const signTransactionRef = useRef(null);
-  const [amountInfo, setAmountInfo] = useState<{ price: string | number, tokenAmount: string | number }>({ price: '...', tokenAmount: 0 });
+  const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
   const [message, setMessage] = useState<MultichainInterface>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
@@ -91,10 +98,11 @@ function SignMultichain() {
   ) => {
     try {
       const response = await multichainSignAndSend({
-        domain: derivationPath?.domain,
-        asset:  derivationPath?.asset,
-        to:     transaction?.to,
-        value:  transaction?.value.toString(),
+        domain:        derivationPath?.domain,
+        asset:         derivationPath?.asset,
+        to:            transaction?.to,
+        value:         transaction?.value.toString(),
+        feeProperties: amountInfo?.feeProperties
       });
       if (response.success) {
         window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
@@ -105,7 +113,7 @@ function SignMultichain() {
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
-  }, []);
+  }, [amountInfo?.feeProperties]);
 
   useEffect(() => {
     // TODO: properly type the incoming data
@@ -127,18 +135,19 @@ function SignMultichain() {
           }
 
           const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, event.data.data.value);
-          const totalGas = await multichainGetTotalGas({
+          const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
             asset: deserialize?.asset,
             to:    event.data.data.to,
             value: event.data.data.value,
             ...('from' in event.data.data ? { from: event.data.data.from } : {}),
           });
-          const gasFeeInUSD = parseFloat(totalGas.toString()) * tokenPrice;
+          const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
           const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
 
           setAmountInfo({
             price: transactionCost,
             tokenAmount,
+            feeProperties
           });
 
           if (deserialize?.domain === window.parent.origin && event.data.data) {
