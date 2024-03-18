@@ -1,16 +1,8 @@
-import * as bitcoin from 'bitcoinjs-lib';
-import { BigNumberish } from 'ethers';
-
 import { Bitcoin } from './chains/Bitcoin/Bitcoin';
-import { BTCNetworks, BitcoinRequest } from './chains/Bitcoin/types';
+import { BitcoinRequest } from './chains/Bitcoin/types';
 import EVM from './chains/EVM/EVM';
-import { EVMChainConfigWithProviders, EVMRequest } from './chains/EVM/types';
-import {
-  ChainSignatureContracts,
-  NearNetworkIds,
-  Response,
-} from './chains/types';
-import { getEVMFeeProperties } from './utils';
+import { EVMRequest } from './chains/EVM/types';
+import { Response } from './chains/types';
 
 export const signAndSendEVMTransaction = async (
   req: EVMRequest
@@ -66,48 +58,9 @@ export const signAndSendBTCTransaction = async (
   }
 };
 
-export const getDerivedBTCAddress = async (
-  signerId: string,
-  derivationPath: string,
-  bitcoinNetwork: BTCNetworks,
-  nearNetworkId: NearNetworkIds,
-  multichainContractId: ChainSignatureContracts
-) => (
-  await Bitcoin.deriveAddress(
-    signerId,
-    derivationPath,
-    bitcoinNetwork === 'testnet'
-      ? bitcoin.networks.testnet
-      : bitcoin.networks.bitcoin,
-    nearNetworkId,
-    multichainContractId
-  )
-).address;
-
-export const getDerivedEVMAddress = EVM.deriveAddress;
-
-/**
- * Calculates the estimated maximum fee for an EVM transaction.
- *
- * @param {Object} transaction - The transaction details including the recipient's address, value, and data.
- * @param {EVMChainConfigWithProviders} chainConfig - The configuration object for the EVM chain, including provider URLs and other relevant settings.
- * @returns {Promise<bigint>} The estimated maximum transaction fee in wei.
- */
-export const getEstimatedFeeEVM = async (
-  transaction: {
-    to: string;
-    value?: BigNumberish;
-    data?: string;
-  },
-  chainConfig: EVMChainConfigWithProviders
-): Promise<bigint> => (await getEVMFeeProperties(chainConfig.providerUrl, transaction)).maxFee;
-
-/**
- * Calculates the estimated fee for a Bitcoin transaction in satoshis.
- *
- * @param {string} providerUrl - The Bitcoin provider url to request the fee properties from
- * @param {string} transaction.from - The Bitcoin address from which the transaction is sent.
- * @param {Array} transaction.targets - An array of objects, each containing the target address and value in satoshis to send.
- * @returns {Promise<number>} The estimated transaction fee in satoshis.
- */
-export const getBitcoinFeeProperties = Bitcoin.getFeeProperties;
+export {
+  fetchDerivedEVMAddress,
+  fetchBTCFeeProperties,
+  fetchDerivedBTCAddress,
+  fetchEstimatedEVMFee,
+} from './utils';

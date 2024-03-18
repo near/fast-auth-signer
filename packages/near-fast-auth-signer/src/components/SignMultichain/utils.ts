@@ -12,7 +12,10 @@ import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
 import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin/Bitcoin';
 import {
-  getBitcoinFeeProperties, getEstimatedFeeEVM, signAndSendBTCTransaction, signAndSendEVMTransaction
+  fetchBTCFeeProperties,
+  fetchEstimatedEVMFee,
+  signAndSendBTCTransaction,
+  signAndSendEVMTransaction
 } from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
@@ -194,14 +197,14 @@ export const multichainGetTotalGas = async ({
   from?: string;
 }) => {
   if (asset === 'BTC') {
-    const satoshis =  (await getBitcoinFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
+    const satoshis =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
       address: to,
       value:   Number(value)
     }])).fee;
 
     return Bitcoin.toBTC(satoshis);
   } if (isEVMChain(asset)) {
-    const wei = await getEstimatedFeeEVM({
+    const wei = await fetchEstimatedEVMFee({
       to,
       value
     }, {

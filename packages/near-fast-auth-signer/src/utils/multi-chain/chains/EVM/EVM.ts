@@ -3,9 +3,8 @@ import {
 } from 'ethers';
 
 import { EVMTransaction } from './types';
-import { generateEthereumAddress } from '../../kdf/kdf';
-import { getRootPublicKey, sign } from '../../signature';
-import { getEVMFeeProperties } from '../../utils';
+import { sign } from '../../signature';
+import { fetchDerivedEVMAddress, fetchEVMFeeProperties } from '../../utils';
 import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 class EVM {
@@ -84,7 +83,7 @@ class EVM {
   maxPriorityFeePerGas: bigint;
   maxFee: bigint;
   }> {
-    return getEVMFeeProperties(this.provider._getConnection().url, transaction);
+    return fetchEVMFeeProperties(this.provider._getConnection().url, transaction);
   }
 
   /**
@@ -163,15 +162,12 @@ class EVM {
    * @param {ChainSignatureContracts} multichainContractId - The contract identifier used to get the root public key.
    * @returns {Promise<string>} A promise that resolves to the derived Ethereum address.
    */
-  static async deriveAddress(
+  async deriveAddress(
     signerId: string,
     path: string,
     nearNetworkId: NearNetworkIds,
-    multichainContractId: ChainSignatureContracts
   ): Promise<string> {
-    const contractRootPublicKey = await getRootPublicKey(multichainContractId, nearNetworkId);
-
-    return generateEthereumAddress(signerId, path, contractRootPublicKey);
+    return fetchDerivedEVMAddress(signerId, path, nearNetworkId, this.contract);
   }
 
   /**
@@ -189,11 +185,10 @@ class EVM {
     nearAuthentication: NearAuthentication,
     path: string,
   ): Promise<ethers.TransactionResponse | undefined> {
-    const from = await EVM.deriveAddress(
+    const from = await this.deriveAddress(
       nearAuthentication.accountId,
       path,
-      nearAuthentication.networkId,
-      this.contract
+      nearAuthentication.networkId
     );
 
     const transaction = await this.attachGasAndNonce({

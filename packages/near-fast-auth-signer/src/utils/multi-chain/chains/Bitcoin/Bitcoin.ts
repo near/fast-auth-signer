@@ -1,10 +1,11 @@
 import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
-import coinselect from 'coinselect';
 
 import { BTCTransaction, UTXO } from './types';
-import { generateBTCAddress } from '../../kdf/kdf';
-import { getRootPublicKey, sign } from '../../signature';
+import { sign } from '../../signature';
+import {
+  fetchBTCFeeProperties, fetchBTCFeeRate, fetchBTCUTXOs, fetchDerivedBTCAddressAndPublicKey
+} from '../../utils';
 import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 type Transaction = {
@@ -101,7 +102,7 @@ export class Bitcoin {
    * @returns {Promise<string>} A promise that resolves to the balance of the address as a string.
    */
   async fetchBalance(address: string): Promise<string> {
-    const utxos = await Bitcoin.fetchUTXOs(this.providerUrl, address);
+    const utxos = await this.fetchUTXOs(address);
     return Bitcoin.toBTC(
       utxos.reduce((acc, utxo) => acc + utxo.value, 0)
     ).toString();
@@ -115,27 +116,10 @@ export class Bitcoin {
    * Each UTXO is represented as an object containing the transaction ID (`txid`), the output index within that transaction (`vout`),
    * the value of the output in satoshis (`value`) and the locking script (`script`).
    */
-  static async fetchUTXOs(
-    providerUrl: string,
+  async fetchUTXOs(
     address: string
   ): Promise<UTXO[]> {
-    try {
-      const response = await axios.get(
-        `${providerUrl}address/${address}/utxo`
-      );
-      const utxos = response.data.map((utxo: any) => {
-        return {
-          txid:   utxo.txid,
-          vout:   utxo.vout,
-          value:  utxo.value,
-          script: utxo.script,
-        };
-      });
-      return utxos;
-    } catch (error) {
-      console.error('Failed to fetch UTXOs:', error);
-      return [];
-    }
+    return fetchBTCUTXOs(this.providerUrl, address);
   }
 
   /**
@@ -148,14 +132,8 @@ export class Bitcoin {
    * @returns {Promise<number>} A promise that resolves to the fee rate in satoshis per byte.
    * @throws {Error} Throws an error if the fee rate data for the specified confirmation target is missing.
    */
-  static async fetchFeeRate(providerUrl: string, confirmationTarget = 6): Promise<number> {
-    const response = await axios.get(`${providerUrl}fee-estimates`);
-    if (response.data && response.data[confirmationTarget]) {
-      return response.data[confirmationTarget];
-    }
-    throw new Error(
-      `Fee rate data for ${confirmationTarget} blocks confirmation target is missing in the response`
-    );
+  async fetchFeeRate(confirmationTarget = 6): Promise<number> {
+    return fetchBTCFeeRate(this.providerUrl, confirmationTarget);
   }
 
   /**
@@ -210,32 +188,20 @@ export class Bitcoin {
    * @param {string} path - The derivation path used to generate the address.
    * @param {bitcoin.networks.Network} network - The Bitcoin network (e.g., mainnet, testnet).
    * @param {string} nearNetworkId - The network id used to interact with the NEAR blockchain.
-   * @param {ChainSignatureContracts} contract - The mpc contract's accountId on the NEAR blockchain.
    * @returns {Promise<{ address: string; publicKey: Buffer }>} An object containing the derived Bitcoin address and its corresponding public key buffer.
    */
-  static async deriveAddress(
+  async deriveAddress(
     signerId: string,
     path: string,
-    network: bitcoin.networks.Network,
     nearNetworkId: NearNetworkIds,
-    contract: ChainSignatureContracts,
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    const contractRootPublicKey = await getRootPublicKey(contract, nearNetworkId);
-
-    const derivedKey = await generateBTCAddress(
+    return fetchDerivedBTCAddressAndPublicKey(
       signerId,
       path,
-      contractRootPublicKey,
+      this.network,
+      nearNetworkId,
+      this.contract
     );
-
-    const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
-
-    const { address } = bitcoin.payments.p2pkh({
-      pubkey:  publicKeyBuffer,
-      network,
-    });
-
-    return { address, publicKey: publicKeyBuffer };
   }
 
   /**
@@ -306,8 +272,7 @@ export class Bitcoin {
    * @param {number} [confirmationTarget=6] - The desired number of blocks in which the transaction should be confirmed.
    * @returns {Promise<{inputs: UTXO[], outputs: {address: string, value: number}[], fee: number}>} A promise that resolves to an object containing the inputs (selected UTXOs), outputs (destination addresses and values), and the transaction fee in satoshis.
    */
-  static async getFeeProperties(
-    providerUrl: string,
+  async getFeeProperties(
     from: string,
     targets: {
       address: string;
@@ -319,17 +284,7 @@ export class Bitcoin {
     outputs: {address: string, value: number}[],
     fee: number,
   }> {
-    const utxos = await Bitcoin.fetchUTXOs(providerUrl, from);
-    const feeRate = await Bitcoin.fetchFeeRate(providerUrl, confirmationTarget);
-
-    // Add a small amount to the fee rate to ensure the transaction is confirmed
-    const ret = coinselect(utxos, targets, feeRate + 1);
-
-    if (!ret.inputs || !ret.outputs) {
-      throw new Error('Invalid transaction: coinselect failed to find a suitable set of inputs and outputs. This could be due to insufficient funds, or no inputs being available that meet the criteria.');
-    }
-
-    return ret;
+    return fetchBTCFeeProperties(this.providerUrl, from, targets, confirmationTarget);
   }
 
   /**
@@ -350,17 +305,15 @@ export class Bitcoin {
     path: string,
   ) {
     const satoshis = Bitcoin.toSatoshi(parseFloat(data.value));
-    const { address, publicKey } = await Bitcoin.deriveAddress(
+    const { address, publicKey } = await this.deriveAddress(
       nearAuthentication.accountId,
       path,
-      this.network,
       nearAuthentication.networkId,
-      this.contract
     );
 
     const { inputs, outputs } = data.inputs && data.outputs
       ? data
-      : await Bitcoin.getFeeProperties(this.providerUrl, address, [{
+      : await this.getFeeProperties(address, [{
         address: data.to,
         value:   satoshis
       }]);
