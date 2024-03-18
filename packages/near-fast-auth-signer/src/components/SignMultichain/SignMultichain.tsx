@@ -94,7 +94,8 @@ function SignMultichain() {
     transaction: {
       to: string,
       value: bigint,
-    }
+    },
+    feeProperties: TransactionFeeProperties
   ) => {
     try {
       const response = await multichainSignAndSend({
@@ -102,7 +103,7 @@ function SignMultichain() {
         asset:         derivationPath?.asset,
         to:            transaction?.to,
         value:         transaction?.value.toString(),
-        feeProperties: amountInfo?.feeProperties
+        feeProperties
       });
       if (response.success) {
         window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
@@ -113,7 +114,7 @@ function SignMultichain() {
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
-  }, [amountInfo?.feeProperties]);
+  }, []);
 
   useEffect(() => {
     // TODO: properly type the incoming data
@@ -151,7 +152,7 @@ function SignMultichain() {
           });
 
           if (deserialize?.domain === window.parent.origin && event.data.data) {
-            await signMultichainTransaction(deserialize, transaction);
+            await signMultichainTransaction(deserialize, transaction, amountInfo.feeProperties);
           } else {
             setValid(true);
             setMessage(transaction);
@@ -186,7 +187,7 @@ function SignMultichain() {
       if (isUserAuthenticated !== true) {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
-        await signMultichainTransaction(deserializedDerivationPath, message);
+        await signMultichainTransaction(deserializedDerivationPath, message, amountInfo.feeProperties);
       }
     } catch (e) {
       onError(e.message);
