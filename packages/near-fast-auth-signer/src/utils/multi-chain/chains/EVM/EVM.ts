@@ -1,10 +1,11 @@
 import {
   ethers, keccak256
 } from 'ethers';
-import { Account } from 'near-api-js';
 
-import { generateEthereumAddress } from '../kdf/kdf';
-import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+import { EVMTransaction } from './types';
+import { sign } from '../../signature';
+import { fetchDerivedEVMAddress, fetchEVMFeeProperties } from '../../utils';
+import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 class EVM {
   private provider: ethers.JsonRpcProvider;
@@ -82,18 +83,7 @@ class EVM {
   maxPriorityFeePerGas: bigint;
   maxFee: bigint;
   }> {
-    const gasLimit = await this.provider.estimateGas(transaction);
-    const feeData = await this.provider.getFeeData();
-
-    const maxFeePerGas =         feeData.maxFeePerGas ?? ethers.parseUnits('10', 'gwei');
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ?? ethers.parseUnits('10', 'gwei');
-
-    return {
-      gasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      maxFee: maxFeePerGas * gasLimit
-    };
+    return fetchEVMFeeProperties(this.provider._getConnection().url, transaction);
   }
 
   /**
@@ -106,12 +96,22 @@ class EVM {
    * @returns {Promise<ethers.providers.TransactionRequest>} A new transaction object augmented with gas price, gas limit, chain ID, and nonce.
    */
   async attachGasAndNonce(
-    transaction: ethers.TransactionLike & {
-      from: string;
-    }
+    transaction: EVMTransaction & { from: string }
   ): Promise<ethers.TransactionLike> {
-    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = await this.getFeeProperties(transaction);
-    const nonce = await this.provider.getTransactionCount(transaction.from, 'latest');
+    const hasUserProvidedGas = transaction.gasLimit
+      && transaction.maxFeePerGas
+      && transaction.maxPriorityFeePerGas;
+
+    const { gasLimit, maxFeePerGas, maxPriorityFeePerGas } = hasUserProvidedGas
+      ? transaction
+      : await this.getFeeProperties(
+        transaction
+      );
+
+    const nonce = await this.provider.getTransactionCount(
+      transaction.from,
+      'latest'
+    );
 
     const { from, ...rest } = transaction;
 
@@ -153,21 +153,16 @@ class EVM {
    *
    * @param {string} signerId - The identifier of the signer.
    * @param {string} path - The derivation path used for generating the address.
-   * @param {Account} account - The account object used to interact with the NEAR blockchain.
-   * @param {ChainSignatureContracts} contract - The contract identifier used to get the root public key.
-   * @param {string} relayerUrl - The URL of the relayer service.
+   * @param {string} nearNetworkId - The near network id used to interact with the NEAR blockchain.
+   * @param {ChainSignatureContracts} multichainContractId - The contract identifier used to get the root public key.
    * @returns {Promise<string>} A promise that resolves to the derived Ethereum address.
    */
-  static async deriveAddress(
+  async deriveAddress(
     signerId: string,
     path: string,
-    account: Account,
-    contract: ChainSignatureContracts,
-    relayerUrl: string
+    nearNetworkId: NearNetworkIds,
   ): Promise<string> {
-    const contractRootPublicKey = await getRootPublicKey(contract, account, relayerUrl);
-
-    return generateEthereumAddress(signerId, path, contractRootPublicKey);
+    return fetchDerivedEVMAddress(signerId, path, nearNetworkId, this.contract);
   }
 
   /**
@@ -176,27 +171,24 @@ class EVM {
    * The digital signing process is detailed in @signature.ts, involving the signing of a transaction hash with the derivation path.
    *
    * @param {Transaction} data - Contains the transaction details such as the recipient's address and the amount to be transferred.
-   * @param {Account} account - The account object used to interact with the NEAR blockchain.
+   * @param {NearAuthentication} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
    * @param {string} path - The derivation path utilized for the signing of the transaction.
    * @returns {Promise<ethers.TransactionResponse | undefined>} A promise that resolves to the response of the executed transaction, or undefined if the transaction fails to execute.
    */
   async handleTransaction(
-    data: {to: string, value: string},
-    account: Account,
+    data: EVMTransaction,
+    nearAuthentication: NearAuthentication,
     path: string,
   ): Promise<ethers.TransactionResponse | undefined> {
-    const from = await EVM.deriveAddress(
-      account?.accountId,
+    const from = await this.deriveAddress(
+      nearAuthentication.accountId,
       path,
-      account,
-      this.contract,
-      this.relayerUrl
+      nearAuthentication.networkId
     );
 
     const transaction = await this.attachGasAndNonce({
+      ...data,
       from,
-      to:    data.to,
-      value: data.value.toString(),
     });
 
     const transactionHash = EVM.prepareTransactionForSignature(transaction);
@@ -204,7 +196,7 @@ class EVM {
     const signature = await sign(
       transactionHash,
       path,
-      account,
+      nearAuthentication,
       this.relayerUrl,
       this.contract
     );

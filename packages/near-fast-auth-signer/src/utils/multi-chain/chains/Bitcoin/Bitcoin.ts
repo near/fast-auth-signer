@@ -1,10 +1,12 @@
 import axios from 'axios';
 import * as bitcoin from 'bitcoinjs-lib';
-import coinselect from 'coinselect';
-import { Account } from 'near-api-js';
 
-import { generateBTCAddress } from '../kdf/kdf';
-import { ChainSignatureContracts, getRootPublicKey, sign } from '../signature';
+import { BTCTransaction, UTXO } from './types';
+import { sign } from '../../signature';
+import {
+  fetchBTCFeeProperties, fetchBTCFeeRate, fetchBTCUTXOs, fetchDerivedBTCAddressAndPublicKey
+} from '../../utils';
+import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../types';
 
 type Transaction = {
   txid: string;
@@ -45,13 +47,6 @@ type Transaction = {
     block_time: number | null;
   };
 };
-
-type UTXO = {
-  txid: string;
-  vout: number;
-  value: number
-  script: string
-}
 
 type NetworkType = 'bitcoin' | 'testnet'
 
@@ -124,23 +119,7 @@ export class Bitcoin {
   async fetchUTXOs(
     address: string
   ): Promise<UTXO[]> {
-    try {
-      const response = await axios.get(
-        `${this.providerUrl}address/${address}/utxo`
-      );
-      const utxos = response.data.map((utxo: any) => {
-        return {
-          txid:   utxo.txid,
-          vout:   utxo.vout,
-          value:  utxo.value,
-          script: utxo.script,
-        };
-      });
-      return utxos;
-    } catch (error) {
-      console.error('Failed to fetch UTXOs:', error);
-      return [];
-    }
+    return fetchBTCUTXOs(this.providerUrl, address);
   }
 
   /**
@@ -154,13 +133,7 @@ export class Bitcoin {
    * @throws {Error} Throws an error if the fee rate data for the specified confirmation target is missing.
    */
   async fetchFeeRate(confirmationTarget = 6): Promise<number> {
-    const response = await axios.get(`${this.providerUrl}fee-estimates`);
-    if (response.data && response.data[confirmationTarget]) {
-      return response.data[confirmationTarget];
-    }
-    throw new Error(
-      `Fee rate data for ${confirmationTarget} blocks confirmation target is missing in the response`
-    );
+    return fetchBTCFeeRate(this.providerUrl, confirmationTarget);
   }
 
   /**
@@ -214,34 +187,21 @@ export class Bitcoin {
    * @param {string} signerId - The unique identifier of the signer.
    * @param {string} path - The derivation path used to generate the address.
    * @param {bitcoin.networks.Network} network - The Bitcoin network (e.g., mainnet, testnet).
-   * @param {Account} account - The account object used to interact with the NEAR blockchain.
-   * @param {string} relayerUrl - The URL of the relayer service.
+   * @param {string} nearNetworkId - The network id used to interact with the NEAR blockchain.
    * @returns {Promise<{ address: string; publicKey: Buffer }>} An object containing the derived Bitcoin address and its corresponding public key buffer.
    */
-  static async deriveAddress(
+  async deriveAddress(
     signerId: string,
     path: string,
-    network: bitcoin.networks.Network,
-    account: Account,
-    contract: ChainSignatureContracts,
-    relayerUrl: string,
+    nearNetworkId: NearNetworkIds,
   ): Promise<{ address: string; publicKey: Buffer; }> {
-    const contractRootPublicKey = await getRootPublicKey(contract, account, relayerUrl);
-
-    const derivedKey = await generateBTCAddress(
+    return fetchDerivedBTCAddressAndPublicKey(
       signerId,
       path,
-      contractRootPublicKey,
+      this.network,
+      nearNetworkId,
+      this.contract
     );
-
-    const publicKeyBuffer = Buffer.from(derivedKey, 'hex');
-
-    const { address } = bitcoin.payments.p2pkh({
-      pubkey:  publicKeyBuffer,
-      network,
-    });
-
-    return { address, publicKey: publicKeyBuffer };
   }
 
   /**
@@ -324,17 +284,7 @@ export class Bitcoin {
     outputs: {address: string, value: number}[],
     fee: number,
   }> {
-    const utxos = await this.fetchUTXOs(from);
-    const feeRate = await this.fetchFeeRate(confirmationTarget);
-
-    // Add a small amount to the fee rate to ensure the transaction is confirmed
-    const ret = coinselect(utxos, targets, feeRate + 1);
-
-    if (!ret.inputs || !ret.outputs) {
-      throw new Error('Invalid transaction: coinselect failed to find a suitable set of inputs and outputs. This could be due to insufficient funds, or no inputs being available that meet the criteria.');
-    }
-
-    return ret;
+    return fetchBTCFeeProperties(this.providerUrl, from, targets, confirmationTarget);
   }
 
   /**
@@ -343,33 +293,29 @@ export class Bitcoin {
    * and the derived path for the account to create a transaction. It then signs the transaction
    * using the chain signature contract and broadcasts it to the Bitcoin network.
    *
-   * @param {Object} data - The transaction data.
+   * @param {BTCTransaction} data - The transaction data.
    * @param {string} data.to - The recipient's Bitcoin address.
-   * @param {number} data.value - The amount of Bitcoin to send (in satoshis).
-   * @param {Account} account - The account object containing the user's account information.
+   * @param {string} data.value - The amount of Bitcoin to send (in BTC).
+   * @param {NearAuthentication} nearAuthentication - The object containing the user's authentication information.
    * @param {string} path - The key derivation path for the account.
    */
   async handleTransaction(
-    data: {
-      to: string;
-      value: number;
-    },
-    account: Account,
+    data: BTCTransaction,
+    nearAuthentication: NearAuthentication,
     path: string,
   ) {
-    const { address, publicKey } = await Bitcoin.deriveAddress(
-      account.accountId,
+    const { address, publicKey } = await this.deriveAddress(
+      nearAuthentication.accountId,
       path,
-      this.network,
-      account,
-      this.contract,
-      this.relayerUrl
+      nearAuthentication.networkId,
     );
 
-    const { inputs, outputs } = await this.getFeeProperties(address, [{
-      address: data.to,
-      value:   data.value,
-    }]);
+    const { inputs, outputs } = data.inputs && data.outputs
+      ? data
+      : await this.getFeeProperties(address, [{
+        address: data.to,
+        value:   parseFloat(data.value)
+      }]);
 
     const psbt = new bitcoin.Psbt({ network: this.network });
 
@@ -415,7 +361,7 @@ export class Bitcoin {
         const signature = await sign(
           transactionHash,
           path,
-          account,
+          nearAuthentication,
           this.relayerUrl,
           this.contract
         );

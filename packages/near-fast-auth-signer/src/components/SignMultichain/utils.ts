@@ -1,4 +1,3 @@
-import { Account } from '@near-js/accounts';
 import { formatEther, formatUnits } from 'ethers';
 
 import { bitcoinSchema } from './bitcoin/schema';
@@ -10,13 +9,45 @@ import {
   MultichainInterface
 } from './types';
 import { assertNever } from '../../utils';
-import { Bitcoin } from '../../utils/multi-chain/chains/Bitcoin';
-import signAndSend, { getEstimatedFeeBTC, getEstimatedFeeEVM } from '../../utils/multi-chain/multiChain';
+import { networkId } from '../../utils/config';
+import {
+  fetchBTCFeeProperties,
+  fetchEVMFeeProperties,
+  signAndSendBTCTransaction,
+  signAndSendEVMTransaction,
+} from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
 const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
 const MULTICHAIN_CONTRACT_MAINNET = 'multichain-testnet-2.testnet';
+
+function toBTC(satoshis: number): number {
+  return satoshis / 100000000;
+}
+
+type BTCFeeProperites = {
+  inputs: {
+      txid: string;
+      vout: number;
+      value: number;
+      script: string;
+  }[];
+  outputs: {
+      address: string;
+      value: number;
+  }[];
+  fee: number;
+};
+
+type EVMFeeProperties = {
+  gasLimit: bigint;
+  maxFeePerGas: bigint;
+  maxPriorityFeePerGas: bigint;
+  maxFee: bigint;
+}
+
+export type TransactionFeeProperties = BTCFeeProperites | EVMFeeProperties
 
 const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
@@ -80,6 +111,7 @@ export const multichainAssetToCoinGeckoId = (asset: Chain) => {
 };
 
 export const multichainAssetToNetworkName = (asset: Chain) => {
+  // the names below should indicate chainId / network type (e.g testnet, mainnet, sepolia etc.)
   const map: ChainMap = {
     ETH:  'Ethereum Network',
     BNB:  'Binance Smart Chain',
@@ -98,7 +130,7 @@ const convertTokenToReadable = (value : MultichainInterface['value'], asset: Cha
     return parseFloat(formatEther(value));
   }
   if (asset === 'BTC') {
-    return Bitcoin.toBTC(Number(value));
+    return toBTC(Number(value));
   }
   return Number(value);
 };
@@ -139,38 +171,54 @@ export const multichainSignAndSend = async ({
   asset,
   to,
   value,
+  feeProperties
 }: {
   domain: string;
   asset: Chain;
   to: string;
   value: string;
+  feeProperties: TransactionFeeProperties;
 }) => {
-  const type = isEVMChain(asset) ? 'EVM' : 'BTC';
+  // TODO: remove duplicate fee fetching
   const accountId = window.fastAuthController.getAccountId();
+  const keypair = await window.fastAuthController.getKey(accountId);
   const derivedPath = `,${multichainAssetToCoinGeckoId(asset)},${domain}`;
-  const account = new Account(
-    window.fastAuthController.getConnection(),
-    accountId
-  );
   const chainConfig = {
-    contract: MULTICHAIN_CONTRACT_TESTNET,
-    type,
+    contract:    MULTICHAIN_CONTRACT_TESTNET,
     ...CHAIN_CONFIG[asset],
   };
 
-  return signAndSend({
+  if (isEVMChain(asset)) {
+    return signAndSendEVMTransaction({
+      transaction: {
+        to,
+        value,
+        derivedPath,
+        gasLimit:             (feeProperties as EVMFeeProperties).gasLimit,
+        maxFeePerGas:         (feeProperties as EVMFeeProperties).maxFeePerGas,
+        maxPriorityFeePerGas: (feeProperties as EVMFeeProperties).maxPriorityFeePerGas,
+      },
+      nearAuthentication: { networkId, keypair, accountId },
+      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+      chainConfig
+    });
+  }
+
+  return signAndSendBTCTransaction({
     transaction: {
       to,
       value,
-      derivedPath
+      derivedPath,
+      inputs:  (feeProperties as BTCFeeProperites).inputs,
+      outputs: (feeProperties as BTCFeeProperites).outputs,
     },
-    account,
+    nearAuthentication: { networkId, keypair, accountId },
     fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
     chainConfig
   });
 };
 
-export const multichainGetTotalGas = async ({
+export const multichainGetFeeProperties = async ({
   asset,
   to,
   value,
@@ -182,33 +230,18 @@ export const multichainGetTotalGas = async ({
   from?: string;
 }) => {
   if (asset === 'BTC') {
-    const satoshis =  await getEstimatedFeeBTC(
-      {
-        from,
-        targets: [{
-          address: to,
-          value:   Number(value)
-        }]
-      },
-      {
-        type:        'BTC',
-        networkType: 'testnet',
-        contract:    MULTICHAIN_CONTRACT_TESTNET,
-        ...CHAIN_CONFIG.BTC,
-      },
-      FAST_AUTH_RELAYER_URL,
-    );
-    return Bitcoin.toBTC(satoshis);
+    const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
+      address: to,
+      value:   Number(value)
+    }]));
+
+    return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (isEVMChain(asset)) {
-    const wei = await getEstimatedFeeEVM({
+    const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, {
       to,
       value
-    }, {
-      type:     'EVM',
-      contract:    MULTICHAIN_CONTRACT_TESTNET,
-      ...CHAIN_CONFIG[asset],
-    }, FAST_AUTH_RELAYER_URL);
-    return formatUnits(wei);
+    });
+    return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
   return null;
 };
