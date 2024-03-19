@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 
 import { network } from '../utils/config';
@@ -31,14 +32,18 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       }
     }
 
-    return withTimeout(await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION)
-      .then(async (res) => {
-        if (res) {
-          const ids = await res.json();
-          return ids;
-        }
-        return [];
-      });
+    try {
+      const res = await withTimeout(fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION);
+      if (res) {
+        const ids = await res.json();
+        return ids;
+      }
+      return [];
+    } catch (error) {
+      console.log('fetchAccountIds', error);
+      captureException(error);
+      return [];
+    }
   }
 
   return [];
