@@ -29,8 +29,8 @@ const toRVS = (signature: string): RSVSignature => {
  * @param {string | ethers.BytesLike} transactionHash - The hash of the transaction to be signed.
  * @param {string} path - The derivation path used for signing the transaction.
  * @param {NearAuthentication} nearAuthentication - The NEAR accountId, keypair and networkId used for signing the transaction.
- * @param {string} relayerUrl - The URL of the relayer service to which the signed transaction is sent.
  * @param {ChainSignatureContracts} contract - The contract identifier for chain signature operations.
+ * @param {string} relayerUrl - The URL of the relayer service to which the signed transaction is sent.
  * @returns {Promise<RSVSignature>} A promise that resolves to the RSV signature of the signed transaction.
  * @throws {Error} Throws an error if the signature cannot be fetched after 3 attempts.
  */
@@ -38,19 +38,9 @@ export const sign = async (
   transactionHash: string | ethers.BytesLike,
   path: string,
   nearAuthentication: NearAuthentication,
-  relayerUrl: string,
-  contract: ChainSignatureContracts
+  contract: ChainSignatureContracts,
+  relayerUrl?: string
 ): Promise<RSVSignature> => {
-  const functionCall = actionCreators.functionCall(
-    'sign',
-    {
-      payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
-      path,
-    },
-    NEAR_MAX_GAS,
-    new BN(0)
-  );
-
   const keyStore = new InMemoryKeyStore();
   await keyStore.setKey(
     nearAuthentication.networkId,
@@ -73,6 +63,46 @@ export const sign = async (
   });
 
   const account = new Account(connection, nearAuthentication.accountId);
+
+  if (!relayerUrl) {
+    const multichainContractAcc = new Contract(account, contract, {
+      viewMethods:   [],
+      changeMethods: ['sign'],
+    }) as Contract & {
+      public_key: () => Promise<string>;
+      // eslint-disable-next-line no-unused-vars
+      sign: (args: {
+        args: {
+          payload: number[];
+          path: string;
+        };
+        gas: BN;
+      }) => Promise<[string, string]>;
+    };
+
+    const [R, s] = await multichainContractAcc.sign({
+      args: {
+        payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
+        path
+      },
+      gas: NEAR_MAX_GAS
+    });
+
+    return {
+      r: R.slice(2),
+      s
+    };
+  }
+
+  const functionCall = actionCreators.functionCall(
+    'sign',
+    {
+      payload: Array.from(ethers.getBytes(transactionHash)).slice().reverse(),
+      path,
+    },
+    NEAR_MAX_GAS,
+    new BN(0)
+  );
 
   const signedDelegate = await account.signedDelegate(
     {

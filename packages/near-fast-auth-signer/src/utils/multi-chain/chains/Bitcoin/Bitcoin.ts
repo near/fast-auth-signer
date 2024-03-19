@@ -55,14 +55,14 @@ export class Bitcoin {
 
   private providerUrl: string;
 
-  private relayerUrl: string;
+  private relayerUrl?: string;
 
   private contract: ChainSignatureContracts;
 
   constructor(config: {
     networkType: NetworkType;
     providerUrl: string;
-    relayerUrl: string,
+    relayerUrl?: string,
     contract: ChainSignatureContracts
   }) {
     this.network =      config.networkType === 'testnet'
@@ -362,8 +362,8 @@ export class Bitcoin {
           transactionHash,
           path,
           nearAuthentication,
-          this.relayerUrl,
-          this.contract
+          this.contract,
+          this.relayerUrl
         );
 
         if (!signature) {

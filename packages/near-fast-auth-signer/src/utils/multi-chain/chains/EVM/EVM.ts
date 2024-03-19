@@ -10,7 +10,7 @@ import { ChainSignatureContracts, NearAuthentication, NearNetworkIds } from '../
 class EVM {
   private provider: ethers.JsonRpcProvider;
 
-  private relayerUrl: string;
+  private relayerUrl?: string;
 
   private contract: ChainSignatureContracts;
 
@@ -22,7 +22,7 @@ class EVM {
    * @param {string} config.relayerUrl - The URL of the relayer service.
    * @param {ChainSignatureContracts} config.contract - The contract identifier for chain signature operations.
    */
-  constructor(config: { providerUrl: string; relayerUrl: string, contract: ChainSignatureContracts }) {
+  constructor(config: { providerUrl: string; relayerUrl?: string, contract: ChainSignatureContracts }) {
     this.provider = new ethers.JsonRpcProvider(config.providerUrl);
     this.relayerUrl = config.relayerUrl;
     this.contract = config.contract;
@@ -197,8 +197,8 @@ class EVM {
       transactionHash,
       path,
       nearAuthentication,
-      this.relayerUrl,
-      this.contract
+      this.contract,
+      this.relayerUrl
     );
 
     if (signature) {
