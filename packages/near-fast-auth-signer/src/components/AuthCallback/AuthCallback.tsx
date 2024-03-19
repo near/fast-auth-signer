@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { createNEARAccount, fetchAccountIds } from '../../api';
-import FastAuthController from '../../lib/controller';
+import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
@@ -227,16 +227,7 @@ function AuthCallbackPage() {
           const accessToken = await user.getIdToken();
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-
-          // claim the oidc token
-          if (window.fastAuthController) {
-            window.fastAuthController.setAccountId(accountId);
-          } else {
-            window.fastAuthController = new FastAuthController({
-              accountId,
-              networkId
-            });
-          }
+          setAccountIdToController({ accountId, networkId });
 
           let publicKeyFak: string;
 

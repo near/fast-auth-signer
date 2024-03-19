@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom/dist';
 
 import { fetchAccountIdsFromTwoKeys } from '../api';
-import FastAuthController from '../lib/controller';
+import FastAuthController, { setAccountIdToController } from '../lib/controller';
 import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
@@ -57,14 +57,10 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
 
         if (!account) return false;
 
-        if (window.fastAuthController) {
-          window.fastAuthController.setAccountId(account?.accountId);
-        } else {
-          window.fastAuthController = new FastAuthController({
-            accountId: account?.accountId,
-            networkId
-          });
-        }
+        setAccountIdToController({
+          accountId: account?.accountId,
+          networkId
+        });
 
         return true;
       }
