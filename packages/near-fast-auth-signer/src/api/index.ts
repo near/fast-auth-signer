@@ -5,15 +5,8 @@ import { network } from '../utils/config';
 import {
   CLAIM, getUserCredentialsFrpSignature
 } from '../utils/mpc-service';
+import { withTimeout } from '../utils';
 
-// Use this function to implement wait logic for async process
-const withTimeout = async (promise, timeoutMs) => {
-  // Create a promise that resolves with false after timeoutMs milliseconds
-  const timeoutPromise = new Promise((resolve) => { setTimeout(() => resolve(false), timeoutMs); });
-
-  // Race the input promise against the timeout
-  return Promise.race([promise, timeoutPromise]);
-};
 
 /**
  * Fetches the account IDs associated with a given public key.

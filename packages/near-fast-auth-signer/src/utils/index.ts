@@ -77,3 +77,12 @@ export const deleteOidcKeyPairOnLocalStorage = () => {
 export const assertNever = (x: never): never => {
   throw new Error(`Unexpected object: ${x}`);
 };
+
+// Use this function to implement wait logic for async process
+export const withTimeout = async (promise, timeoutMs) => {
+  // Create a promise that resolves with false after timeoutMs milliseconds
+  const timeoutPromise = new Promise((resolve) => { setTimeout(() => resolve(false), timeoutMs); });
+
+  // Race the input promise against the timeout
+  return Promise.race([promise, timeoutPromise]);
+};
