@@ -1,12 +1,11 @@
 import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 
+import { withTimeout } from '../utils';
 import { network } from '../utils/config';
 import {
   CLAIM, getUserCredentialsFrpSignature
 } from '../utils/mpc-service';
-import { withTimeout } from '../utils';
-
 
 /**
  * Fetches the account IDs associated with a given public key.
