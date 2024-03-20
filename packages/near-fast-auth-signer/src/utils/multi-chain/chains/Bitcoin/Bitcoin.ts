@@ -358,13 +358,13 @@ export class Bitcoin {
     const mpcKeyPair = {
       publicKey,
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
-        const signature = await sign(
+        const signature = await sign({
           transactionHash,
           path,
           nearAuthentication,
-          this.contract,
-          this.relayerUrl
-        );
+          contract:   this.contract,
+          relayerUrl: this.relayerUrl
+        });
 
         if (!signature) {
           throw new Error('Failed to sign transaction');

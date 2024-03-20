@@ -193,13 +193,13 @@ class EVM {
 
     const transactionHash = EVM.prepareTransactionForSignature(transaction);
 
-    const signature = await sign(
+    const signature = await sign({
       transactionHash,
       path,
       nearAuthentication,
-      this.contract,
-      this.relayerUrl
-    );
+      contract:   this.contract,
+      relayerUrl: this.relayerUrl
+    });
 
     if (signature) {
       const r = `0x${signature.r}`;
