@@ -101,8 +101,9 @@ class FastAuthController {
     return new KeyPairEd25519(privKeyStr.split(':')[1]);
   }
 
-  async getKey(accountId?: string) {
-    return this.keyStore.getKey(this.networkId, accountId || this.accountId);
+  async getKey(key?: string) {
+    const keypair = await this.keyStore.getKey(this.networkId, key || this.accountId);
+    return keypair;
   }
 
   async setKey(keyPair) {
@@ -214,7 +215,7 @@ class FastAuthController {
       headers: new Headers({ 'Content-Type': 'application/json' }),
     }).catch((err) => {
       console.log('Unable to sign and send delegate action', err);
-      captureException(err);
+      captureException(`Unable to sign and send delegate action, ${err.toString()}`);
     });
   }
 
@@ -430,7 +431,7 @@ class FastAuthController {
       headers: new Headers({ 'Content-Type': 'application/json' }),
     }).catch((err) => {
       console.log('Unable to sign and send action with recovery key', err);
-      captureException(err);
+      captureException(`Unable to sign and send action with recovery key, ${err.toString()}`);
     });
   }
 
@@ -467,3 +468,14 @@ class FastAuthController {
 }
 
 export default FastAuthController;
+
+export const setAccountIdToController = ({ accountId, networkId }) => {
+  if (window.fastAuthController) {
+    window.fastAuthController.setAccountId(accountId);
+  } else {
+    window.fastAuthController = new FastAuthController({
+      accountId,
+      networkId
+    });
+  }
+};

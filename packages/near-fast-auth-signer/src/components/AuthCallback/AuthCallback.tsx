@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { createNEARAccount, fetchAccountIds } from '../../api';
-import FastAuthController from '../../lib/controller';
+import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
@@ -102,8 +102,7 @@ export const onSignIn = async ({
 }) => {
   // Stop from LAK with multi-chain contract
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetchAccountIds(recoveryPK, { returnEmpty: true });
-
+  const accountIds = await fetchAccountIds(recoveryPK);
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
@@ -228,12 +227,7 @@ function AuthCallbackPage() {
           const accessToken = await user.getIdToken();
 
           setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-
-          // claim the oidc token
-          window.fastAuthController = new FastAuthController({
-            accountId,
-            networkId
-          });
+          setAccountIdToController({ accountId, networkId });
 
           let publicKeyFak: string;
 
@@ -249,7 +243,9 @@ function AuthCallbackPage() {
 
           await window.fastAuthController.claimOidcToken(accessToken);
           const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          window.firestoreController = new FirestoreController();
+          if (!window.firestoreController) {
+            window.firestoreController = new FirestoreController();
+          }
           window.firestoreController.updateUser({
             userUid:   user.uid,
             oidcToken: accessToken,
