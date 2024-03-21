@@ -20,5 +20,5 @@ export type EVMRequest = {
   transaction: EVMTransaction;
   chainConfig: EVMChainConfigWithProviders;
   nearAuthentication: NearAuthentication;
-  fastAuthRelayerUrl: string;
+  fastAuthRelayerUrl?: string;
 };

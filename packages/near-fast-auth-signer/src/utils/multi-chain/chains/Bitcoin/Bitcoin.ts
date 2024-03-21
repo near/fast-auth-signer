@@ -55,14 +55,14 @@ export class Bitcoin {
 
   private providerUrl: string;
 
-  private relayerUrl: string;
+  private relayerUrl?: string;
 
   private contract: ChainSignatureContracts;
 
   constructor(config: {
     networkType: NetworkType;
     providerUrl: string;
-    relayerUrl: string,
+    relayerUrl?: string,
     contract: ChainSignatureContracts
   }) {
     this.network =      config.networkType === 'testnet'
@@ -358,13 +358,13 @@ export class Bitcoin {
     const mpcKeyPair = {
       publicKey,
       sign: async (transactionHash: Buffer): Promise<Buffer> => {
-        const signature = await sign(
+        const signature = await sign({
           transactionHash,
           path,
           nearAuthentication,
-          this.relayerUrl,
-          this.contract
-        );
+          contract:   this.contract,
+          relayerUrl: this.relayerUrl
+        });
 
         if (!signature) {
           throw new Error('Failed to sign transaction');

@@ -29,7 +29,7 @@ export type BitcoinRequest = {
   transaction: BTCTransaction;
   chainConfig: BTCChainConfigWithProviders;
   nearAuthentication: NearAuthentication;
-  fastAuthRelayerUrl: string;
+  fastAuthRelayerUrl?: string;
 };
 
 export type BTCNetworks = 'mainnet' | 'testnet';
