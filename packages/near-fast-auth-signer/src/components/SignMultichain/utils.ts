@@ -182,7 +182,7 @@ export const multichainSignAndSend = async ({
   // TODO: remove duplicate fee fetching
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const derivedPath = `,${multichainAssetToCoinGeckoId(asset)},${domain}`;
+  const derivedPath = `,${asset},${domain}`;
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
     ...CHAIN_CONFIG[asset],
