@@ -1,4 +1,4 @@
-import { borshDeserialize } from 'borsher';
+import { borshDeserialize, borshSerialize } from 'borsher';
 import React, {
   useEffect, useState, useCallback, useRef
 } from 'react';
@@ -24,31 +24,20 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-// TODO: thes are test code for the multichain, use handleMessage with one of sampleMessage variable to test
-// Also replace import with import { borshDeserialize, borshSerialize } from 'borsher';
-// const ETHDerivationPath = borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
-// const sampleMessageForETH: MultichainInterface = {
-//   chainId:          BigInt('11155111'),
-//   derivationPath:   ETHDerivationPath,
-//   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
-//   value:            BigInt('1000000000000000')
-// };
+borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
 
-// const BNBDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BNB', domain: '' }).toString('base64');
-// const sampleMessageForBNB: MultichainInterface = {
-//   chainId:          BigInt('97'),
-//   derivationPath:   BNBDerivationPath,
-//   to:               '0x4174678c78fEaFd778c1ff319D5D326701449b25',
-//   value:            BigInt('1000000000000000')
-// };
+type IncomingMessageData = {
+  chainId: bigint;
+  derivationPath: string;
+  to: string;
+  value: bigint;
+  from: string;
+};
 
-// const BTCDerivationPath = borshSerialize(derivationPathSchema, { asset: 'BTC', domain: '' }).toString('base64');
-// const sampleMessageForBTC: MultichainInterface = {
-//   derivationPath:   BTCDerivationPath,
-//   to:               'tb1qz9f5pqk3t0lhrsuppyzrctdtrtlcewjhy0jngu',
-//   value:            BigInt('3000'),
-//   from:             'n2ePM9T4N23vgXPwWZo5oRKmUH8mjNhswv'
-// };
+type IncomingMessageEvent = MessageEvent<{
+  data: IncomingMessageData;
+  type: string;
+}>;
 
 type TransactionAmountDisplay = {
   price: string | number;
@@ -74,7 +63,7 @@ function SignMultichain() {
   });
 
   const onError = (text: string) => {
-    window.parent.postMessage({ type: 'multichainError', message: text }, '*');
+    window.parent.postMessage({ type: 'multiChain', message: text }, '*');
     setError(text);
   };
 
@@ -109,7 +98,7 @@ function SignMultichain() {
         feeProperties
       });
       if (response.success) {
-        window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+        window.parent.postMessage({ type: 'multiCHain', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
       } else if (response.success === false) {
         onError(response.errorMessage);
       }
@@ -120,14 +109,11 @@ function SignMultichain() {
   }, []);
 
   useEffect(() => {
-    // TODO: properly type the incoming data
-    const handleMessage = async (event: {data: {data: any, type: string}, origin: string}) => {
-      console.log('iframe: ', event?.origin, event?.data);
-      if (event?.data?.type === 'multi-chain') {
+    const handleMessage = async (event: IncomingMessageEvent) => {
+      if (event?.data?.type === 'multi-chain' && event?.data?.data) {
         setOrigin(event?.origin);
         try {
           const { data: transaction } = event.data;
-          console.log({ transaction });
           setInFlight(true);
           const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
           if (deserialize instanceof Error) {
@@ -145,7 +131,7 @@ function SignMultichain() {
           const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
             asset: deserialize?.asset,
             to:    event.data.data.to,
-            value: event.data.data.value,
+            value: event.data.data.value.toString(),
             ...('from' in event.data.data ? { from: event.data.data.from } : {}),
           });
           const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
@@ -157,7 +143,7 @@ function SignMultichain() {
             feeProperties
           });
 
-          if (deserialize?.domain === window?.parent?.origin && event?.data?.data) {
+          if (deserialize?.domain === event?.origin) {
             await signMultichainTransaction(deserialize, transaction, amountInfo.feeProperties);
           } else {
             setValid(true);
@@ -177,9 +163,6 @@ function SignMultichain() {
     );
 
     window.parent.postMessage({ type: 'sign-multichain-load', message: 'SignMultichain page has loaded' }, '*');
-
-    // TODO: test code, delete later
-    // handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBTC } });
 
     return () => {
       window.removeEventListener('message', handleMessage);

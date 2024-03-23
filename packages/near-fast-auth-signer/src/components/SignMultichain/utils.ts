@@ -26,7 +26,7 @@ function toBTC(satoshis: number): number {
   return satoshis / 100000000;
 }
 
-type BTCFeeProperites = {
+type BTCFeeProperties = {
   inputs: {
       txid: string;
       vout: number;
@@ -47,7 +47,7 @@ type EVMFeeProperties = {
   maxFee: bigint;
 }
 
-export type TransactionFeeProperties = BTCFeeProperites | EVMFeeProperties
+export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties
 
 const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
@@ -209,8 +209,8 @@ export const multichainSignAndSend = async ({
       to,
       value,
       derivedPath,
-      inputs:  (feeProperties as BTCFeeProperites).inputs,
-      outputs: (feeProperties as BTCFeeProperites).outputs,
+      inputs:  (feeProperties as BTCFeeProperties).inputs,
+      outputs: (feeProperties as BTCFeeProperties).outputs,
     },
     nearAuthentication: { networkId, keypair, accountId },
     fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,

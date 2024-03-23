@@ -17,6 +17,7 @@ module.exports = {
   extends:        ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
   plugins:        ['react-hooks'],
   rules:          {
+    'no-unused-vars':                    ['error', { argsIgnorePattern: '^_' }],
     'react-hooks/exhaustive-deps':       'warn',
     'linebreak-style':                   0,
     'react/require-default-props':       'off',
