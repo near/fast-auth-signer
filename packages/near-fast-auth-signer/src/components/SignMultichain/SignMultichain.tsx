@@ -65,6 +65,7 @@ function SignMultichain() {
   const [error, setError] = useState(null);
   const [isValid, setValid] = useState(null);
   const [deserializedDerivationPath, setDeserializedDerivationPath] = useState<DerivationPathDeserialized>(null);
+  const [origin, setOrigin] = useState(null);
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -120,10 +121,13 @@ function SignMultichain() {
 
   useEffect(() => {
     // TODO: properly type the incoming data
-    const handleMessage = async (event: {data: {data: any, type: string}}) => {
-      if (event.data.type === 'multi-chain') {
+    const handleMessage = async (event: {data: {data: any, type: string}, origin: string}) => {
+      console.log('iframe: ', event?.origin, event?.data);
+      if (event?.data?.type === 'multi-chain') {
+        setOrigin(event?.origin);
         try {
           const { data: transaction } = event.data;
+          console.log({ transaction });
           setInFlight(true);
           const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
           if (deserialize instanceof Error) {
@@ -153,7 +157,7 @@ function SignMultichain() {
             feeProperties
           });
 
-          if (deserialize?.domain === window.parent.origin && event.data.data) {
+          if (deserialize?.domain === window?.parent?.origin && event?.data?.data) {
             await signMultichainTransaction(deserialize, transaction, amountInfo.feeProperties);
           } else {
             setValid(true);
@@ -171,6 +175,8 @@ function SignMultichain() {
       'message',
       handleMessage,
     );
+
+    window.parent.postMessage({ type: 'sign-multichain-load', message: 'SignMultichain page has loaded' }, '*');
 
     // TODO: test code, delete later
     // handleMessage({ data: { type: 'multi-chain', data: sampleMessageForBTC } });
@@ -212,7 +218,7 @@ function SignMultichain() {
         <h5>{`${deserializedDerivationPath?.domain || 'Unknown App'} has requested a transaction, review the request before confirming.`}</h5>
         <div className="transaction-details">
           <InternetSvg />
-          {window.parent.origin || 'Unknown App'}
+          {origin || 'Unknown App'}
         </div>
       </div>
       <div className="modal-middle">
