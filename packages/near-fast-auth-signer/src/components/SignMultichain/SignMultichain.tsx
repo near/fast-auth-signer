@@ -148,10 +148,10 @@ function SignMultichain() {
             feeProperties
           });
 
+          setValid(true);
           if (deserialize?.domain === event?.origin) {
             await signMultichainTransaction(deserialize, transaction, feeProperties);
           } else {
-            setValid(true);
             setMessage(transaction);
           }
         } catch (e) {
