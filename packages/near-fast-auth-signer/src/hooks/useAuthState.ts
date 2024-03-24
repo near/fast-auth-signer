@@ -42,7 +42,7 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
         networkId,
       });
 
-      await window.fastAuthController.setKey(new KeyPairEd25519(accountInfo.keyPair.toString().split(':')[1]));
+      await window.fastAuthController.setKey(new KeyPairEd25519(accountInfo.keyPair?.toString()?.split(':')[1]));
       return true;
     } if (isFirestoreReady && firebaseAuth.currentUser) {
       const oidcToken = await firebaseAuth.currentUser.getIdToken();

@@ -53,7 +53,7 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
 export const fetchAccountIdsFromTwoKeys = async (
   keyPairA: KeyPair,
   keyPairB: KeyPair
-): Promise<{ accId: string, keyPair: KeyPair}> => {
+): Promise<{ accId: string, keyPair: KeyPair} | null> => {
   const accountIdsFromPublicKeyA = fetchAccountIds(keyPairA.getPublicKey().toString());
   const accountIdsFromPublicKeyB = fetchAccountIds(keyPairB.getPublicKey().toString());
 
