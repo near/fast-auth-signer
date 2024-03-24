@@ -32,6 +32,7 @@ const getMultichainContract = (
       args: {
         payload: number[];
         path: string;
+        key_version: number;
       };
       gas: BN;
     }) => Promise<[string, string]>;
@@ -97,7 +98,8 @@ export const sign = async ({
     const [R, s] = await multichainContractAcc.sign({
       args: {
         payload,
-        path
+        path,
+        key_version: 0
       },
       gas: NEAR_MAX_GAS
     });
@@ -110,6 +112,7 @@ export const sign = async ({
     {
       payload,
       path,
+      key_version: 0
     },
     NEAR_MAX_GAS,
     new BN(0)

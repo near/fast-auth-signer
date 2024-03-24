@@ -29,8 +29,8 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
     } if (isPasskeySupported && webauthnUsername) {
       const keypairs = await getKeys(webauthnUsername);
       const accountInfo = await fetchAccountIdsFromTwoKeys(
-        keypairs[0].getPublicKey().toString(),
-        keypairs[1].getPublicKey().toString(),
+        keypairs[0],
+        keypairs[1],
       );
 
       if (!accountInfo.accId) {
@@ -42,7 +42,7 @@ export const getAuthState = async (email?: string | null): Promise<AuthState> =>
         networkId,
       });
 
-      await window.fastAuthController.setKey(new KeyPairEd25519(accountInfo.publicKey.split(':')[1]));
+      await window.fastAuthController.setKey(new KeyPairEd25519(accountInfo.keyPair?.toString()?.split(':')[1]));
       return true;
     } if (isFirestoreReady && firebaseAuth.currentUser) {
       const oidcToken = await firebaseAuth.currentUser.getIdToken();

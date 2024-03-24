@@ -16,6 +16,7 @@ module.exports = {
   ignorePatterns: ['dist'],
   extends:        ['airbnb', 'plugin:import/errors', 'plugin:import/typescript'],
   rules:          {
+    'no-unused-vars':                    ['error', { argsIgnorePattern: '^_' }],
     'linebreak-style':                   0,
     'react/require-default-props':       'off',
     'react/prop-types':                  'off',

@@ -469,7 +469,7 @@ class FastAuthController {
 
 export default FastAuthController;
 
-export const setAccountIdToController = ({ accountId, networkId }) => {
+export const setAccountIdToController = ({ accountId, networkId }: { accountId: string; networkId: string }) => {
   if (window.fastAuthController) {
     window.fastAuthController.setAccountId(accountId);
   } else {

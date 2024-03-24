@@ -164,7 +164,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
-      label, errors, name, right, success, error, subText, badges, debounceTime, dataTest, ...rest
+      label, name, right, success, error, subText, badges, debounceTime, dataTest, ...rest
     },
     ref
   ) => {

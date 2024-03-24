@@ -46,34 +46,34 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
  * Webuathn currently prompts two public keys by default and we need to discover which key is currently on chain.
  * Since we store public key <-> account id in firestore, one of the public key will return the result fast and we do not need to wait for both request to resolve.
  * It is possible that both public keys are not on chain, in that case we return null.
- * @param publicKeyA
- * @param publicKeyB
+ * @param keyPairA
+ * @param keyPairB
  * @returns object with account id and public key
  */
 export const fetchAccountIdsFromTwoKeys = async (
-  publicKeyA,
-  publicKeyB
-): Promise<{ accId: string, publicKey: string}> => {
-  const accountIdsFromPublicKeyA = fetchAccountIds(publicKeyA);
-  const accountIdsFromPublicKeyB = fetchAccountIds(publicKeyB);
+  keyPairA: KeyPair,
+  keyPairB: KeyPair
+): Promise<{ accId: string, keyPair: KeyPair} | null> => {
+  const accountIdsFromPublicKeyA = fetchAccountIds(keyPairA.getPublicKey().toString());
+  const accountIdsFromPublicKeyB = fetchAccountIds(keyPairB.getPublicKey().toString());
 
   const firstResult = await Promise.race([accountIdsFromPublicKeyA, accountIdsFromPublicKeyB]);
-  const firstKey = firstResult === await accountIdsFromPublicKeyA ? publicKeyA : publicKeyB;
+  const firstKey = firstResult === await accountIdsFromPublicKeyA ? keyPairA : keyPairB;
   if (firstResult.length > 0) {
     return {
       accId:     firstResult[0],
-      publicKey: firstKey
+      keyPair: firstKey
     };
   }
 
   const secondResult = await (
     firstResult === await accountIdsFromPublicKeyA ? accountIdsFromPublicKeyB : accountIdsFromPublicKeyA
   );
-  const secondKey = firstKey === publicKeyA ? publicKeyB : publicKeyA;
+  const secondKey = firstKey === keyPairA ? keyPairB : keyPairA;
   if (secondResult.length > 0) {
     return {
       accId:     secondResult[0],
-      publicKey: secondKey
+      keyPair: secondKey
     };
   }
 

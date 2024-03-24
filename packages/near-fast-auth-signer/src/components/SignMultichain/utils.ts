@@ -26,7 +26,7 @@ function toBTC(satoshis: number): number {
   return satoshis / 100000000;
 }
 
-type BTCFeeProperites = {
+type BTCFeeProperties = {
   inputs: {
       txid: string;
       vout: number;
@@ -47,7 +47,7 @@ type EVMFeeProperties = {
   maxFee: bigint;
 }
 
-export type TransactionFeeProperties = BTCFeeProperites | EVMFeeProperties
+export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties
 
 const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
@@ -179,10 +179,9 @@ export const multichainSignAndSend = async ({
   value: string;
   feeProperties: TransactionFeeProperties;
 }) => {
-  // TODO: remove duplicate fee fetching
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const derivedPath = `,${multichainAssetToCoinGeckoId(asset)},${domain}`;
+  const derivedPath = `,${asset},${domain}`;
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
     ...CHAIN_CONFIG[asset],
@@ -194,9 +193,9 @@ export const multichainSignAndSend = async ({
         to,
         value,
         derivedPath,
-        gasLimit:             (feeProperties as EVMFeeProperties).gasLimit,
-        maxFeePerGas:         (feeProperties as EVMFeeProperties).maxFeePerGas,
-        maxPriorityFeePerGas: (feeProperties as EVMFeeProperties).maxPriorityFeePerGas,
+        gasLimit:             (feeProperties as EVMFeeProperties)?.gasLimit,
+        maxFeePerGas:         (feeProperties as EVMFeeProperties)?.maxFeePerGas,
+        maxPriorityFeePerGas: (feeProperties as EVMFeeProperties)?.maxPriorityFeePerGas,
       },
       nearAuthentication: { networkId, keypair, accountId },
       fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
@@ -209,8 +208,8 @@ export const multichainSignAndSend = async ({
       to,
       value,
       derivedPath,
-      inputs:  (feeProperties as BTCFeeProperites).inputs,
-      outputs: (feeProperties as BTCFeeProperites).outputs,
+      inputs:  (feeProperties as BTCFeeProperties)?.inputs,
+      outputs: (feeProperties as BTCFeeProperties)?.outputs,
     },
     nearAuthentication: { networkId, keypair, accountId },
     fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
