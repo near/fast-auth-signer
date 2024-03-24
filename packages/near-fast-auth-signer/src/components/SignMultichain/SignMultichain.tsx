@@ -63,7 +63,7 @@ function SignMultichain() {
   });
 
   const onError = (text: string) => {
-    window.parent.postMessage({ type: 'multiChain', message: text }, '*');
+    window.parent.postMessage({ type: 'multiChainResponse', message: text }, '*');
     setError(text);
   };
 
@@ -90,27 +90,32 @@ function SignMultichain() {
     feeProperties: TransactionFeeProperties
   ) => {
     try {
-      const response = await multichainSignAndSend({
-        domain:        derivationPath?.domain,
-        asset:         derivationPath?.asset,
-        to:            transaction?.to,
-        value:         transaction?.value.toString(),
-        feeProperties
-      });
-      if (response.success) {
-        window.parent.postMessage({ type: 'multiCHain', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
-      } else if (response.success === false) {
-        onError(response.errorMessage);
+      const isUserAuthenticated = await getAuthState(firebaseUser?.email);
+      if (isUserAuthenticated !== true) {
+        onError('You are not authenticated or there has been an indexer failure');
+      } else {
+        const response = await multichainSignAndSend({
+          domain:        derivationPath?.domain,
+          asset:         derivationPath?.asset,
+          to:            transaction?.to,
+          value:         transaction?.value.toString(),
+          feeProperties
+        });
+        if (response.success) {
+          window.parent.postMessage({ type: 'multiChainResponse', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+        } else if (response.success === false) {
+          onError(response.errorMessage);
+        }
       }
     } catch (e) {
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
-  }, []);
+  }, [firebaseUser?.email]);
 
   useEffect(() => {
     const handleMessage = async (event: IncomingMessageEvent) => {
-      if (event?.data?.type === 'multi-chain' && event?.data?.data) {
+      if (event?.data?.type === 'multiChainRequest' && event?.data?.data) {
         setOrigin(event?.origin);
         try {
           const { data: transaction } = event.data;
@@ -162,7 +167,7 @@ function SignMultichain() {
       handleMessage,
     );
 
-    window.parent.postMessage({ type: 'sign-multichain-load', message: 'SignMultichain page has loaded' }, '*');
+    window.parent.postMessage({ type: 'signMultiChainLoaded' }, '*');
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -173,12 +178,7 @@ function SignMultichain() {
     setError(null);
     setInFlight(true);
     try {
-      const isUserAuthenticated = await getAuthState(firebaseUser?.email);
-      if (isUserAuthenticated !== true) {
-        onError('You are not authenticated or there has been an indexer failure');
-      } else {
-        await signMultichainTransaction(deserializedDerivationPath, message, amountInfo.feeProperties);
-      }
+      await signMultichainTransaction(deserializedDerivationPath, message, amountInfo.feeProperties);
     } catch (e) {
       onError(e.message);
     } finally {

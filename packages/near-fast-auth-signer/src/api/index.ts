@@ -25,7 +25,7 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
     }
 
     try {
-      const res = await fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`);
+      const res = await withTimeout(fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION);
       if (res) {
         const ids = await res.json();
         return ids;
@@ -54,15 +54,8 @@ export const fetchAccountIdsFromTwoKeys = async (
   keyPairA: KeyPair,
   keyPairB: KeyPair
 ): Promise<{ accId: string, keyPair: KeyPair}> => {
-  const accountIdsFromPublicKeyA = await withTimeout(
-    fetchAccountIds(keyPairA.getPublicKey().toString()),
-    KIT_WALLET_WAIT_DURATION
-  );
-
-  const accountIdsFromPublicKeyB = await withTimeout(
-    fetchAccountIds(keyPairB.getPublicKey().toString()),
-    KIT_WALLET_WAIT_DURATION
-  );
+  const accountIdsFromPublicKeyA = fetchAccountIds(keyPairA.getPublicKey().toString());
+  const accountIdsFromPublicKeyB = fetchAccountIds(keyPairB.getPublicKey().toString());
 
   const firstResult = await Promise.race([accountIdsFromPublicKeyA, accountIdsFromPublicKeyB]);
   const firstKey = firstResult === await accountIdsFromPublicKeyA ? keyPairA : keyPairB;
