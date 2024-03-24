@@ -19,7 +19,7 @@ import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
-import { Button, CloseButton } from '../../lib/Button';
+import { Button } from '../../lib/Button';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
@@ -115,24 +115,24 @@ function SignMultichain() {
         try {
           const { data: transaction } = event.data;
           setInFlight(true);
-          const deserialize = deserializeDerivationPath(event.data.data.derivationPath);
+          const deserialize = deserializeDerivationPath(transaction.derivationPath);
           if (deserialize instanceof Error) {
             onError(deserialize.message);
             return;
           }
 
-          const validation = await validateMessage(event.data.data, deserialize.asset);
+          const validation = await validateMessage(transaction, deserialize.asset);
           if (validation instanceof Error || !validation) {
             onError(validation.toString());
             return;
           }
 
-          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, event.data.data.value);
+          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, transaction.value);
           const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
             asset: deserialize?.asset,
-            to:    event.data.data.to,
-            value: event.data.data.value.toString(),
-            ...('from' in event.data.data ? { from: event.data.data.from } : {}),
+            to:    transaction.to,
+            value: transaction.value.toString(),
+            ...('from' in transaction ? { from: transaction.from } : {}),
           });
           const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
           const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
@@ -144,7 +144,7 @@ function SignMultichain() {
           });
 
           if (deserialize?.domain === event?.origin) {
-            await signMultichainTransaction(deserialize, transaction, amountInfo.feeProperties);
+            await signMultichainTransaction(deserialize, transaction, feeProperties);
           } else {
             setValid(true);
             setMessage(transaction);
@@ -167,8 +167,6 @@ function SignMultichain() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-    // add amountInfo.feeProperties to the dependency array when the test code is removed and remove the eslint-disable-next-line
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deserializeDerivationPath, signMultichainTransaction]);
 
   const onConfirm = async () => {
@@ -188,13 +186,8 @@ function SignMultichain() {
     }
   };
 
-  const onCancel = () => {
-    window.parent.postMessage({ type: 'method', message:  'User cancelled action' }, '*');
-  };
-
   return (
     <ModalSignWrapper ref={signTransactionRef}>
-      <CloseButton onClick={onCancel} />
       <div className="modal-top">
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>

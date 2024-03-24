@@ -179,7 +179,6 @@ export const multichainSignAndSend = async ({
   value: string;
   feeProperties: TransactionFeeProperties;
 }) => {
-  // TODO: remove duplicate fee fetching
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
   const derivedPath = `,${asset},${domain}`;
@@ -194,9 +193,9 @@ export const multichainSignAndSend = async ({
         to,
         value,
         derivedPath,
-        gasLimit:             (feeProperties as EVMFeeProperties).gasLimit,
-        maxFeePerGas:         (feeProperties as EVMFeeProperties).maxFeePerGas,
-        maxPriorityFeePerGas: (feeProperties as EVMFeeProperties).maxPriorityFeePerGas,
+        gasLimit:             (feeProperties as EVMFeeProperties)?.gasLimit,
+        maxFeePerGas:         (feeProperties as EVMFeeProperties)?.maxFeePerGas,
+        maxPriorityFeePerGas: (feeProperties as EVMFeeProperties)?.maxPriorityFeePerGas,
       },
       nearAuthentication: { networkId, keypair, accountId },
       fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
@@ -209,8 +208,8 @@ export const multichainSignAndSend = async ({
       to,
       value,
       derivedPath,
-      inputs:  (feeProperties as BTCFeeProperties).inputs,
-      outputs: (feeProperties as BTCFeeProperties).outputs,
+      inputs:  (feeProperties as BTCFeeProperties)?.inputs,
+      outputs: (feeProperties as BTCFeeProperties)?.outputs,
     },
     nearAuthentication: { networkId, keypair, accountId },
     fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
