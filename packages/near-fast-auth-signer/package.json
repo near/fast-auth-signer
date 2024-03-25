@@ -46,7 +46,6 @@
     "bn.js": "^5.2.1",
     "bootstrap": "^5.3.0",
     "borsh": "^0.7.0",
-    "borsher": "^1.2.1",
     "bs58check": "^3.0.1",
     "canonicalize": "^2.0.0",
     "coinselect": "^3.1.13",
