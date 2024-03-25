@@ -81,6 +81,7 @@ const CHAIN_CONFIG: ChainMap = {
 export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
 const SendMultichainMessageSchema = yup.lazy((value) => {
+  // chain is the slip044 chain id
   if (value.chain === 60) {
     return SendEVMMultichainMessageSchema;
   } if (value.chain === 0) {
@@ -102,6 +103,7 @@ export const validateMessage = async (message: SendMultichainMessage): Promise<b
 type ChainDetails = { chain: number; chainId?: bigint };
 
 export const getTokenSymbol = (chainDetails: ChainDetails) => {
+  // chain is the slip044 chain id
   if (chainDetails.chain === 60) {
     return {
       1:        'ETH',
@@ -125,6 +127,7 @@ export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
 
   const evmChainId = Number(chainDetails.chainId);
 
+  // chain is the slip044 chain id
   if (chainDetails.chain === 60) {
     return chainIdMap[evmChainId];
   }
@@ -135,6 +138,7 @@ export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
 };
 
 export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
+  // chain is the slip044 chain id
   if (chainDetails.chain === 60) {
     return {
       1:        'Ethereum Mainnet',
@@ -154,6 +158,7 @@ export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
 }
 
 const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: number) => {
+  // chain is the slip044 chain id
   if (chain === 60) {
     return parseFloat(formatEther(value));
   }
@@ -223,7 +228,7 @@ export const multichainSignAndSend = async ({
     contract:    MULTICHAIN_CONTRACT_TESTNET,
     ...CHAIN_CONFIG[getTokenSymbol(chainDetails)],
   };
-
+  // chain is the slip044 chain id
   if (chainDetails.chain === 60) {
     const derivedAddress = await fetchDerivedEVMAddress(accountId, derivedPath, networkId, getMultiChainContract());
     if (derivedAddress !== signMultichainRequest.from) {
@@ -287,6 +292,7 @@ export const multichainGetFeeProperties = async ({
   value: string;
   from: string;
 }) => {
+  // chain is the slip044 chain id
   if (chain === 0) {
     const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
       address: to,
