@@ -1,17 +1,24 @@
+import * as bitcoin from 'bitcoinjs-lib';
+import canonicalize from 'canonicalize';
 import { formatEther, formatUnits } from 'ethers';
+import pickBy from 'lodash.pickby';
+import * as yup from 'yup';
 
-import { bitcoinSchema } from './bitcoin/schema';
-import { evmSchema } from './evm/schema';
+import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
+import { SendEVMMultichainMessageSchema } from './evm/schema';
 import {
+  BTCSendMultichainMessage,
   Chain,
   ChainMap,
   EVMChainMap,
-  MultichainInterface
+  EvmSendMultichainMessage,
+  SendMultichainMessage,
 } from './types';
-import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
 import {
   fetchBTCFeeProperties,
+  fetchDerivedBTCAddress,
+  fetchDerivedEVMAddress,
   fetchEVMFeeProperties,
   signAndSendBTCTransaction,
   signAndSendEVMTransaction,
@@ -53,7 +60,7 @@ const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
   BNB: true,
 };
-const isEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
+export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
 const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
 
@@ -73,80 +80,106 @@ const CHAIN_CONFIG: ChainMap = {
 
 export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
-const getSchema = (asset: Chain) => {
-  switch (asset) {
-    case 'BTC':
-      return bitcoinSchema;
-    case 'ETH':
-    case 'BNB':
-      return evmSchema;
-    default:
-      return assertNever(asset);
+const SendMultichainMessageSchema = yup.lazy((value) => {
+  if (value.chain === 60) {
+    return SendEVMMultichainMessageSchema;
+  } if (value.chain === 0) {
+    return SendBTCMultichainMessageSchema;
   }
-};
+  throw new Error(`Schema for chain ${value.chain} is not defined`);
+});
 
-export const validateMessage = async (message: MultichainInterface, asset: Chain): Promise<boolean
+export const validateMessage = async (message: SendMultichainMessage): Promise<boolean
 | Error> => {
-  const schema = getSchema(asset);
-  if (!schema) {
-    return new Error(`Schema for asset ${asset} is not defined`);
-  }
-
   try {
-    await schema.validate(message);
+    await SendMultichainMessageSchema.validate(message);
     return true;
-  } catch (e) {
-    return new Error(e);
+  } catch (err) {
+    return err;
   }
 };
 
-export const multichainAssetToCoinGeckoId = (asset: Chain) => {
-  const map: ChainMap = {
-    ETH:  'ethereum',
-    BNB:  'binancecoin',
-    BTC:  'bitcoin',
-  };
+type ChainDetails = { chain: number; chainId?: bigint };
 
-  return map[asset] || null;
+export const getTokenSymbol = (chainDetails: ChainDetails) => {
+  if (chainDetails.chain === 60) {
+    return {
+      1:        'ETH',
+      56:       'BNB',
+      97:       'BNB',
+      11155111: 'ETH'
+    }[Number(chainDetails.chainId)];
+  }
+  return {
+    0: 'BTC',
+  }[chainDetails.chain];
 };
 
-export const multichainAssetToNetworkName = (asset: Chain) => {
-  // the names below should indicate chainId / network type (e.g testnet, mainnet, sepolia etc.)
-  const map: ChainMap = {
-    ETH:  'Ethereum Network',
-    BNB:  'Binance Smart Chain',
-    BTC:  'Bitcoin Network',
+export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
+  const chainIdMap = {
+    1:        'ethereum',
+    56:       'binancecoin',
+    97:       'binancecoin',
+    11155111: 'ethereum'
   };
 
-  return map[asset] || null;
+  const evmChainId = Number(chainDetails.chainId);
+
+  if (chainDetails.chain === 60) {
+    return chainIdMap[evmChainId];
+  }
+
+  return {
+    0: 'bitcoin',
+  }[chainDetails.chain];
 };
 
-export async function getMultichainCoinGeckoPrice(asset: Chain) {
-  return fetchGeckoPrices(multichainAssetToCoinGeckoId(asset));
+export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
+  if (chainDetails.chain === 60) {
+    return {
+      1:        'Ethereum Mainnet',
+      56:       'Binance Smart Chain Mainnet',
+      97:       'Binace Smart Chain Testnet',
+      11155111: 'Ethereum Sepolia Network'
+    }[Number(chainDetails.chainId)];
+  }
+
+  return {
+    0: 'Bitcoin Network',
+  }[chainDetails.chain];
+};
+
+export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
+  return fetchGeckoPrices(multichainAssetToCoinGeckoId(chainDetails));
 }
 
-const convertTokenToReadable = (value : MultichainInterface['value'], asset: Chain) => {
-  if (isEVMChain(asset)) {
+const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: number) => {
+  if (chain === 60) {
     return parseFloat(formatEther(value));
   }
-  if (asset === 'BTC') {
+  if (chain === 0) {
     return toBTC(Number(value));
   }
   return Number(value);
 };
 
-export const getTokenAndTotalPrice = async (asset: Chain, value: MultichainInterface['value']) => {
-  const id = multichainAssetToCoinGeckoId(asset);
+export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
+  const chainDetails = {
+    chain:   message.chain,
+    chainId: (message as EvmSendMultichainMessage)?.chainId,
+  };
+  const id = multichainAssetToCoinGeckoId(chainDetails);
+  const tokenAmount = convertTokenToReadable(message.value, chainDetails.chain);
+
   if (id) {
-    const res = await getMultichainCoinGeckoPrice(asset);
+    const res = await getMultichainCoinGeckoPrice(chainDetails);
     if (!res) {
       return {
         price:       0,
-        tokenAmount: convertTokenToReadable(value, asset)
+        tokenAmount
       };
     }
     const tokenPrice: number = res[id].usd;
-    const tokenAmount = convertTokenToReadable(value, asset);
     return {
       price: parseInt((tokenPrice * tokenAmount * 100).toString(), 10) / 100,
       tokenAmount,
@@ -155,7 +188,7 @@ export const getTokenAndTotalPrice = async (asset: Chain, value: MultichainInter
   }
   return {
     price:       0,
-    tokenAmount: convertTokenToReadable(value, asset)
+    tokenAmount
   };
 };
 
@@ -167,31 +200,42 @@ export const shortenAddress = (address: string): string => {
 };
 
 export const multichainSignAndSend = async ({
-  domain,
-  asset,
-  to,
-  value,
+  signMultichainRequest,
   feeProperties
 }: {
-  domain: string;
-  asset: Chain;
-  to: string;
-  value: string;
+  signMultichainRequest: EvmSendMultichainMessage | BTCSendMultichainMessage;
   feeProperties: TransactionFeeProperties;
+  meta?: { [k: string]: any };
 }) => {
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const derivedPath = `,${asset},${domain}`;
+  const chainDetails = {
+    chain:   signMultichainRequest.chain,
+    chainId: (signMultichainRequest as EvmSendMultichainMessage).chainId,
+  };
+  const derivedPath = canonicalize(pickBy({
+    chain:  signMultichainRequest.chain,
+    domain: signMultichainRequest.domain,
+    meta:   signMultichainRequest.meta,
+  }, (v) => v !== undefined && v !== null));
+
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
-    ...CHAIN_CONFIG[asset],
+    ...CHAIN_CONFIG[getTokenSymbol(chainDetails)],
   };
 
-  if (isEVMChain(asset)) {
+  if (chainDetails.chain === 60) {
+    const derivedAddress = await fetchDerivedEVMAddress(accountId, derivedPath, networkId, getMultiChainContract());
+    if (derivedAddress !== signMultichainRequest.from) {
+      return {
+        success:      false,
+        errorMessage: 'Derived address does not match the provided from address',
+      };
+    }
     return signAndSendEVMTransaction({
       transaction: {
-        to,
-        value,
+        to:                   signMultichainRequest.to,
+        value:                signMultichainRequest.value.toString(),
         derivedPath,
         gasLimit:             (feeProperties as EVMFeeProperties)?.gasLimit,
         maxFeePerGas:         (feeProperties as EVMFeeProperties)?.maxFeePerGas,
@@ -203,10 +247,25 @@ export const multichainSignAndSend = async ({
     });
   }
 
+  const derivedAddress = await fetchDerivedBTCAddress(
+    accountId,
+    derivedPath,
+    (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
+    networkId,
+    getMultiChainContract()
+  );
+
+  if (derivedAddress !== signMultichainRequest.from) {
+    return {
+      success:      false,
+      errorMessage: 'Derived address does not match the provided from address',
+    };
+  }
+
   return signAndSendBTCTransaction({
     transaction: {
-      to,
-      value,
+      to:                   signMultichainRequest.to,
+      value:                signMultichainRequest.value.toString(),
       derivedPath,
       inputs:  (feeProperties as BTCFeeProperties)?.inputs,
       outputs: (feeProperties as BTCFeeProperties)?.outputs,
@@ -218,24 +277,24 @@ export const multichainSignAndSend = async ({
 };
 
 export const multichainGetFeeProperties = async ({
-  asset,
+  chain,
   to,
   value,
-  from = null,
+  from
 }: {
-  asset: Chain;
+  chain: number;
   to: string;
   value: string;
-  from?: string;
+  from: string;
 }) => {
-  if (asset === 'BTC') {
+  if (chain === 0) {
     const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
       address: to,
       value:   Number(value)
     }]));
 
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
-  } if (isEVMChain(asset)) {
+  } if (chain === 60) {
     const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, {
       to,
       value

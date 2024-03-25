@@ -13,34 +13,24 @@ export type ChainMap<T = any> = {
   [key in Chain]: T
 };
 
-export interface DerivationPathDeserialized {
-  asset: Chain;
-  domain?: string;
+interface BaseSendMultichainMessage {
+  chain: number;
+  domain: string;
+  to: string;
+  value: bigint;
+  meta: { [k: string]: any };
+  from: string;
 }
 
-export interface BaseChainInterface {
- to: string;
- value: bigint;
- derivationPath: string;
-}
+export type EvmSendMultichainMessage = BaseSendMultichainMessage & {
+  chainId: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+  gasLimit?: number;
+};
 
-export interface EVMInterface extends BaseChainInterface {
- chainId: bigint;
- maxFeePerGas?: bigint;
- maxPriorityFeePerGas?: bigint;
- gasLimit?: number;
-}
+export type BTCSendMultichainMessage = BaseSendMultichainMessage & {
+  network: 'mainnet' | 'testnet';
+};
 
-export type BTCInterface = BaseChainInterface &
- (
-   | {
-       from: string;
-     }
-   | {
-       fee: number;
-       utxos: any[];
-       from: string;
-     }
- )
-
-export type MultichainInterface = BTCInterface | EVMInterface;
+export type SendMultichainMessage = BTCSendMultichainMessage | EvmSendMultichainMessage;

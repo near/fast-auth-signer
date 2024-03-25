@@ -1,10 +1,10 @@
-import { borshDeserialize, borshSerialize } from 'borsher';
 import React, {
-  useEffect, useState, useCallback, useRef
+  useEffect, useState, useCallback, useRef, useMemo
 } from 'react';
 
-import { derivationPathSchema } from './schema';
-import { Chain, DerivationPathDeserialized, MultichainInterface } from './types';
+import {
+  Chain, EvmSendMultichainMessage, SendMultichainMessage
+} from './types';
 import {
   validateMessage,
   getTokenAndTotalPrice,
@@ -12,7 +12,8 @@ import {
   shortenAddress,
   multichainSignAndSend,
   multichainGetFeeProperties,
-  TransactionFeeProperties
+  TransactionFeeProperties,
+  getTokenSymbol
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useFirebaseUser from '../../hooks/useFirebaseUser';
@@ -24,20 +25,28 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-borshSerialize(derivationPathSchema, { asset: 'ETH', domain: '' }).toString('base64');
-
-type IncomingMessageData = {
-  chainId: bigint;
-  derivationPath: string;
-  to: string;
-  value: bigint;
-  from: string;
-};
-
 type IncomingMessageEvent = MessageEvent<{
-  data: IncomingMessageData;
+  data: SendMultichainMessage;
   type: string;
 }>;
+
+// const sampleMessageForEthereum: EvmSendMultichainMessage = {
+//   chainId: BigInt('5'),
+//   chain: 60,
+//   domain: "near.org",
+//   to: "0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4",
+//   value: BigInt('10000000000000000'),
+//   meta: {id: 10}
+// }
+
+// const sampleMessageForBTC: BTCSendMultichainMessage = {
+//   network: 'mainnet',
+//   chain: 0,
+//   domain: "near.org",
+//   to: "1K7xkspJg6J8kEZjX9jowFtyXo6JLXUhYj",
+//   value: BigInt('10000000000000000'),
+//   meta: {id: 10}
+// }
 
 type TransactionAmountDisplay = {
   price: string | number;
@@ -49,12 +58,18 @@ function SignMultichain() {
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
-  const [message, setMessage] = useState<MultichainInterface>(null);
+  const [message, setMessage] = useState<SendMultichainMessage>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
   const [isValid, setValid] = useState(null);
-  const [deserializedDerivationPath, setDeserializedDerivationPath] = useState<DerivationPathDeserialized>(null);
   const [origin, setOrigin] = useState(null);
+  const tokenSymbol = useMemo(
+    () => getTokenSymbol({
+      chain:   message?.chain,
+      chainId: (message as EvmSendMultichainMessage)?.chainId,
+    }),
+    [message]
+  );
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -67,26 +82,8 @@ function SignMultichain() {
     setError(text);
   };
 
-  const deserializeDerivationPath = useCallback((path: string): DerivationPathDeserialized | Error => {
-    try {
-      const deserialize: DerivationPathDeserialized = borshDeserialize(derivationPathSchema, Buffer.from(path, 'base64'));
-      setDeserializedDerivationPath(deserialize);
-      return deserialize;
-    } catch (e) {
-      onError(`fail to deserialize derivation path: ${e.message}`);
-      return e;
-    }
-  }, []);
-
   const signMultichainTransaction = useCallback(async (
-    derivationPath: {
-    asset?: Chain,
-    domain?: string
-  },
-    transaction: {
-      to: string,
-      value: bigint,
-    },
+    signMultichainRequest: SendMultichainMessage,
     feeProperties: TransactionFeeProperties
   ) => {
     try {
@@ -95,14 +92,11 @@ function SignMultichain() {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
         const response = await multichainSignAndSend({
-          domain:        derivationPath?.domain,
-          asset:         derivationPath?.asset,
-          to:            transaction?.to,
-          value:         transaction?.value.toString(),
-          feeProperties
+          signMultichainRequest,
+          feeProperties,
         });
-        if (response.success) {
-          window.parent.postMessage({ type: 'multiChainResponse', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+        if (response.success && 'transactionHash' in response) {
+          window.parent.postMessage({ type: 'response', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
         } else if (response.success === false) {
           onError(response.errorMessage);
         }
@@ -114,30 +108,26 @@ function SignMultichain() {
   }, [firebaseUser?.email]);
 
   useEffect(() => {
+    // TODO: properly type the incoming data
     const handleMessage = async (event: IncomingMessageEvent) => {
-      if (event?.data?.type === 'multiChainRequest' && event?.data?.data) {
+      if (event.data.type === 'multiChainRequest' && event?.data?.data) {
         setOrigin(event?.origin);
         try {
           const { data: transaction } = event.data;
           setInFlight(true);
-          const deserialize = deserializeDerivationPath(transaction.derivationPath);
-          if (deserialize instanceof Error) {
-            onError(deserialize.message);
-            return;
-          }
 
-          const validation = await validateMessage(transaction, deserialize.asset);
+          const validation = await validateMessage(transaction);
           if (validation instanceof Error || !validation) {
             onError(validation.toString());
             return;
           }
 
-          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(deserialize.asset, transaction.value);
+          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
           const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
-            asset: deserialize?.asset,
+            chain: transaction.chain,
             to:    transaction.to,
             value: transaction.value.toString(),
-            ...('from' in transaction ? { from: transaction.from } : {}),
+            from:  transaction.from,
           });
           const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
           const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
@@ -147,10 +137,9 @@ function SignMultichain() {
             tokenAmount,
             feeProperties
           });
-
           setValid(true);
-          if (deserialize?.domain === event?.origin) {
-            await signMultichainTransaction(deserialize, transaction, feeProperties);
+          if (transaction?.domain === window.parent.origin) {
+            await signMultichainTransaction(message, amountInfo.feeProperties);
           } else {
             setMessage(transaction);
           }
@@ -172,13 +161,15 @@ function SignMultichain() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [deserializeDerivationPath, signMultichainTransaction]);
+    // add amountInfo.feeProperties to the dependency array when the test code is removed and remove the eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signMultichainTransaction]);
 
   const onConfirm = async () => {
     setError(null);
     setInFlight(true);
     try {
-      await signMultichainTransaction(deserializedDerivationPath, message, amountInfo.feeProperties);
+      await signMultichainTransaction(message, amountInfo.feeProperties);
     } catch (e) {
       onError(e.message);
     } finally {
@@ -191,7 +182,7 @@ function SignMultichain() {
       <div className="modal-top">
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>
-        <h5>{`${deserializedDerivationPath?.domain || 'Unknown App'} has requested a transaction, review the request before confirming.`}</h5>
+        <h5>{`${message?.domain || 'Unknown App'} has requested a transaction, review the request before confirming.`}</h5>
         <div className="transaction-details">
           <InternetSvg />
           {origin || 'Unknown App'}
@@ -203,7 +194,7 @@ function SignMultichain() {
             leftSide="Details"
             rightSide={(
               <TableRow
-                content={`${amountInfo.tokenAmount ? `Send ${amountInfo.tokenAmount} ${deserializedDerivationPath?.asset}` : '...'}`}
+                content={`${amountInfo.tokenAmount ? `Send ${amountInfo.tokenAmount} ${tokenSymbol}` : '...'}`}
               />
             )}
           />
@@ -211,7 +202,7 @@ function SignMultichain() {
             leftSide="to"
             rightSide={(
               <TableRow
-                asset={deserializedDerivationPath?.asset}
+                asset={tokenSymbol as Chain}
                 content={<b><span title={message?.to || ''}>{`${shortenAddress(message?.to || '...')}`}</span></b>}
               />
             )}
@@ -220,8 +211,11 @@ function SignMultichain() {
             leftSide="Network"
             rightSide={(
               <TableRow
-                asset={deserializedDerivationPath?.asset}
-                content={multichainAssetToNetworkName(deserializedDerivationPath?.asset)}
+                asset={tokenSymbol as Chain}
+                content={multichainAssetToNetworkName({
+                  chain:   message?.chain,
+                  chainId: (message as EvmSendMultichainMessage).chainId,
+                })}
               />
             )}
           />

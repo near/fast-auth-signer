@@ -1,6 +1,9 @@
-import { BorshSchema } from 'borsher';
+import * as yup from 'yup';
 
-export const derivationPathSchema = BorshSchema.Struct({
-  asset:         BorshSchema.String,
-  domain:        BorshSchema.Option(BorshSchema.String)
+export const BaseSendMultichainMessageSchema = yup.object().shape({
+  from:   yup.string().required('from is required'),
+  domain: yup.string().optional(),
+  meta:   yup.object().optional(),
+  to:     yup.string().required('to is required'),
+  value:  yup.mixed<bigint>().required('value is required'),
 });
