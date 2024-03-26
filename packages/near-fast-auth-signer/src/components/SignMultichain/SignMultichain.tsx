@@ -20,9 +20,12 @@ import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
 import { Button } from '../../lib/Button';
+import { StyledCheckbox } from '../Devices/Devices';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
+import styled from 'styled-components';
+import Warning from '../../Images/Warning';
 
 type IncomingMessageEvent = MessageEvent<{
   data: SendMultichainMessage;
@@ -53,6 +56,25 @@ type TransactionAmountDisplay = {
   feeProperties?: TransactionFeeProperties;
 };
 
+const Container = styled.div`
+  display: flex;
+  font-size: 12px;
+`;
+
+const WarningContainer = styled.div`
+  display: flex;
+  border-radius: var(--2, 6px);
+  border: 1px solid var(--Colors-Red-8, #D21E24);
+  background: var(--Colors-Red-4, #481A20);
+  align-items: center;
+  color: var(--Colors-Red-11, #FF8589);
+  padding: 15px;
+  font-size: 10px;
+  > svg {
+    margin-right: 12px;
+  }
+`;
+
 function SignMultichain() {
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
@@ -69,6 +91,8 @@ function SignMultichain() {
     }),
     [message]
   );
+  const [isUnsafe, setUnsafe] = useState(false);
+  const [check, setCheck] = useState(false);
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -77,7 +101,7 @@ function SignMultichain() {
   });
 
   const onError = (text: string) => {
-    window.parent.postMessage({ type: 'multiChainResponse', message: text }, '*');
+    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe: true }, '*');
     setError(text);
   };
 
@@ -95,7 +119,7 @@ function SignMultichain() {
           feeProperties,
         });
         if (response.success && 'transactionHash' in response) {
-          window.parent.postMessage({ type: 'multiChainResponse', message: `Successfully sign and send transaction, ${response.transactionHash}` }, '*');
+          window.parent.postMessage({ type: 'multiChainResponse', message: `Successfully sign and send transaction, ${response.transactionHash}`, closeIframe: true }, '*');
         } else if (response.success === false) {
           onError(response.errorMessage);
         }
@@ -118,6 +142,15 @@ function SignMultichain() {
           if (validation instanceof Error || !validation) {
             onError(validation.toString());
             return;
+          }
+
+          // if the domain is the same as the origin, hide the modal
+          if (transaction?.domain === event?.origin) {
+            window.parent.postMessage({ hideModal: true }, '*');
+          }
+
+          if (transaction?.domain && transaction?.domain !== event?.origin) {
+            setUnsafe(true);
           }
 
           const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
@@ -192,7 +225,7 @@ function SignMultichain() {
   }
 
   return (
-    <ModalSignWrapper ref={signTransactionRef}>
+    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin ? 'true' : undefined}>
       <div className="modal-top">
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>
@@ -242,13 +275,33 @@ function SignMultichain() {
           />
         </div>
       </div>
+      {
+        isUnsafe && (
+          <>
+            <Container>
+              <StyledCheckbox type="checkbox" onChange={() => setCheck(!check)} checked={check} />
+              <p>
+                I’ve carefully reviewed the request and trust
+                {' '}
+                <b>{message?.domain}</b>
+              </p>
+            </Container>
+            <WarningContainer>
+              <Warning />
+              <span>
+                We don’t recognize this app, proceed with caution
+              </span>
+            </WarningContainer>
+          </>
+        )
+      }
       <div className="modal-footer">
         <Button
           variant="affirmative"
           size="large"
           label={inFlight ? 'Loading...' : 'Approve'}
           onClick={onConfirm}
-          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number'}
+          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number' || (isUnsafe && !check)}
         />
       </div>
       {error && <p className="info-text error">{error}</p>}

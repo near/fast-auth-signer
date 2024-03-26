@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
-export const ModalSignWrapper = styled.div`
+export const ModalSignWrapper = styled.div<{ hide?: string | undefined }>`
+  ${(props) => props.hide && 'opacity: 0;'}
   width: 550px;
   margin: 0 auto;
   border-radius: 8px;
