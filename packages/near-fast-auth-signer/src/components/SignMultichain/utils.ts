@@ -15,6 +15,7 @@ import {
   SLIP044ChainId,
   SendMultichainMessage,
 } from './types';
+import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
 import {
   fetchBTCFeeProperties,
@@ -25,7 +26,6 @@ import {
   signAndSendEVMTransaction,
 } from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
-import { assertNever } from '../../utils';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
 const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
