@@ -13,8 +13,10 @@ export type ChainMap<T = any> = {
   [key in Chain]: T
 };
 
+export type SLIP044ChainId = 60 | 0;
+
 interface BaseSendMultichainMessage {
-  chain: number;
+  chain: SLIP044ChainId;
   domain?: string;
   to: string;
   value: bigint;

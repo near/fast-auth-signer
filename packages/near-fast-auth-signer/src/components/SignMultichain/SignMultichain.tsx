@@ -107,7 +107,6 @@ function SignMultichain() {
   }, []);
 
   useEffect(() => {
-    // TODO: properly type the incoming data
     const handleMessage = async (event: IncomingMessageEvent) => {
       if (event.data.type === 'multiChainRequest' && event?.data?.data) {
         setOrigin(event?.origin);

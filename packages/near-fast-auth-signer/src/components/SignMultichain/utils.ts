@@ -12,6 +12,7 @@ import {
   ChainMap,
   EVMChainMap,
   EvmSendMultichainMessage,
+  SLIP044ChainId,
   SendMultichainMessage,
 } from './types';
 import { networkId } from '../../utils/config';
@@ -24,6 +25,7 @@ import {
   signAndSendEVMTransaction,
 } from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
+import { assertNever } from '../../utils';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
 const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
@@ -54,7 +56,11 @@ type EVMFeeProperties = {
   maxFee: bigint;
 }
 
-export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties
+export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties;
+
+const isEVMMultichainMessage = (
+  message: SendMultichainMessage
+): message is EvmSendMultichainMessage => message?.chain === 60;
 
 const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
@@ -80,13 +86,14 @@ const CHAIN_CONFIG: ChainMap = {
 
 export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
-const SendMultichainMessageSchema = yup.lazy((value) => {
+const SendMultichainMessageSchema = yup.lazy((value: { chain: SLIP044ChainId }) => {
   // chain is the slip044 chain id
   if (value.chain === 60) {
     return SendEVMMultichainMessageSchema;
   } if (value.chain === 0) {
     return SendBTCMultichainMessageSchema;
   }
+  assertNever(value.chain);
   throw new Error(`Schema for chain ${value.chain} is not defined`);
 });
 
@@ -100,7 +107,7 @@ export const validateMessage = async (message: SendMultichainMessage): Promise<b
   }
 };
 
-type ChainDetails = { chain: number; chainId?: bigint };
+type ChainDetails = { chain: SLIP044ChainId; chainId?: bigint };
 
 export const getTokenSymbol = (chainDetails: ChainDetails) => {
   // chain is the slip044 chain id
@@ -157,7 +164,7 @@ export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
   return fetchGeckoPrices(multichainAssetToCoinGeckoId(chainDetails));
 }
 
-const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: number) => {
+const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: SLIP044ChainId) => {
   // chain is the slip044 chain id
   if (chain === 60) {
     return parseFloat(formatEther(value));
@@ -169,10 +176,10 @@ const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: n
 };
 
 export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
-  const chainDetails = {
+  const chainDetails = isEVMMultichainMessage(message) ? {
     chain:   message.chain,
-    chainId: (message as EvmSendMultichainMessage)?.chainId,
-  };
+    chainId: message.chainId,
+  } : { chain: message.chain };
   const id = multichainAssetToCoinGeckoId(chainDetails);
   const tokenAmount = convertTokenToReadable(message.value, chainDetails.chain);
 
@@ -208,15 +215,15 @@ export const multichainSignAndSend = async ({
   signMultichainRequest,
   feeProperties
 }: {
-  signMultichainRequest: EvmSendMultichainMessage | BTCSendMultichainMessage;
+  signMultichainRequest: SendMultichainMessage;
   feeProperties: TransactionFeeProperties;
 }) => {
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const chainDetails = {
+  const chainDetails = isEVMMultichainMessage(signMultichainRequest) ? {
     chain:   signMultichainRequest.chain,
-    chainId: (signMultichainRequest as EvmSendMultichainMessage).chainId,
-  };
+    chainId: signMultichainRequest.chainId,
+  } : { chain: signMultichainRequest.chain };
   const derivedPath = canonicalize(pickBy({
     chain:  signMultichainRequest.chain,
     domain: signMultichainRequest.domain,
@@ -286,7 +293,7 @@ export const multichainGetFeeProperties = async ({
   value,
   from
 }: {
-  chain: number;
+  chain: SLIP044ChainId;
   to: string;
   value: string;
   from: string;
