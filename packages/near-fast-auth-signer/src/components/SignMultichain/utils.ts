@@ -210,7 +210,6 @@ export const multichainSignAndSend = async ({
 }: {
   signMultichainRequest: EvmSendMultichainMessage | BTCSendMultichainMessage;
   feeProperties: TransactionFeeProperties;
-  meta?: { [k: string]: any };
 }) => {
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);

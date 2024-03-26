@@ -16,7 +16,6 @@ import {
   getTokenSymbol
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
-import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
@@ -55,7 +54,6 @@ type TransactionAmountDisplay = {
 };
 
 function SignMultichain() {
-  const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
   const [message, setMessage] = useState<SendMultichainMessage>(null);
@@ -63,6 +61,7 @@ function SignMultichain() {
   const [error, setError] = useState(null);
   const [isValid, setValid] = useState(null);
   const [origin, setOrigin] = useState(null);
+  const [isDomainKey, setIsDomainKey] = useState(true);
   const tokenSymbol = useMemo(
     () => getTokenSymbol({
       chain:   message?.chain,
@@ -87,7 +86,8 @@ function SignMultichain() {
     feeProperties: TransactionFeeProperties
   ) => {
     try {
-      const isUserAuthenticated = await getAuthState(firebaseUser?.email);
+      const isUserAuthenticated = await getAuthState();
+      console.log(isUserAuthenticated, '< sjkfn')
       if (isUserAuthenticated !== true) {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
@@ -105,7 +105,7 @@ function SignMultichain() {
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
-  }, [firebaseUser?.email]);
+  }, []);
 
   useEffect(() => {
     // TODO: properly type the incoming data
@@ -138,11 +138,8 @@ function SignMultichain() {
             feeProperties
           });
           setValid(true);
-          if (transaction?.domain === event?.origin) {
-            await signMultichainTransaction(message, amountInfo.feeProperties);
-          } else {
-            setMessage(transaction);
-          }
+          setIsDomainKey(transaction?.domain === event?.origin);
+          setMessage(transaction);
         } catch (e) {
           onError(e.message);
         } finally {
@@ -176,6 +173,25 @@ function SignMultichain() {
       setInFlight(false);
     }
   };
+
+  if (isDomainKey) {
+    return (
+      <ModalSignWrapper ref={signTransactionRef}>
+        <div className="modal-footer">
+          <Button
+            variant="affirmative"
+            size="large"
+            label={inFlight ? 'Loading...' : 'Approve'}
+            onClick={onConfirm}
+            disabled={
+              inFlight || !isValid || typeof amountInfo.price !== 'number'
+            }
+          />
+        </div>
+        {error && <p className="info-text error">{error}</p>}
+      </ModalSignWrapper>
+    );
+  }
 
   return (
     <ModalSignWrapper ref={signTransactionRef}>
@@ -214,7 +230,7 @@ function SignMultichain() {
                 asset={tokenSymbol as Chain}
                 content={multichainAssetToNetworkName({
                   chain:   message?.chain,
-                  chainId: (message as EvmSendMultichainMessage).chainId,
+                  chainId: (message as EvmSendMultichainMessage)?.chainId,
                 })}
               />
             )}
@@ -234,10 +250,9 @@ function SignMultichain() {
           size="large"
           label={inFlight ? 'Loading...' : 'Approve'}
           onClick={onConfirm}
-          disabled={inFlight || !isValid || firebaseUserLoading || !firebaseUser || typeof amountInfo.price !== 'number'}
+          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number'}
         />
       </div>
-      {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
       {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
