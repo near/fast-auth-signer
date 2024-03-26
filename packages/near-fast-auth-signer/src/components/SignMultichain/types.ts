@@ -15,10 +15,10 @@ export type ChainMap<T = any> = {
 
 interface BaseSendMultichainMessage {
   chain: number;
-  domain: string;
+  domain?: string;
   to: string;
   value: bigint;
-  meta: { [k: string]: any };
+  meta?: { [k: string]: any };
   from: string;
 }
 
