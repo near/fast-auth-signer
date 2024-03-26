@@ -6,7 +6,6 @@ import { useSearchParams } from 'react-router-dom/dist';
 
 import { fetchAccountIdsFromTwoKeys } from '../api';
 import { setAccountIdToController } from '../lib/controller';
-import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
