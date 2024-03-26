@@ -87,7 +87,6 @@ function SignMultichain() {
   ) => {
     try {
       const isUserAuthenticated = await getAuthState();
-      console.log(isUserAuthenticated, '< sjkfn')
       if (isUserAuthenticated !== true) {
         onError('You are not authenticated or there has been an indexer failure');
       } else {
