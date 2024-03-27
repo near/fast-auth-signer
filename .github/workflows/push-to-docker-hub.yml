@@ -30,7 +30,7 @@ jobs:
       
       - name: Get tag
         id: get-tag
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+        run: echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
           
       - id: docker-push-tagged
         name: Tag Docker image and push to Google Artifact Registry
@@ -38,5 +38,5 @@ jobs:
         with:
           push: true
           tags: |
-             nearprotocol/fast-auth-sdk-frontend:${{ steps.get-tag.outputs.short_ref }}
+             nearprotocol/fast-auth-sdk-frontend:${{ env.sha_short }}
              nearprotocol/fast-auth-sdk-frontend:latest
