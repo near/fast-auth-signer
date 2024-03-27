@@ -179,7 +179,7 @@ function Sign() {
   const onConfirm = async () => {
     setError(null);
     setInFlight(true);
-    const isUserAuthenticated = await getAuthState(firebaseUser?.email);
+    const isUserAuthenticated = await getAuthState();
     if (isUserAuthenticated !== true) {
       const errorMessage = 'You are not authenticated or there has been an indexer failure';
       setError(errorMessage);

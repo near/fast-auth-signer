@@ -5,7 +5,7 @@ import BinanceIcon from '../../Images/BinanceIcon';
 import BitcoinIcon from '../../Images/BitcoinIcon';
 import EthereumIcon from '../../Images/EthereumIcon';
 import { assertNever } from '../../utils';
-import { Chain, DerivationPathDeserialized } from '../SignMultichain/types';
+import { Chain } from '../SignMultichain/types';
 
 const Container = styled.div`
   display: flex;
@@ -17,7 +17,7 @@ const Content = styled.span`
 `;
 
 interface TableRowProps {
-  asset?: DerivationPathDeserialized['asset'];
+  asset?: Chain;
   content?: string | React.ReactElement;
 }
 

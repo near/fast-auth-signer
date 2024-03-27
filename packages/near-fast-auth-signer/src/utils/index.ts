@@ -74,8 +74,8 @@ export const deleteOidcKeyPairOnLocalStorage = () => {
   }
 };
 
-export const assertNever = (x: never): never => {
-  throw new Error(`Unexpected object: ${x}`);
+export const assertNever = (x: never, customErrorMessage?: string): never => {
+  throw new Error(customErrorMessage || `Unexpected object: ${x}`);
 };
 
 // Use this function to implement wait logic for async process

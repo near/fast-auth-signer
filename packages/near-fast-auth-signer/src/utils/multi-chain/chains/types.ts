@@ -1,6 +1,6 @@
 import { KeyPair } from '@near-js/crypto';
 
-export type ChainSignatureContracts = 'multichain-testnet-2.testnet'
+export type ChainSignatureContracts = string;
 
 export type BaseTransaction = {
   to: string;

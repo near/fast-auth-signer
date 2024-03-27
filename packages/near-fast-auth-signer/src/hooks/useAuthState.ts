@@ -6,28 +6,21 @@ import { useSearchParams } from 'react-router-dom/dist';
 
 import { fetchAccountIdsFromTwoKeys } from '../api';
 import { setAccountIdToController } from '../lib/controller';
-import { safeGetLocalStorage } from '../utils';
 import { networkId } from '../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../utils/firebase';
 
 type AuthState = 'loading' | boolean | Error
 
-export const getAuthState = async (email?: string | null): Promise<AuthState> => {
+export const getAuthState = async (): Promise<AuthState> => {
   try {
     const controllerState = await window.fastAuthController.isSignedIn();
     const isFirestoreReady = await checkFirestoreReady();
     const isPasskeySupported = await isPassKeyAvailable();
 
-    const webauthnUsername = safeGetLocalStorage('webauthn_username');
-    if (webauthnUsername === undefined) {
-      return new Error('Please allow third party cookies');
-    }
     if (controllerState === true) {
       return true;
-    } if (isPasskeySupported && (!webauthnUsername || (email && email !== webauthnUsername))) {
-      return false;
-    } if (isPasskeySupported && webauthnUsername) {
-      const keypairs = await getKeys(webauthnUsername);
+    } if (isPasskeySupported) {
+      const keypairs = await getKeys('dontcare');
       const accountInfo = await fetchAccountIdsFromTwoKeys(
         keypairs[0],
         keypairs[1],
@@ -76,7 +69,7 @@ export const useAuthState = (): {authenticated: AuthState} => {
 
   useEffect(() => {
     const handleAuthState = async () => {
-      setAuthenticated(await getAuthState(email));
+      setAuthenticated(await getAuthState());
     };
 
     handleAuthState();

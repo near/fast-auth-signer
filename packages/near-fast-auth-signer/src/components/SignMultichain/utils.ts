@@ -1,17 +1,26 @@
+import * as bitcoin from 'bitcoinjs-lib';
+import canonicalize from 'canonicalize';
 import { formatEther, formatUnits } from 'ethers';
+import pickBy from 'lodash.pickby';
+import * as yup from 'yup';
 
-import { bitcoinSchema } from './bitcoin/schema';
-import { evmSchema } from './evm/schema';
+import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
+import { SendEVMMultichainMessageSchema } from './evm/schema';
 import {
+  BTCSendMultichainMessage,
   Chain,
   ChainMap,
   EVMChainMap,
-  MultichainInterface
+  EvmSendMultichainMessage,
+  SLIP044ChainId,
+  SendMultichainMessage,
 } from './types';
 import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
 import {
   fetchBTCFeeProperties,
+  fetchDerivedBTCAddress,
+  fetchDerivedEVMAddress,
   fetchEVMFeeProperties,
   signAndSendBTCTransaction,
   signAndSendEVMTransaction,
@@ -47,13 +56,17 @@ type EVMFeeProperties = {
   maxFee: bigint;
 }
 
-export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties
+export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties;
+
+const isEVMMultichainMessage = (
+  message: SendMultichainMessage
+): message is EvmSendMultichainMessage => message?.chain === 60;
 
 const EVMChains: EVMChainMap<boolean> = {
   ETH: true,
   BNB: true,
 };
-const isEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
+export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
 const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
 
@@ -73,80 +86,143 @@ const CHAIN_CONFIG: ChainMap = {
 
 export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
-const getSchema = (asset: Chain) => {
-  switch (asset) {
-    case 'BTC':
-      return bitcoinSchema;
-    case 'ETH':
-    case 'BNB':
-      return evmSchema;
-    default:
-      return assertNever(asset);
+const SendMultichainMessageSchema = yup.lazy((value: { chain: SLIP044ChainId }) => {
+  // chain is the slip044 chain id
+  if (value.chain === 60) {
+    return SendEVMMultichainMessageSchema;
+  }
+  if (value.chain === 0) {
+    return SendBTCMultichainMessageSchema;
+  }
+  assertNever(value.chain, `Schema for chain ${value.chain} is not defined`);
+  // unreachable
+  return null;
+});
+
+export const validateMessage = async (message: SendMultichainMessage): Promise<boolean
+| Error> => {
+  try {
+    await SendMultichainMessageSchema.validate(message);
+    return true;
+  } catch (err) {
+    return err;
   }
 };
 
-export const validateMessage = async (message: MultichainInterface, asset: Chain): Promise<boolean
-| Error> => {
-  const schema = getSchema(asset);
-  if (!schema) {
-    return new Error(`Schema for asset ${asset} is not defined`);
+type ChainDetails = { chain: SLIP044ChainId; chainId?: bigint };
+
+export const getTokenSymbol = (chainDetails: ChainDetails) => {
+  // chain is the slip044 chain id
+  if (chainDetails.chain === 60) {
+    return {
+      1:        'ETH',
+      56:       'BNB',
+      97:       'BNB',
+      11155111: 'ETH'
+    }[Number(chainDetails.chainId)];
+  }
+  if (chainDetails.chain === 0) {
+    return 'BTC';
+  }
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
+  const chainIdMap = {
+    1:        'ethereum',
+    56:       'binancecoin',
+    97:       'binancecoin',
+    11155111: 'ethereum'
+  };
+
+  const evmChainId = Number(chainDetails.chainId);
+
+  // chain is the slip044 chain id
+  if (chainDetails.chain === 60) {
+    return chainIdMap[evmChainId];
+  }
+
+  if (chainDetails.chain === 0) {
+    return 'bitcoin';
   }
 
   try {
-    await schema.validate(message);
-    return true;
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
   } catch (e) {
-    return new Error(e);
+    return null;
   }
 };
 
-export const multichainAssetToCoinGeckoId = (asset: Chain) => {
-  const map: ChainMap = {
-    ETH:  'ethereum',
-    BNB:  'binancecoin',
-    BTC:  'bitcoin',
-  };
+export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
+  // chain is the slip044 chain id
+  if (chainDetails.chain === 60) {
+    return {
+      1:        'Ethereum Mainnet',
+      56:       'Binance Smart Chain Mainnet',
+      97:       'Binace Smart Chain Testnet',
+      11155111: 'Ethereum Sepolia Network'
+    }[Number(chainDetails.chainId)];
+  }
 
-  return map[asset] || null;
+  if (chainDetails.chain === 0) {
+    return 'Bitcoin Network';
+  }
+
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
 
-export const multichainAssetToNetworkName = (asset: Chain) => {
-  // the names below should indicate chainId / network type (e.g testnet, mainnet, sepolia etc.)
-  const map: ChainMap = {
-    ETH:  'Ethereum Network',
-    BNB:  'Binance Smart Chain',
-    BTC:  'Bitcoin Network',
-  };
-
-  return map[asset] || null;
-};
-
-export async function getMultichainCoinGeckoPrice(asset: Chain) {
-  return fetchGeckoPrices(multichainAssetToCoinGeckoId(asset));
+export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
+  return fetchGeckoPrices(multichainAssetToCoinGeckoId(chainDetails));
 }
 
-const convertTokenToReadable = (value : MultichainInterface['value'], asset: Chain) => {
-  if (isEVMChain(asset)) {
+const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: SLIP044ChainId) => {
+  // chain is the slip044 chain id
+  if (chain === 60) {
     return parseFloat(formatEther(value));
   }
-  if (asset === 'BTC') {
+  if (chain === 0) {
     return toBTC(Number(value));
   }
-  return Number(value);
+  try {
+    assertNever(chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return Number(value);
+  }
 };
 
-export const getTokenAndTotalPrice = async (asset: Chain, value: MultichainInterface['value']) => {
-  const id = multichainAssetToCoinGeckoId(asset);
+export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
+  const chainDetails = isEVMMultichainMessage(message) ? {
+    chain:   message.chain,
+    chainId: message.chainId,
+  } : { chain: message.chain };
+  const id = multichainAssetToCoinGeckoId(chainDetails);
+  const tokenAmount = convertTokenToReadable(message.value, chainDetails.chain);
+
   if (id) {
-    const res = await getMultichainCoinGeckoPrice(asset);
+    const res = await getMultichainCoinGeckoPrice(chainDetails);
     if (!res) {
       return {
         price:       0,
-        tokenAmount: convertTokenToReadable(value, asset)
+        tokenAmount
       };
     }
     const tokenPrice: number = res[id].usd;
-    const tokenAmount = convertTokenToReadable(value, asset);
     return {
       price: parseInt((tokenPrice * tokenAmount * 100).toString(), 10) / 100,
       tokenAmount,
@@ -155,7 +231,7 @@ export const getTokenAndTotalPrice = async (asset: Chain, value: MultichainInter
   }
   return {
     price:       0,
-    tokenAmount: convertTokenToReadable(value, asset)
+    tokenAmount
   };
 };
 
@@ -167,31 +243,41 @@ export const shortenAddress = (address: string): string => {
 };
 
 export const multichainSignAndSend = async ({
-  domain,
-  asset,
-  to,
-  value,
+  signMultichainRequest,
   feeProperties
 }: {
-  domain: string;
-  asset: Chain;
-  to: string;
-  value: string;
+  signMultichainRequest: SendMultichainMessage;
   feeProperties: TransactionFeeProperties;
 }) => {
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const derivedPath = `,${asset},${domain}`;
+  const chainDetails = isEVMMultichainMessage(signMultichainRequest) ? {
+    chain:   signMultichainRequest.chain,
+    chainId: signMultichainRequest.chainId,
+  } : { chain: signMultichainRequest.chain };
+  const derivedPath = canonicalize(pickBy({
+    chain:  signMultichainRequest.chain,
+    domain: signMultichainRequest.domain,
+    meta:   signMultichainRequest.meta,
+  }, (v) => v !== undefined && v !== null));
+
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
-    ...CHAIN_CONFIG[asset],
+    ...CHAIN_CONFIG[getTokenSymbol(chainDetails)],
   };
-
-  if (isEVMChain(asset)) {
+  // chain is the slip044 chain id
+  if (chainDetails.chain === 60) {
+    const derivedAddress = await fetchDerivedEVMAddress(accountId, derivedPath, networkId, getMultiChainContract());
+    if (derivedAddress !== signMultichainRequest.from) {
+      return {
+        success:      false,
+        errorMessage: 'Derived address does not match the provided from address',
+      };
+    }
     return signAndSendEVMTransaction({
       transaction: {
-        to,
-        value,
+        to:                   signMultichainRequest.to,
+        value:                signMultichainRequest.value.toString(),
         derivedPath,
         gasLimit:             (feeProperties as EVMFeeProperties)?.gasLimit,
         maxFeePerGas:         (feeProperties as EVMFeeProperties)?.maxFeePerGas,
@@ -203,44 +289,78 @@ export const multichainSignAndSend = async ({
     });
   }
 
-  return signAndSendBTCTransaction({
-    transaction: {
-      to,
-      value,
+  if (chainDetails.chain === 0) {
+    const derivedAddress = await fetchDerivedBTCAddress(
+      accountId,
       derivedPath,
-      inputs:  (feeProperties as BTCFeeProperties)?.inputs,
-      outputs: (feeProperties as BTCFeeProperties)?.outputs,
-    },
-    nearAuthentication: { networkId, keypair, accountId },
-    fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
-    chainConfig
-  });
+      (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
+      networkId,
+      getMultiChainContract()
+    );
+
+    if (derivedAddress !== signMultichainRequest.from) {
+      return {
+        success:      false,
+        errorMessage: 'Derived address does not match the provided from address',
+      };
+    }
+
+    return signAndSendBTCTransaction({
+      transaction: {
+        to:                   signMultichainRequest.to,
+        value:                signMultichainRequest.value.toString(),
+        derivedPath,
+        inputs:  (feeProperties as BTCFeeProperties)?.inputs,
+        outputs: (feeProperties as BTCFeeProperties)?.outputs,
+      },
+      nearAuthentication: { networkId, keypair, accountId },
+      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+      chainConfig
+    });
+  }
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return {
+      success:      false,
+      errorMessage: 'Chain not supported',
+    };
+  }
 };
 
 export const multichainGetFeeProperties = async ({
-  asset,
+  chain,
   to,
   value,
-  from = null,
+  from
 }: {
-  asset: Chain;
+  chain: SLIP044ChainId;
   to: string;
   value: string;
-  from?: string;
+  from: string;
 }) => {
-  if (asset === 'BTC') {
+  // chain is the slip044 chain id
+  if (chain === 0) {
     const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, from, [{
       address: to,
       value:   Number(value)
     }]));
 
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
-  } if (isEVMChain(asset)) {
+  } if (chain === 60) {
     const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, {
       to,
       value
     });
     return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
-  return null;
+  try {
+    assertNever(chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
