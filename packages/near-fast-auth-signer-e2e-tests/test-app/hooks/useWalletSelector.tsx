@@ -13,7 +13,7 @@ export default () => {
           setupFastAuthWallet({
             relayerUrl:
               networkId === 'testnet'
-                ? 'http://near-relayer-testnet.api.pagoda.co/relay'
+                ? 'https://near-relayer-testnet.api.pagoda.co/relay'
                 : 'https://near-relayer-mainnet.api.pagoda.co/relay',
           })
         ],
