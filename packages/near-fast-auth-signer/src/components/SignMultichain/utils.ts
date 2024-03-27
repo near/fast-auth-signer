@@ -90,11 +90,13 @@ const SendMultichainMessageSchema = yup.lazy((value: { chain: SLIP044ChainId }) 
   // chain is the slip044 chain id
   if (value.chain === 60) {
     return SendEVMMultichainMessageSchema;
-  } if (value.chain === 0) {
+  }
+  if (value.chain === 0) {
     return SendBTCMultichainMessageSchema;
   }
-  assertNever(value.chain);
-  throw new Error(`Schema for chain ${value.chain} is not defined`);
+  assertNever(value.chain, `Schema for chain ${value.chain} is not defined`);
+  // unreachable
+  return null;
 });
 
 export const validateMessage = async (message: SendMultichainMessage): Promise<boolean
@@ -119,9 +121,16 @@ export const getTokenSymbol = (chainDetails: ChainDetails) => {
       11155111: 'ETH'
     }[Number(chainDetails.chainId)];
   }
-  return {
-    0: 'BTC',
-  }[chainDetails.chain];
+  if (chainDetails.chain === 0) {
+    return 'BTC';
+  }
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
 
 export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
@@ -139,9 +148,17 @@ export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
     return chainIdMap[evmChainId];
   }
 
-  return {
-    0: 'bitcoin',
-  }[chainDetails.chain];
+  if (chainDetails.chain === 0) {
+    return 'bitcoin';
+  }
+
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
 
 export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
@@ -155,9 +172,17 @@ export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
     }[Number(chainDetails.chainId)];
   }
 
-  return {
-    0: 'Bitcoin Network',
-  }[chainDetails.chain];
+  if (chainDetails.chain === 0) {
+    return 'Bitcoin Network';
+  }
+
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
 
 export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
@@ -172,7 +197,13 @@ const convertTokenToReadable = (value : SendMultichainMessage['value'], chain: S
   if (chain === 0) {
     return toBTC(Number(value));
   }
-  return Number(value);
+  try {
+    assertNever(chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return Number(value);
+  }
 };
 
 export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
@@ -258,33 +289,45 @@ export const multichainSignAndSend = async ({
     });
   }
 
-  const derivedAddress = await fetchDerivedBTCAddress(
-    accountId,
-    derivedPath,
-    (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
-    networkId,
-    getMultiChainContract()
-  );
+  if (chainDetails.chain === 0) {
+    const derivedAddress = await fetchDerivedBTCAddress(
+      accountId,
+      derivedPath,
+      (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
+      networkId,
+      getMultiChainContract()
+    );
 
-  if (derivedAddress !== signMultichainRequest.from) {
+    if (derivedAddress !== signMultichainRequest.from) {
+      return {
+        success:      false,
+        errorMessage: 'Derived address does not match the provided from address',
+      };
+    }
+
+    return signAndSendBTCTransaction({
+      transaction: {
+        to:                   signMultichainRequest.to,
+        value:                signMultichainRequest.value.toString(),
+        derivedPath,
+        inputs:  (feeProperties as BTCFeeProperties)?.inputs,
+        outputs: (feeProperties as BTCFeeProperties)?.outputs,
+      },
+      nearAuthentication: { networkId, keypair, accountId },
+      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+      chainConfig
+    });
+  }
+  try {
+    assertNever(chainDetails.chain);
+    // unreachable
+    return null;
+  } catch (e) {
     return {
       success:      false,
-      errorMessage: 'Derived address does not match the provided from address',
+      errorMessage: 'Chain not supported',
     };
   }
-
-  return signAndSendBTCTransaction({
-    transaction: {
-      to:                   signMultichainRequest.to,
-      value:                signMultichainRequest.value.toString(),
-      derivedPath,
-      inputs:  (feeProperties as BTCFeeProperties)?.inputs,
-      outputs: (feeProperties as BTCFeeProperties)?.outputs,
-    },
-    nearAuthentication: { networkId, keypair, accountId },
-    fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
-    chainConfig
-  });
 };
 
 export const multichainGetFeeProperties = async ({
@@ -313,5 +356,11 @@ export const multichainGetFeeProperties = async ({
     });
     return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
-  return null;
+  try {
+    assertNever(chain);
+    // unreachable
+    return null;
+  } catch (e) {
+    return null;
+  }
 };
