@@ -1,6 +1,11 @@
 import styled from 'styled-components';
 
-export const ModalSignWrapper = styled.div<{ hide?: string | undefined }>`
+interface ModalSignWrapperProps {
+  hide?: string | undefined;
+  warning?: boolean | undefined;
+}
+
+export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   ${(props) => props.hide && 'opacity: 0;'}
   width: 550px;
   margin: 0 auto;
@@ -46,6 +51,11 @@ export const ModalSignWrapper = styled.div<{ hide?: string | undefined }>`
       text-align: left;
       color: #1b1b1b;
       margin-bottom: 24px;
+      ${({ warning }) => warning && `
+        border: 1px solid var(--Red-Light-6, #FF988A);
+        background: var(--Red-Light-1, #FFF6F5);
+        color: var(--Red-Light-12, var(--Red-Light-12, #4B0B02));
+      `}
       svg {
         height: 13.5px;
         width: 13.5px;

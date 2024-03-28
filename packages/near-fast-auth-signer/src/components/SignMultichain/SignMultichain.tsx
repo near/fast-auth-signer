@@ -1,6 +1,7 @@
 import React, {
   useEffect, useState, useCallback, useRef, useMemo
 } from 'react';
+import styled from 'styled-components';
 
 import {
   Chain, EvmSendMultichainMessage, SendMultichainMessage
@@ -19,13 +20,14 @@ import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
+import WarningCircle from '../../Images/WarningCircle';
+import WarningTriangle from '../../Images/WarningTriangle';
 import { Button } from '../../lib/Button';
+import { isSafari } from '../../utils';
 import { StyledCheckbox } from '../Devices/Devices';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
-import styled from 'styled-components';
-import Warning from '../../Images/Warning';
 
 type IncomingMessageEvent = MessageEvent<{
   data: SendMultichainMessage;
@@ -59,17 +61,23 @@ type TransactionAmountDisplay = {
 const Container = styled.div`
   display: flex;
   font-size: 12px;
+  margin-top: 16px;
+
+  > button {
+    width: 100%;
+  }
 `;
 
 const WarningContainer = styled.div`
   display: flex;
-  border-radius: var(--2, 6px);
-  border: 1px solid var(--Colors-Red-8, #D21E24);
-  background: var(--Colors-Red-4, #481A20);
+  border-radius: 6px;
+  border: 1px solid var(--Red-Light-7, #FE8371);
+  background: var(--Red-Light-4, #FFC9C2);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
   align-items: center;
-  color: var(--Colors-Red-11, #FF8589);
-  padding: 15px;
-  font-size: 10px;
+  color: var(--Red-Light-12, var(--Red-Light-12, #4B0B02));
+  padding: 8px 12px;
+  font-size: 11px;
   > svg {
     margin-right: 12px;
   }
@@ -93,6 +101,7 @@ function SignMultichain() {
   );
   const [isUnsafe, setUnsafe] = useState(false);
   const [check, setCheck] = useState(false);
+  const isSafariBrowser = isSafari();
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -145,7 +154,8 @@ function SignMultichain() {
           }
 
           // if the domain is the same as the origin, hide the modal
-          if (transaction?.domain === event?.origin) {
+          if (transaction?.domain === event?.origin && !isSafariBrowser) {
+            // Check early to hide the UI quicker
             window.parent.postMessage({ hideModal: true }, '*');
           }
 
@@ -171,6 +181,9 @@ function SignMultichain() {
           setValid(true);
           setIsDomainKey(transaction?.domain === event?.origin);
           setMessage(transaction);
+          if (transaction?.domain === event?.origin && !isSafariBrowser) {
+            await signMultichainTransaction(transaction, feeProperties);
+          }
         } catch (e) {
           onError(e.message);
         } finally {
@@ -205,34 +218,37 @@ function SignMultichain() {
     }
   };
 
-  if (isDomainKey) {
+  if (isDomainKey && isSafariBrowser) {
     return (
       <ModalSignWrapper ref={signTransactionRef}>
-        <div className="modal-footer">
+        <div className="modal-top">
+          <h3>Passkey Required</h3>
+          <h5>{inFlight ? 'Follow the prompts to continue.' : 'Use your passkey to confirm the transaction'}</h5>
+        </div>
+        <Container>
           <Button
-            variant="affirmative"
+            variant="primary"
             size="large"
-            label={inFlight ? 'Loading...' : 'Approve'}
+            label={inFlight ? 'Loading...' : 'Continue'}
             onClick={onConfirm}
             disabled={
               inFlight || !isValid || typeof amountInfo.price !== 'number'
             }
           />
-        </div>
+        </Container>
         {error && <p className="info-text error">{error}</p>}
       </ModalSignWrapper>
     );
   }
 
   return (
-    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin ? 'true' : undefined}>
+    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin ? 'true' : undefined} warning={isUnsafe}>
       <div className="modal-top">
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>
-        <h5>{`${message?.domain || 'Unknown App'} has requested a transaction, review the request before confirming.`}</h5>
         <div className="transaction-details">
-          <InternetSvg />
-          {origin || 'Unknown App'}
+          { isUnsafe ? <WarningCircle /> : <InternetSvg />}
+          { message?.domain || origin || 'Unknown App'}
         </div>
       </div>
       <div className="modal-middle">
@@ -287,7 +303,7 @@ function SignMultichain() {
               </p>
             </Container>
             <WarningContainer>
-              <Warning />
+              <WarningTriangle />
               <span>
                 We don’t recognize this app, proceed with caution
               </span>
@@ -295,7 +311,7 @@ function SignMultichain() {
           </>
         )
       }
-      <div className="modal-footer">
+      <Container>
         <Button
           variant="affirmative"
           size="large"
@@ -303,7 +319,7 @@ function SignMultichain() {
           onClick={onConfirm}
           disabled={inFlight || !isValid || typeof amountInfo.price !== 'number' || (isUnsafe && !check)}
         />
-      </div>
+      </Container>
       {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
