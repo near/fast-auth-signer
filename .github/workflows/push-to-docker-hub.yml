@@ -36,7 +36,7 @@ jobs:
         name: Tag Docker image and push to Google Artifact Registry
         uses: docker/build-push-action@v5
         with:
-          file: "{{defaultContext}}:packages/near-fast-auth-signer/Dockerfile"
+          file: packages/near-fast-auth-signer/Dockerfile
           push: true
           tags: |
              nearprotocol/fast-auth-sdk-frontend:${{ env.sha_short }}
