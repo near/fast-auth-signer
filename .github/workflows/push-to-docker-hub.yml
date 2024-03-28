@@ -1,7 +1,6 @@
 name: Push to Docker Hub GitHub Action
 
-on:
-  workflow_call:
+on: [workflow_call, pull_request]
 
 permissions:
   id-token: write
@@ -37,6 +36,7 @@ jobs:
         name: Tag Docker image and push to Google Artifact Registry
         uses: docker/build-push-action@v5
         with:
+          context: .
           file: packages/near-fast-auth-signer/Dockerfile
           push: true
           tags: |
