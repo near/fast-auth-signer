@@ -1,6 +1,7 @@
 name: Push to Docker Hub GitHub Action
 
-on: [workflow_call, pull_request]
+on:
+  workflow_call:
 
 permissions:
   id-token: write
