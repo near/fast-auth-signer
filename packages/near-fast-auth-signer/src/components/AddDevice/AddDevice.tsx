@@ -269,19 +269,22 @@ function AddDevicePage() {
   }, [firebaseUser, navigate, searchParams]);
 
   const onSubmit = async (data: { email: string }) => {
-    recordEvent('click-login-continue');
     setIsProcessingAuth(true);
     try {
-      const authenticated = await getAuthState();
-      const isFirestoreReady = await checkFirestoreReady();
       const isPasskeySupported = await isPassKeyAvailable();
-      const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
-      const shouldUseCurrentUser = authenticated === true
-        && (isPasskeySupported || !firebaseAuthInvalid)
+      if (!isPasskeySupported) {
+        const authenticated = await getAuthState();
+        const isFirestoreReady = await checkFirestoreReady();
+        const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
+        const shouldUseCurrentUser = authenticated === true
+        && !firebaseAuthInvalid
         && isFirestoreReady;
-      if (shouldUseCurrentUser) {
-        await handleAuthCallback();
-      } else if (inIframe()) {
+        if (shouldUseCurrentUser) {
+          await handleAuthCallback();
+          return;
+        }
+      }
+      if (inIframe()) {
         window.parent.postMessage({
           type:   'method',
           method: 'query',
@@ -343,7 +346,14 @@ function AddDevicePage() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <AddDeviceForm ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(onSubmit)}>
+      <AddDeviceForm
+        ref={addDeviceFormRef}
+        inIframe={inIframe()}
+        onSubmit={(e) => {
+          recordEvent('click-login-continue');
+          return handleSubmit(onSubmit)(e);
+        }}
+      >
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
@@ -358,6 +368,14 @@ function AddDevicePage() {
           disabled={loading}
           dataTest={{
             input: 'add-device-email',
+          }}
+          onClick={async () => {
+            if (await isPassKeyAvailable()) {
+              const authenticated = await getAuthState();
+              if (authenticated === true) {
+                await handleAuthCallback();
+              }
+            }
           }}
           error={errors.email?.message}
         />
