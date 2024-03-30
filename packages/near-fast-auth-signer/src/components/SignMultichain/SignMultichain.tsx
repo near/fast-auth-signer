@@ -242,7 +242,7 @@ function SignMultichain() {
   }
 
   return (
-    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin ? 'true' : undefined} warning={isUnsafe}>
+    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin} warning={isUnsafe}>
       <div className="modal-top">
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>

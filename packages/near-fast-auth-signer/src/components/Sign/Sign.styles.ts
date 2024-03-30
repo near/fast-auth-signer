@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 interface ModalSignWrapperProps {
-  hide?: string | undefined;
+  hide?: boolean | undefined;
   warning?: boolean | undefined;
 }
 
