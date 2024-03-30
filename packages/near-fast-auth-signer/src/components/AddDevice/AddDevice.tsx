@@ -84,6 +84,7 @@ function AddDevicePage() {
   const defaultValues = {
     email: searchParams.get('email') ?? '',
   };
+  const [wasPassKeyPrompted, setWasPassKeyPrompted] = useState(false);
   const {
     register, handleSubmit, setValue, getValues, formState: { errors }
   } = useForm({
@@ -164,7 +165,7 @@ function AddDevicePage() {
       return;
     }
     const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
-    const existingDevice = isPasskeySupported
+    const existingDevice = isPasskeySupported && firebaseUser
       ? await window.firestoreController.getDeviceCollection(publicKeyFak)
       : null;
     const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
@@ -369,11 +370,15 @@ function AddDevicePage() {
           dataTest={{
             input: 'add-device-email',
           }}
-          onClick={async () => {
-            if (await isPassKeyAvailable()) {
+          onFocus={async () => {
+            if (!wasPassKeyPrompted && await isPassKeyAvailable()) {
+              setInFlight(true);
               const authenticated = await getAuthState();
+              setWasPassKeyPrompted(true);
               if (authenticated === true) {
                 await handleAuthCallback();
+              } else {
+                setInFlight(false);
               }
             }
           }}
