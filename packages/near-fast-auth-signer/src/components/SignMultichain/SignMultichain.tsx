@@ -20,8 +20,8 @@ import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
-import WarningCircle from '../../Images/WarningCircle';
-import WarningTriangle from '../../Images/WarningTriangle';
+import WarningCircleSVG from '../../Images/WarningCircle';
+import WarningTriangleSVG from '../../Images/WarningTriangle';
 import { Button } from '../../lib/Button';
 import { isSafari } from '../../utils';
 import { StyledCheckbox } from '../Devices/Devices';
@@ -247,7 +247,7 @@ function SignMultichain() {
         <ModalIconSvg />
         <h3>Approve Transaction?</h3>
         <div className="transaction-details">
-          { isUnsafe ? <WarningCircle /> : <InternetSvg />}
+          { isUnsafe ? <WarningCircleSVG /> : <InternetSvg />}
           { message?.domain || origin || 'Unknown App'}
         </div>
       </div>
@@ -303,7 +303,7 @@ function SignMultichain() {
               </p>
             </Container>
             <WarningContainer>
-              <WarningTriangle />
+              <WarningTriangleSVG />
               <span>
                 We don’t recognize this app, proceed with caution
               </span>
