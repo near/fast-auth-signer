@@ -105,8 +105,6 @@ function AddDevicePage() {
 
     // if different user is logged in, sign out
     await firebaseAuth.signOut();
-    // once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-    window.localStorage.removeItem('webauthn_username');
 
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
@@ -325,7 +323,7 @@ function AddDevicePage() {
         try {
           const isPasskeySupported = await isPassKeyAvailable();
           if (isPasskeySupported) {
-            setValue('email', safeGetLocalStorage('webauthn_username') ?? defaultValues.email);
+            setValue('email', defaultValues.email);
           }
         } catch (e) {
           setValue('email', defaultValues.email);

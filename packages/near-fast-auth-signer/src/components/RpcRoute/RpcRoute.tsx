@@ -10,23 +10,20 @@ function RpcRoute() {
         switch (e.data.params.request_type) {
           case 'get_pre_biometric_auth_account':
             try {
-              let username = window.localStorage.getItem('webauthn_username');
-              if (!username) {
-                username = await checkFirestoreReady().then(async (isReady) => {
-                  if (isReady) {
-                    const oidcToken = await firebaseAuth.currentUser.getIdToken();
-                    if (
-                      window.fastAuthController.getLocalStoreKey(
-                        `oidc_keypair_${oidcToken}`
-                      )
-                    ) {
-                      return firebaseAuth.currentUser.email;
-                    }
-                    return null;
+              const username = await checkFirestoreReady().then(async (isReady) => {
+                if (isReady) {
+                  const oidcToken = await firebaseAuth.currentUser.getIdToken();
+                  if (
+                    window.fastAuthController.getLocalStoreKey(
+                      `oidc_keypair_${oidcToken}`
+                    )
+                  ) {
+                    return firebaseAuth.currentUser.email;
                   }
                   return null;
-                });
-              }
+                }
+                return null;
+              });
               window.parent.postMessage({
                 type:   'response',
                 id:     e.data.id,

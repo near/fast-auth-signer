@@ -65,11 +65,6 @@ const onCreateAccount = async ({
 
   setStatusMessage('Account created successfully!');
 
-  // TODO: Check if account ID matches the one from email
-  if (publicKeyFak) {
-    window.localStorage.setItem('webauthn_username', email);
-  }
-
   setStatusMessage('Redirecting to app...');
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -147,10 +142,6 @@ export const onSignIn = async ({
         });
 
         setStatusMessage('Account recovered successfully!');
-
-        if (publicKeyFak) {
-          window.localStorage.setItem('webauthn_username', email);
-        }
 
         setStatusMessage('Redirecting to app...');
 
