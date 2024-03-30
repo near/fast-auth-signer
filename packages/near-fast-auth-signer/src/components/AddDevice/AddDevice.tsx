@@ -21,7 +21,7 @@ import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
 } from '../../utils';
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';

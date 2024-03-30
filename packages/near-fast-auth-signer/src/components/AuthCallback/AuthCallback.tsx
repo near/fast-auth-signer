@@ -37,7 +37,6 @@ const onCreateAccount = async ({
   methodNames,
   success_url,
   setStatusMessage,
-  email,
   gateway,
 }) => {
   const res = await createNEARAccount({
@@ -90,7 +89,6 @@ export const onSignIn = async ({
   methodNames,
   setStatusMessage,
   success_url,
-  email,
   searchParams,
   navigate,
   gateway,
