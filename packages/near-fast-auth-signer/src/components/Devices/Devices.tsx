@@ -184,7 +184,6 @@ function Devices() {
             methodNames,
             setStatusMessage: () => null,
             success_url,
-            email,
             searchParams,
             navigate,
             gateway:          success_url,

@@ -251,7 +251,6 @@ function AuthCallbackPage() {
             methodNames,
             success_url,
             setStatusMessage,
-            email,
             navigate,
             searchParams,
             gateway:      success_url,
