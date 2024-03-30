@@ -172,7 +172,6 @@ function Devices() {
         if (contract_id && public_key_lak) {
           setIsAddingKey(true);
 
-          const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
           const oidcToken = window.firestoreController.getUserOidcToken();
