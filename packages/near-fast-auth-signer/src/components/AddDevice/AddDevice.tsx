@@ -371,7 +371,11 @@ function AddDevicePage() {
             input: 'add-device-email',
           }}
           onFocus={async () => {
-            if (!wasPassKeyPrompted && await isPassKeyAvailable()) {
+            if (
+              !wasPassKeyPrompted
+              && decodeIfTruthy(searchParams.get('forceNoPasskey')) !== true
+              && (await isPassKeyAvailable())
+            ) {
               setInFlight(true);
               const authenticated = await getAuthState();
               setWasPassKeyPrompted(true);

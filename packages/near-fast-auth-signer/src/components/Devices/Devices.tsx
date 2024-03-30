@@ -142,6 +142,7 @@ function Devices() {
   }, []);
 
   const redirectToSignin = () => {
+    searchParams.append('forceNoPasskey', 'true');
     if (inIframe()) {
       window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
     } else {
