@@ -21,14 +21,39 @@ import FirestoreController from '../../lib/firestoreController';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, safeGetLocalStorage
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
 } from '../../utils';
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
 import { getMultiChainContract } from '../SignMultichain/utils';
+
+const ErrorContainer = styled.div`
+.stats-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    flex: 1;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &.error {
+    color: #a81500;
+  }
+
+  &.success {
+    color: #197650;
+  }
+}
+`;
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -84,6 +109,8 @@ function AddDevicePage() {
   const defaultValues = {
     email: searchParams.get('email') ?? '',
   };
+  const [wasPassKeyPrompted, setWasPassKeyPrompted] = useState(false);
+  const [passkeyAuthError, setPasskeyAuthError] = useState(false);
   const {
     register, handleSubmit, setValue, getValues, formState: { errors }
   } = useForm({
@@ -104,8 +131,6 @@ function AddDevicePage() {
 
     // if different user is logged in, sign out
     await firebaseAuth.signOut();
-    // once it has email but not authenticated, it means existing passkey is not valid anymore, therefore remove webauthn_username and try to create a new passkey
-    window.localStorage.removeItem('webauthn_username');
 
     const success_url = searchParams.get('success_url');
     const failure_url = searchParams.get('failure_url');
@@ -164,7 +189,7 @@ function AddDevicePage() {
       return;
     }
     const publicKeyFak = isPasskeySupported ? await window.fastAuthController.getPublicKey() : '';
-    const existingDevice = isPasskeySupported
+    const existingDevice = isPasskeySupported && firebaseUser
       ? await window.firestoreController.getDeviceCollection(publicKeyFak)
       : null;
     const existingDeviceLakKey = existingDevice?.publicKeys?.filter((key) => key !== publicKeyFak)[0];
@@ -269,19 +294,22 @@ function AddDevicePage() {
   }, [firebaseUser, navigate, searchParams]);
 
   const onSubmit = async (data: { email: string }) => {
-    recordEvent('click-login-continue');
     setIsProcessingAuth(true);
     try {
-      const authenticated = await getAuthState();
-      const isFirestoreReady = await checkFirestoreReady();
       const isPasskeySupported = await isPassKeyAvailable();
-      const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
-      const shouldUseCurrentUser = authenticated === true
-        && (isPasskeySupported || !firebaseAuthInvalid)
+      if (!isPasskeySupported) {
+        const authenticated = await getAuthState();
+        const isFirestoreReady = await checkFirestoreReady();
+        const firebaseAuthInvalid = authenticated === true && !isPasskeySupported && firebaseUser?.email !== data.email;
+        const shouldUseCurrentUser = authenticated === true
+        && !firebaseAuthInvalid
         && isFirestoreReady;
-      if (shouldUseCurrentUser) {
-        await handleAuthCallback();
-      } else if (inIframe()) {
+        if (shouldUseCurrentUser) {
+          await handleAuthCallback();
+          return;
+        }
+      }
+      if (inIframe()) {
         window.parent.postMessage({
           type:   'method',
           method: 'query',
@@ -321,7 +349,7 @@ function AddDevicePage() {
         try {
           const isPasskeySupported = await isPassKeyAvailable();
           if (isPasskeySupported) {
-            setValue('email', safeGetLocalStorage('webauthn_username') ?? defaultValues.email);
+            setValue('email', defaultValues.email);
           }
         } catch (e) {
           setValue('email', defaultValues.email);
@@ -343,7 +371,14 @@ function AddDevicePage() {
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <AddDeviceForm ref={addDeviceFormRef} inIframe={inIframe()} onSubmit={handleSubmit(onSubmit)}>
+      <AddDeviceForm
+        ref={addDeviceFormRef}
+        inIframe={inIframe()}
+        onSubmit={(e) => {
+          recordEvent('click-login-continue');
+          return handleSubmit(onSubmit)(e);
+        }}
+      >
         <header>
           <h1>Sign In</h1>
           <p className="desc">Use this account to sign in everywhere on NEAR, no password required.</p>
@@ -358,6 +393,23 @@ function AddDevicePage() {
           disabled={loading}
           dataTest={{
             input: 'add-device-email',
+          }}
+          onFocus={async () => {
+            if (
+              !wasPassKeyPrompted
+              && decodeIfTruthy(searchParams.get('forceNoPasskey')) !== true
+              && (await isPassKeyAvailable())
+            ) {
+              setInFlight(true);
+              const authenticated = await getAuthState();
+              setWasPassKeyPrompted(true);
+              if (authenticated === true) {
+                await handleAuthCallback();
+              } else {
+                setPasskeyAuthError(true);
+                setInFlight(false);
+              }
+            }
           }}
           error={errors.email?.message}
         />
@@ -389,7 +441,14 @@ function AddDevicePage() {
           iconLeft="bi bi-wallet"
           onClick={handleConnectWallet}
         />
-
+        {!getValues().email && passkeyAuthError && !errors.email?.message ? (
+          <ErrorContainer>
+            <div className="stats-message error">
+              <ErrorSvg />
+              <span>Failed to authenticate, please retry with email</span>
+            </div>
+          </ErrorContainer>
+        ) : null}
       </AddDeviceForm>
     </StyledContainer>
   );

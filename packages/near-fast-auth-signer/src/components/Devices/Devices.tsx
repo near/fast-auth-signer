@@ -142,7 +142,16 @@ function Devices() {
   }, []);
 
   const redirectToSignin = () => {
+    searchParams.append('forceNoPasskey', 'true');
     if (inIframe()) {
+      window.parent.postMessage({
+        type:   'method',
+        method: 'query',
+        id:     1234,
+        params: {
+          request_type: 'complete_authentication'
+        }
+      }, '*');
       window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/login?${searchParams.toString()}`, '_parent');
     } else {
       navigate({
@@ -171,7 +180,6 @@ function Devices() {
         if (contract_id && public_key_lak) {
           setIsAddingKey(true);
 
-          const email = window.localStorage.getItem('emailForSignIn');
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
           const oidcToken = window.firestoreController.getUserOidcToken();
@@ -183,7 +191,6 @@ function Devices() {
             methodNames,
             setStatusMessage: () => null,
             success_url,
-            email,
             searchParams,
             navigate,
             gateway:          success_url,

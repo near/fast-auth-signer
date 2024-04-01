@@ -116,7 +116,6 @@ class FastAuthController {
 
   async clearUser() {
     await this.keyStore.clear();
-    window.localStorage.removeItem('webauthn_username');
   }
 
   async isSignedIn() {
