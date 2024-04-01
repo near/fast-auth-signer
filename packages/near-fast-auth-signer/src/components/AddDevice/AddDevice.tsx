@@ -26,9 +26,34 @@ import {
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
 import { getMultiChainContract } from '../SignMultichain/utils';
+
+const ErrorContainer = styled.div`
+.stats-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    flex: 1;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &.error {
+    color: #a81500;
+  }
+
+  &.success {
+    color: #197650;
+  }
+}
+`;
 
 export const handleCreateAccount = async ({
   accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
@@ -85,6 +110,7 @@ function AddDevicePage() {
     email: searchParams.get('email') ?? '',
   };
   const [wasPassKeyPrompted, setWasPassKeyPrompted] = useState(false);
+  const [passkeyAuthError, setPasskeyAuthError] = useState(false);
   const {
     register, handleSubmit, setValue, getValues, formState: { errors }
   } = useForm({
@@ -343,6 +369,8 @@ function AddDevicePage() {
     }, '*');
   };
 
+  console.log(getValues().email, '<<< email');
+
   return (
     <StyledContainer inIframe={inIframe()}>
       <AddDeviceForm
@@ -380,6 +408,7 @@ function AddDevicePage() {
               if (authenticated === true) {
                 await handleAuthCallback();
               } else {
+                setPasskeyAuthError(true);
                 setInFlight(false);
               }
             }
@@ -414,7 +443,14 @@ function AddDevicePage() {
           iconLeft="bi bi-wallet"
           onClick={handleConnectWallet}
         />
-
+        {!getValues().email && passkeyAuthError && !errors.email?.message ? (
+          <ErrorContainer>
+            <div className="stats-message error">
+              <ErrorSvg />
+              <span>Failed to authenticate, please retry with email</span>
+            </div>
+          </ErrorContainer>
+        ) : null}
       </AddDeviceForm>
     </StyledContainer>
   );
