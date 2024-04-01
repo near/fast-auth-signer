@@ -369,8 +369,6 @@ function AddDevicePage() {
     }, '*');
   };
 
-  console.log(getValues().email, '<<< email');
-
   return (
     <StyledContainer inIframe={inIframe()}>
       <AddDeviceForm
