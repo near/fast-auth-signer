@@ -1,4 +1,4 @@
-import { Account, Connection } from '@near-js/accounts';
+import { Account, AccountBalance, Connection } from '@near-js/accounts';
 import { createKey, getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import {
   KeyPair, KeyPairEd25519, KeyType, PublicKey
@@ -6,7 +6,9 @@ import {
 import { InMemoryKeyStore } from '@near-js/keystores';
 import {
   SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate,
-  signTransaction
+  signTransaction,
+  SignedTransaction,
+  Action
 } from '@near-js/transactions';
 import { baseDecode } from '@near-js/utils';
 import { captureException } from '@sentry/react';
@@ -207,14 +209,15 @@ class FastAuthController {
     return signedDelegate;
   }
 
-  async getBalance() {
+  async getBalance(): Promise<AccountBalance> {
     const account = new Account(this.connection, this.accountId);
     return account.getAccountBalance();
   }
 
-  async signTransaction({ receiverId, actions, signerId }) {
+  async signTransaction({ receiverId, actions, signerId }:
+    { receiverId: string; actions: Action[]; signerId: string }):
+   Promise<[Uint8Array, SignedTransaction]> {
     this.assertValidSigner(signerId);
-    let signedTransaction;
     const account = new Account(this.connection, this.accountId);
 
     const accessKeyInfo = await account.findAccessKey(receiverId, actions);
@@ -234,7 +237,7 @@ class FastAuthController {
     const nonce = accessKey.nonce.add(new BN(1));
 
     if (isPassKeyAvailable) {
-      signedTransaction = await signTransaction(
+      return signTransaction(
         receiverId,
         nonce,
         actions,
@@ -243,22 +246,19 @@ class FastAuthController {
         this.accountId,
         this.connection.networkId
       );
-    } else {
-      const oidcToken = await firebaseAuth.currentUser.getIdToken();
-      const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
-      const inMemorySigner = await InMemorySigner.fromKeyPair(this.connection.networkId, this.accountId, localKey);
-      signedTransaction = await signTransaction(
-        receiverId,
-        nonce,
-        actions,
-        baseDecode(blockHash),
-        inMemorySigner,
-        this.accountId,
-        this.connection.networkId
-      );
     }
-
-    return signedTransaction;
+    const oidcToken = await firebaseAuth.currentUser.getIdToken();
+    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+    const inMemorySigner = await InMemorySigner.fromKeyPair(this.connection.networkId, this.accountId, localKey);
+    return signTransaction(
+      receiverId,
+      nonce,
+      actions,
+      baseDecode(blockHash),
+      inMemorySigner,
+      this.accountId,
+      this.connection.networkId
+    );
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {

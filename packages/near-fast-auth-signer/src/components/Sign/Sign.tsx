@@ -189,15 +189,16 @@ function Sign() {
     }
     const signedTransactions = [];
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+    // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       let base64 = '';
       try {
         // eslint-disable-next-line no-await-in-loop
         if (parseFloat((await window.fastAuthController.getBalance()).available) > 0) {
           // eslint-disable-next-line no-await-in-loop
-          const signed = await window.fastAuthController.signTransaction(
+          const signed = (await window.fastAuthController.signTransaction(
             transactionDetails.transactions[i]
-          );
+          ))[1];
           base64 = Buffer.from(encodeTransaction(signed)).toString(
             'base64'
           );
