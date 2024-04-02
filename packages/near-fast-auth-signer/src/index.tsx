@@ -8,6 +8,7 @@ import App from './App';
 import lang_de from './translations/de.json';
 import lang_en from './translations/en.json';
 import { networkId, network } from './utils/config';
+import environment from './utils/environment';
 
 i18next.init({
   interpolation: { escapeValue: false }, // React already does escaping
@@ -26,7 +27,7 @@ if (network.sentryDsn) {
   Sentry.init({
     environment:           networkId,
     dsn:                   network.sentryDsn,
-    release:               process.env.GIT_COMMIT_HASH,
+    release:               environment.GIT_COMMIT_HASH,
     integrations: [
       new Sentry.BrowserTracing({
         // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled

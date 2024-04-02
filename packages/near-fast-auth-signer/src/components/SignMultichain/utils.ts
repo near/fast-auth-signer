@@ -17,6 +17,7 @@ import {
 } from './types';
 import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
+import environment from '../../utils/environment';
 import {
   fetchBTCFeeProperties,
   fetchDerivedBTCAddress,
@@ -84,7 +85,7 @@ const CHAIN_CONFIG: ChainMap = {
   },
 };
 
-export const getMultiChainContract = () => (process.env.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
+export const getMultiChainContract = () => (environment.NETWORK_ID === 'mainnet' ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
 const SendMultichainMessageSchema = yup.lazy((value: { chain: SLIP044ChainId }) => {
   // chain is the slip044 chain id
