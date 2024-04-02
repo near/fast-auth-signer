@@ -22,6 +22,7 @@ import FirestoreController from './lib/firestoreController';
 import GlobalStyle from './styles/index';
 import { initAnalytics } from './utils/analytics';
 import { basePath, networkId } from './utils/config';
+import environment from './utils/environment';
 
 (window as any).fastAuthController = new FastAuthController({
   accountId: '',
@@ -37,7 +38,7 @@ const log = faLog.extend('App');
 const log2 = log.extend('watwat');
 
 // @ts-ignore
-console.log('process.env.debug', process.env.DEBUG);
+console.log('process.env.debug', environment.DEBUG);
 
 // @ts-ignore
 console.log('faLog', faLog.enabled);
@@ -68,7 +69,7 @@ export default function App() {
             <Route path="add-device" element={<AddDevice />} />
             <Route path="sign" element={<Sign />} />
             {/* TODO: This isn't available on mainnet, and isn't production ready, clean the code for production release */}
-            {process.env.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
+            {environment.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
             <Route path="devices" element={<Devices />} />

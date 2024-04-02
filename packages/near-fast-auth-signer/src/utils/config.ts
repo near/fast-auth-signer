@@ -1,5 +1,6 @@
 import { KeyType, PublicKey } from '@near-js/crypto';
 
+import environment from './environment';
 import type { Network, NetworkId } from './types';
 
 export const networks: Record<NetworkId, Network> = {
@@ -9,9 +10,9 @@ export const networks: Record<NetworkId, Network> = {
     nodeUrl:       'https://rpc.mainnet.near.org',
     walletUrl:     'https://wallet.near.org',
     helperUrl:     'https://helper.mainnet.near.org',
-    relayerUrl:    process.env.RELAYER_URL,
+    relayerUrl:    environment.RELAYER_URL,
     explorerUrl:   'https://explorer.near.org',
-    sentryDsn:       process.env.SENTRY_DSN,
+    sentryDsn:       environment.SENTRY_DSN,
     fastAuth:      {
       mpcRecoveryUrl:  'https://near-mpc-recovery-mainnet.api.pagoda.co',
       authHelperUrl:   'https://api.kitwallet.app',
@@ -54,13 +55,13 @@ export const networks: Record<NetworkId, Network> = {
         ])
       }),
       firebase:        {
-        apiKey:            process.env.FIREBASE_API_KEY,
-        authDomain:        process.env.FIREBASE_AUTH_DOMAIN,
-        projectId:         process.env.FIREBASE_PROJECT_ID,
-        storageBucket:     process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId:             process.env.FIREBASE_APP_ID,
-        measurementId:     process.env.FIREBASE_MEASUREMENT_ID,
+        apiKey:            environment.FIREBASE_API_KEY,
+        authDomain:        environment.FIREBASE_AUTH_DOMAIN,
+        projectId:         environment.FIREBASE_PROJECT_ID,
+        storageBucket:     environment.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: environment.FIREBASE_MESSAGING_SENDER_ID,
+        appId:             environment.FIREBASE_APP_ID,
+        measurementId:     environment.FIREBASE_MEASUREMENT_ID,
       },
     },
   },
@@ -70,9 +71,9 @@ export const networks: Record<NetworkId, Network> = {
     nodeUrl:       'https://rpc.testnet.near.org',
     walletUrl:     'https://wallet.testnet.near.org',
     helperUrl:     'https://helper.testnet.near.org',
-    relayerUrl:    process.env.RELAYER_URL_TESTNET,
+    relayerUrl:    environment.RELAYER_URL_TESTNET,
     explorerUrl:    'https://explorer.testnet.near.org',
-    sentryDsn:       process.env.SENTRY_DSN_TESTNET,
+    sentryDsn:       environment.SENTRY_DSN_TESTNET,
     fastAuth:      {
       mpcRecoveryUrl:    'https://mpc-recovery-leader-testnet.api.pagoda.co',
       authHelperUrl:   'https://testnet-api.kitwallet.app',
@@ -115,13 +116,13 @@ export const networks: Record<NetworkId, Network> = {
         ])
       }),
       firebase:        {
-        apiKey:            process.env.FIREBASE_API_KEY_TESTNET,
-        authDomain:        process.env.FIREBASE_AUTH_DOMAIN_TESTNET,
-        projectId:         process.env.FIREBASE_PROJECT_ID_TESTNET,
-        storageBucket:     process.env.FIREBASE_STORAGE_BUCKET_TESTNET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID_TESTNET,
-        appId:             process.env.FIREBASE_APP_ID_TESTNET,
-        measurementId:     process.env.FIREBASE_MEASUREMENT_ID_TESTNET,
+        apiKey:            environment.FIREBASE_API_KEY_TESTNET,
+        authDomain:        environment.FIREBASE_AUTH_DOMAIN_TESTNET,
+        projectId:         environment.FIREBASE_PROJECT_ID_TESTNET,
+        storageBucket:     environment.FIREBASE_STORAGE_BUCKET_TESTNET,
+        messagingSenderId: environment.FIREBASE_MESSAGING_SENDER_ID_TESTNET,
+        appId:             environment.FIREBASE_APP_ID_TESTNET,
+        measurementId:     environment.FIREBASE_MEASUREMENT_ID_TESTNET,
       },
     },
   },
@@ -135,6 +136,6 @@ export const networks: Record<NetworkId, Network> = {
   // },
 };
 
-export const networkId: NetworkId = (process.env.NETWORK_ID as NetworkId);
+export const networkId: NetworkId = (environment.NETWORK_ID as NetworkId);
 export const network = networks[networkId];
-export const basePath = process.env.REACT_APP_BASE_PATH;
+export const basePath = environment.REACT_APP_BASE_PATH;

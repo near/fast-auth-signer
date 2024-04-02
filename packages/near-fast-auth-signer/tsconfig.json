@@ -12,5 +12,5 @@
     "sourceMap": true
   },
   "exclude": ["node_modules", "dist"],
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "config.js.template"]
 }
