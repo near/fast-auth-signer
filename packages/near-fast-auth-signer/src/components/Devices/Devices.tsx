@@ -58,7 +58,7 @@ const Description = styled.p<{bold?: boolean}>`
   ${(props) => props.bold && 'font-weight: bold;'}
 `;
 
-const StyledCheckbox = styled.input`
+export const StyledCheckbox = styled.input`
   width: 20px;
   height: 20px;
   background-color: initial;

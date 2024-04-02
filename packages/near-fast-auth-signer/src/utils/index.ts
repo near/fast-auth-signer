@@ -86,3 +86,6 @@ export const withTimeout = async (promise, timeoutMs) => {
   // Race the input promise against the timeout
   return Promise.race([promise, timeoutPromise]);
 };
+
+export const isSafari = () => /^((?!chrome|android).)*safari/i
+  .test(navigator.userAgent);
