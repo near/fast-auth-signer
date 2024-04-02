@@ -1,4 +1,4 @@
-import { encodeSignedDelegate } from '@near-js/transactions';
+import { encodeSignedDelegate, encodeTransaction } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import React, {
@@ -190,14 +190,27 @@ function Sign() {
     const signedTransactions = [];
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
+      let base64 = '';
       try {
         // eslint-disable-next-line no-await-in-loop
-        const signed = await window.fastAuthController.signDelegateAction(
-          transactionDetails.transactions[i]
-        );
-        const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
-          'base64'
-        );
+        if (parseFloat((await window.fastAuthController.getBalance()).available) > 0) {
+          // eslint-disable-next-line no-await-in-loop
+          const signed = await window.fastAuthController.signTransaction(
+            transactionDetails.transactions[i]
+          );
+          base64 = Buffer.from(encodeTransaction(signed)).toString(
+            'base64'
+          );
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          const signed = await window.fastAuthController.signDelegateAction(
+            transactionDetails.transactions[i]
+          );
+          base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
+            'base64'
+          );
+        }
+
         signedTransactions.push(base64);
       } catch (err) {
         if (inIframe()) {

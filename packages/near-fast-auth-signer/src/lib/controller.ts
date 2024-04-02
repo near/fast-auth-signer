@@ -1,17 +1,20 @@
 import { Account, Connection } from '@near-js/accounts';
-import { createKey, getKeys } from '@near-js/biometric-ed25519';
+import { createKey, getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import {
   KeyPair, KeyPairEd25519, KeyType, PublicKey
 } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
 import {
-  SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate
+  SCHEMA, actionCreators, encodeSignedDelegate, buildDelegateAction, Signature, SignedDelegate,
+  signTransaction
 } from '@near-js/transactions';
+import { baseDecode } from '@near-js/utils';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
-import { keyStores } from 'near-api-js';
+import { InMemorySigner, keyStores } from 'near-api-js';
+import { TypedError } from 'near-api-js/lib/utils/errors';
 
 import networkParams from './networkParams';
 import { fetchAccountIds } from '../api';
@@ -187,7 +190,6 @@ class FastAuthController {
       });
     } catch {
       // fallback, non webAuthN supported browser
-      // @ts-ignore
       const oidcToken = await firebaseAuth.currentUser.getIdToken();
       const recoveryPK = await this.getUserCredential(oidcToken);
       // make sure to handle failure, (eg token expired) if fail, redirect to failure_url
@@ -203,6 +205,60 @@ class FastAuthController {
       });
     }
     return signedDelegate;
+  }
+
+  async getBalance() {
+    const account = new Account(this.connection, this.accountId);
+    return account.getAccountBalance();
+  }
+
+  async signTransaction({ receiverId, actions, signerId }) {
+    this.assertValidSigner(signerId);
+    let signedTransaction;
+    const account = new Account(this.connection, this.accountId);
+
+    const accessKeyInfo = await account.findAccessKey(receiverId, actions);
+    if (!accessKeyInfo) {
+      throw new TypedError(
+        `Can not sign transactions for account ${this.accountId} on network ${this.connection.networkId}, no matching key pair exists for this account`,
+        'KeyNotFound'
+      );
+    }
+    const { accessKey } = accessKeyInfo;
+
+    const block = await this.connection.provider.block({
+      finality: 'final',
+    });
+    const blockHash = block.header.hash;
+
+    const nonce = accessKey.nonce.add(new BN(1));
+
+    if (isPassKeyAvailable) {
+      signedTransaction = await signTransaction(
+        receiverId,
+        nonce,
+        actions,
+        baseDecode(blockHash),
+        this.connection.signer,
+        this.accountId,
+        this.connection.networkId
+      );
+    } else {
+      const oidcToken = await firebaseAuth.currentUser.getIdToken();
+      const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
+      const inMemorySigner = await InMemorySigner.fromKeyPair(this.connection.networkId, this.accountId, localKey);
+      signedTransaction = await signTransaction(
+        receiverId,
+        nonce,
+        actions,
+        baseDecode(blockHash),
+        inMemorySigner,
+        this.accountId,
+        this.connection.networkId
+      );
+    }
+
+    return signedTransaction;
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {
@@ -227,10 +283,6 @@ class FastAuthController {
         addKey(PublicKey.from(publicKey), functionCallAccessKey(contractId, methodNames || [], allowance))
       ]
     });
-  }
-
-  async signTransaction(params) {
-    return this.signDelegateAction(params);
   }
 
   async getAllAccessKeysExceptRecoveryKey(odicToken: string): Promise<string[]> {
