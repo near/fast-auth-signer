@@ -247,6 +247,7 @@ class FastAuthController {
         this.connection.networkId
       );
     }
+
     const oidcToken = await firebaseAuth.currentUser.getIdToken();
     const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
     const inMemorySigner = await InMemorySigner.fromKeyPair(this.connection.networkId, this.accountId, localKey);
