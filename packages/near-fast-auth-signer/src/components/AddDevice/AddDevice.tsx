@@ -107,7 +107,7 @@ function AddDevicePage() {
   const [isProcessingAuth, setIsProcessingAuth] = useState(false);
   const loading = isProcessingAuth || firebaseUserLoading || inFlight;
   const defaultValues = {
-    email: decodeURIComponent(searchParams.get('email')) ?? '',
+    email: decodeURIComponent(searchParams.get('email') ?? ''),
   };
   const [wasPassKeyPrompted, setWasPassKeyPrompted] = useState(false);
   const [passkeyAuthError, setPasskeyAuthError] = useState(false);

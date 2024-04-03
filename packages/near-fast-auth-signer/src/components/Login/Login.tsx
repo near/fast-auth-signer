@@ -46,7 +46,7 @@ function Login() {
     mode:          'all',
     resolver:      yupResolver(schema),
     defaultValues: {
-      email: currentSearchParams.get('email') ?? '',
+      email: decodeURIComponent(currentSearchParams.get('email') ?? ''),
     }
   });
 
