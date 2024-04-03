@@ -66,6 +66,11 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
+enum SignMethod {
+  SIGN_DELEGATE = 'SIGN_DELEGATE',
+  SIGN_TRANSACTION = 'SIGN_TRANSACTION',
+}
+
 export const calculateGasLimit = (actions) => actions
   .filter((a) => Object.keys(a)[0] === 'functionCall')
   .map((a) => a.functionCall.gas)
@@ -77,7 +82,7 @@ function Sign() {
   // Send form height to modal if in iframe
   useIframeDialogConfig({
     element: signTransactionRef.current,
-    onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
+    onClose: () => window.parent.postMessage({ signedTransactions: '', signedDelegates: '', error:  'User cancelled action' }, '*')
   });
   const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const [inFlight, setInFlight] = useState(false);
@@ -88,6 +93,12 @@ function Sign() {
     const url = new URL(searchParams.get('success_url') || searchParams.get('failure_url'));
     return url.origin;
   }, [searchParams]);
+
+  const signMethodParam = searchParams.get('sign_method');
+  const signMethod = signMethodParam in SignMethod
+    ? SignMethod[signMethodParam as keyof typeof SignMethod]
+    : SignMethod.SIGN_DELEGATE;
+
   const [transactionDetails, setTransactionDetails] =    useState<TransactionDetails>({
     signerId:    '',
     receiverId:  '',
@@ -132,7 +143,9 @@ function Sign() {
       });
     } catch (err) {
       if (inIframe()) {
-        window.parent.postMessage({ signedDelegates: '', error: err.message, code: err.code }, '*');
+        window.parent.postMessage({
+          signedTransactions: '', signedDelegates: '', error: err.message, code: err.code
+        }, '*');
         setError(err.message);
       } else {
         const failure_url = isUrlNotJavascriptProtocol(searchParams.get('failure_url')) && searchParams.get('failure_url');
@@ -183,7 +196,7 @@ function Sign() {
     if (isUserAuthenticated !== true) {
       const errorMessage = 'You are not authenticated or there has been an indexer failure';
       setError(errorMessage);
-      window.parent.postMessage({ signedDelegates: '', signedTransactions: '', error: errorMessage }, '*');
+      window.parent.postMessage({ signedTransactions: '', signedDelegates: '', error: errorMessage }, '*');
       setInFlight(false);
       return;
     }
@@ -193,8 +206,7 @@ function Sign() {
     // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       try {
-        // eslint-disable-next-line no-await-in-loop
-        if (parseFloat((await window.fastAuthController.getBalance()).available) > 0) {
+        if (signMethod === SignMethod.SIGN_TRANSACTION) {
           // eslint-disable-next-line no-await-in-loop
           const signed = (await window.fastAuthController.signTransaction(
             transactionDetails.transactions[i]
@@ -203,13 +215,14 @@ function Sign() {
             'base64'
           );
           signedTransactions.push(base64);
-        } else {
+        } else if (signMethod === SignMethod.SIGN_DELEGATE) {
           // eslint-disable-next-line no-await-in-loop
           const signed = await window.fastAuthController.signDelegateAction(
             transactionDetails.transactions[i]
           );
           const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
             'base64'
+
           );
           signedDelegates.push(base64);
         }
@@ -217,7 +230,7 @@ function Sign() {
         if (inIframe()) {
           setError(`An error occurred: ${err.message}`);
           setInFlight(false);
-          window.parent.postMessage({ signedDelegates: '', signedTransactions: '', error: err.message }, '*');
+          window.parent.postMessage({ signedTransactions: '', signedDelegates: '', error: err.message }, '*');
         } else {
           const failure_url = searchParams.get('failure_url');
           redirectWithError({ success_url, failure_url, error: err });
@@ -226,10 +239,9 @@ function Sign() {
       }
     }
     if (inIframe()) {
-      window.parent.postMessage({ signedDelegates: signedDelegates.join(','), signedTransactions: signedTransactions.join(',') }, '*');
+      window.parent.postMessage({ signedTransactions: signedTransactions.join(','), signedDelegates: signedDelegates.join(',') }, '*');
     } else {
       const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('signedDelegates', signedDelegates.join(','));
       parsedUrl.searchParams.set('signedTransactions', signedTransactions.join(','));
       window.location.replace(parsedUrl.href);
     }

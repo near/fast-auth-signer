@@ -1,4 +1,4 @@
-import { Account, AccountBalance, Connection } from '@near-js/accounts';
+import { Account, Connection } from '@near-js/accounts';
 import { createKey, getKeys, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import {
   KeyPair, KeyPairEd25519, KeyType, PublicKey
@@ -207,11 +207,6 @@ class FastAuthController {
       });
     }
     return signedDelegate;
-  }
-
-  async getBalance(): Promise<AccountBalance> {
-    const account = new Account(this.connection, this.accountId);
-    return account.getAccountBalance();
   }
 
   async signTransaction({ receiverId, actions, signerId }:
