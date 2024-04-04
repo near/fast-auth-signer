@@ -2,7 +2,8 @@ import { encodeSignedDelegate, encodeTransaction } from '@near-js/transactions';
 import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import React, {
-  useEffect, useRef, useMemo, useState
+  useEffect, useRef, useMemo, useState,
+  useCallback
 } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -22,6 +23,7 @@ import { Button } from '../../lib/Button';
 import { inIframe, isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
+import { NEAR_MAX_GAS } from '../../utils/constants';
 
 const formatActionType = (action: string) => {
   switch (action) {
@@ -93,11 +95,18 @@ function Sign() {
     const url = new URL(searchParams.get('success_url') || searchParams.get('failure_url'));
     return url.origin;
   }, [searchParams]);
+  const signMethodParams = searchParams.get('sign_method')
 
-  const signMethodParam = searchParams.get('sign_method');
-  const signMethod = signMethodParam in SignMethod
-    ? SignMethod[signMethodParam as keyof typeof SignMethod]
-    : SignMethod.SIGN_DELEGATE;
+    const getSignMethod = useCallback( async (signMethodParam: string | null) => {
+      if (signMethodParam && signMethodParam in SignMethod) {
+        return SignMethod[signMethodParam as keyof typeof SignMethod];
+      } else {
+        const balance = await window.fastAuthController.getAccountBalance();
+        return new BN(balance.available) >= NEAR_MAX_GAS
+          ? SignMethod.SIGN_TRANSACTION
+          : SignMethod.SIGN_DELEGATE;
+      }
+    }, []);
 
   const [transactionDetails, setTransactionDetails] =    useState<TransactionDetails>({
     signerId:    '',
@@ -206,7 +215,7 @@ function Sign() {
     // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       try {
-        if (signMethod === SignMethod.SIGN_TRANSACTION) {
+        if (await getSignMethod(signMethodParams) === SignMethod.SIGN_TRANSACTION) {
           // eslint-disable-next-line no-await-in-loop
           const signed = (await window.fastAuthController.signTransaction(
             transactionDetails.transactions[i]
@@ -215,14 +224,13 @@ function Sign() {
             'base64'
           );
           signedTransactions.push(base64);
-        } else if (signMethod === SignMethod.SIGN_DELEGATE) {
+        } else if (await getSignMethod(signMethodParams) === SignMethod.SIGN_DELEGATE) {
           // eslint-disable-next-line no-await-in-loop
           const signed = await window.fastAuthController.signDelegateAction(
             transactionDetails.transactions[i]
           );
           const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
             'base64'
-
           );
           signedDelegates.push(base64);
         }
