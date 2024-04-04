@@ -26,12 +26,16 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
 
     // Currently fast near only support mainnet, once it supports testnet, we need to update this condition
     if (networkId === 'mainnet') {
-      const res = await fetch(`${network.fastAuth.fastnearUrl}/public_key/${publicKey}`);
-      if (res) {
-        const response = await res.json();
-        if (response && response.account_ids && response.account_ids.length > 0) {
-          return response.account_ids;
+      try {
+        const res = await fetch(`${network.fastAuth.fastnearUrl}/public_key/${publicKey}`);
+        if (res) {
+          const response = await res.json();
+          if (response && response.account_ids && response.account_ids.length > 0) {
+            return response.account_ids;
+          }
         }
+      } catch (error) {
+        console.log('Fail to retrieve account id from fast near:', error);
       }
     }
 
