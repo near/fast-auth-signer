@@ -2,7 +2,7 @@ import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 
 import { withTimeout } from '../utils';
-import { network } from '../utils/config';
+import { network, networkId } from '../utils/config';
 import {
   CLAIM, getUserCredentialsFrpSignature
 } from '../utils/mpc-service';
@@ -24,6 +24,15 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       }
     }
 
+    // Currently fast near only support mainnet, once it supports testnet, we need to update this condition
+    if (networkId === 'mainnet') {
+      const res = await fetch(`${network.fastAuth.fastnearUrl}/public_key/${publicKey}`);
+      if (res) {
+        const response = await res.json();
+        return response.account_ids;
+      }
+    }
+
     try {
       const res = await withTimeout(fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION);
       if (res) {
@@ -32,7 +41,7 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       }
       return [];
     } catch (error) {
-      console.log('fetchAccountIds', error);
+      console.log('Unable to fetch account ids:', error);
       captureException(error);
       return [];
     }
