@@ -29,7 +29,9 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       const res = await fetch(`${network.fastAuth.fastnearUrl}/public_key/${publicKey}`);
       if (res) {
         const response = await res.json();
-        return response.account_ids;
+        if (response && response.account_ids && response.account_ids.length > 0) {
+          return response.account_ids;
+        }
       }
     }
 
