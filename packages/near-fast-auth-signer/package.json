@@ -60,7 +60,7 @@
     "keccak": "^3.0.4",
     "lodash.debounce": "^4.0.8",
     "lodash.pickby": "^4.6.0",
-    "multichain-tools": "^1.0.2",
+    "multichain-tools": "^1.0.5",
     "nanoid": "^5.0.6",
     "near-api-js": "^2.1.4",
     "process": "^0.11.10",
