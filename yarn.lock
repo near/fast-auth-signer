@@ -8453,10 +8453,10 @@ multicast-dns@^7.2.5:
     dns-packet "^5.2.2"
     thunky "^1.0.2"
 
-multichain-tools@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.5.tgz#678db8a42984e51f3cb65fb3fc5d438ba0d10828"
-  integrity sha512-44dhY082P5ft6F0lU9MSA9h4vQfCpDTSnLf4DM5fLb2Bys5l4KtNLu/4LENeTpELePzRG8KBqjEGa8kDj/yyrg==
+multichain-tools@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.7.tgz#3967ecb8d6bb2fc03c338c8d49d449375c81be31"
+  integrity sha512-7+oPscGvBmYFk3n66Y7503JtlciXD5xUoqt6sDdnz5bLACghddCZewQfsm3hfQo7ndyY9vhiWQLyesq9udTScg==
   dependencies:
     axios "^1.6.8"
     bitcoinjs-lib "^6.1.5"

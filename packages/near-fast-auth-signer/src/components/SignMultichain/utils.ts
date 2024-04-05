@@ -1,4 +1,3 @@
-import * as bitcoin from 'bitcoinjs-lib';
 import canonicalize from 'canonicalize';
 import { formatEther, formatUnits } from 'ethers';
 import pickBy from 'lodash.pickby';
@@ -294,7 +293,7 @@ export const multichainSignAndSend = async ({
     const derivedAddress = await fetchDerivedBTCAddress(
       accountId,
       derivedPath,
-      (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
+      (signMultichainRequest as BTCSendMultichainMessage).network,
       networkId,
       getMultiChainContract()
     );
