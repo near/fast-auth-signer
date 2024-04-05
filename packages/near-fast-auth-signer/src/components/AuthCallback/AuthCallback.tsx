@@ -13,6 +13,7 @@ import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
+import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
@@ -45,7 +46,7 @@ const onCreateAccount = async ({
     limitedAccessKeys: public_key_lak ? [{
       public_key:   public_key_lak,
       receiver_id:  contract_id,
-      allowance:    '250000000000000',
+      allowance:    NEAR_MAX_ALLOWANCE,
       method_names: methodNames ?? '',
     }] : [],
     accessToken,
@@ -109,13 +110,13 @@ export const onSignIn = async ({
       publicKeyLak: public_key_lak,
       contractId:   contract_id,
       methodNames,
-      allowance:    new BN('250000000000000'),
+      allowance:    new BN(NEAR_MAX_ALLOWANCE),
     }) : getAddKeyAction({
       publicKeyLak:      public_key_lak,
       webAuthNPublicKey: publicKeyFak,
       contractId:        contract_id,
       methodNames,
-      allowance:         new BN('250000000000000'),
+      allowance:         new BN(NEAR_MAX_ALLOWANCE),
     });
 
   return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({

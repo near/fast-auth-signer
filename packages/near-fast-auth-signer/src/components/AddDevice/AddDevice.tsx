@@ -25,6 +25,7 @@ import {
 } from '../../utils';
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
+import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
@@ -226,7 +227,7 @@ function AddDevicePage() {
     window.fastAuthController.signAndSendAddKey({
       contractId: contract_id,
       methodNames,
-      allowance:  new BN('250000000000000'),
+      allowance:  new BN(NEAR_MAX_ALLOWANCE),
       publicKey:  public_key,
     }).then((res) => res && res.json()).then((res) => {
       const failure = res['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
