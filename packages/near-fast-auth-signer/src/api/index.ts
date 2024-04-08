@@ -29,7 +29,7 @@ const fetchAccountIdFromQueryApi = async (publicKey: string): Promise<string | n
         operationName: 'AccountIdByPublicKey',
       }),
     });
-    if (res) {
+    if (res.ok) {
       const response = await res.json();
       if (response.data) {
         const data = response.data.dataplatform_near_access_keys_v1_access_keys_v1[0];
