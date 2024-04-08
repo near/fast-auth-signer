@@ -40,6 +40,7 @@ const fetchAccountIdFromQueryApi = async (publicKey: string): Promise<string | n
     // Not tracking error here because it is possible that the public key is not on chain
     console.log(`Fail to retrieve account id with public key ${publicKey} from queryAPI: ${e}`);
   }
+  return null;
 };
 
 /**
