@@ -2,46 +2,10 @@ import { captureException } from '@sentry/react';
 import { KeyPair } from 'near-api-js';
 
 import { withTimeout } from '../utils';
-import { network, networkId } from '../utils/config';
+import { network } from '../utils/config';
 import {
   CLAIM, getUserCredentialsFrpSignature
 } from '../utils/mpc-service';
-
-const fetchAccountIdFromQueryApi = async (publicKey: string): Promise<string | null> => {
-  const query = `query AccountIdByPublicKey {
-    dataplatform_near_access_keys_v1_access_keys_v1(
-      where: {public_key: {_eq: "${publicKey}"}, deleted_by_receipt_id: {_is_null: true}, account_deleted_by_receipt_id: {_is_null: true}}
-    ) {
-      account_id
-      public_key
-      created_by_receipt_id
-      last_updated_block_height
-    }
-  }`;
-
-  try {
-    const res = await fetch(network.fastAuth.queryApiUrl, {
-      method:  'POST',
-      headers: { 'x-hasura-role': 'dataplatform_near' },
-      body:    JSON.stringify({
-        query,
-        variables:     {},
-        operationName: 'AccountIdByPublicKey',
-      }),
-    });
-    if (res.ok) {
-      const response = await res.json();
-      if (response.data) {
-        const data = response.data.dataplatform_near_access_keys_v1_access_keys_v1[0];
-        return data?.account_id;
-      }
-    }
-  } catch (e) {
-    // Not tracking error here because it is possible that the public key is not on chain
-    console.log(`Fail to retrieve account id with public key ${publicKey} from queryAPI: ${e}`);
-  }
-  return null;
-};
 
 /**
  * Fetches the account IDs associated with a given public key.
@@ -60,15 +24,6 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       }
     }
 
-    // Currently fast near only support mainnet, once it supports testnet, we need to update this condition
-    if (networkId === 'mainnet') {
-      const accountId = await fetchAccountIdFromQueryApi(publicKey);
-      console.log('accountId', accountId);
-      if (accountId) {
-        return [accountId];
-      }
-    }
-
     try {
       const res = await withTimeout(fetch(`${network.fastAuth.authHelperUrl}/publicKey/${publicKey}/accounts`), KIT_WALLET_WAIT_DURATION);
       if (res) {
@@ -77,7 +32,7 @@ export const fetchAccountIds = async (publicKey: string): Promise<string[]> => {
       }
       return [];
     } catch (error) {
-      console.log('Unable to fetch account ids:', error);
+      console.log('fetchAccountIds', error);
       captureException(error);
       return [];
     }
