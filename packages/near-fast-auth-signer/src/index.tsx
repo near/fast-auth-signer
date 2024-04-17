@@ -42,7 +42,16 @@ if (network.sentryDsn) {
     tracesSampleRate:         0.1, // Capture 10% of transactions
 
     // Reconstructing the URL to exclude sensitive query parameters
-    beforeSend(event) {
+    beforeSend(event, hint) {
+      // Check if the error comes from a Chrome extension
+      if (hint && hint.originalException) {
+        const exception = hint.originalException;
+        // @ts-ignore exception has unknown type
+        if (typeof exception?.stack === 'string' && exception?.stack.includes('chrome-extension://')) {
+          // Return null to ignore the event
+          return null;
+        }
+      }
       if (event.request && event.request.url) {
         const url = new URL(event.request.url);
         const queryParams = url.searchParams;
