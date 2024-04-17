@@ -26,7 +26,7 @@ export const getAuthState = async (): Promise<AuthState> => {
         keypairs[1],
       );
 
-      if (!accountInfo.accId) {
+      if (!accountInfo?.accId) {
         return false;
       }
 
