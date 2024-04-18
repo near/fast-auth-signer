@@ -37,7 +37,7 @@ type IncomingMessageEvent = MessageEvent<{
 // const sampleMessageForEthereum: EvmSendMultichainMessage = {
 //   chainId: BigInt('5'),
 //   chain: 60,
-//   domain: "near.org",
+//   domain: "near.orgs",
 //   to: "0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4",
 //   value: BigInt('10000000000000000'),
 //   meta: {id: 10}
