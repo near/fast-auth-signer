@@ -16,7 +16,6 @@ export const networks: Record<NetworkId, Network> = {
     fastAuth:      {
       mpcRecoveryUrl:  'https://near-mpc-recovery-mainnet.api.pagoda.co',
       authHelperUrl:   'https://api.kitwallet.app',
-      queryApiUrl:     'https://near-queryapi.api.pagoda.co/v1/graphql',
       accountIdSuffix: 'near',
       mpcPublicKey:    new PublicKey({
         keyType: KeyType.ED25519,

@@ -19,8 +19,7 @@ type ProductionNetwork = {
   sentryDsn?: string;
   fastAuth: {
     mpcRecoveryUrl: string;
-    authHelperUrl: string;
-    queryApiUrl?: string;
+    authHelperUrl: string; // TODO refactor: review by fastauth team
     accountIdSuffix: string;
     mpcPublicKey: PublicKey,
     firebase: {
