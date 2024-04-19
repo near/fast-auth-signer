@@ -1,7 +1,14 @@
-import * as bitcoin from 'bitcoinjs-lib';
 import canonicalize from 'canonicalize';
 import { formatEther, formatUnits } from 'ethers';
 import pickBy from 'lodash.pickby';
+import {
+  fetchDerivedBTCAddress,
+  fetchDerivedEVMAddress,
+  fetchBTCFeeProperties,
+  fetchEVMFeeProperties,
+  signAndSendEVMTransaction,
+  signAndSendBTCTransaction
+} from 'multichain-tools';
 import * as yup from 'yup';
 
 import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
@@ -18,14 +25,6 @@ import {
 import { assertNever } from '../../utils';
 import { networkId } from '../../utils/config';
 import environment from '../../utils/environment';
-import {
-  fetchBTCFeeProperties,
-  fetchDerivedBTCAddress,
-  fetchDerivedEVMAddress,
-  fetchEVMFeeProperties,
-  signAndSendBTCTransaction,
-  signAndSendEVMTransaction,
-} from '../../utils/multi-chain/multiChain';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
@@ -294,7 +293,7 @@ export const multichainSignAndSend = async ({
     const derivedAddress = await fetchDerivedBTCAddress(
       accountId,
       derivedPath,
-      (signMultichainRequest as BTCSendMultichainMessage).network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet,
+      (signMultichainRequest as BTCSendMultichainMessage).network,
       networkId,
       getMultiChainContract()
     );
