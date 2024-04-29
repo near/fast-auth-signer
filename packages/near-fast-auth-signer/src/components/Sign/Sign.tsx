@@ -3,7 +3,6 @@ import BN from 'bn.js';
 import { utils, transactions as transaction } from 'near-api-js';
 import React, {
   useEffect, useRef, useMemo, useState,
-  useCallback
 } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -22,7 +21,6 @@ import InternetSvg from '../../Images/Internet';
 import { Button } from '../../lib/Button';
 import { inIframe, isUrlNotJavascriptProtocol, redirectWithError } from '../../utils';
 import { basePath, network } from '../../utils/config';
-import { NEAR_MAX_GAS } from '../../utils/constants';
 import TableContent from '../TableContent/TableContent';
 
 const formatActionType = (action: string) => {
@@ -68,11 +66,6 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-enum SignMethod {
-  SIGN_DELEGATE = 'SIGN_DELEGATE',
-  SIGN_TRANSACTION = 'SIGN_TRANSACTION',
-}
-
 export const calculateGasLimit = (actions) => actions
   .filter((a) => Object.keys(a)[0] === 'functionCall')
   .map((a) => a.functionCall.gas)
@@ -95,17 +88,6 @@ function Sign() {
     const url = new URL(searchParams.get('success_url') || searchParams.get('failure_url'));
     return url.origin;
   }, [searchParams]);
-  const signMethodParams = searchParams.get('sign_method');
-
-  const getSignMethod = useCallback(async (signMethodParam: string | null) => {
-    if (signMethodParam && signMethodParam in SignMethod) {
-      return SignMethod[signMethodParam as keyof typeof SignMethod];
-    }
-    const balance = await window.fastAuthController.getAccountBalance();
-    return new BN(balance.available) >= NEAR_MAX_GAS
-      ? SignMethod.SIGN_TRANSACTION
-      : SignMethod.SIGN_DELEGATE;
-  }, []);
 
   const [transactionDetails, setTransactionDetails] =    useState<TransactionDetails>({
     signerId:    '',
@@ -214,25 +196,19 @@ function Sign() {
     // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       try {
-        if (await getSignMethod(signMethodParams) === SignMethod.SIGN_TRANSACTION) {
-          // eslint-disable-next-line no-await-in-loop
-          const signed = (await window.fastAuthController.signTransaction(
-            transactionDetails.transactions[i]
-          ))[1];
-          const base64 = Buffer.from(encodeTransaction(signed)).toString(
-            'base64'
-          );
-          signedTransactions.push(base64);
-        } else if (await getSignMethod(signMethodParams) === SignMethod.SIGN_DELEGATE) {
-          // eslint-disable-next-line no-await-in-loop
-          const signed = await window.fastAuthController.signDelegateAction(
-            transactionDetails.transactions[i]
-          );
-          const base64 = Buffer.from(encodeSignedDelegate(signed)).toString(
-            'base64'
-          );
-          signedDelegates.push(base64);
-        }
+        const t = transactionDetails.transactions[i];
+
+        // eslint-disable-next-line no-await-in-loop
+        const signedTransaction = await window.fastAuthController.signTransaction(t);
+        const encodedTransaction = encodeTransaction(signedTransaction[1]);
+        const base64Transaction = Buffer.from(encodedTransaction).toString('base64');
+        signedTransactions.push(base64Transaction);
+
+        // eslint-disable-next-line no-await-in-loop
+        const signedDelegate = await window.fastAuthController.signDelegateAction(t);
+        const encodedDelegate = encodeSignedDelegate(signedDelegate);
+        const base64Delegate = Buffer.from(encodedDelegate).toString('base64');
+        signedDelegates.push(base64Delegate);
       } catch (err) {
         if (inIframe()) {
           setError(`An error occurred: ${err.message}`);

@@ -209,11 +209,6 @@ class FastAuthController {
     return signedDelegate;
   }
 
-  async getAccountBalance() {
-    const account = new Account(this.connection, this.accountId);
-    return account.getAccountBalance();
-  }
-
   async signTransaction({ receiverId, actions, signerId }:
     { receiverId: string; actions: Action[]; signerId: string }):
    Promise<[Uint8Array, SignedTransaction]> {
