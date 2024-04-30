@@ -11,7 +11,7 @@ import { createNEARAccount, fetchAccountIds } from '../../api';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
+  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
 } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
 import {
@@ -188,7 +188,6 @@ function AuthCallbackPage() {
         const accountId = decodeIfTruthy(searchParams.get('accountId'));
         const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
         const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const failure_url = decodeIfTruthy(searchParams.get('failure_url'));
         const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
         const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
         const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
@@ -197,14 +196,9 @@ function AuthCallbackPage() {
         const email = window.localStorage.getItem('emailForSignIn');
 
         if (!email) {
-          const parsedUrl = new URL(
-            failure_url && isUrlNotJavascriptProtocol(failure_url)
-              ? failure_url
-              : window.location.origin + (basePath ? `/${basePath}` : '')
-          );
-          parsedUrl.searchParams.set('code', '500');
-          parsedUrl.searchParams.set('reason', 'Please use the same device and browser to verify your email');
-          window.location.replace(parsedUrl.href);
+          const error = new Error('Please use the same device and browser to verify your email');
+          setCallbackError(error);
+          return;
         }
 
         if (!window.firestoreController) {
@@ -272,7 +266,7 @@ function AuthCallbackPage() {
     signInProcess();
   }, [navigate, searchParams]);
 
-  if (callbackError) return <AuthCallbackError error={callbackError} failureUrl={decodeIfTruthy(searchParams.get('failure_url'))} />;
+  if (callbackError) return <AuthCallbackError error={callbackError} redirectUrl={decodeIfTruthy(searchParams.get('failure_url'))} />;
 
   return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
