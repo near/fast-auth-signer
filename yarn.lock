@@ -20,39 +20,6 @@
     "@jridgewell/gen-mapping" "^0.3.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@aws-crypto/sha256-js@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/@aws-crypto/sha256-js/-/sha256-js-4.0.0.tgz"
-  integrity sha512-MHGJyjE7TX9aaqXj7zk2ppnFUOhaDs5sP+HtNS0evOxn72c+5njUmyJmpGd7TfyoDznZlHMmdo/xGUdu2NIjNQ==
-  dependencies:
-    "@aws-crypto/util" "^4.0.0"
-    "@aws-sdk/types" "^3.222.0"
-    tslib "^1.11.1"
-
-"@aws-crypto/util@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.npmjs.org/@aws-crypto/util/-/util-4.0.0.tgz"
-  integrity sha512-2EnmPy2gsFZ6m8bwUQN4jq+IyXV3quHAcwPOS6ZA3k+geujiqI8aRokO2kFJe+idJ/P3v4qWI186rVMo0+zLDQ==
-  dependencies:
-    "@aws-sdk/types" "^3.222.0"
-    "@aws-sdk/util-utf8-browser" "^3.0.0"
-    tslib "^1.11.1"
-
-"@aws-sdk/types@^3.222.0":
-  version "3.433.0"
-  resolved "https://registry.npmjs.org/@aws-sdk/types/-/types-3.433.0.tgz"
-  integrity sha512-0jEE2mSrNDd8VGFjTc1otYrwYPIkzZJEIK90ZxisKvQ/EURGBhNzWn7ejWB9XCMFT6XumYLBR0V9qq5UPisWtA==
-  dependencies:
-    "@smithy/types" "^2.4.0"
-    tslib "^2.5.0"
-
-"@aws-sdk/util-utf8-browser@^3.0.0":
-  version "3.259.0"
-  resolved "https://registry.npmjs.org/@aws-sdk/util-utf8-browser/-/util-utf8-browser-3.259.0.tgz"
-  integrity sha512-UvFa/vR+e19XookZF8RzFZBrw2EUkQWxiBW0yYQAhvk3C+QVGl0H3ouca8LDBlBfQKXwmW3huo/59H8rwb1wJw==
-  dependencies:
-    tslib "^2.3.1"
-
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.22.13":
   version "7.22.13"
   resolved "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.22.13.tgz"
@@ -1726,7 +1693,12 @@
     protobufjs "^7.2.4"
     yargs "^17.7.2"
 
-"@hexagon/base64@^1.1.26", "@hexagon/base64@~1.1.26":
+"@hexagon/base64@1.1.26":
+  version "1.1.26"
+  resolved "https://registry.yarnpkg.com/@hexagon/base64/-/base64-1.1.26.tgz#5e79c06362bb04a8ac3f6509d84a07f433d654e2"
+  integrity sha512-9HYANYWJAwBbxjkz5P0ZB+JXX7kH7HhUG0FmIBcF7GUmnl6mXnAHFuGOkssW7v2RLNnVvjcKIeOqywSHfw21Qg==
+
+"@hexagon/base64@~1.1.26":
   version "1.1.28"
   resolved "https://registry.npmjs.org/@hexagon/base64/-/base64-1.1.28.tgz"
   integrity sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==
@@ -2015,19 +1987,19 @@
     lru_map "0.4.1"
     near-abi "0.1.1"
 
-"@near-js/biometric-ed25519@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.npmjs.org/@near-js/biometric-ed25519/-/biometric-ed25519-0.3.0.tgz"
-  integrity sha512-9I/xjDJIA79VMGujMNaMZnvohrvnvHPa3Rz0GvMF/Qfu4dbC62mivGCBDhkEkDT1xAVJn/7ZbBX/CGZNODMIPg==
+"@near-js/biometric-ed25519@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@near-js/biometric-ed25519/-/biometric-ed25519-1.2.2.tgz#ae5fd6b9a8b0da8eafe622bff0a5188d88523139"
+  integrity sha512-0xpLejwYebm0kKpJDUQcBXWzRJmKGZIYbDQyZxWqdWhsKH6cRMnTRgfjVKPZQ7WamBE3vjkIts8nIBPgNUlj3A==
   dependencies:
-    "@aws-crypto/sha256-js" "^4.0.0"
-    "@hexagon/base64" "^1.1.26"
-    "@near-js/crypto" "0.0.5"
-    asn1-parser "^1.1.8"
-    bn.js "5.2.1"
-    borsh "^0.7.0"
-    buffer "^6.0.3"
-    elliptic "^6.5.4"
+    "@hexagon/base64" "1.1.26"
+    "@near-js/crypto" "1.2.3"
+    "@near-js/utils" "0.2.1"
+    "@noble/curves" "1.2.0"
+    "@noble/hashes" "1.3.3"
+    asn1-parser "1.1.8"
+    borsh "1.0.0"
+    buffer "6.0.3"
     fido2-lib "3.4.1"
 
 "@near-js/crypto@0.0.5", "@near-js/crypto@^0.0.5":
@@ -2049,6 +2021,17 @@
     "@near-js/utils" "0.1.0"
     "@noble/curves" "1.2.0"
     bn.js "5.2.1"
+    borsh "1.0.0"
+    randombytes "2.1.0"
+
+"@near-js/crypto@1.2.3":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@near-js/crypto/-/crypto-1.2.3.tgz#ba318d77b9eed79ef92a86f7a2c84562cb2f6b9d"
+  integrity sha512-BuNE+tdcxwImxktFtuAxLiVejFDtn1X92kejcDcYc6f7e0ku9yMntdw98LMb+5ls+xlRuF1UDoi/hUF1LPVpyQ==
+  dependencies:
+    "@near-js/types" "0.2.0"
+    "@near-js/utils" "0.2.1"
+    "@noble/curves" "1.2.0"
     borsh "1.0.0"
     randombytes "2.1.0"
 
@@ -2186,6 +2169,11 @@
   dependencies:
     bn.js "5.2.1"
 
+"@near-js/types@0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@near-js/types/-/types-0.2.0.tgz#5370c3e9230103222b2827dbd6370f03c4e996d1"
+  integrity sha512-pTahjni0+PzStseFtnnI9nqmh+ZrHqBqeERo3B3OCXUC/qEie0ZSBMSMt80SgqnaGAy5/CqkCLO9zOx1gA8Cwg==
+
 "@near-js/utils@0.0.4":
   version "0.0.4"
   resolved "https://registry.npmjs.org/@near-js/utils/-/utils-0.0.4.tgz"
@@ -2203,6 +2191,16 @@
   dependencies:
     "@near-js/types" "0.0.4"
     bn.js "5.2.1"
+    bs58 "4.0.0"
+    depd "2.0.0"
+    mustache "4.0.0"
+
+"@near-js/utils@0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@near-js/utils/-/utils-0.2.1.tgz#6798cf8c3a6ed8057da002401e24409c49454a82"
+  integrity sha512-u7yR1fmxIcYoiITR1spTvqciXbMXNvlrmRcneNt9DWeQP7yPdbCQtRB7lMN2KI7ONkUf3U7xiheQDDmk2vFI0w==
+  dependencies:
+    "@near-js/types" "0.2.0"
     bs58 "4.0.0"
     depd "2.0.0"
     mustache "4.0.0"
@@ -3085,13 +3083,6 @@
   version "0.27.8"
   resolved "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.27.8.tgz"
   integrity sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==
-
-"@smithy/types@^2.4.0":
-  version "2.4.0"
-  resolved "https://registry.npmjs.org/@smithy/types/-/types-2.4.0.tgz"
-  integrity sha512-iH1Xz68FWlmBJ9vvYeHifVMWJf82ONx+OybPW8ZGf5wnEv2S0UXcU4zwlwJkRXuLKpcSLHrraHbn2ucdVXLb4g==
-  dependencies:
-    tslib "^2.5.0"
 
 "@svgr/babel-plugin-add-jsx-attribute@8.0.0":
   version "8.0.0"
@@ -4119,9 +4110,9 @@ arrify@^2.0.1:
   resolved "https://registry.npmjs.org/arrify/-/arrify-2.0.1.tgz"
   integrity sha512-3duEwti880xqi4eAMN8AyR4a0ByT90zoYdLlevfrvU43vb0YZwZVfxOgxWrLXXXpyugL0hNZc9G6BiB5B3nUug==
 
-asn1-parser@^1.1.8:
+asn1-parser@1.1.8:
   version "1.1.8"
-  resolved "https://registry.npmjs.org/asn1-parser/-/asn1-parser-1.1.8.tgz"
+  resolved "https://registry.yarnpkg.com/asn1-parser/-/asn1-parser-1.1.8.tgz#f157fdb51e97d87f6d420beae8d85304cfd5519d"
   integrity sha512-3aYtVA7yzCK7r+qbBzpvzcq53kz7IRfGWTObbAGZieTj+By8wbSGSncZO7TztQ5UXrHELCesUIlJGD4JJcUAsA==
 
 asn1.js@^5.2.0:
@@ -4514,6 +4505,14 @@ buffer-xor@^1.0.3:
   resolved "https://registry.npmjs.org/buffer-xor/-/buffer-xor-1.0.3.tgz"
   integrity sha512-571s0T7nZWK6vB67HI5dyUF7wXiNcfaPPPTl6zYCNApANjIvYJTg7hlud/+cJpdAhS7dVzqMLmfhfHR3rAcOjQ==
 
+buffer@6.0.3:
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/buffer/-/buffer-6.0.3.tgz#2ace578459cc8fbe2a70aaa8f52ee63b6a74c6c6"
+  integrity sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==
+  dependencies:
+    base64-js "^1.3.1"
+    ieee754 "^1.2.1"
+
 buffer@^5.5.0:
   version "5.7.1"
   resolved "https://registry.npmjs.org/buffer/-/buffer-5.7.1.tgz"
@@ -4521,14 +4520,6 @@ buffer@^5.5.0:
   dependencies:
     base64-js "^1.3.1"
     ieee754 "^1.1.13"
-
-buffer@^6.0.3:
-  version "6.0.3"
-  resolved "https://registry.npmjs.org/buffer/-/buffer-6.0.3.tgz"
-  integrity sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==
-  dependencies:
-    base64-js "^1.3.1"
-    ieee754 "^1.2.1"
 
 builtin-status-codes@^3.0.0:
   version "3.0.0"
@@ -10892,12 +10883,12 @@ tslib@2.4.0:
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.4.0.tgz"
   integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
 
-tslib@^1.11.1, tslib@^1.8.1:
+tslib@^1.8.1:
   version "1.14.1"
   resolved "https://registry.npmjs.org/tslib/-/tslib-1.14.1.tgz"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-tslib@^2.0.0, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.3.0, tslib@^2.3.1, tslib@^2.4.0, tslib@^2.5.0, tslib@^2.6.1, tslib@^2.6.2:
+tslib@^2.0.0, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.3.0, tslib@^2.4.0, tslib@^2.5.0, tslib@^2.6.1, tslib@^2.6.2:
   version "2.6.2"
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.6.2.tgz"
   integrity sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==
