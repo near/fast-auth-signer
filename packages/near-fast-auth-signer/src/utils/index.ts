@@ -89,3 +89,14 @@ export const withTimeout = async (promise, timeoutMs) => {
 
 export const isSafari = () => /^((?!chrome|android).)*safari/i
   .test(navigator.userAgent);
+
+export const extractQueryParams = (searchParams: URLSearchParams, paramNames: string[]) => {
+  const params = {};
+  paramNames.forEach((paramName) => {
+    const paramValue = searchParams.get(paramName);
+    if (paramValue !== null) {
+      params[paramName] = paramValue;
+    }
+  });
+  return params;
+};
