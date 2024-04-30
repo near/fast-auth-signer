@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import AuthCallbackError from './AuthCallbackError';
 import { createNEARAccount, fetchAccountIds } from '../../api';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
@@ -13,7 +14,9 @@ import {
   decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol, redirectWithError
 } from '../../utils';
 import { basePath, networkId } from '../../utils/config';
-import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
+import {
+  checkFirestoreReady, firebaseAuth,
+} from '../../utils/firebase';
 import {
   getAddKeyAction, getAddLAKAction
 } from '../../utils/mpc-service';
@@ -174,6 +177,7 @@ export const onSignIn = async ({
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
+  const [callbackError, setCallbackError] = useState<Error | null>(null);
 
   const [searchParams] = useSearchParams();
 
@@ -257,8 +261,8 @@ function AuthCallbackPage() {
           });
         } catch (e) {
           captureException(e);
-          console.log('error:', e);
-          redirectWithError({ success_url, failure_url, error: e });
+          setCallbackError(e);
+          // redirectWithError({ success_url, failure_url, error: e });
         }
       } else {
         navigate('/signup');
@@ -267,6 +271,8 @@ function AuthCallbackPage() {
 
     signInProcess();
   }, [navigate, searchParams]);
+
+  if (callbackError) return <AuthCallbackError error={callbackError} failureUrl={decodeIfTruthy(searchParams.get('failure_url'))} />;
 
   return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
 }
