@@ -256,7 +256,6 @@ function AuthCallbackPage() {
         } catch (e) {
           captureException(e);
           setCallbackError(e);
-          // redirectWithError({ success_url, failure_url, error: e });
         }
       } else {
         navigate('/signup');
