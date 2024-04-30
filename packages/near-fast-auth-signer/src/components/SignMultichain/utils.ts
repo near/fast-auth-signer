@@ -68,8 +68,6 @@ const EVMChains: EVMChainMap<boolean> = {
 };
 export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
-const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
-
 const CHAIN_CONFIG: ChainMap = {
   ETH: {
     providerUrl: 'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
@@ -284,7 +282,7 @@ export const multichainSignAndSend = async ({
         maxPriorityFeePerGas: (feeProperties as EVMFeeProperties)?.maxPriorityFeePerGas,
       },
       nearAuthentication: { networkId, keypair, accountId },
-      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+      fastAuthRelayerUrl: environment.FAST_AUTH_RELAYER_URL,
       chainConfig
     });
   }
@@ -314,7 +312,7 @@ export const multichainSignAndSend = async ({
         outputs: (feeProperties as BTCFeeProperties)?.outputs,
       },
       nearAuthentication: { networkId, keypair, accountId },
-      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+      fastAuthRelayerUrl: environment.FAST_AUTH_RELAYER_URL,
       chainConfig
     });
   }
