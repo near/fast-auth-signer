@@ -196,19 +196,23 @@ function Sign() {
     // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       try {
-        const t = transactionDetails.transactions[i];
+        const signPromises = transactionDetails.transactions.map(async (t) => {
+          const [signedTransaction, signedDelegate] = await Promise.all([
+            window.fastAuthController.signTransaction(t),
+            window.fastAuthController.signDelegateAction(t)
+          ]);
+
+          const encodedTransaction = encodeTransaction(signedTransaction[1]);
+          const base64Transaction = Buffer.from(encodedTransaction).toString('base64');
+          signedTransactions.push(base64Transaction);
+
+          const encodedDelegate = encodeSignedDelegate(signedDelegate);
+          const base64Delegate = Buffer.from(encodedDelegate).toString('base64');
+          signedDelegates.push(base64Delegate);
+        });
 
         // eslint-disable-next-line no-await-in-loop
-        const signedTransaction = await window.fastAuthController.signTransaction(t);
-        const encodedTransaction = encodeTransaction(signedTransaction[1]);
-        const base64Transaction = Buffer.from(encodedTransaction).toString('base64');
-        signedTransactions.push(base64Transaction);
-
-        // eslint-disable-next-line no-await-in-loop
-        const signedDelegate = await window.fastAuthController.signDelegateAction(t);
-        const encodedDelegate = encodeSignedDelegate(signedDelegate);
-        const base64Delegate = Buffer.from(encodedDelegate).toString('base64');
-        signedDelegates.push(base64Delegate);
+        await Promise.all(signPromises);
       } catch (err) {
         if (inIframe()) {
           setError(`An error occurred: ${err.message}`);
