@@ -34,7 +34,7 @@
     "@ethereumjs/tx": "^5.2.1",
     "@hookform/resolvers": "^3.3.2",
     "@near-js/accounts": "^0.1.4",
-    "@near-js/biometric-ed25519": "^0.3.0",
+    "@near-js/biometric-ed25519": "^1.2.2",
     "@near-js/crypto": "^0.0.5",
     "@near-js/iframe-rpc": "^0.0.2",
     "@near-js/keystores": "^0.0.5",
