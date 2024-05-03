@@ -75,25 +75,13 @@ function VerifyEmailPage() {
         handleCodeInApp: true,
       });
       window.localStorage.setItem('emailForSignIn', email);
-
-      openToast({
-        type:  'SUCCESS',
-        title: 'Email resent successfully!',
-      });
     } catch (error: any) {
       console.log(error);
       redirectWithError({ success_url, failure_url, error });
 
-      if (typeof error?.message === 'string') {
-        openToast({
-          type:  'ERROR',
-          title: error.message,
-        });
-        return;
-      }
       openToast({
         type:  'ERROR',
-        title: 'Something went wrong',
+        title: error?.message ?? 'Something went wrong',
       });
     } finally {
       setInFlight(false);
