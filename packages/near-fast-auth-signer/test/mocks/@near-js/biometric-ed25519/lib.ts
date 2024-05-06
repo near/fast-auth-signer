@@ -1,15 +1,15 @@
-import { KeyPairEd25519 } from '@near-js/crypto';
+import { KeyPair } from '@near-js/crypto';
 
 export function createKey() {
   console.log('Mocked createKey called');
-  return new KeyPairEd25519('mock-secret-key');
+  return KeyPair.fromString('5aWQVZ29KNZYFPFD8WA3qzUjmRWkH7RioPevVzB82EHfuKSVXCBzer5eTwnpKYnd6XKfEv97AdiRw1xA3MVYsY6a');
 }
 
 export function getKeys() {
   console.log('Mocked getKeys called');
   return [
-    new KeyPairEd25519('mock-secret-key-1'),
-    new KeyPairEd25519('mock-secret-key-2')
+    KeyPair.fromString('5aWQVZ29KNZYFPFD8WA3qzUjmRWkH7RioPevVzB82EHfuKSVXCBzer5eTwnpKYnd6XKfEv97AdiRw1xA3MVYsY6a'),
+    KeyPair.fromString('5aWQVZ29KNZYFPFD8WA3qzUjmRWkH7RioPevVzB82EHfuKSVXCBzer5eTwnpKYnd6XKfEv97AdiRw1xA3MVYsY6a')
   ];
 }
 
