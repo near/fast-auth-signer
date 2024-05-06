@@ -23,16 +23,16 @@ export default function App() {
 
   const handleSignIn = () => {
     fastAuthWallet.signIn({
-      contractId: 'example.near',
-      email:      'user@example.com',
+      contractId: 'v1.social08.testnet',
+      email:      'felipe@near.org',
       isRecovery: true
     });
   };
 
   const handleSignUp = () => {
     fastAuthWallet.signIn({
-      contractId: 'example.near',
-      email:      'user@example.com',
+      contractId: 'v1.social08.testnet',
+      email:      'felipe@near.org',
       isRecovery: false
     });
   };
