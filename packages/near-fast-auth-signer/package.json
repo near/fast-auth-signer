@@ -4,9 +4,9 @@
   "description": "Signer for fast auth functionality in near-discovery gateways",
   "main": "src/index.html",
   "scripts": {
-    "start": "webpack serve --mode development --history-api-fallback",
-    "start:test": "webpack serve --mode development --history-api-fallback --config webpack.test.config.js",
-    "bundle": "webpack build --mode production --output-public-path /fastauth/",
+    "start": "webpack serve --history-api-fallback --config webpack.development.config.js",
+    "start:test": "webpack serve --history-api-fallback --config webpack.test.config.js",
+    "bundle": "webpack build --output-public-path /fastauth/ --config webpack.production.config.js",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
