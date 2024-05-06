@@ -27,8 +27,8 @@ test('should create account', async ({ page }) => {
   const fastAuthIframe = page.frameLocator('#nfw-connect-iframe');
 
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('ligoti6516@deligy.com');
-  // const value = await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).inputValue();
-  // await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).fill('mytextplaceholder');
+  await page.waitForResponse('https://rpc.testnet.near.org/');
+  await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).fill('mytextplaceholder');
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
 
