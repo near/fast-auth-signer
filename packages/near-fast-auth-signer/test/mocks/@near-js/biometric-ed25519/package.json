@@ -1,0 +1,11 @@
+{
+  "name": "@near-js/biometric-ed25519",
+  "version": "1.0.0",
+  "description": "Mock package for biometric-ed25519 used in near-fast-auth-signer tests",
+  "main": "lib.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
