@@ -17,6 +17,7 @@
     "start": "webpack serve --mode development --history-api-fallback"
   },
   "dependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@near-wallet-selector/core": "^8.9.7",
     "https-browserify": "^1.0.0",
     "near-fast-auth-signer": "*",
