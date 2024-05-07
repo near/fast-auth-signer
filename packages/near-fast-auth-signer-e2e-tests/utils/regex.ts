@@ -3,8 +3,9 @@ export const extractLinkFromOnboardingEmail = (emailContent: string): string | n
   const match = emailContent.match(regex);
 
   if (match) {
-    const linkAddress = match[1];
-    return linkAddress;
+    return match[1]
+      .replace(/=3D/g, '=')
+      .replace(/&amp;/g, '&');
   }
 
   return null;

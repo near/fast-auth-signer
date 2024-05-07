@@ -83,17 +83,25 @@ class MailPop3Box {
   };
 
   public async getLastEmail(): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string | undefined>((resolve, reject) => {
       if (!this.isLoggedIn) {
         reject(new Error('Not logged in to server.'));
         return;
       }
 
+      const checkEmails = () => {
+        this.client.list();
+      };
+
       this.client.on('list', (status, msgcount) => {
-        if (!status || msgcount === 0) {
-          reject(new Error('No messages to retrieve or LIST failed.'));
+        if (!status) {
+          reject(new Error('LIST command failed.'));
+          return;
+        }
+        if (msgcount === 0) {
+          resolve(undefined);
         } else {
-          this.client.retr(msgcount);
+          this.client.retr(1);
         }
       });
 
@@ -101,7 +109,18 @@ class MailPop3Box {
         if (!status) {
           reject(new Error('Failed to retrieve message.'));
         } else {
-          resolve(data);
+          this.client.dele(msgnumber);
+          resolve(data
+            .replace(/=\n/g, '')
+            .replace(/\n/g, '')
+            .replace(/\s+/g, ' ')
+            .trim());
+        }
+      });
+
+      this.client.on('dele', (status) => {
+        if (!status) {
+          console.error('Failed to delete message.');
         }
       });
 
@@ -109,7 +128,7 @@ class MailPop3Box {
         reject(err);
       });
 
-      this.client.list();
+      checkEmails();
     });
   }
 }
