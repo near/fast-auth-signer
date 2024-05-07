@@ -39,7 +39,7 @@ class MailPop3Box {
     this.client = new POP3Client(this.port, this.host, {
       tlserrs:   false,
       enabletls: this.tls,
-      debug:     true
+      debug:     false
     });
 
     this.setupEventHandlers();
@@ -93,7 +93,6 @@ class MailPop3Box {
         if (!status || msgcount === 0) {
           reject(new Error('No messages to retrieve or LIST failed.'));
         } else {
-          console.log({ status, msgcount });
           this.client.retr(msgcount);
         }
       });

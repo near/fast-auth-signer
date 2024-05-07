@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import EmailBox from '../utils/email';
+import { extractLinkFromOnboardingEmail } from '../utils/regex';
 
 test('should login', async ({ page }) => {
   test.slow();
@@ -78,7 +79,8 @@ test('test with CDP', async ({ page }) => {
   await mailPop3Box.establishConnection();
 
   const lastEmail = await mailPop3Box.getLastEmail();
-  console.log(lastEmail);
+  const link = extractLinkFromOnboardingEmail(lastEmail);
+  console.log(link);
 
   await setupVirtualAuthenticator(page);
 
