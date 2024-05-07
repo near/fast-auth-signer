@@ -24,4 +24,5 @@ window.env = {
   SENTRY_DSN:                      "${SENTRY_DSN}",
   SENTRY_DSN_TESTNET:              "${SENTRY_DSN_TESTNET}",
   GIT_COMMIT_HASH:                 "${GIT_COMMIT_HASH}",
+  FAST_AUTH_RELAYER_URL:           "${FAST_AUTH_RELAYER_URL}",
 };

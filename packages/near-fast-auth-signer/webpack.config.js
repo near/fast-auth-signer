@@ -48,6 +48,7 @@ module.exports = (env, argv) => {
         SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
         SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
         GIT_COMMIT_HASH:                      commitHash,
+        FAST_AUTH_RELAYER_URL:                'http://34.136.82.88:3030',
       }),
       ...(process.env.SENTRY_AUTH_TOKEN
         ? [sentryWebpackPlugin({

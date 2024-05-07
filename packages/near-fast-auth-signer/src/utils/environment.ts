@@ -26,6 +26,7 @@ const environment = {
   SENTRY_DSN:                           windowEnv.SENTRY_DSN || process.env.SENTRY_DSN,
   SENTRY_DSN_TESTNET:                   windowEnv.SENTRY_DSN_TESTNET || process.env.SENTRY_DSN_TESTNET,
   GIT_COMMIT_HASH:                      windowEnv.GIT_COMMIT_HASH || process.env.GIT_COMMIT_HASH,
+  FAST_AUTH_RELAYER_URL:                windowEnv.FAST_AUTH_RELAYER_URL || process.env.FAST_AUTH_RELAYER_URL,
 };
 
 export default environment;
