@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-import Imap from 'imap';
-import Pop3Command from 'node-pop3';
+import POP3Client from 'mailpop3';
 
 test('should login', async ({ page }) => {
   test.slow();
@@ -64,113 +63,16 @@ async function setupVirtualAuthenticator(page) {
   return { client, authenticatorId };
 }
 
-function setupEmailBox({
-  user,
-  password,
-  host,
-  port,
-  tls
-}: {
+function setupMailPop3Box(config: {
   user: string;
   password: string;
   host: string;
   port: number;
   tls: boolean;
 }) {
-  const imap = new Imap({
-    user,
-    password,
-    host,
-    port,
-    tls,
-  });
-
-  function openInbox(cb) {
-    imap.openBox('INBOX', true, cb);
-  }
-
-  imap.once('ready', () => {
-    openInbox((err, box) => {
-      if (err) throw err;
-      console.log('Inbox opened');
-
-      // Listen for new mail event
-      imap.on('mail', (numNewMsgs) => {
-        console.log('New mail arrived:', numNewMsgs);
-        // Perform any desired actions with the new mail
-        // For example, you can fetch the new messages or update your application state
-      });
-    });
-  });
-
-  imap.once('error', (err) => {
-    console.log('IMAP connection error:', err);
-  });
-
-  imap.once('end', () => {
-    console.log('IMAP connection ended');
-  });
-
-  imap.connect();
-}
-
-async function setupPop3Box({
-  user,
-  password,
-  host,
-}: {
-  user: string;
-  password: string;
-  host: string;
-}) {
-  const pop3 = new Pop3Command({
-    user,
-    password,
-    host,
-  });
-
-  let retrievedUIDs = [];
-
-  async function checkForNewEmails() {
-    try {
-      console.log('1');
-      await pop3.connect();
-      console.log('2');
-      const list = await pop3.UIDL();
-
-      console.log('3');
-      console.log(list);
-
-      const newUIDs = list.filter((item) => !retrievedUIDs.includes(item[1]));
-      if (newUIDs.length > 0) {
-        console.log(`Found ${newUIDs.length} new email(s)`);
-        retrievedUIDs = list.map((item) => item[1]);
-      }
-
-      await pop3.QUIT();
-    } catch (err) {
-      console.log('Error:', err);
-    }
-  }
-
-  console.log('called');
-  setInterval(checkForNewEmails, 1000);
-}
-
-async function setupMailPop3Box({
-  user,
-  password,
-  host,
-  port,
-  tls
-}: {
-  user: string;
-  password: string;
-  host: string;
-  port: number;
-  tls: boolean;
-}) {
-  const POP3Client = require('mailpop3');
+  const {
+    user, password, host, port, tls
+  } = config;
   const client = new POP3Client(port, host, {
     tlserrs:   false,
     enabletls: tls,
@@ -178,9 +80,7 @@ async function setupMailPop3Box({
   });
 
   client.on('error', (err) => {
-    if (err.errno === 111) console.log('Unable to connect to server');
-    else console.log('Server error occurred');
-    console.log(err);
+    console.error('Error:', err);
   });
 
   client.on('connect', () => {
@@ -188,7 +88,7 @@ async function setupMailPop3Box({
     client.login(user, password);
   });
 
-  client.on('login', (status, rawdata) => {
+  client.on('login', (status) => {
     if (status) {
       console.log('LOGIN/PASS success');
       client.list();
@@ -198,40 +98,17 @@ async function setupMailPop3Box({
     }
   });
 
-  client.on('list', (status, msgcount, msgnumber, data, rawdata) => {
-    if (status === false) {
+  client.on('list', (status, msgcount) => {
+    if (status) {
+      console.log(`LIST success with ${msgcount} element(s)`);
+    } else {
       console.log('LIST failed');
       client.quit();
-    } else {
-      console.log(`LIST success with ${msgcount} element(s)`);
-      if (msgcount > 0) client.retr(1);
-      else client.quit();
     }
   });
 
-  client.on('retr', (status, msgnumber, data, rawdata) => {
-    if (status === true) {
-      console.log(`RETR success for msgnumber ${msgnumber}`);
-      client.dele(msgnumber);
-      client.quit();
-    } else {
-      console.log(`RETR failed for msgnumber ${msgnumber}`);
-      client.quit();
-    }
-  });
-
-  client.on('dele', (status, msgnumber, data, rawdata) => {
-    if (status === true) {
-      console.log(`DELE success for msgnumber ${msgnumber}`);
-      client.quit();
-    } else {
-      console.log(`DELE failed for msgnumber ${msgnumber}`);
-      client.quit();
-    }
-  });
-
-  client.on('quit', (status, rawdata) => {
-    if (status === true) console.log('QUIT success');
+  client.on('quit', (status) => {
+    if (status) console.log('QUIT success');
     else console.log('QUIT failed');
   });
 }
