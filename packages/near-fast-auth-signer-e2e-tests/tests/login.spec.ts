@@ -45,10 +45,11 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
   await page.getByRole('button', { name: 'Sign In' }).click();
 
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
-  await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with emai')).toBeVisible();
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
+
+  await expect(page.getByRole('button', { name: 'Resend' })).toBeVisible();
 
   const loginLink = await getFirebaseAuthLink(email, {
     user:     process.env.MAILTRAP_USER,
