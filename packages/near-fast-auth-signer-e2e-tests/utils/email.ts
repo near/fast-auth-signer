@@ -1,6 +1,6 @@
 import POP3Client from 'mailpop3';
 
-import { cleanEmailFormat, extractLinkFromOnboardingEmail } from './regex';
+import { cleanEmailFormat, extractLinkAndUIDLFromOnboardingEmail } from './regex';
 
 export function getLastEmail(config: {
   user: string;
@@ -61,7 +61,7 @@ export function getLastEmail(config: {
         reject(new Error('Failed to delete message.'));
       } else {
         client.quit();
-        setTimeout(() => resolve(ret), 10000);
+        resolve(ret);
       }
     });
   });
@@ -73,7 +73,7 @@ export const getFirebaseAuthLink = async (email: string, config: {
   host: string;
   port: number;
   tls: boolean;
-}): Promise<string | null> => {
+}): Promise<{link: string, uidl: string } | null> => {
   let lastEmail = await getLastEmail(config);
 
   while (!lastEmail?.includes(email)) {
@@ -83,7 +83,7 @@ export const getFirebaseAuthLink = async (email: string, config: {
     lastEmail = await getLastEmail(config);
   }
 
-  return extractLinkFromOnboardingEmail(lastEmail);
+  return extractLinkAndUIDLFromOnboardingEmail(lastEmail);
 };
 
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {

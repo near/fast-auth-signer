@@ -23,7 +23,7 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
 
-  const createAccountLink = await getFirebaseAuthLink(email, {
+  const createAccountData = await getFirebaseAuthLink(email, {
     user:     process.env.MAILTRAP_USER,
     password: process.env.MAILTRAP_PASS,
     host:     'pop3.mailtrap.io',
@@ -31,9 +31,9 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
     tls:      false
   });
 
-  expect(createAccountLink).toBeTruthy();
+  expect(createAccountData.link).toBeTruthy();
 
-  await page.goto(createAccountLink);
+  await page.goto(createAccountData.link);
 
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
 
@@ -51,7 +51,7 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
 
   await expect(page.getByRole('button', { name: 'Resend' })).toBeVisible();
 
-  const loginLink = await getFirebaseAuthLink(email, {
+  const loginData = await getFirebaseAuthLink(email, {
     user:     process.env.MAILTRAP_USER,
     password: process.env.MAILTRAP_PASS,
     host:     'pop3.mailtrap.io',
@@ -59,9 +59,9 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
     tls:      false
   });
 
-  expect(loginLink).toBeTruthy();
+  expect(loginData.link).toBeTruthy();
 
-  await page.goto(loginLink);
+  await page.goto(loginData.link);
 
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 800000 });
 });
@@ -105,7 +105,7 @@ test('should login with email', async ({ page, baseURL }) => {
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
 
-  const loginLink = await getFirebaseAuthLink(email, {
+  const loginData = await getFirebaseAuthLink(email, {
     user:     process.env.MAILTRAP_USER,
     password: process.env.MAILTRAP_PASS,
     host:     'pop3.mailtrap.io',
@@ -113,7 +113,7 @@ test('should login with email', async ({ page, baseURL }) => {
     tls:      false
   });
 
-  expect(loginLink).toBeTruthy();
+  expect(loginData).toBeTruthy();
 
   credentials = await client.send('WebAuthn.getCredentials', {
     authenticatorId,
@@ -125,7 +125,7 @@ test('should login with email', async ({ page, baseURL }) => {
     console.log(c);
   }
 
-  await page.goto(loginLink);
+  await page.goto(loginData.link);
 
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 800000 });
 
