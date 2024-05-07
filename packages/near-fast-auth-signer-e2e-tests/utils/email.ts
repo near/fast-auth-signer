@@ -1,6 +1,6 @@
 import POP3Client from 'mailpop3';
 
-import { cleanEmailFormat } from './regex';
+import { cleanEmailFormat, extractLinkFromOnboardingEmail } from './regex';
 
 export function getLastEmail(config: {
   user: string;
@@ -54,6 +54,25 @@ export function getLastEmail(config: {
     });
   });
 }
+
+export const getFirebaseAuthLink = async (email: string, config: {
+  user: string;
+  password: string;
+  host: string;
+  port: number;
+  tls: boolean;
+}): Promise<string | null> => {
+  let lastEmail = await getLastEmail(config);
+
+  while (!lastEmail?.includes(email)) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => { setTimeout(resolve, 1000); });
+    // eslint-disable-next-line no-await-in-loop
+    lastEmail = await getLastEmail(config);
+  }
+
+  return extractLinkFromOnboardingEmail(lastEmail);
+};
 
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {
   const randomPart = Math.random().toString(36).substring(2, 15);
