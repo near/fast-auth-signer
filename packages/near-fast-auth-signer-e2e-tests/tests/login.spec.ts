@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import EmailBox from '../utils/email';
+import { getLastEmail, getRandomEmailAndAccountId } from '../utils/email';
 import { extractLinkFromOnboardingEmail } from '../utils/regex';
 
 test('should login', async ({ page }) => {
@@ -66,10 +66,9 @@ async function setupVirtualAuthenticator(page) {
 }
 
 test('test with CDP', async ({ page }) => {
-  const randomPart = Math.random().toString(36).substring(2, 15);
-  const email = `dded070de3-903595+${randomPart}@inbox.mailtrap.io`;
-
   test.slow();
+
+  const { email, accountId } = getRandomEmailAndAccountId();
 
   await setupVirtualAuthenticator(page);
 
@@ -86,27 +85,23 @@ test('test with CDP', async ({ page }) => {
 
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
   await page.waitForResponse('https://rpc.testnet.near.org/');
-  await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).fill(randomPart);
+  await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).fill(accountId);
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
 
   let lastEmail = '';
   while (!lastEmail.includes(email)) {
-    const mailPop3Box = new EmailBox({
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => { setTimeout(resolve, 1000); });
+
+    // eslint-disable-next-line no-await-in-loop
+    lastEmail = await getLastEmail({
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
       host:     'pop3.mailtrap.io',
       port:     9950,
       tls:      false
     });
-
-    // eslint-disable-next-line no-await-in-loop
-    await mailPop3Box.establishConnection();
-
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise((resolve) => { setTimeout(resolve, 1000); });
-    // eslint-disable-next-line no-await-in-loop
-    lastEmail = await mailPop3Box.getLastEmail();
   }
 
   const link = extractLinkFromOnboardingEmail(lastEmail);
