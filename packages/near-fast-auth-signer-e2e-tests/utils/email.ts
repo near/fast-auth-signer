@@ -49,14 +49,7 @@ export function getLastEmail(config: {
       if (!status) {
         reject(new Error('Failed to retrieve message.'));
       } else {
-        client.dele(msgnumber);
         resolve(cleanEmailFormat(data));
-      }
-    });
-
-    client.on('dele', (status: boolean) => {
-      if (!status) {
-        console.error('Failed to delete message.');
       }
     });
   });

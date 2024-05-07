@@ -1,44 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 
 import { getLastEmail, getRandomEmailAndAccountId } from '../utils/email';
 import { extractLinkFromOnboardingEmail } from '../utils/regex';
 
-test('should login', async ({ page }) => {
-  test.slow();
-
-  await page.goto('http://localhost:3002/');
-
-  await expect(page.getByText('User is logged in')).not.toBeVisible();
-
-  await page.getByRole('button', { name: 'Sign In' }).click();
-  const fastAuthIframe = page.frameLocator('#nfw-connect-iframe');
-
-  await fastAuthIframe.getByRole('textbox', { name: 'email' }).fill('felipe@near.org');
-  await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
-
-  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 800000 });
-});
-
-test('should create account', async ({ page }) => {
-  test.slow();
-
-  await page.goto('http://localhost:3002/');
-
-  await expect(page.getByText('User is logged in')).not.toBeVisible();
-
-  await page.getByRole('button', { name: 'Create Account' }).click();
-  const fastAuthIframe = page.frameLocator('#nfw-connect-iframe');
-
-  await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('ligoti6516@deligy.com');
-  await page.waitForResponse('https://rpc.testnet.near.org/');
-  await fastAuthIframe.getByRole('textbox', { name: 'user_name', exact: true }).fill('mytextplaceholder');
-
-  await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
-
-  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 800000 });
-});
-
-async function setupVirtualAuthenticator(page) {
+async function setupVirtualAuthenticator(page: Page) {
   const client = await page.context().newCDPSession(page);
   // Disable UI for automated testing
   await client.send('WebAuthn.enable', { enableUI: false });
@@ -55,17 +20,10 @@ async function setupVirtualAuthenticator(page) {
   });
   const { authenticatorId } = result;
 
-  client.on('WebAuthn.credentialAdded', () => {
-    console.log('WebAuthn.credentialAdded');
-  });
-  client.on('WebAuthn.credentialAsserted', () => {
-    console.log('WebAuthn.credentialAsserted');
-  });
-
   return { client, authenticatorId };
 }
 
-test('test with CDP', async ({ page }) => {
+test('should create account', async ({ page }) => {
   test.slow();
 
   const { email, accountId } = getRandomEmailAndAccountId();
@@ -89,8 +47,8 @@ test('test with CDP', async ({ page }) => {
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
 
-  let lastEmail = '';
-  while (!lastEmail.includes(email)) {
+  let lastEmail  = '';
+  while (!lastEmail?.includes(email)) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => { setTimeout(resolve, 1000); });
 
@@ -108,5 +66,27 @@ test('test with CDP', async ({ page }) => {
 
   await page.goto(link);
 
+  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
+});
+
+test('should login with email', async ({ page }) => {
+  test.slow();
+
+  await page.goto('http://localhost:3002/');
+
+  await expect(page.getByText('User is logged in')).not.toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  const fastAuthIframe = page.frameLocator('#nfw-connect-iframe');
+
+  await fastAuthIframe.getByRole('textbox', { name: 'email' }).fill('felipe@near.org');
+  await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
+
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 800000 });
+});
+
+test('should login with passkey', async ({ page }) => {
+  test.slow();
+
+  await page.goto('http://localhost:3002/');
 });
