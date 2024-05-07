@@ -48,6 +48,10 @@ export default function App() {
     });
   };
 
+  const handleSignOut = async () => {
+    await fastAuthWallet.signOut();
+  };
+
   console.log({ accounts });
 
   return (
@@ -58,6 +62,9 @@ export default function App() {
       </button>
       <button type="button" onClick={handleSignIn}>
         Sign In
+      </button>
+      <button type="button" onClick={handleSignOut}>
+        Sign Out
       </button>
       {accounts.length > 0 && <p>User is logged in</p>}
     </div>

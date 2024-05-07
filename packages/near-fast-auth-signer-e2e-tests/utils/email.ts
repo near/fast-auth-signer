@@ -13,6 +13,8 @@ export function getLastEmail(config: {
     user, password, host, port, tls
   } = config;
 
+  let ret: string;
+
   return new Promise((resolve, reject) => {
     const client = new POP3Client(port, host, {
       tlserrs:   false,
@@ -49,7 +51,17 @@ export function getLastEmail(config: {
       if (!status) {
         reject(new Error('Failed to retrieve message.'));
       } else {
-        resolve(cleanEmailFormat(data));
+        client.dele(msgnumber);
+        ret = cleanEmailFormat(data);
+      }
+    });
+
+    client.on('dele', (status: boolean) => {
+      if (!status) {
+        reject(new Error('Failed to delete message.'));
+      } else {
+        client.quit();
+        setTimeout(() => resolve(ret), 10000);
       }
     });
   });
