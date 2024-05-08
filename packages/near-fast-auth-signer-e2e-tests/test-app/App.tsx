@@ -52,8 +52,6 @@ export default function App() {
     await fastAuthWallet.signOut();
   };
 
-  console.log({ accounts });
-
   return (
     <div id="ws-loaded">
       <p>Wallet selector instance is ready</p>

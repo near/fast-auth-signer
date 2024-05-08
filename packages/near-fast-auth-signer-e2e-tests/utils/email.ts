@@ -67,7 +67,7 @@ export function getLastEmail(config: {
   });
 }
 
-export const getFirebaseAuthLink = async (email: string, config: {
+export const getFirebaseAuthLink = async (email: string, readUIDLS: string[], config: {
   user: string;
   password: string;
   host: string;
@@ -75,15 +75,17 @@ export const getFirebaseAuthLink = async (email: string, config: {
   tls: boolean;
 }): Promise<{link: string, uidl: string } | null> => {
   let lastEmail = await getLastEmail(config);
+  let { link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail);
 
-  while (!lastEmail?.includes(email)) {
+  while (!lastEmail?.includes(email) || readUIDLS.includes(uidl)) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => { setTimeout(resolve, 1000); });
     // eslint-disable-next-line no-await-in-loop
     lastEmail = await getLastEmail(config);
+    ({ link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail));
   }
 
-  return extractLinkAndUIDLFromOnboardingEmail(lastEmail);
+  return { link, uidl };
 };
 
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {
