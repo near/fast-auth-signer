@@ -189,7 +189,16 @@ test('random', async ({ page, baseURL }) => {
     window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = async () => true;
     navigator.credentials.create = async (...args) => {
       console.log('navigator.credentials.create was called');
-      return args as any;
+      return {
+        id:       'example-id',
+        rawId:    new Uint8Array([/* raw ID bytes */]),
+        type:     'public-key',
+        response: {
+          clientDataJSON:    new Uint8Array([/* client data JSON bytes */]),
+          attestationObject: new Uint8Array([/* attestation object bytes */]),
+        },
+        getClientExtensionResults: () => { return {}; },
+      };
     };
   });
 
