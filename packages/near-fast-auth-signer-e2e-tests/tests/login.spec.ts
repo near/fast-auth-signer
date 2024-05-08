@@ -185,7 +185,15 @@ test('random', async ({ page, baseURL }) => {
   expect(createAccountData.link).toBeTruthy();
 
   await page.addInitScript(() => {
-    console.log('called here felipe');
+    const script1 = document.createElement('script');
+    script1.src = 'https://unpkg.com/bignumber.js';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.src = 'https://unpkg.com/cbor-web';
+    document.head.appendChild(script2);
+
+    console.log('isUserVerifyingPlatformAuthenticatorAvailable was called');
     window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = async () => true;
 
     // This is a mock for the create method
@@ -217,15 +225,51 @@ test('random', async ({ page, baseURL }) => {
 
     navigator.credentials.create = async () => {
       console.log('navigator.credentials.create was called');
+      // Example of original return
+      // return {
+      //   authenticatorAttachment: 'platform',
+      //   id:                      'Sxi-QnudaNGk4PZc8E2Msc7MiImyqgaCZphEhzhoOl4',
+      //   rawId:                   new ArrayBuffer(32),
+      //   response:                {
+      //     attestationObject: new ArrayBuffer(194),
+      //     clientDataJSON:    new ArrayBuffer(374)
+      //   },
+      //   type: 'public-key'
+      // };
       return {
         authenticatorAttachment: 'platform',
-        id:                      'Sxi-QnudaNGk4PZc8E2Msc7MiImyqgaCZphEhzhoOl4',
-        rawId:                   new ArrayBuffer(32),
+        id:                      `mocked-id-${Math.random().toString(36).substr(2, 9)}`,
+        rawId:                   new Uint8Array(16).map(() => Math.floor(Math.random() * 256)).buffer,
         response:                {
-          attestationObject: new ArrayBuffer(194),
-          clientDataJSON:    new ArrayBuffer(374)
+          // cbor is available by script tag imported only in this page
+          // @ts-ignore
+          // eslint-disable-next-line no-undef
+          attestationObject: cbor.encode({
+            attStmt:  {},
+            authData: new Uint8Array(32).map(() => Math.floor(Math.random() * 256)),
+            fmt:      'none',
+          }).buffer,
+
+          // Docs: https://developer.mozilla.org/en-US/docs/Web/API/AuthenticatorAttestationResponse/attestationObject
+          // attestationObject: cbor.encode({
+          //   authData: new Uint8Array(32).map(() => Math.floor(Math.random() * 256)),
+          //   fmt:      'packed',
+          //   attStmt:  {
+          //     alg: -7, // Example algorithm identifier for ES256
+          //     sig: new Uint8Array(72).map(() => Math.random() * 256), // Mock signature
+          //     x5c: [new Uint8Array(256).map(() => Math.random() * 256)] // Mock certificate chain
+          //   }
+          // }).buffer,
+          clientDataJSON:    new TextEncoder().encode(JSON.stringify({
+            challenge:                    'qJGfhbymHo0Fn0D2cGViiA_vZ6zfytWkQGWaI3NirK6pD5q2o6qDjPmc7DHcMPrzGyBZzsZQ5ViIw5UVnMsf-SfxAbwxtCrz-2FqJJLnO_FAbQvMWwAyzd6JMoHnJsLJuTvy1WJ9Grhg-NfO9YGdOQzkCKqW3DVNyJKJakyO6vs',
+            crossOrigin:                  false,
+            origin:                       'http://localhost:3000',
+            other_keys_can_be_added_here: 'do not compare clientDataJSON against a template. See https://goo.gl/yabPex',
+            type:                         'webauthn.create',
+          })).buffer,
         },
-        type: 'public-key'
+        type:                      'public-key',
+        getClientExtensionResults: () => { return {}; },
       };
     };
 
