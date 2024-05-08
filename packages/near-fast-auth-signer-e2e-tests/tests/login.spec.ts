@@ -73,7 +73,7 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
 // The problem of this test it's that it may end up on remove device screen and be non deterministic. So I included this test on the create account.
 test('should login with email', async ({ page, baseURL }) => {
   test.slow();
-  const { email, accountId } = getRandomEmailAndAccountId();
+  const { email } = getRandomEmailAndAccountId();
 
   await page.goto(baseURL);
 
@@ -187,17 +187,72 @@ test('random', async ({ page, baseURL }) => {
   await page.addInitScript(() => {
     console.log('called here felipe');
     window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = async () => true;
-    navigator.credentials.create = async (...args) => {
+
+    // This is a mock for the create method
+    // const publicKey = {
+    //   attestation:            'none',
+    //   authenticatorSelection: {
+    //     authenticatorAttachment: 'platform',
+    //     requireResidentKey:      true,
+    //     userVerification:        'preferred'
+    //   },
+    //   challenge:        new ArrayBuffer(128),
+    //   pubKeyCredParams: [
+    //     { type: 'public-key', alg: -8 },
+    //     { type: 'public-key', alg: -7 },
+    //     { type: 'public-key', alg: -257 }
+    //   ],
+    //   rp: {
+    //     id:   'localhost',
+    //     name: 'NEAR_API_JS_WEBAUTHN'
+    //   },
+    //   status:  'ok',
+    //   timeout: 90000,
+    //   user:    {
+    //     displayName: 'xasij31525@facais.com',
+    //     id:          new ArrayBuffer(21),
+    //     name:        'xasij31525@facais.com'
+    //   }
+    // };
+
+    navigator.credentials.create = async () => {
       console.log('navigator.credentials.create was called');
       return {
-        id:       'example-id',
-        rawId:    new Uint8Array([/* raw ID bytes */]),
-        type:     'public-key',
-        response: {
-          clientDataJSON:    new Uint8Array([/* client data JSON bytes */]),
-          attestationObject: new Uint8Array([/* attestation object bytes */]),
+        authenticatorAttachment: 'platform',
+        id:                      'Sxi-QnudaNGk4PZc8E2Msc7MiImyqgaCZphEhzhoOl4',
+        rawId:                   new ArrayBuffer(32),
+        response:                {
+          attestationObject: new ArrayBuffer(194),
+          clientDataJSON:    new ArrayBuffer(374)
         },
-        getClientExtensionResults: () => { return {}; },
+        type: 'public-key'
+      };
+    };
+
+    // Public key provided to get example
+    // const publickKey = {
+    //   allowCredentials: [],
+    //   attestation:      'direct',
+    //   challenge:        new ArrayBuffer(128),
+    //   rpId:             'localhost',
+    //   status:           'ok',
+    //   timeout:          90000,
+    //   userVerification: 'preferred',
+    //   username:         'dontcare'
+    // };
+    navigator.credentials.get = async () => {
+      console.log('navigator.credentials.get was called');
+      return {
+        authenticatorAttachment: 'platform',
+        id:                      '2EEDL1Pc1-k4SIFAId_6bgAQiekmSSxCGQ0pBmVM26M',
+        rawId:                   new ArrayBuffer(32),
+        response:                {
+          authenticatorData: new ArrayBuffer(37),
+          clientDataJSON:    new ArrayBuffer(262),
+          signature:         new ArrayBuffer(71),
+          userHandle:        new ArrayBuffer(15),
+        },
+        type: 'public-key'
       };
     };
   });
