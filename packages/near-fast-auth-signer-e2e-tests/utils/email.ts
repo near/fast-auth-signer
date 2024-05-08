@@ -67,7 +67,7 @@ export function getLastEmail(config: {
   });
 }
 
-export const getFirebaseAuthLink = async (email: string, readUIDLS: string[], config: {
+export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], config: {
   user: string;
   password: string;
   host: string;
@@ -77,7 +77,7 @@ export const getFirebaseAuthLink = async (email: string, readUIDLS: string[], co
   let lastEmail = await getLastEmail(config);
   let { link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail);
 
-  while (!lastEmail?.includes(email) || readUIDLS.includes(uidl)) {
+  while (!lastEmail?.includes(email) || readUIDLs.includes(uidl)) {
     // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => { setTimeout(resolve, 1000); });
     // eslint-disable-next-line no-await-in-loop
