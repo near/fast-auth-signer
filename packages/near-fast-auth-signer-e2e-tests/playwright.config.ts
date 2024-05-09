@@ -10,7 +10,8 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir:       './tests',
+  testDir:       './tests/devices',
+  testMatch:     '*.spec.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -33,19 +34,24 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup env',
+      testMatch: /global\.setup\.ts/,
+    },
+
+    {
       name: 'chromium',
       use:  { ...devices['Desktop Chrome'] },
     },
 
-    {
-      name: 'firefox',
-      use:  { ...devices['Desktop Firefox'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   use:  { ...devices['Desktop Firefox'] },
+    // },
 
-    {
-      name: 'webkit',
-      use:  { ...devices['Desktop Safari'] },
-    },
+    // {
+    //   name: 'webkit',
+    //   use:  { ...devices['Desktop Safari'] },
+    // },
 
     /* Test against mobile viewports. */
     // {
@@ -69,15 +75,16 @@ export default defineConfig({
   ],
 
   /* Run your local dev serve`r` before starting the tests */
-  webServer: [{
-    command:             'cd ../near-fast-auth-signer && yarn run start',
-    url:                 'http://127.0.0.1:3000',
-    reuseExistingServer: !process.env.CI,
-  },
-  {
-    command:             'yarn run start',
-    url:                 'http://127.0.0.1:3030',
-    reuseExistingServer: !process.env.CI,
-  }
+  webServer: [
+    {
+      command:             'cd ../near-fast-auth-signer && yarn run start',
+      url:                 'http://127.0.0.1:3000',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command:             'yarn run start',
+      url:                 'http://127.0.0.1:3030',
+      reuseExistingServer: !process.env.CI,
+    }
   ],
 });

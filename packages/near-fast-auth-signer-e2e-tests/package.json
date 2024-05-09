@@ -17,10 +17,11 @@
     "start": "webpack serve --mode development --history-api-fallback"
   },
   "dependencies": {
+    "@near-wallet-selector/core": "8.7.0",
+    "firebase-admin": "^12.1.0",
     "https-browserify": "^1.0.0",
     "near-fast-auth-signer": "*",
     "near-fastauth-wallet": "^0.0.10",
-    "@near-wallet-selector/core": "8.7.0",
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -12,7 +12,22 @@ export default function App() {
     );
   }
 
+  const onSignIn = () => {
+    console.log('onSignInclicked');
+    return selectorInstance
+      .wallet('fast-auth-wallet')
+      .then((fastAuthWallet: any) => fastAuthWallet.signIn({
+        accountId:  'test',
+        isRecovery: true,
+      }));
+  };
+
   return (
-    <div id="ws-loaded">Wallet selector instance is ready</div>
+    <>
+      <div id="ws-loaded">Wallet selector instance is ready</div>
+      <button type="button" data-testid="signIn" onClick={onSignIn}>
+        Go to sign in page
+      </button>
+    </>
   );
 }
