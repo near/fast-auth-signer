@@ -132,8 +132,6 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
 
-  await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
-
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
 });
 

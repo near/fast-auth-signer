@@ -41,18 +41,15 @@ export const setupIFramePasskeys = async (page: Page, config: {
   keyPairA: KeyPair;
   keyPairB: KeyPair;
 }) => {
-  await new Promise<void>((resolve) => {
-    page.on('frameattached', async (frame) => {
-      await frame.evaluate(
-        setupPasskeys,
-        {
-          ...config,
-          // Using any to access private property
-          secretKeyA: (config.keyPairA as any).secretKey,
-          secretKeyB: (config.keyPairB as any).secretKey
-        }
-      );
-      resolve();
-    });
+  page.on('frameattached', async (frame) => {
+    await frame.evaluate(
+      setupPasskeys,
+      {
+        ...config,
+        // Using any to access private property
+        secretKeyA: (config.keyPairA as any).secretKey,
+        secretKeyB: (config.keyPairB as any).secretKey
+      }
+    );
   });
 };
