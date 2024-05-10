@@ -29,3 +29,7 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+
+# serviceAccount
+utils/serviceAccount.js
