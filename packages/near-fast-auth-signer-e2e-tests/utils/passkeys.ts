@@ -1,18 +1,58 @@
-export const setupPasskeys = () => {
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js';
-  document.head.appendChild(script);
-  const seed = '5aWQVZ29KNZYFPFD8WA3qzUjmRWkH7RioPevVzB82EHfuKSVXCBzer5eTwnpKYnd6XKfEv97AdiRw1xA3MVYsY6g';
+import { KeyPair } from 'near-api-js';
+import { Page } from 'playwright/test';
 
-  // Keypair imported from near-api-js CDN
+const setupPasskeys = ({
+  isPassKeyAvailable = true,
+  returnSameKey = true,
+  secretKeyA,
+  secretKeyB,
+}) => {
+  const createKeyPair = secretKeyA;
+  const getKeyPair = returnSameKey ? createKeyPair : secretKeyB;
+
   // @ts-ignore
   window.test = {
-    isPassKeyAvailable: async () => true,
-    // @ts-ignore
-    // eslint-disable-next-line no-undef
-    createKey:          async () => window.nearApi.KeyPair.fromString(seed),
-    // @ts-ignore
-    // eslint-disable-next-line no-undef
-    getKeys:            async () => [window.nearApi.KeyPair.fromString(seed), window.nearApi.KeyPair.fromString(seed)],
+    isPassKeyAvailable: async () => isPassKeyAvailable,
+    createKey:          () => createKeyPair,
+    getKeys:            () => [getKeyPair, getKeyPair],
   };
+};
+
+export const setupPagePasskeys = async (page: Page, config: {
+  isPassKeyAvailable: boolean;
+  returnSameKey: boolean;
+  keyPairA: KeyPair;
+  keyPairB: KeyPair;
+}) => {
+  await page.addInitScript(
+    setupPasskeys,
+    {
+      ...config,
+      // Using any to access private property
+      secretKeyA: (config.keyPairA as any).secretKey,
+      secretKeyB: (config.keyPairB as any).secretKey
+    }
+  );
+};
+
+export const setupIFramePasskeys = async (page: Page, config: {
+  isPassKeyAvailable: boolean;
+  returnSameKey: boolean;
+  keyPairA: KeyPair;
+  keyPairB: KeyPair;
+}) => {
+  await new Promise<void>((resolve) => {
+    page.on('frameattached', async (frame) => {
+      await frame.evaluate(
+        setupPasskeys,
+        {
+          ...config,
+          // Using any to access private property
+          secretKeyA: (config.keyPairA as any).secretKey,
+          secretKeyB: (config.keyPairB as any).secretKey
+        }
+      );
+      resolve();
+    });
+  });
 };
