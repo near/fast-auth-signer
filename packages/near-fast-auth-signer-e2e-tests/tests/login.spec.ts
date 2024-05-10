@@ -3,16 +3,20 @@ import { KeyPair } from 'near-api-js';
 
 import { getFirebaseAuthLink, getRandomEmailAndAccountId } from '../utils/email';
 import { setupIFramePasskeys, setupPagePasskeys } from '../utils/passkeys';
-import { setupVirtualAuthenticator } from '../utils/VirtualAuthenticator';
 
 test('should create account and login with e-mail', async ({ page, baseURL }) => {
-  const readUIDLs = [];
-
   test.slow();
+
+  const readUIDLs = [];
 
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  await setupVirtualAuthenticator(page);
+  await setupPagePasskeys(page, {
+    isPassKeyAvailable: true,
+    returnSameKey:      true,
+    keyPairA:           KeyPair.fromRandom('ED25519'),
+    keyPairB:           KeyPair.fromRandom('ED25519')
+  });
 
   await page.goto(baseURL);
 
@@ -48,9 +52,16 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
   await page.goto(baseURL);
   await expect(page.getByText('User is logged in')).not.toBeVisible();
 
+  await setupIFramePasskeys(page, {
+    isPassKeyAvailable: true,
+    returnSameKey:      true,
+    keyPairA:           KeyPair.fromRandom('ED25519'),
+    keyPairB:           KeyPair.fromRandom('ED25519')
+  });
+
   await page.getByRole('button', { name: 'Sign In' }).click();
 
-  await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
+  await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click({ delay: 1000 });
   await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
 
   await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
@@ -66,6 +77,13 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
   });
 
   expect(loginData.link).toBeTruthy();
+
+  await setupPagePasskeys(page, {
+    isPassKeyAvailable: true,
+    returnSameKey:      true,
+    keyPairA:           KeyPair.fromRandom('ED25519'),
+    keyPairB:           KeyPair.fromRandom('ED25519')
+  });
 
   await page.goto(loginData.link);
 
@@ -130,7 +148,7 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   await page.getByRole('button', { name: 'Sign In' }).click();
 
-  await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
+  await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click({ delay: 1000 });
 
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
 });
