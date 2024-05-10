@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { getFirebaseAuthLink, getRandomEmailAndAccountId } from '../utils/email';
+import { setupPasskeys } from '../utils/passkeys';
 import { createPasskey, setupVirtualAuthenticator } from '../utils/VirtualAuthenticator';
 
 test('should create account and login with e-mail', async ({ page, baseURL }) => {
@@ -158,23 +159,7 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   await expect(page.getByText('Verifying email...')).toBeVisible();
 
-  await page.evaluate(async () => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js';
-    document.head.appendChild(script);
-
-    // Keypair imported from near-api-js CDN
-    // @ts-ignore
-    window.test = {
-      isPassKeyAvailable: async () => true,
-      // @ts-ignore
-      // eslint-disable-next-line no-undef
-      createKey:          async () => window.nearApi.KeyPair.fromRandom('ED25519'),
-      // @ts-ignore
-      // eslint-disable-next-line no-undef
-      getKeys:            async () => [window.nearApi.KeyPair.fromRandom('ED25519'), window.nearApi.KeyPair.fromRandom('ED25519')],
-    };
-  });
+  await page.evaluate(setupPasskeys);
 
   await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
 
@@ -184,23 +169,7 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   await new Promise<void>((resolve) => {
     page.on('frameattached', async (frame) => {
-      await frame.evaluate(async () => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/near-api-js@2.1.4/dist/near-api-js.min.js';
-        document.head.appendChild(script);
-
-        // Keypair imported from near-api-js CDN
-        // @ts-ignore
-        window.test = {
-          isPassKeyAvailable: async () => true,
-          // @ts-ignore
-          // eslint-disable-next-line no-undef
-          createKey:          async () => window.nearApi.KeyPair.fromRandom('ED25519'),
-          // @ts-ignore
-          // eslint-disable-next-line no-undef
-          getKeys:            async () => [window.nearApi.KeyPair.fromRandom('ED25519'), window.nearApi.KeyPair.fromRandom('ED25519')],
-        };
-      });
+      await frame.evaluate(setupPasskeys);
       resolve();
     });
   });
