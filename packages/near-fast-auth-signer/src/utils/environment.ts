@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import pickBy from 'lodash.pickby';
 
-const windowEnv = pickBy((window as unknown as {env: any}).env || {}, (v) => !!v);
+const windowEnv = typeof window !== 'undefined' ? pickBy((window as unknown as {env: any}).env || {}, (v) => !!v) : {};
 
 const environment = {
   DEBUG:                                windowEnv.DEBUG || process.env.DEBUG,
