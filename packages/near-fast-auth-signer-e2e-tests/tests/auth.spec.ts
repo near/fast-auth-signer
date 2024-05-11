@@ -40,7 +40,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getAppPage().isLoggedIn();
 });
 
-test('should login with passkeys', async ({ page }) => {
+test('should create account and login with passkeys', async ({ page }) => {
   test.slow();
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
