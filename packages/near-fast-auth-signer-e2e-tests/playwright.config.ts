@@ -70,7 +70,7 @@ export default defineConfig({
 
   /* Run your local dev serve`r` before starting the tests */
   webServer: [{
-    command:             'cd ../near-fast-auth-signer && yarn run start:test',
+    command:             'cd ../near-fast-auth-signer && NETWORK_ID=testnet yarn run start:test',
     url:                 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
   },
