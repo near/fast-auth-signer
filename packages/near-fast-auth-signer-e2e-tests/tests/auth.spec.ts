@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { test } from '@playwright/test';
 import { KeyPair } from 'near-api-js';
 
 import PageManager from '../pages/PageManager';
@@ -14,7 +14,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  await expect(page.getByText('User is logged in')).not.toBeVisible();
+  await pm.getAppPage().isNotLoggedIn();
 
   await pm.getCreateAccountPage().createAccount(email, accountId);
 
@@ -26,12 +26,9 @@ test('should create account and login with e-mail', async ({ page }) => {
 
   readUIDLs.push(emailId);
 
-  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
-  await page.getByRole('button', { name: 'Sign Out' }).click();
-  await expect(page.getByText('User is logged in')).not.toBeVisible();
+  await pm.getAppPage().signOut();
 
   await pm.getLoginPage().signInWithEmail(email);
-
   await pm.getEmailPage().hasLoaded();
 
   await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
@@ -40,7 +37,7 @@ test('should create account and login with e-mail', async ({ page }) => {
     keyPairForRetrieval: KeyPair.fromRandom('ED25519')
   });
 
-  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
+  await pm.getAppPage().isLoggedIn();
 });
 
 test('should login with passkeys', async ({ page }) => {
@@ -50,7 +47,7 @@ test('should login with passkeys', async ({ page }) => {
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
 
-  await expect(page.getByText('User is logged in')).not.toBeVisible();
+  await pm.getAppPage().isNotLoggedIn();
 
   await pm.getCreateAccountPage().createAccount(email, accountId);
 
@@ -62,19 +59,13 @@ test('should login with passkeys', async ({ page }) => {
 
   readUIDLs.push(emailId);
 
-  await page.getByRole('button', { name: 'Sign Out' }).click();
+  await pm.getAppPage().signOut();
 
   await pm.getLoginPage().signInWithKeyPair(keyPair, keyPair, {
     shouldClickContinue: false
   });
 
-  await expect(page.getByText('User is logged in')).toBeVisible({ timeout: 900000 });
-});
-
-test('should login with passkey', async ({ page }) => {
-  test.slow();
-
-  await page.goto('http://localhost:3002/');
+  await pm.getAppPage().isLoggedIn();
 });
 
 test('should not be able to login without account', async ({ page }) => {

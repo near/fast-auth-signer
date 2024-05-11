@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 
+import AppPage from './AppPage';
 import AuthCallBackPage from './AuthCallBackPage';
 import CreateAccountPage from './CreateAccountPage';
 import EmailPage from './EmailPage';
@@ -14,11 +15,14 @@ class PageManager {
 
   private emailPage: EmailPage;
 
+  private appPage: AppPage;
+
   constructor(page: Page) {
     this.loginPage = new LoginPage(page);
     this.createAccountPage = new CreateAccountPage(page);
     this.authCallBackPage = new AuthCallBackPage(page);
     this.emailPage = new EmailPage(page);
+    this.appPage = new AppPage(page);
   }
 
   getLoginPage(): LoginPage {
@@ -35,6 +39,10 @@ class PageManager {
 
   getEmailPage(): EmailPage {
     return this.emailPage;
+  }
+
+  getAppPage(): AppPage {
+    return this.appPage;
   }
 }
 

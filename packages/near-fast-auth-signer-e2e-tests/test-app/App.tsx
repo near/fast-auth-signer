@@ -5,7 +5,7 @@ import useWalletSelector from './hooks/useWalletSelector';
 export default function App() {
   const selectorInstance = useWalletSelector();
   const [fastAuthWallet, setFastAuthWallet] = useState<any>();
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
 
   useEffect(() => {
     const getWallet = async () => {
@@ -28,12 +28,6 @@ export default function App() {
     fetchAccounts();
   }, [fastAuthWallet]);
 
-  if (!selectorInstance || !fastAuthWallet) {
-    return (
-      <div id="loading-ws">Loading wallet selector...</div>
-    );
-  }
-
   const handleSignIn = () => {
     fastAuthWallet.signIn({
       contractId: 'v1.social08.testnet',
@@ -53,6 +47,12 @@ export default function App() {
     window.location.reload();
   };
 
+  if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
+    return (
+      <div id="loading-ws">Loading...</div>
+    );
+  }
+
   return (
     <div id="ws-loaded">
       <p>Wallet selector instance is ready</p>
@@ -62,10 +62,14 @@ export default function App() {
       <button type="button" onClick={handleSignIn}>
         Sign In
       </button>
-      <button type="button" onClick={handleSignOut}>
-        Sign Out
-      </button>
-      {accounts.length > 0 && <p>User is logged in</p>}
+      {accounts.length > 0 && (
+        <div>
+          <button type="button" onClick={handleSignOut}>
+            Sign Out
+          </button>
+          <p>User is logged in</p>
+        </div>
+      )}
     </div>
   );
 }
