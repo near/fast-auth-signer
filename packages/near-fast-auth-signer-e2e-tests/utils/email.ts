@@ -77,13 +77,16 @@ export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], co
   let lastEmail = await getLastEmail(config);
   let { link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail);
 
-  while (!lastEmail?.includes(email) || readUIDLs.includes(uidl)) {
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise((resolve) => { setTimeout(resolve, 1000); });
-    // eslint-disable-next-line no-await-in-loop
-    lastEmail = await getLastEmail(config);
-    ({ link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail));
-  }
+  await new Promise<void>((resolve) => {
+    const interval = setInterval(async () => {
+      lastEmail = await getLastEmail(config);
+      ({ link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail));
+      if (lastEmail?.includes(email) && !readUIDLs.includes(uidl)) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 1000);
+  });
 
   return { link, uidl };
 };

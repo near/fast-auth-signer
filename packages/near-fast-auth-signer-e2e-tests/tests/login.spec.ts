@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { KeyPair } from 'near-api-js';
 
 import { getFirebaseAuthLink, getRandomEmailAndAccountId } from '../utils/email';
-import { setupIFramePasskeys, setupPagePasskeys } from '../utils/passkeys';
+import { setupPasskeysFunctions } from '../utils/passkeys';
 
 test('should create account and login with e-mail', async ({ page, baseURL }) => {
   test.slow();
@@ -11,11 +11,10 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
 
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  await setupPagePasskeys(page, {
-    isPassKeyAvailable: true,
-    returnSameKey:      true,
-    keyPairA:           KeyPair.fromRandom('ED25519'),
-    keyPairB:           KeyPair.fromRandom('ED25519')
+  await setupPasskeysFunctions(page, 'page', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:           KeyPair.fromRandom('ED25519'),
+    keyPairForRetrieval:           KeyPair.fromRandom('ED25519')
   });
 
   await page.goto(baseURL);
@@ -52,11 +51,10 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
   await page.goto(baseURL);
   await expect(page.getByText('User is logged in')).not.toBeVisible();
 
-  await setupIFramePasskeys(page, {
-    isPassKeyAvailable: true,
-    returnSameKey:      true,
-    keyPairA:           KeyPair.fromRandom('ED25519'),
-    keyPairB:           KeyPair.fromRandom('ED25519')
+  await setupPasskeysFunctions(page, 'iframe', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:           KeyPair.fromRandom('ED25519'),
+    keyPairForRetrieval:           KeyPair.fromRandom('ED25519')
   });
 
   await page.getByRole('button', { name: 'Sign In' }).click();
@@ -78,11 +76,10 @@ test('should create account and login with e-mail', async ({ page, baseURL }) =>
 
   expect(loginData.link).toBeTruthy();
 
-  await setupPagePasskeys(page, {
-    isPassKeyAvailable: true,
-    returnSameKey:      true,
-    keyPairA:           KeyPair.fromRandom('ED25519'),
-    keyPairB:           KeyPair.fromRandom('ED25519')
+  await setupPasskeysFunctions(page, 'page', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:           KeyPair.fromRandom('ED25519'),
+    keyPairForRetrieval:           KeyPair.fromRandom('ED25519')
   });
 
   await page.goto(loginData.link);
@@ -124,11 +121,10 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   const keyPair = KeyPair.fromRandom('ED25519');
 
-  await setupPagePasskeys(page, {
-    isPassKeyAvailable: true,
-    returnSameKey:      true,
-    keyPairA:           keyPair,
-    keyPairB:           keyPair
+  await setupPasskeysFunctions(page, 'page', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:           keyPair,
+    keyPairForRetrieval:           keyPair
   });
 
   await page.goto(createAccountData.link);
@@ -137,11 +133,10 @@ test('should login with passkeys', async ({ page, baseURL }) => {
 
   await page.goto(baseURL);
 
-  await setupIFramePasskeys(page, {
-    isPassKeyAvailable: true,
-    returnSameKey:      true,
-    keyPairA:           keyPair,
-    keyPairB:           keyPair
+  await setupPasskeysFunctions(page, 'iframe', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:           keyPair,
+    keyPairForRetrieval:           keyPair
   });
 
   await expect(page.getByText('User is logged in')).not.toBeVisible();

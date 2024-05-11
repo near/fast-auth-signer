@@ -1,55 +1,49 @@
 import { KeyPair } from 'near-api-js';
 import { Page } from 'playwright/test';
 
-const setupPasskeys = ({
+const configWindowTest = ({
   isPassKeyAvailable = true,
-  returnSameKey = true,
-  secretKeyA,
-  secretKeyB,
+  keyCreationSecret,
+  keyRetrievalSecret,
 }) => {
-  const createKeyPair = secretKeyA;
-  const getKeyPair = returnSameKey ? createKeyPair : secretKeyB;
-
   // @ts-ignore
   window.test = {
+    // @ts-ignore
+    ...window.test,
     isPassKeyAvailable: async () => isPassKeyAvailable,
-    createKey:          () => createKeyPair,
-    getKeys:            () => [getKeyPair, getKeyPair],
+    createKey:          () => keyCreationSecret,
+    getKeys:            () => [keyRetrievalSecret, keyRetrievalSecret],
   };
 };
 
-export const setupPagePasskeys = async (page: Page, config: {
+export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: {
   isPassKeyAvailable: boolean;
-  returnSameKey: boolean;
-  keyPairA: KeyPair;
-  keyPairB: KeyPair;
+  keyPairForCreation: KeyPair;
+  keyPairForRetrieval: KeyPair;
 }) => {
-  await page.addInitScript(
-    setupPasskeys,
-    {
-      ...config,
-      // Using any to access private property
-      secretKeyA: (config.keyPairA as any).secretKey,
-      secretKeyB: (config.keyPairB as any).secretKey
-    }
-  );
-};
+  const setupPasskeysArgs = {
+    ...config,
+    // Using any to access private property
+    keyCreationSecret:  (config.keyPairForCreation as any).secretKey,
+    keyRetrievalSecret: (config.keyPairForRetrieval as any).secretKey
+  };
 
-export const setupIFramePasskeys = async (page: Page, config: {
-  isPassKeyAvailable: boolean;
-  returnSameKey: boolean;
-  keyPairA: KeyPair;
-  keyPairB: KeyPair;
-}) => {
-  page.on('frameattached', async (frame) => {
-    await frame.evaluate(
-      setupPasskeys,
-      {
-        ...config,
-        // Using any to access private property
-        secretKeyA: (config.keyPairA as any).secretKey,
-        secretKeyB: (config.keyPairB as any).secretKey
-      }
-    );
-  });
+  switch (type) {
+    case 'iframe':
+      page.on('frameattached', async (frame) => {
+        await frame.evaluate(
+          configWindowTest,
+          setupPasskeysArgs
+        );
+      });
+      break;
+    case 'page':
+      await page.addInitScript(
+        configWindowTest,
+        setupPasskeysArgs
+      );
+      break;
+    default:
+      throw new Error('Invalid type');
+  }
 };
