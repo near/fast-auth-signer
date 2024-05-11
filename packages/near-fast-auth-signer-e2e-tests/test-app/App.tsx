@@ -50,6 +50,7 @@ export default function App() {
 
   const handleSignOut = async () => {
     await fastAuthWallet.signOut();
+    window.location.reload();
   };
 
   return (

@@ -11,21 +11,29 @@ const configWindowTest = ({
     // @ts-ignore
     ...window.test,
     isPassKeyAvailable: async () => isPassKeyAvailable,
-    createKey:          () => keyCreationSecret,
-    getKeys:            () => [keyRetrievalSecret, keyRetrievalSecret],
+    ...isPassKeyAvailable ? {
+      createKey:          () => keyCreationSecret,
+      getKeys:            () => [keyRetrievalSecret, keyRetrievalSecret]
+    } : {}
   };
 };
 
-export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: {
-  isPassKeyAvailable: boolean;
+export type SetupPasskeysFunctionsConfig = {
+  isPassKeyAvailable: true;
   keyPairForCreation: KeyPair;
   keyPairForRetrieval: KeyPair;
-}) => {
+} | {
+  isPassKeyAvailable: false;
+  keyPairForCreation?: never
+  keyPairForRetrieval?: never
+};
+
+export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: SetupPasskeysFunctionsConfig) => {
   const setupPasskeysArgs = {
     ...config,
     // Using any to access private property
-    keyCreationSecret:  (config.keyPairForCreation as any).secretKey,
-    keyRetrievalSecret: (config.keyPairForRetrieval as any).secretKey
+    keyCreationSecret:  (config.keyPairForCreation as any)?.secretKey,
+    keyRetrievalSecret: (config.keyPairForRetrieval as any)?.secretKey
   };
 
   switch (type) {
