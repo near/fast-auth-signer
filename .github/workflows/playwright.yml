@@ -20,6 +20,22 @@ jobs:
       run: npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
+    - name: Checkout pagoda-relayer-rs repository
+      uses: actions/checkout@v3
+      with:
+        repository: 'near/pagoda-relayer-rs'
+        path: 'pagoda-relayer-rs'
+    - name: Setup Rust environment
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+    - name: Build and run pagoda-relayer-rs
+      run: |
+        cd pagoda-relayer-rs
+        cargo build --release
+        cargo run &
     - name: Run Playwright tests
       env:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
