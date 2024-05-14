@@ -37,11 +37,6 @@ jobs:
         toolchain: stable
         profile: minimal
         override: true
-    - name: Build pagoda-relayer-rs
-      run: |
-        cd ${{ github.workspace }}/pagoda-relayer-rs
-        cargo build --release
-      shell: /usr/bin/bash -e {0}
     - name: Start server in the background
       run: |
         cd ${{ github.workspace }}/pagoda-relayer-rs
