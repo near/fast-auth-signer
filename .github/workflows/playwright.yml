@@ -45,7 +45,7 @@ jobs:
     - name: Wait for server to be ready
       run: |
         echo "Waiting for server to start..."
-        timeout=240 # timeout in seconds
+        timeout=300 # timeout in seconds
         while ! curl --output /dev/null --silent --header "Content-Type: application/json" --data '{"account_id": "example.testnet"}' http://localhost:3030/get_allowance; do
           printf '.'
           sleep 5
@@ -60,7 +60,9 @@ jobs:
       if: failure()
       run: cat ${{ github.workspace }}/server.log
     - name: Install dependencies
-      run: npm install -g yarn
+      run: |
+        cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
+        npm install -g yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
     - name: Run Playwright tests
