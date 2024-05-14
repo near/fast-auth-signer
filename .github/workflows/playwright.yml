@@ -40,7 +40,7 @@ jobs:
     - name: Start server in the background
       run: |
         cd ${{ github.workspace }}/pagoda-relayer-rs
-        cargo run > server.log 2>&1 &
+        cargo run > ${{ github.workspace }}/server.log 2>&1 &
         SERVER_PID=$!
     - name: Wait for server to be ready
       run: |
@@ -58,7 +58,7 @@ jobs:
         echo "Server is up and running!"
     - name: Print server logs
       if: failure()
-      run: cat server.log
+      run: cat ${{ github.workspace }}/server.log
     - name: Install dependencies
       run: npm install -g yarn
     - name: Install Playwright Browsers
