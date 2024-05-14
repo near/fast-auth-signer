@@ -31,11 +31,15 @@ jobs:
         toolchain: stable
         profile: minimal
         override: true
+    - name: List directories
+      run: ls -la ${{ github.workspace }}
     - name: Build and run pagoda-relayer-rs
       run: |
-        cd pagoda-relayer-rs
+        ls
+        cd ${{ github.workspace }}/pagoda-relayer-rs
         cargo build --release
         cargo run &
+      shell: /usr/bin/bash -e {0}
     - name: Run Playwright tests
       env:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
