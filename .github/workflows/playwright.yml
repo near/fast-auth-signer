@@ -16,30 +16,52 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
-    - name: Install dependencies
-      run: npm install -g yarn && yarn
-    - name: Install Playwright Browsers
-      run: yarn playwright install --with-deps
     - name: Checkout pagoda-relayer-rs repository
       uses: actions/checkout@v3
       with:
         repository: 'near/pagoda-relayer-rs'
         path: 'pagoda-relayer-rs'
+    - name: Cache Rust dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
     - name: Setup Rust environment
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         profile: minimal
         override: true
-    - name: List directories
-      run: ls -la ${{ github.workspace }}
-    - name: Build and run pagoda-relayer-rs
+    - name: Build pagoda-relayer-rs
       run: |
-        ls
         cd ${{ github.workspace }}/pagoda-relayer-rs
         cargo build --release
-        cargo run &
       shell: /usr/bin/bash -e {0}
+    - name: Start server in the background
+      run: |
+        cd ${{ github.workspace }}/pagoda-relayer-rs
+        cargo run &
+        SERVER_PID=$!
+    - name: Wait for server to be ready
+      run: |
+        echo "Waiting for server to start..."
+        until curl --output /dev/null --silent --head --fail http://localhost:3030; do
+          printf '.'
+          sleep 5
+        done
+        echo "Server is up and running!"
+    - name: Start server and redirect output to a file
+      run: |
+        cargo run > server.log 2>&1 &
+    - name: Install dependencies
+      run: npm install -g yarn && yarn
+    - name: Install Playwright Browsers
+      run: yarn playwright install --with-deps
     - name: Run Playwright tests
       env:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
@@ -51,3 +73,7 @@ jobs:
         name: playwright-report
         path: ./packages/near-fast-auth-signer-e2e-tests/playwright-report/
         retention-days: 30
+    - name: Cleanup background process
+      if: always()
+      run: |
+        kill $SERVER_PID || echo "Process already terminated."
