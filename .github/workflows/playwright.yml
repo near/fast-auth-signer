@@ -62,7 +62,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
-        npm install -g yarn
+        npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
     - name: Run Playwright tests
