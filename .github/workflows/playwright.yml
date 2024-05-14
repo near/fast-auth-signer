@@ -45,7 +45,7 @@ jobs:
     - name: Wait for server to be ready
       run: |
         echo "Waiting for server to start..."
-        timeout=2400 # timeout in seconds
+        timeout=240 # timeout in seconds
         while ! curl --output /dev/null --silent --header "Content-Type: application/json" --data '{"account_id": "example.testnet"}' http://localhost:3030/get_allowance; do
           printf '.'
           sleep 5
