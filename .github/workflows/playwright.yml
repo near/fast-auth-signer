@@ -40,12 +40,12 @@ jobs:
     - name: Start server in the background
       run: |
         cd ${{ github.workspace }}/pagoda-relayer-rs
-        cargo run &
+        cargo run > server.log 2>&1 &
         SERVER_PID=$!
     - name: Wait for server to be ready
       run: |
         echo "Waiting for server to start..."
-        timeout=420 # timeout in seconds
+        timeout=240 # timeout in seconds
         while ! curl --output /dev/null --silent --fail http://localhost:3030; do
           printf '.'
           sleep 5
@@ -56,11 +56,11 @@ jobs:
           fi
         done
         echo "Server is up and running!"
-    - name: Start server and redirect output to a file
-      run: |
-        cargo run > server.log 2>&1 &
+    - name: Print server logs
+      if: failure()
+      run: cat server.log
     - name: Install dependencies
-      run: npm install -g yarn && yarn
+      run: npm install -g yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
     - name: Run Playwright tests
