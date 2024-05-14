@@ -40,7 +40,7 @@ jobs:
     - name: Start server in the background
       run: |
         cd ${{ github.workspace }}/pagoda-relayer-rs
-        cargo run &
+        cargo run
         SERVER_PID=$!
     - name: Wait for server to be ready
       run: |
