@@ -47,7 +47,7 @@ jobs:
         cd ${{ github.workspace }}/pagoda-relayer-rs
         cargo run &
         SERVER_PID=$!
-   - name: Wait for server to be ready
+    - name: Wait for server to be ready
       run: |
         echo "Waiting for server to start..."
         timeout=60 # timeout in seconds
