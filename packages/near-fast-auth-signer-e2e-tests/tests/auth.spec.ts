@@ -20,9 +20,8 @@ test('should create account and login with e-mail', async ({ page }) => {
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  await pm.getAppPage().isNotLoggedIn();
-
   await pm.getCreateAccountPage().createAccount(email, accountId);
+  await pm.getEmailPage().hasLoaded();
 
   const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
     isPassKeyAvailable:  true,
@@ -53,9 +52,8 @@ test('should create account and login with passkeys', async ({ page }) => {
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
 
-  await pm.getAppPage().isNotLoggedIn();
-
   await pm.getCreateAccountPage().createAccount(email, accountId);
+  await pm.getEmailPage().hasLoaded();
 
   const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
     isPassKeyAvailable:  true,

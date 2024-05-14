@@ -11,7 +11,7 @@ class AuthCallBackPage {
   }
 
   async handleEmail(email: string, readUIDLs: string[], passkeysConfig: SetupPasskeysFunctionsConfig): Promise<string> {
-    const createAccountData = await getFirebaseAuthLink(email, readUIDLs, {
+    const emailData = await getFirebaseAuthLink(email, readUIDLs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
       host:     'pop3.mailtrap.io',
@@ -21,11 +21,11 @@ class AuthCallBackPage {
 
     setupPasskeysFunctions(this.page, 'page', passkeysConfig);
 
-    expect(createAccountData.link).toBeTruthy();
+    await this.page.goto(emailData.link);
 
-    await this.page.goto(createAccountData.link);
+    await expect(this.page.getByText('Verifying email...')).toHaveText('Verifying email...', { timeout: 90000 });
 
-    return createAccountData.uidl;
+    return emailData.uidl;
   }
 }
 

@@ -59,16 +59,18 @@ export default function App() {
       <button type="button" onClick={handleSignUp}>
         Create Account
       </button>
-      <button type="button" onClick={handleSignIn}>
-        Sign In
-      </button>
-      {accounts.length > 0 && (
+
+      {accounts.length > 0 ? (
         <div>
           <button type="button" onClick={handleSignOut}>
             Sign Out
           </button>
           <p>User is logged in</p>
         </div>
+      ) : (
+        <button type="button" onClick={handleSignIn}>
+          Sign In
+        </button>
       )}
     </div>
   );
