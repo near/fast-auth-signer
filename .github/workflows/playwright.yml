@@ -40,12 +40,12 @@ jobs:
     - name: Start server in the background
       run: |
         cd ${{ github.workspace }}/pagoda-relayer-rs
-        cargo run
+        cargo run &
         SERVER_PID=$!
     - name: Wait for server to be ready
       run: |
         echo "Waiting for server to start..."
-        timeout=60 # timeout in seconds
+        timeout=420 # timeout in seconds
         while ! curl --output /dev/null --silent --fail http://localhost:3030; do
           printf '.'
           sleep 5
