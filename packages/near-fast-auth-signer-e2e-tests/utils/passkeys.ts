@@ -1,15 +1,19 @@
 import { KeyPair } from 'near-api-js';
-import { Page } from 'playwright/test';
+import { Frame, Page } from 'playwright/test';
 
 const configWindowTest = ({
   isPassKeyAvailable = true,
   keyCreationSecret,
   keyRetrievalSecret,
+  shouldCleanStorage = false
 }) => {
+  if (shouldCleanStorage) {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  }
+
   // @ts-ignore
   window.test = {
-    // @ts-ignore
-    ...window.test,
     isPassKeyAvailable: async () => isPassKeyAvailable,
     ...isPassKeyAvailable ? {
       createKey:          () => keyCreationSecret,
@@ -22,13 +26,15 @@ export type SetupPasskeysFunctionsConfig = {
   isPassKeyAvailable: true;
   keyPairForCreation: KeyPair;
   keyPairForRetrieval: KeyPair;
+  shouldCleanStorage: boolean;
 } | {
   isPassKeyAvailable: false;
-  keyPairForCreation?: never
-  keyPairForRetrieval?: never
+  keyPairForCreation?: never;
+  keyPairForRetrieval?: never;
+  shouldCleanStorage: boolean;
 };
 
-export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: SetupPasskeysFunctionsConfig) => {
+export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: SetupPasskeysFunctionsConfig): Promise<any> => {
   const setupPasskeysArgs = {
     ...config,
     // Using any to access private property
@@ -36,22 +42,26 @@ export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page'
     keyRetrievalSecret: (config.keyPairForRetrieval as any)?.secretKey
   };
 
-  switch (type) {
-    case 'iframe':
-      page.on('frameattached', async (frame) => {
+  if (type === 'iframe') {
+    const listener = async (frame: Frame) => {
+      if (!frame.isDetached()) {
         await frame.evaluate(
           configWindowTest,
           setupPasskeysArgs
         );
-      });
-      break;
-    case 'page':
-      await page.addInitScript(
-        configWindowTest,
-        setupPasskeysArgs
-      );
-      break;
-    default:
-      throw new Error('Invalid type');
+      }
+    };
+    page.on('framenavigated', listener);
+
+    return listener;
+  } if (type === 'page') {
+    await page.addInitScript(
+      configWindowTest,
+      setupPasskeysArgs
+    );
+  } else {
+    throw new Error('Invalid type');
   }
+
+  return null;
 };

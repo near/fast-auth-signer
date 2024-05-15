@@ -26,7 +26,8 @@ test('should create account and login with e-mail', async ({ page }) => {
   const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
     isPassKeyAvailable:  true,
     keyPairForCreation:  KeyPair.fromRandom('ED25519'),
-    keyPairForRetrieval: KeyPair.fromRandom('ED25519')
+    keyPairForRetrieval: KeyPair.fromRandom('ED25519'),
+    shouldCleanStorage:  false
   });
 
   readUIDLs.push(emailId);
@@ -39,7 +40,8 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
     isPassKeyAvailable:  true,
     keyPairForCreation:  KeyPair.fromRandom('ED25519'),
-    keyPairForRetrieval: KeyPair.fromRandom('ED25519')
+    keyPairForRetrieval: KeyPair.fromRandom('ED25519'),
+    shouldCleanStorage:  false
   });
 
   await pm.getAppPage().isLoggedIn();
@@ -58,7 +60,8 @@ test('should create account and login with passkeys', async ({ page }) => {
   const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
     isPassKeyAvailable:  true,
     keyPairForCreation:  keyPair,
-    keyPairForRetrieval: keyPair
+    keyPairForRetrieval: keyPair,
+    shouldCleanStorage:  false
   });
 
   readUIDLs.push(emailId);
