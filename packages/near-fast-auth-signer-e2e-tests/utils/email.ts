@@ -94,7 +94,7 @@ export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], co
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {
   const randomPart = Math.random().toString(36).substring(2, 15);
   return {
-    email:     `dded070de3-903595+${randomPart}@inbox.mailtrap.io`,
+    email:     `${process.env.MAILTRAP_EMAIL}+${randomPart}@inbox.mailtrap.io`,
     accountId: randomPart
   };
 };
