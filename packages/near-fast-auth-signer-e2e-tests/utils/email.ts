@@ -1,21 +1,21 @@
 import POP3Client from 'mailpop3';
+import { v4 as uuid } from 'uuid';
 
-import { cleanEmailFormat, extractLinkAndUIDLFromOnboardingEmail } from './regex';
+import { clearEmailFormatting, extractLinkAndUIDLFromEmail } from './regex';
 
-export function getLastEmail(config: {
+export function checkAllEmails(config: {
   user: string;
   password: string;
   host: string;
   port: number;
   tls: boolean;
-}): Promise<string | undefined> {
-  const {
-    user, password, host, port, tls
-  } = config;
-
-  let ret: string;
-
+}, isTargetEmail: (_emailBody: string) => boolean): Promise<string | undefined> {
   return new Promise((resolve, reject) => {
+    const {
+      user, password, host, port, tls
+    } = config;
+    let count = 0;
+
     const client = new POP3Client(port, host, {
       tlserrs:   false,
       enabletls: tls,
@@ -43,6 +43,7 @@ export function getLastEmail(config: {
       } else if (msgcount === 0) {
         resolve(undefined);
       } else {
+        count = msgcount;
         client.retr(1);
       }
     });
@@ -51,20 +52,26 @@ export function getLastEmail(config: {
       if (!status) {
         reject(new Error('Failed to retrieve message.'));
       } else {
-        client.dele(msgnumber);
-        ret = cleanEmailFormat(data);
-      }
-    });
+        count -= 1;
 
-    client.on('dele', (status: boolean) => {
-      if (!status) {
-        reject(new Error('Failed to delete message.'));
-      } else {
-        client.quit();
-        resolve(ret);
+        const cleanEmail = clearEmailFormatting(data);
+        if (isTargetEmail(cleanEmail)) {
+          client.quit();
+          resolve(cleanEmail);
+        } else if (count === 0) {
+          client.quit();
+          resolve(undefined);
+        } else {
+          client.retr(msgnumber + 1);
+        }
       }
     });
   });
+}
+
+type EmailLinkAndUIDL = {
+  link: string;
+  uidl: string;
 }
 
 export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], config: {
@@ -73,26 +80,36 @@ export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], co
   host: string;
   port: number;
   tls: boolean;
-}): Promise<{link: string, uidl: string } | null> => {
-  let lastEmail = await getLastEmail(config);
-  let { link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail);
-
-  await new Promise<void>((resolve) => {
-    const interval = setInterval(async () => {
-      lastEmail = await getLastEmail(config);
-      ({ link, uidl } = extractLinkAndUIDLFromOnboardingEmail(lastEmail));
-      if (lastEmail?.includes(email) && !readUIDLs.includes(uidl)) {
-        clearInterval(interval);
-        resolve();
+}) => new Promise<EmailLinkAndUIDL | null>((resolve, reject) => {
+  let retry = 3;
+  const interval = setInterval(async () => {
+    let emailLinkAndUIDL: EmailLinkAndUIDL | null = null;
+    const targetEmail = await checkAllEmails(config, (content: string) => {
+      emailLinkAndUIDL = extractLinkAndUIDLFromEmail(content);
+      if (emailLinkAndUIDL) {
+        const ret = content.includes(email) && !readUIDLs.includes(emailLinkAndUIDL.uidl);
+        readUIDLs.push(emailLinkAndUIDL.uidl);
+        return ret;
       }
-    }, 1000);
-  });
+      return false;
+    });
 
-  return { link, uidl };
-};
+    if (targetEmail) {
+      clearInterval(interval);
+      resolve(emailLinkAndUIDL);
+    }
+
+    if (retry === 0) {
+      clearInterval(interval);
+      reject(new Error('Firebase auth link email not found'));
+    }
+
+    retry -= 1;
+  }, 10000);
+});
 
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {
-  const randomPart = Math.random().toString(36).substring(2, 15);
+  const randomPart = uuid();
   return {
     email:     `${process.env.MAILTRAP_EMAIL}+${randomPart}@inbox.mailtrap.io`,
     accountId: randomPart
