@@ -9,7 +9,6 @@ test.beforeEach(async ({ page, baseURL, relayerURL }) => {
   await page.goto(baseURL);
 
   // Overwrite relayer URLs to use local instance
-  // Add line
   await rerouteToCustomURL(page, relayerURL, '/relay');
   await rerouteToCustomURL(page, relayerURL, '/send_meta_tx_async');
 });

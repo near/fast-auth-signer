@@ -1,6 +1,6 @@
 import { expect, Page } from '@playwright/test';
 
-const TIMEOUT = 900000;
+import { TIMEOUT } from '../utils/constants';
 
 class AppPage {
   private page: Page;

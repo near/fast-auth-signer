@@ -1,5 +1,7 @@
 import { expect, Page } from '@playwright/test';
 
+import { TIMEOUT } from '../utils/constants';
+
 class EmailPage {
   private page: Page;
 
@@ -8,7 +10,7 @@ class EmailPage {
   }
 
   async hasLoaded() {
-    await expect(this.page.getByRole('button', { name: 'Resend' })).toHaveText('Resend', { timeout: 30000 });
+    await expect(this.page.getByRole('button', { name: 'Resend' })).toHaveText('Resend', { timeout: TIMEOUT });
   }
 }
 
