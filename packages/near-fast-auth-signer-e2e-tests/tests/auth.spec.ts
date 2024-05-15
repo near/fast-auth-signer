@@ -3,14 +3,13 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
-import { rerouteToCustomURL } from '../utils/url';
 
-test.beforeEach(async ({ page, baseURL, relayerURL }) => {
+test.beforeEach(async ({ page, baseURL }) => {
   await page.goto(baseURL);
 
   // Overwrite relayer URLs to use local instance
-  await rerouteToCustomURL(page, relayerURL, '/relay');
-  await rerouteToCustomURL(page, relayerURL, '/send_meta_tx_async');
+  // await rerouteToCustomURL(page, relayerURL, '/relay');
+  // await rerouteToCustomURL(page, relayerURL, '/send_meta_tx_async');
 });
 
 test('should create account and login with e-mail', async ({ page }) => {
