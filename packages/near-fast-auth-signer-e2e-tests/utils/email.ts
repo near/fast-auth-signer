@@ -54,6 +54,7 @@ export function checkAllEmails(config: {
       } else {
         count -= 1;
 
+        console.log({ msgnumber });
         const cleanEmail = clearEmailFormatting(data);
         if (isTargetEmail(cleanEmail)) {
           client.quit();
@@ -82,30 +83,34 @@ export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], co
   tls: boolean;
 }) => new Promise<EmailLinkAndUIDL | null>((resolve, reject) => {
   let retry = 3;
-  const interval = setInterval(async () => {
-    let emailLinkAndUIDL: EmailLinkAndUIDL | null = null;
-    const targetEmail = await checkAllEmails(config, (content: string) => {
-      emailLinkAndUIDL = extractLinkAndUIDLFromEmail(content);
-      if (emailLinkAndUIDL) {
-        const ret = content.includes(email) && !readUIDLs.includes(emailLinkAndUIDL.uidl);
-        readUIDLs.push(emailLinkAndUIDL.uidl);
-        return ret;
+
+  // Wait 5 seconds before start checking e-mails
+  setTimeout(() => {
+    const interval = setInterval(async () => {
+      let emailLinkAndUIDL: EmailLinkAndUIDL | null = null;
+      const targetEmail = await checkAllEmails(config, (content: string) => {
+        emailLinkAndUIDL = extractLinkAndUIDLFromEmail(content);
+        if (emailLinkAndUIDL) {
+          const ret = content.includes(email) && !readUIDLs.includes(emailLinkAndUIDL.uidl);
+          readUIDLs.push(emailLinkAndUIDL.uidl);
+          return ret;
+        }
+        return false;
+      });
+
+      if (targetEmail) {
+        clearInterval(interval);
+        resolve(emailLinkAndUIDL);
       }
-      return false;
-    });
 
-    if (targetEmail) {
-      clearInterval(interval);
-      resolve(emailLinkAndUIDL);
-    }
+      if (retry === 0) {
+        clearInterval(interval);
+        reject(new Error('Firebase auth link email not found'));
+      }
 
-    if (retry === 0) {
-      clearInterval(interval);
-      reject(new Error('Firebase auth link email not found'));
-    }
-
-    retry -= 1;
-  }, 10000);
+      retry -= 1;
+    }, 5000);
+  }, 5000);
 });
 
 export const getRandomEmailAndAccountId = (): {email: string, accountId: string} => {
