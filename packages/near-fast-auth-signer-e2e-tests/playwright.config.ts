@@ -14,7 +14,6 @@ require('dotenv').config();
 export default defineConfig<TestOptions>({
   testDir:       './tests',
   /* Run tests in files in parallel */
-  // Can't run in parallel due to e-mail issues. Tests will have conflicts on fetching the last e-mails
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly:    !!process.env.CI,
