@@ -69,6 +69,7 @@ jobs:
       env:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
           MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
+          MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
       run: yarn playwright test
     - uses: actions/upload-artifact@v3
       if: always()
