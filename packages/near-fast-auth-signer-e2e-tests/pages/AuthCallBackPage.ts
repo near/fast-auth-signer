@@ -26,6 +26,17 @@ class AuthCallBackPage {
 
     await this.page.goto(emailData.link);
 
+    await this.page.waitForLoadState('networkidle', {
+      timeout: TIMEOUT
+    });
+
+    const navigationResponse = await this.page.evaluate(() => document.readyState);
+
+    if (navigationResponse !== 'complete') {
+      console.error(`Navigation error: Expected 'complete', got '${navigationResponse}'`);
+      throw new Error('Navigation to the authentication link failed.');
+    }
+
     await expect(this.page.getByText('Verifying email...')).toHaveText('Verifying email...', { timeout: TIMEOUT });
 
     return emailData.uidl;
