@@ -22,6 +22,12 @@ class AuthCallBackPage {
 
     setupPasskeysFunctions(this.page, 'page', passkeysConfig);
 
+    console.log({
+      ...emailData,
+      email,
+      readUIDLs
+    });
+
     expect(emailData.link).toBeDefined();
 
     try {
@@ -29,6 +35,7 @@ class AuthCallBackPage {
 
       // Wait for the page to reach a stable state
       await this.page.waitForLoadState('networkidle', { timeout: TIMEOUT });
+      await this.page.waitForTimeout(3000);
 
       // Check the navigation response
       const navigationResponse = await this.page.evaluate(() => document.readyState);
