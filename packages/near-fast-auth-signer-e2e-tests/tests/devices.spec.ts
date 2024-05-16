@@ -2,126 +2,79 @@ import {
   KeyPair,
 } from '@near-js/crypto';
 import { expect, test } from '@playwright/test';
-import admin from 'firebase-admin';
-import { sha256 } from 'js-sha256';
-import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
-import { serviceAccount } from '../utils/serviceAccount';
-import { generateRandomString } from '../utils/utils';
+import PageManager from '../pages/PageManager';
+import {
+  createAccount, deleteAccount, generateKeyPairs, initializeAdmin,
+  isServiceAccountAvailable
+} from '../utils/createAccount';
+import { getRandomEmailAndAccountId } from '../utils/email';
+import { setupPasskeysFunctions } from '../utils/passkeys';
 
 let testUserUid;
-const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
 test.beforeAll(async () => {
-  if (!serviceAccount) {
-    throw new Error('Fail to retrieve serviceAccount.js');
+  if (isServiceAccountAvailable()) {
+    initializeAdmin();
   }
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
 });
 
-test('device page flow', async ({ page }) => {
-  await page.goto('http://localhost:3030/');
+test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
+  test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
+
+  const pm = new PageManager(page);
+  test.setTimeout(120000);
+  const { email, accountId } = getRandomEmailAndAccountId();
+
+  await page.goto(baseURL);
   const walletSelector = page.locator('#ws-loaded');
   await walletSelector.waitFor();
 
-  const id = `testaccount${generateRandomString(10).toLocaleLowerCase()}`;
-  const accountId = `${id}.testnet`;
-  const testEmail = `${id}@gmail.com`;
-  const testPassword = generateRandomString(10);
+  const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
-  const testUserRecord = await admin.auth().createUser({
-    email:         testEmail,
-    emailVerified: true,
-    password:      testPassword,
-    displayName:   accountId,
+  // As of 14 May 2024, creating an account with 5 keypairs will be just enough to redirected to devices page
+  const keypairs = generateKeyPairs(5);
+  const {
+    createAccountResponse,
+    userUid
+  } = await createAccount({
+    email,
+    accountId,
+    oidcKeyPair,
+    keypairs,
   });
 
-  testUserUid = testUserRecord.uid;
-  console.log('testUserUid', testUserUid);
-  console.log('accountId', accountId);
+  // will be used to delete account
+  testUserUid = userUid;
 
-  const tokenPayload = {
-    email:             testEmail,
-    password:          testPassword,
-    returnSecureToken: true,
-  };
-  const tokenResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY_TESTNET}`, {
-    method:  'POST',
-    mode:    'cors' as const,
-    body:    JSON.stringify(tokenPayload),
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-  });
-
-  expect(tokenResponse.ok).toBe(true);
-  const tokenResponseJson = await tokenResponse.json();
-
-  const accessToken = tokenResponseJson.idToken;
-  const odicKeyPair = KeyPair.fromRandom('ED25519');
-  const fakKeyPair1 = KeyPair.fromRandom('ED25519');
-  const fakKeyPair2 = KeyPair.fromRandom('ED25519');
-  const fakKeyPair3 = KeyPair.fromRandom('ED25519');
-
-  const signature = getUserCredentialsFrpSignature({
-    salt:            CLAIM + 0,
-    oidcToken:       accessToken,
-    shouldHashToken: true,
-    keypair:         odicKeyPair,
-  });
-
-  const claimOidcData = {
-    oidc_token_hash: sha256(accessToken),
-    frp_signature:   signature,
-    frp_public_key:  odicKeyPair.getPublicKey().toString(),
-  };
-
-  const claimOidcResponse = await fetch('https://mpc-recovery-leader-testnet.api.pagoda.co/claim_oidc', {
-    method:  'POST',
-    mode:    'cors' as const,
-    body:    JSON.stringify(claimOidcData),
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-  });
-  expect(claimOidcResponse.ok).toBe(true);
-
-  const userCredentialsFrpSignature = getUserCredentialsFrpSignature({
-    salt:            CLAIM + 2,
-    oidcToken:       accessToken,
-    shouldHashToken: false,
-    keypair:         odicKeyPair,
-  });
-
-  const data = {
-    near_account_id:        accountId,
-    create_account_options: {
-      full_access_keys:    [
-        fakKeyPair1.getPublicKey().toString(),
-        fakKeyPair2.getPublicKey().toString(),
-        fakKeyPair3.getPublicKey().toString()
-      ],
-    },
-    oidc_token:                     accessToken,
-    user_credentials_frp_signature: userCredentialsFrpSignature,
-    frp_public_key:                 odicKeyPair.getPublicKey().toString(),
-  };
-
-  const options = {
-    method:  'POST',
-    mode:    'cors' as const,
-    body:    JSON.stringify(data),
-    headers: new Headers({ 'Content-Type': 'application/json' }),
-  };
-
-  const createAccountResponse = await fetch('https://mpc-recovery-leader-testnet.api.pagoda.co/new_account', options);
   expect(createAccountResponse.ok).toBe(true);
 
-  // await page.getByTestId('signIn').click();
-  // await expect(page).toHaveURL(/http:\/\/localhost:3000\/add-device/);
-  // then attempt to sign in
+  await setupPasskeysFunctions(page, 'page', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:  oidcKeyPair,
+    keyPairForRetrieval: oidcKeyPair
+  });
+
+  await pm.getLoginPage().signInWithEmail(email);
+  await page.waitForLoadState('domcontentloaded');
+
+  await pm.getAuthCallBackPage().handleEmail(email, [], {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:  oidcKeyPair,
+    keyPairForRetrieval: oidcKeyPair
+  });
+
+  // Wait for page to render and execute async operations
+  await page.waitForTimeout(20000);
+
+  // Select all existing keypairs (except recovery keypair) and delete them
+  await pm.getDevicesPage().selectAndDelete();
+  await pm.getAppPage().isLoggedIn();
 });
 
 test.afterAll(async () => {
   // Delete test user acc
-  await admin.auth().deleteUser(testUserUid);
-  console.log('deleted user');
+  if (isServiceAccountAvailable()) {
+    await deleteAccount(testUserUid);
+  }
 });
