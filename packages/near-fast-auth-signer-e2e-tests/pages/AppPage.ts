@@ -1,6 +1,6 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
-import { TIMEOUT } from '../utils/constants';
+import { expectToExist } from '../utils/expect';
 
 class AppPage {
   private page: Page;
@@ -10,12 +10,12 @@ class AppPage {
   }
 
   async isLoaded() {
-    await expect(this.page.getByText('Wallet selector instance is ready')).toHaveText('Wallet selector instance is ready', { timeout: TIMEOUT });
+    await expectToExist(this.page, 'Wallet selector instance is ready');
   }
 
   async isLoggedIn() {
     await this.isLoaded();
-    await expect(this.page.getByText('User is logged in')).toHaveText('User is logged in', { timeout: TIMEOUT });
+    await expectToExist(this.page, 'User is logged in');
   }
 
   async signOut() {

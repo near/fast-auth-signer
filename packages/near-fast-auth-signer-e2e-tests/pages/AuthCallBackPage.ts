@@ -21,17 +21,8 @@ class AuthCallBackPage {
 
     setupPasskeysFunctions(this.page, 'page', passkeysConfig);
 
-    console.log({
-      ...emailData,
-      email,
-      readUIDLs
-    });
-
     expect(emailData.link).toBeDefined();
-
     await this.page.goto(emailData.link);
-
-    // await expect(this.page.getByText('Verifying email...')).toHaveText('Verifying email...', { timeout: TIMEOUT });
 
     return emailData.uidl;
   }
