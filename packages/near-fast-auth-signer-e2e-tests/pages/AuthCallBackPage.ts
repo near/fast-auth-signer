@@ -24,16 +24,44 @@ class AuthCallBackPage {
 
     expect(emailData.link).toBeDefined();
 
-    await this.page.goto(emailData.link);
+    try {
+      await this.page.goto(emailData.link, { waitUntil: 'load', timeout: TIMEOUT });
 
-    await this.page.waitForLoadState('networkidle', {
-      timeout: TIMEOUT
-    });
+      // Wait for the page to reach a stable state
+      await this.page.waitForLoadState('networkidle', { timeout: TIMEOUT });
 
-    const navigationResponse = await this.page.evaluate(() => document.readyState);
+      // Check the navigation response
+      const navigationResponse = await this.page.evaluate(() => document.readyState);
+      if (navigationResponse !== 'complete') {
+        console.log({ emailData });
+        console.error(`Navigation error: Expected 'complete', got '${navigationResponse}'`);
 
-    if (navigationResponse !== 'complete') {
-      console.error(`Navigation error: Expected 'complete', got '${navigationResponse}'`);
+        // Capture a screenshot of the page
+        await this.page.screenshot({ path: 'navigation-error.png' });
+
+        // Save the page source for debugging
+        const pageSource = await this.page.content();
+        console.log({ pageSource });
+
+        // Log any JavaScript errors on the page
+        this.page.on('pageerror', (error) => {
+          console.error('Page error:', error);
+        });
+
+        // Wait for a specific selector or condition (adjust as needed)
+        await this.page.waitForSelector('body', { timeout: TIMEOUT });
+
+        // Retry the navigation
+        await this.page.reload({ waitUntil: 'networkidle', timeout: TIMEOUT });
+
+        // Re-check the navigation response
+        const retryNavigationResponse = await this.page.evaluate(() => document.readyState);
+        if (retryNavigationResponse !== 'complete') {
+          throw new Error('Navigation to the authentication link failed after retry.');
+        }
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
       throw new Error('Navigation to the authentication link failed.');
     }
 
