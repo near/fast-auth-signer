@@ -36,12 +36,9 @@ class AuthCallBackPage {
         console.log({ emailData });
         console.error(`Navigation error: Expected 'complete', got '${navigationResponse}'`);
 
-        // Capture a screenshot of the page
-        await this.page.screenshot({ path: 'navigation-error.png' });
-
         // Save the page source for debugging
-        const pageSource = await this.page.content();
-        console.log({ pageSource });
+        const visibleText = await this.page.evaluate(() => document.body.innerText);
+        console.log({ visibleText });
 
         // Log any JavaScript errors on the page
         this.page.on('pageerror', (error) => {
