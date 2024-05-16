@@ -43,6 +43,7 @@ export function checkAllEmails(config: {
       } else if (msgcount === 0) {
         resolve(undefined);
       } else {
+        console.log({ msgcount });
         count = msgcount;
         client.retr(1);
       }
@@ -53,9 +54,8 @@ export function checkAllEmails(config: {
         reject(new Error('Failed to retrieve message.'));
       } else {
         count -= 1;
-
-        console.log({ msgnumber });
         const cleanEmail = clearEmailFormatting(data);
+        console.log({ msgnumber });
         if (isTargetEmail(cleanEmail)) {
           client.quit();
           resolve(cleanEmail);
@@ -99,6 +99,9 @@ export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], co
       });
 
       if (targetEmail) {
+        console.log({ targetEmail });
+        console.log('\n\n');
+        console.log({ emailLinkAndUIDL });
         clearInterval(interval);
         resolve(emailLinkAndUIDL);
       }

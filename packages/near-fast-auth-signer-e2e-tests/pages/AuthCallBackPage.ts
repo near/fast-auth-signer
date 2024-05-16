@@ -22,6 +22,8 @@ class AuthCallBackPage {
 
     setupPasskeysFunctions(this.page, 'page', passkeysConfig);
 
+    expect(emailData.link).toBeDefined();
+
     await this.page.goto(emailData.link);
 
     await expect(this.page.getByText('Verifying email...')).toHaveText('Verifying email...', { timeout: TIMEOUT });
