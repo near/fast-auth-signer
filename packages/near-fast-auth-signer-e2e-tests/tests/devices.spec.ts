@@ -52,7 +52,8 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await setupPasskeysFunctions(page, 'page', {
     isPassKeyAvailable:  true,
     keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair
+    keyPairForRetrieval: oidcKeyPair,
+    shouldCleanStorage:  false
   });
 
   await pm.getLoginPage().signInWithEmail(email);
@@ -61,7 +62,8 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAuthCallBackPage().handleEmail(email, [], {
     isPassKeyAvailable:  true,
     keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair
+    keyPairForRetrieval: oidcKeyPair,
+    shouldCleanStorage:  false
   });
 
   // Wait for page to render and execute async operations
