@@ -23,7 +23,7 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'dist'),
     },
-    port: 3030,
+    port: 3001,
   },
   devtool: 'eval-source-map',
   module:  {

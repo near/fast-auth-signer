@@ -16,11 +16,60 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
+    # - name: Checkout pagoda-relayer-rs repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: 'near/pagoda-relayer-rs'
+    #     path: 'pagoda-relayer-rs'
+    # - name: Cache Rust dependencies
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ~/.cargo/registry
+    #       ~/.cargo/git
+    #       target
+    #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-cargo-
+    # - name: Setup Rust environment
+    #   uses: actions-rs/toolchain@v1
+    #   with:
+    #     toolchain: stable
+    #     profile: minimal
+    #     override: true
+    # - name: Start server in the background
+    #   run: |
+    #     cd ${{ github.workspace }}/pagoda-relayer-rs
+    #     cargo run > ${{ github.workspace }}/server.log 2>&1 &
+    #     SERVER_PID=$!
+    # - name: Wait for server to be ready
+    #   run: |
+    #     echo "Waiting for server to start..."
+    #     timeout=300 # timeout in seconds
+    #     while ! curl --output /dev/null --silent --header "Content-Type: application/json" --data '{"account_id": "example.testnet"}' http://localhost:3030/get_allowance; do
+    #       printf '.'
+    #       sleep 5
+    #       timeout=$((timeout-5))
+    #       if [ "$timeout" -le 0 ]; then
+    #         echo "Server did not start in time."
+    #         exit 1
+    #       fi
+    #     done
+    #     echo "Server is up and running!"
+    # - name: Print server logs
+    #   if: failure()
+    #   run: cat ${{ github.workspace }}/server.log
     - name: Install dependencies
-      run: npm install -g yarn && yarn
+      run: |
+        cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
+        npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
     - name: Run Playwright tests
+      env:
+          MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
+          MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
+          MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
       run: yarn playwright test
     - uses: actions/upload-artifact@v3
       if: always()
@@ -28,3 +77,7 @@ jobs:
         name: playwright-report
         path: ./packages/near-fast-auth-signer-e2e-tests/playwright-report/
         retention-days: 30
+    - name: Cleanup background process
+      if: always()
+      run: |
+        kill $SERVER_PID || echo "Process already terminated."
