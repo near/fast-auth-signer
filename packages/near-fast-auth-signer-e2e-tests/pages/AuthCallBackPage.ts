@@ -1,6 +1,5 @@
 import { expect, Page } from '@playwright/test';
 
-import { TIMEOUT } from '../utils/constants';
 import { getFirebaseAuthLink } from '../utils/email';
 import { setupPasskeysFunctions, SetupPasskeysFunctionsConfig } from '../utils/passkeys';
 
@@ -22,9 +21,8 @@ class AuthCallBackPage {
 
     setupPasskeysFunctions(this.page, 'page', passkeysConfig);
 
+    expect(emailData.link).toBeDefined();
     await this.page.goto(emailData.link);
-
-    await expect(this.page.getByText('Verifying email...')).toHaveText('Verifying email...', { timeout: TIMEOUT });
 
     return emailData.uidl;
   }

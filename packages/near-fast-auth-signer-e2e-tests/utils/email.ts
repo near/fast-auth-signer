@@ -53,8 +53,6 @@ export function checkAllEmails(config: {
         reject(new Error('Failed to retrieve message.'));
       } else {
         count -= 1;
-
-        console.log({ msgnumber });
         const cleanEmail = clearEmailFormatting(data);
         if (isTargetEmail(cleanEmail)) {
           client.quit();
