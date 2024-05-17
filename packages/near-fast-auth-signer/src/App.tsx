@@ -12,7 +12,7 @@ import Devices from './components/Devices/Devices';
 import Login from './components/Login/Login';
 import RemoveTrailingSlash from './components/RemoveTrailingSlash/RemoveTrailingSlash';
 import RpcRoute from './components/RpcRoute/RpcRoute';
-import Sign from './components/Sign/Sign';
+import SignTemplate from './components/Sign/SignTemplate';
 import SignMultichain from './components/SignMultichain/SignMultichain';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
@@ -67,7 +67,9 @@ export default function App() {
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
-            <Route path="sign" element={<Sign />} />
+            {/* TODO: change the path for the delegates it's a breaking change that need to be done in sync with integrators */}
+            <Route path="sign" element={<SignTemplate signMethod="delegate" />} />
+            <Route path="sign-transaction" element={<SignTemplate signMethod="transaction" />} />
             {/* TODO: This isn't available on mainnet, and isn't production ready, clean the code for production release */}
             {environment.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
             <Route path="verify-email" element={<VerifyEmailPage />} />

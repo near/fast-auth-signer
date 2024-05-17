@@ -66,13 +66,17 @@ interface TransactionDetails {
   actions: transaction.Action[];
 }
 
-export const calculateGasLimit = (actions) => actions
+export const calculateGasLimit = (actions: Array<{ functionCall?: { gas: BN } }>): string => actions
   .filter((a) => Object.keys(a)[0] === 'functionCall')
-  .map((a) => a.functionCall.gas)
+  .map((a) => a.functionCall!.gas)
   .reduce((totalGas, gas) => totalGas.add(gas), new BN(0)).div(new BN('1000000000000'))
   .toString();
 
-function Sign() {
+type SignTemplateProps = {
+  signMethod: 'transaction' | 'delegate'
+}
+
+function SignTemplate({ signMethod }: SignTemplateProps) {
   const signTransactionRef = useRef(null);
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -190,25 +194,26 @@ function Sign() {
       setInFlight(false);
       return;
     }
+
     const signedTransactions = [];
     const signedDelegates = [];
     const success_url = isUrlNotJavascriptProtocol(searchParams.get('success_url')) && searchParams.get('success_url');
+
     // This need to run sequentially due to nonce issues.
     for (let i = 0; i < transactionDetails.transactions.length; i += 1) {
       try {
         const signPromises = transactionDetails.transactions.map(async (t) => {
-          const [signedTransaction, signedDelegate] = await Promise.all([
-            window.fastAuthController.signTransaction(t),
-            window.fastAuthController.signDelegateAction(t)
-          ]);
-
-          const encodedTransaction = encodeTransaction(signedTransaction[1]);
-          const base64Transaction = Buffer.from(encodedTransaction).toString('base64');
-          signedTransactions.push(base64Transaction);
-
-          const encodedDelegate = encodeSignedDelegate(signedDelegate);
-          const base64Delegate = Buffer.from(encodedDelegate).toString('base64');
-          signedDelegates.push(base64Delegate);
+          if (signMethod === 'transaction') {
+            const signedTransaction = await window.fastAuthController.signTransaction(t);
+            const encodedTransaction = encodeTransaction(signedTransaction[1]);
+            const base64Transaction = Buffer.from(encodedTransaction).toString('base64');
+            signedTransactions.push(base64Transaction);
+          } else if (signMethod === 'delegate') {
+            const signedDelegate = await window.fastAuthController.signDelegateAction(t);
+            const encodedDelegate = encodeSignedDelegate(signedDelegate);
+            const base64Delegate = Buffer.from(encodedDelegate).toString('base64');
+            signedDelegates.push(base64Delegate);
+          }
         });
 
         // eslint-disable-next-line no-await-in-loop
@@ -225,11 +230,20 @@ function Sign() {
         return;
       }
     }
+
     if (inIframe()) {
-      window.parent.postMessage({ signedTransactions: signedTransactions.join(','), signedDelegates: signedDelegates.join(',') }, '*');
+      if (signMethod === 'transaction') {
+        window.parent.postMessage({ signedTransactions: signedTransactions.join(','), signedDelegates: '' }, '*');
+      } else if (signMethod === 'delegate') {
+        window.parent.postMessage({ signedTransactions: '', signedDelegates: signedDelegates.join(',') }, '*');
+      }
     } else {
       const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
-      parsedUrl.searchParams.set('signedTransactions', signedTransactions.join(','));
+      if (signMethod === 'transaction') {
+        parsedUrl.searchParams.set('signedTransactions', signedTransactions.join(','));
+      } else if (signMethod === 'delegate') {
+        parsedUrl.searchParams.set('signedDelegates', signedDelegates.join(','));
+      }
       window.location.replace(parsedUrl.href);
     }
 
@@ -243,11 +257,14 @@ function Sign() {
           <div className="modal-top">
             <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
             <h4>Confirm transaction</h4>
-
             <div className="transaction-details">
               <InternetSvg />
               {callbackUrl || 'Unknown App'}
             </div>
+          </div>
+          <div className="transaction-alert">
+            {signMethod === 'transaction' && <p>You will be responsible for paying the gas fees.</p>}
+            {signMethod === 'delegate' && <p>The relayer will cover the gas fees for you.</p>}
           </div>
           <div className="modal-middle">
             <div className="table-wrapper">
@@ -290,8 +307,6 @@ function Sign() {
                 <h4>Actions</h4>
                 {transactionDetails.actions.map((action, i) => (
                   <TableContent
-                  // eslint-disable-next-line
-                key={i}
                     leftSide={transactionDetails.transactions[i].receiverId}
                     hasFunctionCall
                     isFunctionCallOpen
@@ -322,4 +337,4 @@ function Sign() {
   );
 }
 
-export default Sign;
+export default SignTemplate;
