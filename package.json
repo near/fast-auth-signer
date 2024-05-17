@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "yarn && yarn workspace fast-auth-signer-e2e-tests test"
+    "test": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",

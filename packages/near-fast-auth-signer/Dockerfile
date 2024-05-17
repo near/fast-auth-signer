@@ -4,7 +4,7 @@ COPY . ./
 WORKDIR /usr/src/app/packages/near-fast-auth-signer
 RUN rm -rf node_modules
 RUN yarn
-RUN npx webpack build --mode production 
+RUN npx webpack build --config webpack.production.config.js
 
 FROM nginx:alpine as production
 ENV NODE_ENV production

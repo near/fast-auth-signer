@@ -15,6 +15,7 @@ export default () => {
               networkId === 'testnet'
                 ? 'https://near-relayer-testnet.api.pagoda.co/relay'
                 : 'https://near-relayer-mainnet.api.pagoda.co/relay',
+            walletUrl: 'http://localhost:3000'
           })
         ],
       });

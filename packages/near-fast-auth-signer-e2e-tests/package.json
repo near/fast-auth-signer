@@ -17,24 +17,29 @@
     "start": "webpack serve --mode development --history-api-fallback"
   },
   "dependencies": {
+    "@near-wallet-selector/core": "^8.9.7",
+    "dotenv": "^16.4.5",
     "https-browserify": "^1.0.0",
+    "mailpop3": "^0.1.0",
+    "near-api-js": "^2.1.4",
     "near-fast-auth-signer": "*",
-    "near-fastauth-wallet": "^0.0.10",
-    "@near-wallet-selector/core": "8.7.0",
+    "near-fastauth-wallet": "^0.0.15",
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "typescript": "^5.0.4",
-    "url": "^0.11.3"
+    "url": "^0.11.3",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
-    "@playwright/test": "^1.39.0",
+    "@playwright/test": "^1.44.0",
     "@types/node": "^20.9.0",
-    "playwright": "^1.39.0",
+    "@types/uuid": "^9.0.8",
+    "playwright": "^1.44.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
