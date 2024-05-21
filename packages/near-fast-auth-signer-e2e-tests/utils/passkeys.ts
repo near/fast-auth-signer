@@ -38,8 +38,8 @@ export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page'
   const setupPasskeysArgs = {
     ...config,
     // Using any to access private property
-    keyCreationSecret:  (config.keyPairForCreation as any)?.secretKey,
-    keyRetrievalSecret: (config.keyPairForRetrieval as any)?.secretKey
+    keyCreationSecret:  (config.keyPairForCreation as any)?.toString(),
+    keyRetrievalSecret: (config.keyPairForRetrieval as any)?.toString()
   };
 
   if (type === 'iframe') {
