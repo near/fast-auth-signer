@@ -13,7 +13,6 @@ import {
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
 import { getAuthState } from '../../hooks/useAuthState';
-import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
