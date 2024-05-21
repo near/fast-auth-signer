@@ -79,7 +79,6 @@ function Sign() {
     element: signTransactionRef.current,
     onClose: () => window.parent.postMessage({ signedDelegates: '', error:  'User cancelled action' }, '*')
   });
-  const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
 
@@ -151,7 +150,7 @@ function Sign() {
       .catch(() => {
         console.warn('Coin Gecko Error');
       });
-  }, [firebaseUser?.email, searchParams, storeFetchedUsdValues]);
+  }, [searchParams, storeFetchedUsdValues]);
 
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
@@ -212,7 +211,7 @@ function Sign() {
       }
     }
     if (inIframe()) {
-      window.parent.postMessage({ signedDelegates: signedTransactions.join(',') }, '*');
+      window.parent.postMessage({ signedDelegates: signedTransactions.join(','), closeIframe: true }, '*');
     } else {
       const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
       parsedUrl.searchParams.set('transactions', signedTransactions.join(','));
@@ -224,7 +223,7 @@ function Sign() {
 
   return (
     <ModalSignWrapper ref={signTransactionRef}>
-      {firebaseUser && (
+      {(
         <>
           <div className="modal-top">
             <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
@@ -252,6 +251,7 @@ function Sign() {
           {/*          eslint-disable-next-line */}
           <div
             className="more-details"
+            data-test-id="more-details-button"
             onClick={() => setShowDetails(!showDetails)}
           >
             More details
@@ -296,13 +296,12 @@ function Sign() {
               size="large"
               label={inFlight ? 'Loading...' : 'Confirm'}
               disabled={inFlight}
+              data-test-id="confirm-transaction-button"
               onClick={onConfirm}
             />
           </div>
         </>
       )}
-      {firebaseUserLoading && <p className="info-text">Loading...</p>}
-      {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
       {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
