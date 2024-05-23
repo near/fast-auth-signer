@@ -1,3 +1,5 @@
+import { KeyPair } from '@near-js/crypto';
+
 class TestDapp {
   page: any;
 
@@ -5,7 +7,7 @@ class TestDapp {
     this.page = page;
   }
 
-  async loginWithKeyPairLocalStorage(accountId, lakKeyPair, fakKeyPair) {
+  async loginWithKeyPairLocalStorage(accountId: string, lakKeyPair: KeyPair, fakKeyPair: KeyPair) {
     const serializedLakKeyPair = lakKeyPair.toString();
     const fakPublicKey = fakKeyPair.getPublicKey().toString();
     const lakPublicKey = lakKeyPair.getPublicKey().toString();
