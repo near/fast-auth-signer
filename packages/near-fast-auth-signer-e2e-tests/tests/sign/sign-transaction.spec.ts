@@ -1,11 +1,10 @@
 import { Account, Connection, Contract } from '@near-js/accounts';
 import { KeyPair } from '@near-js/crypto';
-import { InMemoryKeyStore } from '@near-js/keyStores';
+import { InMemoryKeyStore } from '@near-js/keystores';
 import { test, expect } from '@playwright/test';
 
-import { generateNewUserToken } from '../../firebase';
-import { claimToken, createNEARAccount } from '../../mpc-service';
 import { getFastAuthIframe } from '../../utils/constants';
+import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/createAccount';
 import { setupPasskeysFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
@@ -18,25 +17,27 @@ let accountId;
 
 describe('Sign transaction', () => {
   beforeAll(async ({ browser }, { workerIndex }) => {
+    if (isServiceAccountAvailable()) {
+      initializeAdmin();
+    }
     const context = await browser.newContext();
     page = await context.newPage();
     const testDapp = new TestDapp(page);
     const user = `testuser-playwright-fastauth-${workerIndex}-${Date.now()}`;
     const email = `${user}@example.com`;
     accountId = `${user}.testnet`;
-    const oidcToken = await generateNewUserToken(email);
-    const frpKeypair = await claimToken(oidcToken);
-    await createNEARAccount({
-      accountId,
-      fullAccessKeys:    [userFAK.getPublicKey().toString()],
-      limitedAccessKeys: [{
+    const frpKeypair = KeyPair.fromRandom('ed25519');
+    await createAccount({
+      email,
+      accountId: user,
+      FAKs:      [userFAK],
+      LAKs:      [{
         public_key:   userLAK.getPublicKey().toString(),
         receiver_id:  accountId,
         allowance:    '100000000000000000000000000',
         method_names: '["claim"]',
       }],
-      accessToken: oidcToken,
-      oidcKeypair: frpKeypair,
+      oidcKeyPair: frpKeypair
     });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
