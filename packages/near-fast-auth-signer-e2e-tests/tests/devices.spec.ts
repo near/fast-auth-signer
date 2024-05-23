@@ -19,7 +19,7 @@ test.beforeAll(async () => {
   }
 });
 
-test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
+test.only('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
@@ -27,8 +27,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   const { email, accountId } = getRandomEmailAndAccountId();
 
   await page.goto(baseURL);
-  const walletSelector = page.locator('#ws-loaded');
-  await walletSelector.waitFor();
+  await expect(page.locator('#ws-loaded')).toBeVisible();
 
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
@@ -57,7 +56,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   });
 
   await pm.getLoginPage().signInWithEmail(email);
-  await page.waitForLoadState('domcontentloaded');
+  await pm.getEmailPage().hasLoaded();
 
   await pm.getAuthCallBackPage().handleEmail(email, [], {
     isPassKeyAvailable:  true,
