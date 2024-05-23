@@ -19,7 +19,7 @@ test.beforeAll(async () => {
   }
 });
 
-test.only('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
+test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
