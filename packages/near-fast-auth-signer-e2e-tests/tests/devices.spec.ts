@@ -11,7 +11,7 @@ import {
 import { getRandomEmailAndAccountId } from '../utils/email';
 import { setupPasskeysFunctions } from '../utils/passkeys';
 
-let testUserUid;
+let testUserUid: string;
 
 test.beforeAll(async () => {
   if (isServiceAccountAvailable()) {
@@ -28,7 +28,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
 
   await page.goto(baseURL);
   const walletSelector = page.locator('#ws-loaded');
-  await walletSelector.waitFor();
+  await expect(walletSelector).toBeVisible();
 
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
@@ -57,7 +57,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   });
 
   await pm.getLoginPage().signInWithEmail(email);
-  await page.waitForLoadState('domcontentloaded');
+  await pm.getEmailPage().hasLoaded();
 
   await pm.getAuthCallBackPage().handleEmail(email, [], {
     isPassKeyAvailable:  true,
@@ -67,10 +67,10 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   });
 
   // Wait for page to render and execute async operations
-  await page.waitForTimeout(20000);
+  await pm.getDevicesPage().isCheckboxLoaded(5);
 
   // Select all existing keypairs (except recovery keypair) and delete them
-  await pm.getDevicesPage().selectAndDelete();
+  await pm.getDevicesPage().selectAndDelete(5);
   await pm.getAppPage().isLoggedIn();
 });
 

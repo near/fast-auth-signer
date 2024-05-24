@@ -22,7 +22,7 @@ export const deleteAccount = async (userUid: string) => {
 
 export const createAccount = async ({
   email, accountId, keypairs, oidcKeyPair
-}) => {
+}: { email: string, accountId: string, keypairs: KeyPair[], oidcKeyPair: KeyPair}) => {
   const testPassword = 'z#CNZKa5Cwkp';
 
   const testUserRecord = await admin.auth().createUser({

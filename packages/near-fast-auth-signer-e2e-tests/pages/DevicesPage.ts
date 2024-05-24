@@ -1,6 +1,4 @@
-import { Page } from '@playwright/test';
-
-import { checkConditionUntilMet } from '../utils/async';
+import { expect, Page } from '@playwright/test';
 
 class DevicesPage {
   private page: Page;
@@ -9,22 +7,13 @@ class DevicesPage {
     this.page = page;
   }
 
-  async getCount() {
-    const checkboxes = this.page.locator('input[type="checkbox"]');
-    return checkboxes.count();
+  async isCheckboxLoaded(numberOfCheckboxes: number) {
+    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: 30000 });
   }
 
-  async selectAndDelete() {
-    const checkFunction = async () => {
-      const count = await this.getCount();
-      return count > 0;
-    };
-    // Wait until it loads records and it is available for an action
-    await checkConditionUntilMet(this.page, checkFunction, 5, 1000);
+  async selectAndDelete(numberOfCheckboxes: number) {
     const checkboxes = this.page.locator('input[type="checkbox"]');
-    const count = await checkboxes.count();
-
-    for (let i = 0; i < count; i += 1) {
+    for (let i = 0; i < numberOfCheckboxes; i += 1) {
       const element = checkboxes.nth(i);
       /* eslint-disable no-await-in-loop */
       await element.click();
