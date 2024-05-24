@@ -75,9 +75,3 @@ test('should create account and login with passkeys', async ({ page }) => {
 
   await pm.getAppPage().isLoggedIn();
 });
-
-// test('should not be able to login without account', async ({ page }) => {
-//   test.slow();
-
-//   await page.goto('http://localhost:3002/');
-// });
