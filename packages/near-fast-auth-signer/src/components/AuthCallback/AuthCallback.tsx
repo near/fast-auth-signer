@@ -102,8 +102,7 @@ export const onSignIn = async ({
   public_key_lak: string;
   contract_id: string,
   methodNames: string[],
-  // eslint-disable-next-line no-unused-vars
-  setStatusMessage: (arg: string) => void,
+  setStatusMessage: (_arg: string) => void,
   success_url?: string,
   searchParams: URLSearchParams,
   navigate: NavigateFunction,
