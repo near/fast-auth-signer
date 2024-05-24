@@ -6,6 +6,7 @@ import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
+import { setupPasskeysFunctions } from './passkeys';
 import { serviceAccount } from './serviceAccount';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
@@ -113,4 +114,49 @@ export const isServiceAccountAvailable = () => {
     return false;
   }
   return true;
+};
+
+export const createAccountAndLandDevicePage = async ({
+  page,
+  pm,
+  email,
+  accountId,
+  testUserUidList,
+}) => {
+  const oidcKeyPair = KeyPair.fromRandom('ED25519');
+
+  // As of 14 May 2024, creating an account with 5 keypairs will be just enough to redirected to devices page
+  const keypairs = generateKeyPairs(5);
+  const {
+    createAccountResponse,
+    userUid
+  } = await createAccount({
+    email,
+    accountId,
+    oidcKeyPair,
+    keypairs,
+  });
+
+  // will be used to delete account
+  // eslint-disable-next-line no-unused-vars
+  testUserUidList.push(userUid);
+
+  expect(createAccountResponse.ok).toBe(true);
+
+  await setupPasskeysFunctions(page, 'page', {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:  oidcKeyPair,
+    keyPairForRetrieval: oidcKeyPair,
+    shouldCleanStorage:  false
+  });
+
+  await pm.getLoginPage().signInWithEmail(email);
+  await pm.getEmailPage().hasLoaded();
+
+  await pm.getAuthCallBackPage().handleEmail(email, [], {
+    isPassKeyAvailable:  true,
+    keyPairForCreation:  oidcKeyPair,
+    keyPairForRetrieval: oidcKeyPair,
+    shouldCleanStorage:  false
+  });
 };

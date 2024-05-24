@@ -3,7 +3,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import AuthCallbackError from './AuthCallbackError';
@@ -95,6 +95,20 @@ export const onSignIn = async ({
   searchParams,
   navigate,
   gateway,
+  devicePageCallback,
+}: {
+  accessToken: string;
+  publicKeyFak?: string;
+  public_key_lak: string;
+  contract_id: string,
+  methodNames: string[],
+  // eslint-disable-next-line no-unused-vars
+  setStatusMessage: (arg: string) => void,
+  success_url?: string,
+  searchParams: URLSearchParams,
+  navigate: NavigateFunction,
+  gateway: string,
+  devicePageCallback?: () => void,
 }) => {
   // Stop from LAK with multi-chain contract
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
@@ -131,6 +145,9 @@ export const onSignIn = async ({
     .then(async (res) => {
       const failure = res['Receipts Outcome']
         .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+      if (devicePageCallback) {
+        devicePageCallback();
+      }
       if (failure?.ActionError?.kind?.LackBalanceForState) {
         navigate(`/devices?${searchParams.toString()}`);
       } else {
