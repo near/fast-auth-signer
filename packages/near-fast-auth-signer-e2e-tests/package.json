@@ -19,6 +19,7 @@
   "dependencies": {
     "@near-wallet-selector/core": "^8.9.7",
     "dotenv": "^16.4.5",
+    "firebase-admin": "^12.1.0",
     "https-browserify": "^1.0.0",
     "mailpop3": "^0.1.0",
     "near-api-js": "^2.1.4",
