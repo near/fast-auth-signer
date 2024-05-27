@@ -89,7 +89,7 @@ export const createAccount = async ({
   });
 
   const data = {
-    near_account_id:        accountId,
+    near_account_id:        `${accountId}.testnet`,
     create_account_options: {
       full_access_keys:    FAKs.map((keypair) => keypair.getPublicKey().toString()),
       limited_access_keys: LAKs,

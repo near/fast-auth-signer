@@ -70,7 +70,7 @@ describe('Sign transaction', () => {
   test('should display signerId, transaction amount, receiverId and args', async () => {
     await page.goto('/');
     const walletSelector = page.locator('#ws-loaded');
-    await walletSelector.waitFor();
+    await expect(walletSelector).toBeVisible();
     await page.locator('data-test-id=sign-transaction-button').click();
 
     await expect(getFastAuthIframe(page).getByText(accountId)).toBeVisible();
@@ -91,7 +91,7 @@ describe('Sign transaction', () => {
     });
 
     const walletSelector = page.locator('#ws-loaded');
-    await walletSelector.waitFor();
+    await expect(walletSelector).toBeVisible();
     await page.locator('data-test-id=sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
 
@@ -108,7 +108,7 @@ describe('Sign transaction', () => {
     });
 
     const walletSelector = page.locator('#ws-loaded');
-    await walletSelector.waitFor();
+    await expect(walletSelector).toBeVisible();
     await page.locator('data-test-id=sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
     const socialdbContract = new Contract(new Account(Connection.fromConfig({
