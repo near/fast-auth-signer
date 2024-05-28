@@ -2,7 +2,12 @@ import React, { FormEvent } from 'react';
 
 type SignMultiChainProps = {
   // eslint-disable-next-line no-unused-vars
-  onSubmitForm: (values: {keyType: string, chainValue: number, amount: number, chainId: string | bigint}) => void
+  onSubmitForm: (values: {
+    keyType: string,
+    chainValue: number,
+    amount: number,
+    chainId: string | bigint,
+    address: string}) => void
 }
 export default function SignMultiChain(props: SignMultiChainProps) {
   const { onSubmitForm } = props;
@@ -23,6 +28,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
     const keyType = formData.get('keyType') as string;
     const chainValue = Number(formData.get('assetType'));
     const amount = Number(formData.get('amount'));
+    const address = String(formData.get('address'));
 
     let chainId: bigint | string = document
       .querySelector('input[name="assetType"]:checked')
@@ -33,7 +39,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
     }
 
     onSubmitForm({
-      keyType, chainId, chainValue, amount
+      keyType, chainId, chainValue, amount, address
     });
   };
 
@@ -45,7 +51,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
         onSubmit={onSubmit}
       >
         <div
-          className="radio-group"
+          className="input-group"
           style={{ display: 'flex', gap: 3, marginBottom: '5px' }}
         >
           <label htmlFor="domainKey" className="radio-label">
@@ -80,7 +86,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
         </div>
 
         <div
-          className="radio-group"
+          className="input-group"
           style={{ display: 'flex', gap: 3, marginBottom: '5px' }}
         >
           <label htmlFor="eth" className="radio-label">
@@ -116,8 +122,9 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             BTC testnet
           </label>
         </div>
+
         <div
-          className="radio-group"
+          className="input-group"
           style={{ marginBottom: '10px' }}
         >
           <label htmlFor="amount" className="radio-label">
@@ -126,6 +133,22 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               type="text"
               id="amount"
               name="amount"
+              defaultValue={0.02}
+              style={{ marginLeft: '3px' }}
+            />
+          </label>
+        </div>
+
+        <div
+          className="input-group"
+          style={{ marginBottom: '10px' }}
+        >
+          <label htmlFor="address" className="radio-label">
+            Address
+            <input
+              type="text"
+              id="address"
+              name="address"
               defaultValue={0.02}
               style={{ marginLeft: '3px' }}
             />

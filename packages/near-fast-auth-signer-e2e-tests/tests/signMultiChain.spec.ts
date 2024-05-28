@@ -2,24 +2,42 @@ import { test } from '@playwright/test';
 
 import PageManager from '../pages/PageManager';
 
+const receivingAddresses = {
+  ETH_BNB: '0x7F780C57D846501De4824046EF4c503Ce1c8eAF9',
+};
+
 test.beforeEach(async ({ page, baseURL }) => {
   await page.goto(baseURL);
 });
 
-test('Should show  confirmation modal for personal key transactions', async ({ page }) => {
+test('Shows confirmation modal for transactions with personal key', async ({ page }) => {
   const pm = new PageManager(page);
   test.slow();
-  await pm.getSignMultiChainPage().simulateTransaction('personalKey', 'bnb', 0.03);
+  await pm.getSignMultiChainPage().submitTransaction({
+    keyType: 'personalKey', assetType: 'bnb', amount: 0.03, address: receivingAddresses.ETH_BNB
+  });
 });
 
-test('Should show unknown  confirmation modal for wrong key transactions', async ({ page }) => {
+test('Shows unknown confirmation modal for transactions with wrong key', async ({ page }) => {
   const pm = new PageManager(page);
   test.slow();
-  await pm.getSignMultiChainPage().simulateTransaction('wrongKey', 'eth', 0.07);
+  await pm.getSignMultiChainPage().submitTransaction({
+    keyType: 'wrongKey', assetType: 'eth', amount: 0.07, address: receivingAddresses.ETH_BNB
+  });
 });
 
-test('Should not show confirmation modal for domain key transactions', async ({ page }) => {
+test('Should proceed without confirmation for domain key transactions', async ({ page }) => {
   const pm = new PageManager(page);
   test.slow();
-  await pm.getSignMultiChainPage().simulateTransaction('domainKey', 'eth', 0.08);
+  await pm.getSignMultiChainPage().submitTransaction({
+    keyType: 'domainKey', assetType: 'eth', amount: 0.08, address: receivingAddresses.ETH_BNB
+  });
+});
+
+test('Test transaction', async ({ page }) => {
+  const pm = new PageManager(page);
+  test.slow();
+  await pm.getSignMultiChainPage().approveTransaction({
+    keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
+  });
 });
