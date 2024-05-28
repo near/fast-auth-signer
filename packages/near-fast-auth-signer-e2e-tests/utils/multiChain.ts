@@ -2,8 +2,6 @@ import * as bitcoinLib from 'bitcoinjs-lib';
 import canonicalize from 'canonicalize';
 import { fetchDerivedEVMAddress, fetchDerivedBTCAddressAndPublicKey } from 'multichain-tools';
 
-export const TESTNET_ADDRESS = '0x7F780C57D846501De4824046EF4c503Ce1c8eAF9';
-
 export function toWei(eth: number): string {
   const wei = eth * 1e18;
   return wei.toString();
@@ -74,21 +72,24 @@ export const getTransactionPayload = async ({
   keyType,
   chainId,
   chainValue,
-  amount
+  amount,
+  address
 }: {
   keyType: string,
   chainValue: number,
   amount: number,
-  chainId: string | bigint
+  chainId: string | bigint,
+  address: string
 }): Promise<Record<string, string | number | bigint>> => {
   try {
     const accountId = 'harisvalj.testnet';
     const derivedAddress = await fetchDerivedAddress({ accountId, chainValue, keyType });
+    console.log('derivedAddress ', derivedAddress);
     const domain = getDomain(keyType);
     let payload: Record<string, string | number | bigint> = {
       chain: chainValue,
       ...(domain ? { domain } : {}),
-      to:    TESTNET_ADDRESS,
+      to:    address,
       value: BigInt(getValue(chainValue, amount)),
       from:  derivedAddress,
     };
