@@ -162,7 +162,7 @@ export const createAccountAndLandDevicePage = async ({
   // will be used to delete account
   testUserUidList.push(userUid);
 
-  expect(createAccountResponse.ok).toBe(true);
+  expect(createAccountResponse.type).toEqual('ok');
 
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
