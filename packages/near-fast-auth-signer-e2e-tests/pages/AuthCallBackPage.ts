@@ -10,7 +10,7 @@ class AuthCallBackPage {
     this.page = page;
   }
 
-  async handleEmail(email: string, readUIDLs: string[], passkeysConfig: SetupPasskeysFunctionsConfig): Promise<string> {
+  async handleEmail(email: string, readUIDLs: string[], passkeysConfig): Promise<string> {
     const emailData = await getFirebaseAuthLink(email, readUIDLs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
