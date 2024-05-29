@@ -20,8 +20,6 @@ class DevicesPage {
       await expect(element).toBeChecked();
     }
 
-    console.log(`numberOfCheckboxes: ${numberOfCheckboxes}`);
-
     await this.page.getByRole('button', { name: 'Delete Key' }).click();
   }
 }

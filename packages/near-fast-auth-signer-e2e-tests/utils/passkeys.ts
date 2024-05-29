@@ -1,5 +1,5 @@
 import { KeyPair } from 'near-api-js';
-import { Frame, Page } from 'playwright/test';
+import { Page } from 'playwright/test';
 
 const configWindowTest = ({
   isPassKeyAvailable = true,
@@ -43,18 +43,13 @@ export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page'
   };
 
   if (type === 'iframe') {
-    const listener = async (frame: Frame) => {
-      if (!frame.isDetached()) {
-        await frame.evaluate(
-          configWindowTest,
-          setupPasskeysArgs
-        );
-      }
-    };
-    page.on('framenavigated', listener);
-
-    return listener;
-  } if (type === 'page') {
+    const iframeElementHandle = await page.$('#nfw-connect-iframe');
+    const frame = await iframeElementHandle.contentFrame();
+    await frame.evaluate(
+      configWindowTest,
+      setupPasskeysArgs
+    );
+  } else if (type === 'page') {
     await page.addInitScript(
       configWindowTest,
       setupPasskeysArgs
