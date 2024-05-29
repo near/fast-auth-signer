@@ -3,7 +3,14 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
+import { deleteUserByEmail, initializeAdmin } from '../utils/firebase';
 import { rerouteToCustomURL } from '../utils/url';
+
+const testEmailLists: string[] = [];
+
+test.beforeAll(async () => {
+  initializeAdmin();
+});
 
 test.beforeEach(async ({ page, baseURL, relayerURL }) => {
   await page.goto(baseURL);
@@ -20,6 +27,8 @@ test('should create account and login with e-mail', async ({ page }) => {
   test.slow();
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
+
+  testEmailLists.push(email);
 
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
@@ -48,6 +57,8 @@ test('should create account and login with passkeys', async ({ page }) => {
   test.slow();
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
+  testEmailLists.push(email);
+
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
 
@@ -68,4 +79,12 @@ test('should create account and login with passkeys', async ({ page }) => {
   });
 
   await pm.getAppPage().isLoggedIn();
+});
+
+test.afterAll(async () => {
+  // Delete test user acc
+  if (testEmailLists.length > 0) {
+    // eslint-disable-next-line no-return-await
+    await Promise.all(testEmailLists.map(async (email) => await deleteUserByEmail(email)));
+  }
 });

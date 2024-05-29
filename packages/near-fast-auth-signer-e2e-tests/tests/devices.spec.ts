@@ -1,21 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 import PageManager from '../pages/PageManager';
+import { getRandomEmailAndAccountId } from '../utils/email';
 import {
   createAccountAndLandDevicePage, deleteAccount, initializeAdmin,
   isServiceAccountAvailable
-} from '../utils/createAccount';
-import { getRandomEmailAndAccountId } from '../utils/email';
+} from '../utils/firebase';
 
 const testUserUidList: string[] = [];
 
-let isAdminInitialized = false;
-
 test.beforeAll(async () => {
-  if (isServiceAccountAvailable() && !isAdminInitialized) {
-    initializeAdmin();
-    isAdminInitialized = true;
-  }
+  initializeAdmin();
 });
 
 test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
