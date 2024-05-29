@@ -44,41 +44,13 @@ export default defineConfig<TestOptions>({
       use:  { ...devices['Desktop Safari'] },
     },
     {
-      name: 'iPhone 12 Safari',
-      use: {
-        browserName: 'webkit',
-        ...devices['iPhone 12'],
-      },
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
     },
     {
-      name: 'Pixel 5 Chrome',
-      use: {
-        browserName: 'chromium',
-        viewport: { width: 1080, height: 2340 },
-        deviceScaleFactor: 2.75,
-        isMobile: true,
-        hasTouch: true,
-        userAgent: 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.93 Mobile Safari/537.36',
-      },
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
     },
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
   /* Run your local dev serve`r` before starting the tests */
