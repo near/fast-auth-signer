@@ -154,7 +154,7 @@ export const createAccountAndLandDevicePage = async ({
   // eslint-disable-next-line no-unused-vars
   testUserUidList.push(userUid);
 
-  expect(createAccountResponse.ok).toBe(true);
+  expect(createAccountResponse.type).toEqual('ok');
 
   await setupPasskeysFunctions(page, 'page', {
     isPassKeyAvailable:  true,
