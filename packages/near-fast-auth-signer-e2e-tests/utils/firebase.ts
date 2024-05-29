@@ -11,14 +11,40 @@ import { serviceAccount } from './serviceAccount';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
+export const isServiceAccountAvailable = () => {
+  if (
+    !serviceAccount.private_key_id
+    || !serviceAccount.private_key
+    || !serviceAccount.client_email
+    || !serviceAccount.client_id
+    || !serviceAccount.client_x509_cert_url
+  ) {
+    return false;
+  }
+  return true;
+};
+
 export const initializeAdmin = () => {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+  if (isServiceAccountAvailable() && !admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+  }
 };
 
 export const deleteAccount = async (userUid: string) => {
   await admin.auth().deleteUser(userUid);
+};
+
+export const deleteUserByEmail = async (email: string) => {
+  try {
+    const user = await admin.auth().getUserByEmail(email);
+    if (user) {
+      await deleteAccount(user.uid);
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+  }
 };
 
 export const createAccount = async ({
@@ -102,19 +128,6 @@ export const createAccount = async ({
 };
 
 export const generateKeyPairs = (count:number) => Array.from({ length: count }, () => Object.freeze(KeyPair.fromRandom('ED25519')));
-
-export const isServiceAccountAvailable = () => {
-  if (
-    !serviceAccount.private_key_id
-    || !serviceAccount.private_key
-    || !serviceAccount.client_email
-    || !serviceAccount.client_id
-    || !serviceAccount.client_x509_cert_url
-  ) {
-    return false;
-  }
-  return true;
-};
 
 export const createAccountAndLandDevicePage = async ({
   page,
