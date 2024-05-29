@@ -43,8 +43,24 @@ export default defineConfig<TestOptions>({
       name: 'webkit',
       use:  { ...devices['Desktop Safari'] },
     },
-
-    /* Test against mobile viewports. */
+    {
+      name: 'iPhone 12 Safari',
+      use: {
+        browserName: 'webkit',
+        ...devices['iPhone 12'],
+      },
+    },
+    {
+      name: 'Pixel 5 Chrome',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 1080, height: 2340 },
+        deviceScaleFactor: 2.75,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: 'Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.93 Mobile Safari/537.36',
+      },
+    },
     // {
     //   name: 'Mobile Chrome',
     //   use: { ...devices['Pixel 5'] },
