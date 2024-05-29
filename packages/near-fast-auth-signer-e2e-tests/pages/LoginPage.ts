@@ -1,8 +1,8 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { KeyPair } from 'near-api-js';
 
 import { getFastAuthIframe } from '../utils/constants';
-import { setupPasskeysFunctions } from '../utils/passkeys';
+import { overridePasskeyFunctions } from '../utils/passkeys';
 
 class LoginPage {
   private page: Page;
@@ -12,17 +12,20 @@ class LoginPage {
   }
 
   async signInWithEmail(email: string) {
-    const listener = await setupPasskeysFunctions(this.page, 'iframe', {
-      isPassKeyAvailable:  false,
-      shouldCleanStorage: true
+    const fastAuthIframe = getFastAuthIframe(this.page);
+
+    await overridePasskeyFunctions(this.page, {
+      creationKeypair:  KeyPair.fromRandom('ed25519'),
+      retrievalKeypair: KeyPair.fromRandom('ed25519')
     });
 
     await this.page.getByRole('button', { name: 'Sign In' }).click();
-    const fastAuthIframe = getFastAuthIframe(this.page);
+
+    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('dontcare');
+    await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible();
 
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
     await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
-    this.page.removeListener('framenavigated', listener);
   }
 
   async signInWithKeyPair(
@@ -32,21 +35,19 @@ class LoginPage {
       shouldClickContinue: boolean
     }
   ) {
-    const listener = await setupPasskeysFunctions(this.page, 'iframe', {
-      isPassKeyAvailable:  true,
-      keyPairForCreation,
-      keyPairForRetrieval,
-      shouldCleanStorage: false
+    const fastAuthIframe = getFastAuthIframe(this.page);
+
+    await overridePasskeyFunctions(this.page, {
+      creationKeypair:  keyPairForCreation,
+      retrievalKeypair: keyPairForRetrieval
     });
 
     await this.page.getByRole('button', { name: 'Sign In' }).click();
-    const fastAuthIframe = getFastAuthIframe(this.page);
 
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('dontcare');
     if (config.shouldClickContinue) {
       await fastAuthIframe.getByRole('textbox', { name: 'Continue' }).click();
     }
-    this.page.removeListener('framenavigated', listener);
   }
 }
 

@@ -1,7 +1,7 @@
 import { expect, Page } from '@playwright/test';
 
 import { getFirebaseAuthLink } from '../utils/email';
-import { setupPasskeysFunctions, SetupPasskeysFunctionsConfig } from '../utils/passkeys';
+import { overridePasskeyFunctions } from '../utils/passkeys';
 
 class AuthCallBackPage {
   private page: Page;
@@ -19,7 +19,10 @@ class AuthCallBackPage {
       tls:      false
     });
 
-    setupPasskeysFunctions(this.page, 'page', passkeysConfig);
+    await overridePasskeyFunctions(this.page, {
+      creationKeypair:  passkeysConfig.keyPairForCreation,
+      retrievalKeypair: passkeysConfig.keyPairForRetrieval
+    });
 
     expect(emailData.link).toBeDefined();
     await this.page.goto(emailData.link);

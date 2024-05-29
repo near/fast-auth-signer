@@ -6,7 +6,7 @@ import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
-import { setupPasskeysFunctions } from './passkeys';
+import { overridePasskeyFunctions } from './passkeys';
 import { serviceAccount } from './serviceAccount';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
@@ -22,8 +22,19 @@ export const deleteAccount = async (userUid: string) => {
 };
 
 export const createAccount = async ({
-  email, accountId, keypairs, oidcKeyPair
-}: { email: string, accountId: string, keypairs: KeyPair[], oidcKeyPair: KeyPair}) => {
+  email, accountId, FAKs, LAKs, oidcKeyPair
+}: {
+  email: string,
+  accountId: string,
+  FAKs: KeyPair[],
+  LAKs: {
+    public_key: string,
+    receiver_id: string,
+    allowance: string,
+    method_names: string
+  }[],
+  oidcKeyPair: KeyPair
+}) => {
   const testPassword = 'z#CNZKa5Cwkp';
 
   const testUserRecord = await admin.auth().createUser({
@@ -80,7 +91,8 @@ export const createAccount = async ({
   const data = {
     near_account_id:        `${accountId}.testnet`,
     create_account_options: {
-      full_access_keys:    keypairs.map((keypair) => keypair.getPublicKey().toString()),
+      full_access_keys:    FAKs.map((keypair) => keypair.getPublicKey().toString()),
+      limited_access_keys: LAKs,
     },
     oidc_token:                     accessToken,
     user_credentials_frp_signature: userCredentialsFrpSignature,
@@ -96,8 +108,8 @@ export const createAccount = async ({
 
   const createAccountResponse = await fetch('https://mpc-recovery-leader-testnet.api.pagoda.co/new_account', options);
   return {
-    createAccountResponse,
-    userUid: testUserRecord.uid
+    createAccountResponse: await createAccountResponse.json(),
+    userUid:               testUserRecord.uid
   };
 };
 
@@ -134,20 +146,19 @@ export const createAccountAndLandDevicePage = async ({
     email,
     accountId,
     oidcKeyPair,
-    keypairs,
+    FAKs: keypairs,
+    LAKs: []
   });
 
   // will be used to delete account
   // eslint-disable-next-line no-unused-vars
   testUserUidList.push(userUid);
 
-  expect(createAccountResponse.ok).toBe(true);
+  expect(createAccountResponse.type).toEqual('ok');
 
-  await setupPasskeysFunctions(page, 'page', {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair,
-    shouldCleanStorage:  false
+  await overridePasskeyFunctions(page, {
+    creationKeypair:  oidcKeyPair,
+    retrievalKeypair: oidcKeyPair
   });
 
   await pm.getLoginPage().signInWithEmail(email);
