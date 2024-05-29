@@ -42,7 +42,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAppPage().isLoggedIn();
 });
 
-test.only('device page delete one key and return to device page again', async ({ page, baseURL }) => {
+test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
