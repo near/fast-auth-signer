@@ -8,7 +8,7 @@ import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../..
 import { setupPasskeysFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
-const { describe, beforeAll } = test;
+const { describe, beforeEach } = test;
 
 let page;
 const userFAK = KeyPair.fromRandom('ed25519');
@@ -16,7 +16,7 @@ const userLAK = KeyPair.fromRandom('ed25519');
 let accountId;
 
 describe('Sign transaction', () => {
-  beforeAll(async ({ browser }, { workerIndex }) => {
+  beforeEach(async ({ browser }, { workerIndex }) => {
     if (isServiceAccountAvailable()) {
       initializeAdmin();
     }
