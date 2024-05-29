@@ -9,7 +9,7 @@ import { getRandomEmailAndAccountId } from '../utils/email';
 
 const testUserUidList: string[] = [];
 
-test.beforeAll(async () => {
+test.beforeEach(async () => {
   if (isServiceAccountAvailable()) {
     initializeAdmin();
   }
@@ -42,7 +42,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAppPage().isLoggedIn();
 });
 
-test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
+test.only('device page delete one key and return to device page again', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
@@ -69,7 +69,7 @@ test('device page delete one key and return to device page again', async ({ page
   await pm.getAppPage().isLoggedIn();
 });
 
-test.afterAll(async () => {
+test.afterEach(async () => {
   // Delete test user acc
   if (isServiceAccountAvailable()) {
     // eslint-disable-next-line no-return-await

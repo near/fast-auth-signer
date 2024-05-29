@@ -17,7 +17,10 @@ class DevicesPage {
       const element = checkboxes.nth(i);
       /* eslint-disable no-await-in-loop */
       await element.click();
+      await expect(element).toBeChecked();
     }
+
+    console.log(`numberOfCheckboxes: ${numberOfCheckboxes}`);
 
     await this.page.getByRole('button', { name: 'Delete Key' }).click();
   }
