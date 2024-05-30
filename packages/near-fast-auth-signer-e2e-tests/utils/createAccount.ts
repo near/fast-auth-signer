@@ -19,7 +19,12 @@ export const initializeAdmin = () => {
 };
 
 export const deleteAccount = async (userUid: string) => {
-  await admin.auth().deleteUser(userUid);
+  if (userUid) {
+    const user = await admin.auth().getUser(userUid);
+    if (user.uid) {
+      await admin.auth().deleteUser(userUid);
+    }
+  }
 };
 
 export const createAccount = async ({

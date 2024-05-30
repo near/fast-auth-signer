@@ -16,7 +16,7 @@ export default defineConfig<TestOptions>({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly:    !!process.env.CI,
-  retries:       2,
+  retries:       0,
   workers:       process.env.CI ? 3 : 6,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter:      'html',
@@ -26,7 +26,7 @@ export default defineConfig<TestOptions>({
     baseURL:    'http://127.0.0.1:3001/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'on',
   },
 
   /* Configure projects for major browsers */
