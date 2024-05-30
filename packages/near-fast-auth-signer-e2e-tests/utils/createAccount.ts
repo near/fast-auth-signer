@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { expect, Page } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
@@ -14,8 +16,9 @@ const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
 export const initializeAdmin = () => {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
+    credential: admin.credential.cert(serviceAccount),
+
+  }, randomUUID());
 };
 
 export const deleteAccount = async (userUid: string) => {
