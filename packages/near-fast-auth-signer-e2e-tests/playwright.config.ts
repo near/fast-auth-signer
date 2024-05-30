@@ -1,3 +1,5 @@
+import os from 'os';
+
 import { defineConfig, devices } from '@playwright/test';
 
 import { TestOptions } from './test-options';
@@ -8,6 +10,8 @@ import { TestOptions } from './test-options';
  */
 require('dotenv').config();
 
+const numberOfWorkers = Math.max(1, os.cpus().length - 1);
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -17,7 +21,7 @@ export default defineConfig<TestOptions>({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly:    !!process.env.CI,
   retries:       0,
-  workers:       process.env.CI ? 3 : 6,
+  workers:       numberOfWorkers,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter:      'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

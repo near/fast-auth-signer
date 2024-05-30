@@ -1,5 +1,7 @@
 import { expect, Page } from '@playwright/test';
 
+import { TIMEOUT } from '../utils/constants';
+
 class DevicesPage {
   private page: Page;
 
@@ -8,7 +10,7 @@ class DevicesPage {
   }
 
   async isCheckboxLoaded(numberOfCheckboxes: number) {
-    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: 30000 });
+    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: TIMEOUT });
   }
 
   async selectAndDelete(numberOfCheckboxes: number) {
@@ -20,8 +22,9 @@ class DevicesPage {
       await expect(element).toBeChecked();
     }
 
-    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible();
-    await this.page.getByRole('button', { name: 'Delete key' }).click();
+    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible({ timeout: TIMEOUT });
+    await this.page.getByRole('button', { name: 'Delete key' }).click({ timeout: TIMEOUT });
+    await expect(this.page.getByRole('button', { name: 'Deleting...' })).not.toBeVisible({ timeout: TIMEOUT });
   }
 }
 
