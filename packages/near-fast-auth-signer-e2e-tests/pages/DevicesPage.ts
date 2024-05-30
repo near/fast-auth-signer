@@ -21,9 +21,9 @@ class DevicesPage {
     }
 
     if (numberOfCheckboxes === 1) {
-      await this.page.getByRole('button', { name: 'Delete Key' }).click();
+      await this.page.getByRole('button', { name: 'Delete key' }).click();
     } else {
-      await this.page.getByRole('button', { name: 'Delete Keys' }).click();
+      await this.page.getByRole('button', { name: 'Delete keys' }).click();
     }
   }
 }
