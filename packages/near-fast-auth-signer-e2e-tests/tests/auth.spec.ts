@@ -6,7 +6,7 @@ import { getRandomEmailAndAccountId } from '../utils/email';
 import { deleteUserByEmail, initializeAdmin } from '../utils/firebase';
 import { rerouteToCustomURL } from '../utils/url';
 
-const testEmailLists: string[] = [];
+const authTestEmailList: string[] = [];
 
 test.beforeAll(async () => {
   initializeAdmin();
@@ -28,7 +28,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  testEmailLists.push(email);
+  authTestEmailList.push(email);
 
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
@@ -57,7 +57,7 @@ test('should create account and login with passkeys', async ({ page }) => {
   test.slow();
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
-  testEmailLists.push(email);
+  authTestEmailList.push(email);
 
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
@@ -83,8 +83,8 @@ test('should create account and login with passkeys', async ({ page }) => {
 
 test.afterAll(async () => {
   // Delete test user acc
-  if (testEmailLists.length > 0) {
+  if (authTestEmailList.length > 0) {
     // eslint-disable-next-line no-return-await
-    await Promise.all(testEmailLists.map(async (email) => await deleteUserByEmail(email)));
+    await Promise.all(authTestEmailList.map(async (email) => await deleteUserByEmail(email)));
   }
 });

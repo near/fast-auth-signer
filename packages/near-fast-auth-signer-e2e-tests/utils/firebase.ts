@@ -51,7 +51,7 @@ const addAccountPublicKeyToFirestore = async (accountId: string, publicKey: stri
 export const deleteUserByEmail = async (email: string) => {
   try {
     const user = await admin.auth().getUserByEmail(email);
-    if (user) {
+    if (user && user.uid) {
       await deleteAccount(user.uid);
     }
   } catch (error) {
