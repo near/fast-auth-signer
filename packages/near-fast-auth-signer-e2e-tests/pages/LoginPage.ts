@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { KeyPair } from 'near-api-js';
 
-import { getFastAuthIframe } from '../utils/constants';
+import { getFastAuthIframe, TIMEOUT } from '../utils/constants';
 import { overridePasskeyFunctions } from '../utils/passkeys';
 
 class LoginPage {
@@ -24,7 +24,7 @@ class LoginPage {
     await expect(fastAuthIframe.getByRole('button', { name: 'Continue' })).toBeVisible();
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).focus();
-    await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible({ timeout: 10000 });
+    await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible({ timeout: TIMEOUT });
 
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
     await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();

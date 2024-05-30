@@ -6,6 +6,7 @@ import {
   isServiceAccountAvailable
 } from '../utils/createAccount';
 import { getRandomEmailAndAccountId } from '../utils/email';
+import { checkEndpointCallsSucceed } from '../utils/url';
 
 const testUserUidList: string[] = [];
 
@@ -16,6 +17,10 @@ test.beforeAll(async () => {
     initializeAdmin();
     hasInitializedAdmin = true;
   }
+});
+
+test.beforeEach(async ({ page }) => {
+  await checkEndpointCallsSucceed(page, '/relay');
 });
 
 test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
