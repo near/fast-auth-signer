@@ -1,20 +1,33 @@
 import { KeyPair } from 'near-api-js';
 import { Page } from 'playwright/test';
 
-export const overridePasskeyFunctions = async (page: Page, { creationKeypair, retrievalKeypair }: {
-  creationKeypair: KeyPair,
-  retrievalKeypair: KeyPair
-}) => {
+export type KeyPairs = {
+  creationKeypair: KeyPair;
+  retrievalKeypair: KeyPair;
+}
+
+export type KeyPairsString = {
+  creationKeypair: string;
+  retrievalKeypair: string;
+}
+
+export const overridePasskeyFunctions = async (page: Page, keyPairs: KeyPairs): Promise<void> => {
   await page.addInitScript(
     // eslint-disable-next-line no-shadow
-    ([creationKeypair, retrievalKeypair]) => {
+    (keyPairs: KeyPairsString) => {
       // @ts-ignore
       window.test = {
         isPassKeyAvailable: async () => true,
-        createKey:          () => creationKeypair.toString(),
-        getKeys:            () => [retrievalKeypair.toString(), retrievalKeypair.toString()]
+        createKey:          () => keyPairs.creationKeypair,
+        getKeys:            () => [
+          keyPairs.retrievalKeypair,
+          keyPairs.retrievalKeypair
+        ]
       };
     },
-    [creationKeypair.toString(), retrievalKeypair.toString()]
+    {
+      creationKeypair:  keyPairs.creationKeypair.toString(),
+      retrievalKeypair: keyPairs.retrievalKeypair.toString(),
+    }
   );
 };

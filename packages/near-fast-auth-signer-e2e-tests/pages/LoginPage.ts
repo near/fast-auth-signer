@@ -15,14 +15,16 @@ class LoginPage {
     const fastAuthIframe = getFastAuthIframe(this.page);
 
     await overridePasskeyFunctions(this.page, {
-      creationKeypair:  KeyPair.fromRandom('ed25519'),
-      retrievalKeypair: KeyPair.fromRandom('ed25519')
+      creationKeypair:  KeyPair.fromRandom('ED25519'),
+      retrievalKeypair: KeyPair.fromRandom('ED25519')
     });
 
     await this.page.getByRole('button', { name: 'Sign In' }).click();
 
-    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('dontcare');
-    await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible();
+    await expect(fastAuthIframe.getByRole('button', { name: 'Continue' })).toBeVisible();
+    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).focus();
+    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
+    await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible({ timeout: 10000 });
 
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);
     await fastAuthIframe.getByRole('button', { name: 'Continue' }).click();
@@ -44,7 +46,7 @@ class LoginPage {
 
     await this.page.getByRole('button', { name: 'Sign In' }).click();
 
-    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('dontcare');
+    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill('dontcare@gmail.com');
     if (config.shouldClickContinue) {
       await fastAuthIframe.getByRole('textbox', { name: 'Continue' }).click();
     }

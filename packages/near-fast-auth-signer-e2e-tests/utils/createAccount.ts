@@ -1,13 +1,14 @@
-import {
-  KeyPair,
-} from '@near-js/crypto';
-import { expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
+import {
+  KeyPair,
+} from 'near-api-js';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
 import { overridePasskeyFunctions } from './passkeys';
 import { serviceAccount } from './serviceAccount';
+import PageManager from '../pages/PageManager';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
@@ -122,6 +123,12 @@ export const createAccountAndLandDevicePage = async ({
   email,
   accountId,
   testUserUidList,
+}: {
+  page: Page;
+  pm: PageManager;
+  email: string;
+  accountId: string;
+  testUserUidList: string[];
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
@@ -152,9 +159,7 @@ export const createAccountAndLandDevicePage = async ({
   await pm.getEmailPage().hasLoaded();
 
   await pm.getAuthCallBackPage().handleEmail(email, [], {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair,
-    shouldCleanStorage:  false
+    creationKeypair:  oidcKeyPair,
+    retrievalKeypair: oidcKeyPair,
   });
 };
