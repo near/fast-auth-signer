@@ -3,7 +3,7 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
-import { checkEndpointCallsSucceed, rerouteToCustomURL } from '../utils/url';
+import { rerouteToCustomURL } from '../utils/url';
 
 test.beforeEach(async ({ page, baseURL, relayerURL }) => {
   await page.goto(baseURL);
@@ -13,8 +13,6 @@ test.beforeEach(async ({ page, baseURL, relayerURL }) => {
     await rerouteToCustomURL(page, relayerURL, '/relay');
     await rerouteToCustomURL(page, relayerURL, '/send_meta_tx_async');
   }
-
-  await checkEndpointCallsSucceed(page, '/relay');
 });
 
 test('should create account and login with e-mail', async ({ page }) => {

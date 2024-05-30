@@ -6,7 +6,6 @@ import {
 } from 'near-api-js';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
-import { overridePasskeyFunctions } from './passkeys';
 import { serviceAccount } from './serviceAccount';
 import PageManager from '../pages/PageManager';
 
@@ -123,7 +122,6 @@ export const isServiceAccountAvailable = () => {
 };
 
 export const createAccountAndLandDevicePage = async ({
-  page,
   pm,
   email,
   accountId,
@@ -150,21 +148,15 @@ export const createAccountAndLandDevicePage = async ({
   });
 
   // will be used to delete account
-  // eslint-disable-next-line no-unused-vars
   testUserUidList.push(userUid);
 
   expect(createAccountResponse.ok).toBe(true);
-
-  await overridePasskeyFunctions(page, {
-    creationKeypair:  oidcKeyPair,
-    retrievalKeypair: oidcKeyPair
-  });
 
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
   await pm.getAuthCallBackPage().handleEmail(email, [], true, {
-    creationKeypair:  oidcKeyPair,
-    retrievalKeypair: oidcKeyPair,
+    creationKeypair:   KeyPair.fromRandom('ED25519'),
+    retrievalKeypair:  KeyPair.fromRandom('ED25519'),
   });
 };

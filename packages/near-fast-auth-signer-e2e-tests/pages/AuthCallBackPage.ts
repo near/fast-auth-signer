@@ -26,8 +26,10 @@ class AuthCallBackPage {
     await this.page.goto(emailData.link);
 
     if (isRecovery) {
+      await expect(this.page.getByText('Recovering account...')).toBeVisible({ timeout: TIMEOUT });
       await expect(this.page.getByText('Recovering account...')).not.toBeVisible({ timeout: TIMEOUT });
     } else {
+      await expect(this.page.getByText('Creating account...')).toBeVisible({ timeout: TIMEOUT });
       await expect(this.page.getByText('Creating account...')).not.toBeVisible({ timeout: TIMEOUT });
     }
 
