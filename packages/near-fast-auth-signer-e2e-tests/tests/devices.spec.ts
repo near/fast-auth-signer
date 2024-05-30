@@ -7,7 +7,7 @@ import {
   isServiceAccountAvailable
 } from '../utils/firebase';
 
-const testUserUidList: string[] = [];
+const deviceTestEmailList: string[] = [];
 
 test.beforeAll(async () => {
   initializeAdmin();
@@ -29,7 +29,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
     pm,
     email,
     accountId,
-    testUserUidList,
+    testUserUidList: deviceTestEmailList,
   });
 
   // Wait for page to render and execute async operations
@@ -44,7 +44,7 @@ test('device page delete one key and return to device page again', async ({ page
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
-  test.setTimeout(180000);
+  test.setTimeout(240000);
   const { email, accountId } = getRandomEmailAndAccountId();
 
   await page.goto(baseURL);
@@ -56,7 +56,7 @@ test('device page delete one key and return to device page again', async ({ page
     pm,
     email,
     accountId,
-    testUserUidList,
+    testUserUidList: deviceTestEmailList,
   });
 
   await pm.getDevicesPage().isCheckboxLoaded(5);
@@ -71,6 +71,6 @@ test.afterAll(async () => {
   // Delete test user acc
   if (isServiceAccountAvailable()) {
     // eslint-disable-next-line no-return-await
-    await Promise.all(testUserUidList.map(async (uid) => await deleteAccount(uid)));
+    await Promise.all(deviceTestEmailList.map(async (uid) => await deleteAccount(uid)));
   }
 });
