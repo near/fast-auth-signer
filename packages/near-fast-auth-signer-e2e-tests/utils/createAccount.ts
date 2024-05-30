@@ -163,7 +163,7 @@ export const createAccountAndLandDevicePage = async ({
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, [], {
+  await pm.getAuthCallBackPage().handleEmail(email, [], true, {
     creationKeypair:  oidcKeyPair,
     retrievalKeypair: oidcKeyPair,
   });

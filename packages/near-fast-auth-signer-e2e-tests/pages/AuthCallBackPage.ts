@@ -1,5 +1,6 @@
 import { expect, Page } from '@playwright/test';
 
+import { TIMEOUT } from '../utils/constants';
 import { getFirebaseAuthLink } from '../utils/email';
 import { KeyPairs, overridePasskeyFunctions } from '../utils/passkeys';
 
@@ -10,7 +11,7 @@ class AuthCallBackPage {
     this.page = page;
   }
 
-  async handleEmail(email: string, readUIDLs: string[], keyPairs: KeyPairs): Promise<string> {
+  async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean, keyPairs: KeyPairs): Promise<string> {
     const emailData = await getFirebaseAuthLink(email, readUIDLs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
@@ -23,6 +24,12 @@ class AuthCallBackPage {
 
     expect(emailData.link).toBeDefined();
     await this.page.goto(emailData.link);
+
+    if (isRecovery) {
+      await expect(this.page.getByText('Recovering account...')).not.toBeVisible({ timeout: TIMEOUT });
+    } else {
+      await expect(this.page.getByText('Creating account...')).not.toBeVisible({ timeout: TIMEOUT });
+    }
 
     return emailData.uidl;
   }

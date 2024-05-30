@@ -24,7 +24,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
+  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false, {
     creationKeypair:  KeyPair.fromRandom('ED25519'),
     retrievalKeypair: KeyPair.fromRandom('ED25519'),
   });
@@ -36,7 +36,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
+  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, true, {
     creationKeypair:  KeyPair.fromRandom('ED25519'),
     retrievalKeypair: KeyPair.fromRandom('ED25519'),
   });
@@ -54,7 +54,7 @@ test('should create account and login with passkeys', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
+  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false, {
     creationKeypair:  keyPair,
     retrievalKeypair: keyPair,
   });
