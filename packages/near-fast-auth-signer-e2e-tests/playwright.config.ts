@@ -17,11 +17,11 @@ const numberOfWorkers = Math.max(1, os.cpus().length - 1);
  */
 export default defineConfig<TestOptions>({
   testDir:       './tests',
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly:    !!process.env.CI,
   retries:       0,
-  workers:       numberOfWorkers,
+  workers:       1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter:      'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

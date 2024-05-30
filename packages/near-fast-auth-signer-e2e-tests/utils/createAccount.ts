@@ -147,8 +147,6 @@ export const createAccountAndLandDevicePage = async ({
     keypairs,
   });
 
-  console.log({ accountId });
-
   // will be used to delete account
   testUserUidList.push(userUid);
 
