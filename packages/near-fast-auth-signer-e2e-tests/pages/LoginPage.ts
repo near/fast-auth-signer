@@ -22,8 +22,8 @@ class LoginPage {
     await this.page.getByRole('button', { name: 'Sign In' }).click();
 
     await expect(fastAuthIframe.getByRole('button', { name: 'Continue' })).toBeVisible();
-    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).focus();
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).click();
+    await fastAuthIframe.getByRole('textbox', { name: 'Email' }).focus();
     await expect(fastAuthIframe.getByText('Failed to authenticate, please retry with email')).toBeVisible({ timeout: 10000 });
 
     await fastAuthIframe.getByRole('textbox', { name: 'Email' }).fill(email);

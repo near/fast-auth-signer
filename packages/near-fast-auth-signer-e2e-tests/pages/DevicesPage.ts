@@ -20,11 +20,8 @@ class DevicesPage {
       await expect(element).toBeChecked();
     }
 
-    if (numberOfCheckboxes === 1) {
-      await this.page.getByRole('button', { name: 'Delete key' }).click();
-    } else {
-      await this.page.getByRole('button', { name: 'Delete keys' }).click();
-    }
+    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible();
+    await this.page.getByRole('button', { name: 'Delete key' }).click();
   }
 }
 
