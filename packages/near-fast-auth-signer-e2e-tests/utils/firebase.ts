@@ -12,6 +12,17 @@ import PageManager from '../pages/PageManager';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
+function getRandomWaitTime(min, max) {
+  // Generate a random number between min and max (inclusive)
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const performTaskWithRandomDelay = async () => {
+  const randomWaitTime = getRandomWaitTime(1000, 5000);
+
+  await new Promise((resolve) => { setTimeout(resolve, randomWaitTime); });
+};
+
 export const isServiceAccountAvailable = () => {
   if (
     !serviceAccount.private_key_id
@@ -87,6 +98,10 @@ export const createAccount = async ({
     password:          testPassword,
     returnSecureToken: true,
   };
+
+  // create random delay on creating account, to avoid parallel requests to google endpoint
+  await performTaskWithRandomDelay();
+
   const tokenResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY_TESTNET}`, {
     method:  'POST',
     mode:    'cors' as const,
