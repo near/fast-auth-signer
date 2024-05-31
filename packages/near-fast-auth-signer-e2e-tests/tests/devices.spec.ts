@@ -27,7 +27,6 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await expect(walletSelector).toBeVisible();
 
   await createAccountAndLandDevicePage({
-    page,
     pm,
     email,
     accountId,

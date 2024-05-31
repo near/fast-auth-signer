@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
 import {
@@ -127,7 +127,6 @@ export const createAccountAndLandDevicePage = async ({
   accountId,
   testUserUidList,
 }: {
-  page: Page;
   pm: PageManager;
   email: string;
   accountId: string;
