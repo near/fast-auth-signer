@@ -49,6 +49,7 @@ function TableContent({
             <Button
               type="button"
               size="small"
+              data-test-id="function-call-button"
               onClick={() => setMethodDetails(!methodDetails)}
             >
               {rightSide}

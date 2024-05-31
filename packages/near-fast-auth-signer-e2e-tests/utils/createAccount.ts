@@ -27,8 +27,19 @@ export const deleteAccount = async (userUid: string) => {
 };
 
 export const createAccount = async ({
-  email, accountId, keypairs, oidcKeyPair
-}: { email: string, accountId: string, keypairs: KeyPair[], oidcKeyPair: KeyPair}) => {
+  email, accountId, FAKs, LAKs, oidcKeyPair
+}: {
+  email: string,
+  accountId: string,
+  FAKs: KeyPair[],
+  LAKs: {
+    public_key: string,
+    receiver_id: string,
+    allowance: string,
+    method_names: string
+  }[],
+  oidcKeyPair: KeyPair
+}) => {
   const testPassword = 'z#CNZKa5Cwkp';
 
   const testUserRecord = await admin.auth().createUser({
@@ -85,7 +96,8 @@ export const createAccount = async ({
   const data = {
     near_account_id:        `${accountId}.testnet`,
     create_account_options: {
-      full_access_keys:    keypairs.map((keypair) => keypair.getPublicKey().toString()),
+      full_access_keys:    FAKs.map((keypair) => keypair.getPublicKey().toString()),
+      limited_access_keys: LAKs,
     },
     oidc_token:                     accessToken,
     user_credentials_frp_signature: userCredentialsFrpSignature,
@@ -101,8 +113,8 @@ export const createAccount = async ({
 
   const createAccountResponse = await fetch('https://mpc-recovery-leader-testnet.api.pagoda.co/new_account', options);
   return {
-    createAccountResponse,
-    userUid: testUserRecord.uid
+    createAccountResponse: await createAccountResponse.json(),
+    userUid:               testUserRecord.uid
   };
 };
 
@@ -143,13 +155,14 @@ export const createAccountAndLandDevicePage = async ({
     email,
     accountId,
     oidcKeyPair,
-    keypairs,
+    FAKs: keypairs,
+    LAKs: []
   });
 
   // will be used to delete account
   testUserUidList.push(userUid);
 
-  expect(createAccountResponse.ok).toBe(true);
+  expect(createAccountResponse.type).toEqual('ok');
 
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
