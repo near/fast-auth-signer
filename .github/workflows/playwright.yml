@@ -10,7 +10,7 @@ jobs:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04-16core
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
