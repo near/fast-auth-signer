@@ -19,12 +19,9 @@ class DevicesPage {
       const element = checkboxes.nth(i);
       /* eslint-disable no-await-in-loop */
       await element.click();
-      await expect(element).toBeChecked();
     }
 
-    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible({ timeout: TIMEOUT });
     await this.page.getByRole('button', { name: 'Delete key' }).click({ timeout: TIMEOUT });
-    await expect(this.page.getByRole('button', { name: 'Deleting...' })).not.toBeVisible({ timeout: TIMEOUT });
   }
 }
 

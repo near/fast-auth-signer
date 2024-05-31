@@ -17,7 +17,7 @@ const numberOfWorkers = Math.max(1, os.cpus().length - 1);
  */
 export default defineConfig<TestOptions>({
   testDir:       './tests',
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly:    !!process.env.CI,
   retries:       2,
