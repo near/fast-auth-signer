@@ -9,11 +9,11 @@ jobs:
     defaults:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
-    timeout-minutes: 60
+    timeout-minutes: 120
     runs-on: ubuntu-20.04-16core
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: 18.x
     # - name: Checkout pagoda-relayer-rs repository
