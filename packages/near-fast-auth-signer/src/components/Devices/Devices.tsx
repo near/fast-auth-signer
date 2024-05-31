@@ -184,8 +184,9 @@ function Devices() {
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
           const oidcToken = window.firestoreController.getUserOidcToken();
           setIsDeleting(false);
-          const devicePageCallback = () => setIsAddingKey(false);
-
+          const devicePageCallback = async () => {
+            setIsAddingKey(false);
+          };
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,

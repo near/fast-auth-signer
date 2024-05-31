@@ -145,7 +145,7 @@ export const onSignIn = async ({
       const failure = res['Receipts Outcome']
         .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
       if (devicePageCallback) {
-        devicePageCallback();
+        await devicePageCallback();
       }
       if (failure?.ActionError?.kind?.LackBalanceForState) {
         navigate(`/devices?${searchParams.toString()}`);
