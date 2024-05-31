@@ -1,5 +1,7 @@
 import { expect, Page } from '@playwright/test';
 
+import { TIMEOUT } from '../utils/constants';
+
 class DevicesPage {
   private page: Page;
 
@@ -8,7 +10,7 @@ class DevicesPage {
   }
 
   async isCheckboxLoaded(numberOfCheckboxes: number) {
-    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: 30000 });
+    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: TIMEOUT });
   }
 
   async selectAndDelete(numberOfCheckboxes: number) {
