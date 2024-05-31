@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/createAccount';
-import { setupPasskeysFunctions } from '../../utils/passkeys';
+import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
 const { describe, beforeAll } = test;
@@ -85,13 +85,15 @@ describe('Sign transaction', () => {
 
   test('should fail if signer app is not authenticated', async () => {
     await page.goto('/');
-    await setupPasskeysFunctions(page, 'page', {
-      isPassKeyAvailable:  false,
-      shouldCleanStorage:  false,
-    });
 
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  KeyPair.fromRandom('ed25519'),
+      retrievalKeypair: KeyPair.fromRandom('ed25519')
+    });
+
     await page.locator('data-test-id=sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
 
@@ -100,15 +102,15 @@ describe('Sign transaction', () => {
 
   test('should succeed and dismiss when signer app is authenticated', async () => {
     await page.goto('/');
-    await setupPasskeysFunctions(page, 'page', {
-      isPassKeyAvailable:  true,
-      keyPairForCreation:  userFAK,
-      keyPairForRetrieval: userFAK,
-      shouldCleanStorage:  false,
-    });
 
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  userFAK,
+      retrievalKeypair: userFAK
+    });
+
     await page.locator('data-test-id=sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
     const socialdbContract = new Contract(new Account(Connection.fromConfig({
