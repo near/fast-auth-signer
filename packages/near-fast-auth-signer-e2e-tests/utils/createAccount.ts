@@ -1,24 +1,29 @@
-import {
-  KeyPair,
-} from '@near-js/crypto';
 import { expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
+import {
+  KeyPair,
+} from 'near-api-js';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
-import { setupPasskeysFunctions } from './passkeys';
 import { serviceAccount } from './serviceAccount';
+import PageManager from '../pages/PageManager';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
 
 export const initializeAdmin = () => {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount),
   });
 };
 
 export const deleteAccount = async (userUid: string) => {
-  await admin.auth().deleteUser(userUid);
+  if (userUid) {
+    const user = await admin.auth().getUser(userUid);
+    if (user.uid) {
+      await admin.auth().deleteUser(userUid);
+    }
+  }
 };
 
 export const createAccount = async ({
@@ -117,11 +122,15 @@ export const isServiceAccountAvailable = () => {
 };
 
 export const createAccountAndLandDevicePage = async ({
-  page,
   pm,
   email,
   accountId,
   testUserUidList,
+}: {
+  pm: PageManager;
+  email: string;
+  accountId: string;
+  testUserUidList: string[];
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
@@ -138,25 +147,15 @@ export const createAccountAndLandDevicePage = async ({
   });
 
   // will be used to delete account
-  // eslint-disable-next-line no-unused-vars
   testUserUidList.push(userUid);
 
   expect(createAccountResponse.ok).toBe(true);
 
-  await setupPasskeysFunctions(page, 'page', {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair,
-    shouldCleanStorage:  false
-  });
-
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, [], {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  oidcKeyPair,
-    keyPairForRetrieval: oidcKeyPair,
-    shouldCleanStorage:  false
+  await pm.getAuthCallBackPage().handleEmail(email, [], true, {
+    creationKeypair:   KeyPair.fromRandom('ED25519'),
+    retrievalKeypair:  KeyPair.fromRandom('ED25519'),
   });
 };

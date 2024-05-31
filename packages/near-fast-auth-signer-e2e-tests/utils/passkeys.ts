@@ -1,67 +1,33 @@
 import { KeyPair } from 'near-api-js';
-import { Frame, Page } from 'playwright/test';
+import { Page } from 'playwright/test';
 
-const configWindowTest = ({
-  isPassKeyAvailable = true,
-  keyCreationSecret,
-  keyRetrievalSecret,
-  shouldCleanStorage = false
-}) => {
-  if (shouldCleanStorage) {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-  }
+export type KeyPairs = {
+  creationKeypair: KeyPair;
+  retrievalKeypair: KeyPair;
+}
 
-  // @ts-ignore
-  window.test = {
-    isPassKeyAvailable: async () => isPassKeyAvailable,
-    ...isPassKeyAvailable ? {
-      createKey:          () => keyCreationSecret,
-      getKeys:            () => [keyRetrievalSecret, keyRetrievalSecret]
-    } : {}
-  };
-};
+export type KeyPairsString = {
+  creationKeypair: string;
+  retrievalKeypair: string;
+}
 
-export type SetupPasskeysFunctionsConfig = {
-  isPassKeyAvailable: true;
-  keyPairForCreation: KeyPair;
-  keyPairForRetrieval: KeyPair;
-  shouldCleanStorage: boolean;
-} | {
-  isPassKeyAvailable: false;
-  keyPairForCreation?: never;
-  keyPairForRetrieval?: never;
-  shouldCleanStorage: boolean;
-};
-
-export const setupPasskeysFunctions = async (page: Page, type: 'iframe' | 'page', config: SetupPasskeysFunctionsConfig): Promise<any> => {
-  const setupPasskeysArgs = {
-    ...config,
-    // Using any to access private property
-    keyCreationSecret:  (config.keyPairForCreation as any)?.secretKey,
-    keyRetrievalSecret: (config.keyPairForRetrieval as any)?.secretKey
-  };
-
-  if (type === 'iframe') {
-    const listener = async (frame: Frame) => {
-      if (!frame.isDetached()) {
-        await frame.evaluate(
-          configWindowTest,
-          setupPasskeysArgs
-        );
-      }
-    };
-    page.on('framenavigated', listener);
-
-    return listener;
-  } if (type === 'page') {
-    await page.addInitScript(
-      configWindowTest,
-      setupPasskeysArgs
-    );
-  } else {
-    throw new Error('Invalid type');
-  }
-
-  return null;
+export const overridePasskeyFunctions = async (page: Page, keyPairs: KeyPairs): Promise<void> => {
+  await page.addInitScript(
+    // eslint-disable-next-line no-shadow
+    (keyPairs: KeyPairsString) => {
+      // @ts-ignore
+      window.test = {
+        isPassKeyAvailable: async () => true,
+        createKey:          () => keyPairs.creationKeypair,
+        getKeys:            () => [
+          keyPairs.retrievalKeypair,
+          keyPairs.retrievalKeypair
+        ]
+      };
+    },
+    {
+      creationKeypair:  keyPairs.creationKeypair.toString(),
+      retrievalKeypair: keyPairs.retrievalKeypair.toString(),
+    }
+  );
 };
