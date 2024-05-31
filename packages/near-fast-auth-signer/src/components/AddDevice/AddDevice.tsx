@@ -442,7 +442,7 @@ function AddDevicePage() {
           iconLeft="bi bi-wallet"
           onClick={handleConnectWallet}
         />
-        {!getValues().email && passkeyAuthError && !errors.email?.message ? (
+        {!getValues().email && passkeyAuthError ? (
           <ErrorContainer>
             <div className="stats-message error">
               <ErrorSvg />

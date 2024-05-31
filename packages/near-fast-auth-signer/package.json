@@ -6,7 +6,7 @@
   "scripts": {
     "start": "webpack serve --history-api-fallback --mode development --config webpack.development.config.js",
     "start:test": "webpack serve --history-api-fallback --mode development --config webpack.test.config.js",
-    "bundle": "webpack build --output-public-path --mode production /fastauth/ --config webpack.production.config.js",
+    "bundle": "webpack build --output-public-path /fastauth/ --mode=production --config webpack.production.config.js",
     "lint": "eslint ./",
     "fix": "eslint ./ --fix",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -183,6 +183,9 @@ function Devices() {
           const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
           const success_url = decodeIfTruthy(searchParams.get('success_url'));
           const oidcToken = window.firestoreController.getUserOidcToken();
+          setIsDeleting(false);
+          const devicePageCallback = () => setIsAddingKey(false);
+
           await onSignIn({
             accessToken:      oidcToken,
             publicKeyFak,
@@ -194,13 +197,14 @@ function Devices() {
             searchParams,
             navigate,
             gateway:          success_url,
+            devicePageCallback,
           });
-          setIsAddingKey(false);
         }
       }).catch((err) => {
+        setIsDeleting(false);
         captureException(err);
         console.log('Delete Failed', err);
-      }).finally(() => setIsDeleting(false));
+      });
   };
 
   const deleteCollectionText = useMemo(() => {

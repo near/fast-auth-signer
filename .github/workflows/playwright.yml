@@ -70,6 +70,7 @@ jobs:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
           MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
           MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
+          FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
       run: yarn playwright test
     - uses: actions/upload-artifact@v3
       if: always()

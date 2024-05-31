@@ -24,11 +24,9 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  KeyPair.fromRandom('ED25519'),
-    keyPairForRetrieval: KeyPair.fromRandom('ED25519'),
-    shouldCleanStorage:  false
+  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false, {
+    creationKeypair:  KeyPair.fromRandom('ED25519'),
+    retrievalKeypair: KeyPair.fromRandom('ED25519'),
   });
 
   readUIDLs.push(emailId);
@@ -38,11 +36,9 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  KeyPair.fromRandom('ED25519'),
-    keyPairForRetrieval: KeyPair.fromRandom('ED25519'),
-    shouldCleanStorage:  false
+  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, true, {
+    creationKeypair:  KeyPair.fromRandom('ED25519'),
+    retrievalKeypair: KeyPair.fromRandom('ED25519'),
   });
 
   await pm.getAppPage().isLoggedIn();
@@ -58,11 +54,9 @@ test('should create account and login with passkeys', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, {
-    isPassKeyAvailable:  true,
-    keyPairForCreation:  keyPair,
-    keyPairForRetrieval: keyPair,
-    shouldCleanStorage:  false
+  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false, {
+    creationKeypair:  keyPair,
+    retrievalKeypair: keyPair,
   });
 
   readUIDLs.push(emailId);
@@ -75,9 +69,3 @@ test('should create account and login with passkeys', async ({ page }) => {
 
   await pm.getAppPage().isLoggedIn();
 });
-
-// test('should not be able to login without account', async ({ page }) => {
-//   test.slow();
-
-//   await page.goto('http://localhost:3002/');
-// });
