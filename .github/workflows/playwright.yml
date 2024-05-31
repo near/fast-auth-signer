@@ -10,12 +10,12 @@ jobs:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
     timeout-minutes: 60
-    runs-on: ubuntu-22.04-32core
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 18.x
     # - name: Checkout pagoda-relayer-rs repository
     #   uses: actions/checkout@v3
     #   with:
