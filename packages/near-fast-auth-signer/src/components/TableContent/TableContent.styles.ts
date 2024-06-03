@@ -32,6 +32,17 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
   .right-side {
     text-align: right;
 
+    .delegated {
+      .right-side {
+        text-decoration: line-through;
+        color: var(--Sand-Light-11, var(--Sand-Light-11, #706F6C));
+      }
+
+      .currency-value {
+        color: var(--Red-Light-10, var(--Red-Light-10, #EE6F5D));
+      }
+    }
+
     .function-call {
       display: inline-flex;
       flex-wrap: wrap;

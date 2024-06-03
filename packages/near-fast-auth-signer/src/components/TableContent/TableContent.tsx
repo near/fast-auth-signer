@@ -17,6 +17,7 @@ interface TableContentProps {
   rightSide?: string| React.ReactElement;
   infoText?: string;
   openLink?: string;
+  isDelegated?: boolean
 }
 function TableContent({
   hasFunctionCall,
@@ -27,6 +28,7 @@ function TableContent({
   currencyValue,
   infoText,
   openLink,
+  isDelegated
 }: TableContentProps) {
   const [methodDetails, setMethodDetails] = React.useState(false);
 
@@ -61,9 +63,9 @@ function TableContent({
             </Button>
           </div>
         ) : (
-          <div>
-            {rightSide}
-            {currencyValue ? <small>{currencyValue}</small> : null}
+          <div className={`${isDelegated ? 'delegated' : ''}`}>
+            <span className="right-side">{rightSide}</span>
+            {currencyValue ? <small className="currency-value">{currencyValue}</small> : null}
           </div>
         )}
       </div>

@@ -303,6 +303,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
                 infoText={pageCopy[signMethod].estimatedFeesHint}
                 rightSide={`${estimatedUsdFees()}`}
                 currencyValue={`Paid by ${signMethod === 'transaction' ? 'you' : new URL(document.referrer).hostname}`}
+                isDelegated={signMethod === 'delegate'}
               />
               <TableContent
                 leftSide="Total"
