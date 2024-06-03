@@ -14,8 +14,9 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   display: flex;
   flex-direction: column;
   position: relative;
-  row-gap: 8px;
-    .info-text {
+  overflow: hidden;
+
+  .info-text {
     font-size: 12px;
     font-weight: 500;
     color: #1b1b1b;
@@ -28,7 +29,7 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   .modal-top {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
     line-height: 17px;
     text-align: center;
@@ -36,6 +37,7 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
       height: 48px;
       width:48px;
     }
+
     .transaction-details {
       display: inline-flex;
       gap: 6px;
@@ -65,13 +67,24 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
     }
   }
 
+  .modal-middle {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
   .table-wrapper {
+    overflow: hidden;
     background-color: #fdfdfc;
     border: 1px solid #eeeeec;
-    border-radius: 4px;
+    border-radius: 6px;
 
     &.margin-top {
       margin-top: 20px;
+    }
+
+    > *:not(:last-child) {
+      border-bottom: 1px solid var(--Sand-Light-4, #EEEEEC);
     }
 
     h4 {
@@ -95,7 +108,6 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 8px 16px 0px;
     svg path {
       fill: #1b1b1b;;
     }
@@ -104,30 +116,15 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
     }
   }
 
-  .more-details-opened {
-    .table-wrapper {
-      &:first-child {
-        border-bottom-left-radius: 0px;
-        border-bottom-right-radius: 0px;
-      }
-
-      &:last-child {
-        border-top-left-radius: 0px;
-        border-top-right-radius: 0px;
-
-        border-top: 0px;
-      }
-    }
+  .more-details {
+    margin: 16px 0;
   }
 
-  .modal-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-
-    > button {
-      min-width: 100%;
-    }
+  .more-details-opened {
+    overflow: scroll;
+  }
+  
+  & > button{
+    margin-top: 24px
   }
 `;

@@ -53,7 +53,6 @@ function TableContent({
               onClick={() => setMethodDetails(!methodDetails)}
             >
               {rightSide}
-              {' '}
               {isFunctionCallOpen && methodDetails ? (
                 <ArrowUpSvg />
               ) : (

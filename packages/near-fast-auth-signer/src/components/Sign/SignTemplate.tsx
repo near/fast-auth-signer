@@ -22,6 +22,32 @@ import { inIframe, isUrlNotJavascriptProtocol, redirectWithError } from '../../u
 import { basePath, network } from '../../utils/config';
 import TableContent from '../TableContent/TableContent';
 
+type SignTemplateProps = {
+  signMethod: 'transaction' | 'delegate'
+}
+
+interface PageCopy {
+  title: string;
+  description: string;
+  estimatedFeesHint: string;
+  totalFeeHint: string;
+}
+
+const pageCopy: Record<SignTemplateProps['signMethod'], PageCopy> = {
+  delegate: {
+    title:             'Approve Transaction?',
+    description:       'You are about to authorize an action. Review the contract details before approving.',
+    estimatedFeesHint: 'Fees for this transaction are covered',
+    totalFeeHint:      'The total amount you’ll pay',
+  },
+  transaction: {
+    title:             'Sign Transaction?',
+    description:       'Please note this transaction requires you to pay for the fees. Review the costs before continuing.',
+    estimatedFeesHint: 'You are required to pay the fees for this transaction',
+    totalFeeHint:      'The maximum amount you’ll pay',
+  },
+};
+
 const formatActionType = (action: string) => {
   switch (action) {
     case 'createAccount':
@@ -70,10 +96,6 @@ export const calculateGasLimit = (actions: Array<{ functionCall?: { gas: BN } }>
   .map((a) => a.functionCall!.gas)
   .reduce((totalGas, gas) => totalGas.add(gas), new BN(0)).div(new BN('1000000000000'))
   .toString();
-
-type SignTemplateProps = {
-  signMethod: 'transaction' | 'delegate'
-}
 
 function SignTemplate({ signMethod }: SignTemplateProps) {
   const signTransactionRef = useRef(null);
@@ -254,16 +276,16 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
         <>
           <div className="modal-top">
             <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
-            <h4>Confirm transaction</h4>
+            <h4>{pageCopy[signMethod].title}</h4>
+            <div className="transaction-alert">
+              {pageCopy[signMethod].description}
+            </div>
             <div className="transaction-details">
               <InternetSvg />
               {callbackUrl || 'Unknown App'}
             </div>
           </div>
-          <div className="transaction-alert">
-            {signMethod === 'transaction' && <p>You will be responsible for paying the gas fees.</p>}
-            {signMethod === 'delegate' && <p>The relayer will cover the gas fees for you.</p>}
-          </div>
+
           <div className="modal-middle">
             <div className="table-wrapper">
               <TableContent
@@ -271,14 +293,25 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
                 rightSide={transactionDetails.signerId}
               />
               <TableContent
+                leftSide="To"
+                rightSide={transactionDetails.receiverId}
+              />
+            </div>
+            <div className="table-wrapper">
+              <TableContent
+                leftSide="Estimated fee"
+                infoText={pageCopy[signMethod].estimatedFeesHint}
+                rightSide={`${estimatedUsdFees()}`}
+                currencyValue={`Paid by ${signMethod === 'transaction' ? 'you' : new URL(document.referrer).hostname}`}
+              />
+              <TableContent
                 leftSide="Total"
-                infoText="The estimated total of your transaction including fees."
-                rightSide={`${totalNearAmount()} NEAR`}
-                currencyValue={`$${totalUsdAmount}`}
+                infoText={pageCopy[signMethod].totalFeeHint}
+                rightSide={`$${totalUsdAmount}`}
               />
             </div>
           </div>
-          {/*          eslint-disable-next-line */}
+          {/* eslint-disable-next-line */}
           <div
             className="more-details"
             data-test-id="more-details-button"
@@ -289,19 +322,6 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
           </div>
           {showDetails && (
             <div className="more-details-opened">
-              <div className="table-wrapper">
-                <h4>Network fees</h4>
-                <TableContent
-                  leftSide="Fee limit"
-                  rightSide={`${transactionDetails.fees.gasLimit} Tgas`}
-                />
-                <TableContent
-                  leftSide="Estimated Fees"
-                  infoText="The estimated cost of processing your transaction."
-                  rightSide={`${estimatedNearFees} NEAR`}
-                  currencyValue={`${estimatedUsdFees()}`}
-                />
-              </div>
               <div className="table-wrapper">
                 <h4>Actions</h4>
                 {transactionDetails.actions.map((action, i) => (
@@ -317,17 +337,14 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
               </div>
             </div>
           )}
-
-          <div className="modal-footer">
-            <Button
-              variant="primary"
-              size="large"
-              label={inFlight ? 'Loading...' : 'Confirm'}
-              disabled={inFlight}
-              data-test-id="confirm-transaction-button"
-              onClick={onConfirm}
-            />
-          </div>
+          <Button
+            variant="primary"
+            size="large"
+            label={inFlight ? 'Loading...' : 'Confirm'}
+            disabled={inFlight}
+            data-test-id="confirm-transaction-button"
+            onClick={onConfirm}
+          />
         </>
       )}
       {error && <p className="info-text error">{error}</p>}
