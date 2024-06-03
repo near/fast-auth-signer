@@ -274,7 +274,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
   return (
     <ModalSignWrapper ref={signTransactionRef}>
       {(
-        <>
+        <div className="modal-body">
           <div className="modal-top">
             <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
             <h4>{pageCopy[signMethod].title}</h4>
@@ -347,7 +347,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
             data-test-id="confirm-transaction-button"
             onClick={onConfirm}
           />
-        </>
+        </div>
       )}
       {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
