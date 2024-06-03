@@ -7,7 +7,7 @@ interface ModalSignWrapperProps {
 
 export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   ${(props) => props.hide && 'opacity: 0;'}
-  height: 632px;
+  height: 660px;
   width: 550px;
   margin: 0 auto;
   border-radius: 8px;
