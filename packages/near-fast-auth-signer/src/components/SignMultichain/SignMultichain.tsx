@@ -87,8 +87,8 @@ function SignMultichain() {
     onClose: () => window.parent.postMessage({ type: 'method', message: 'User cancelled action' }, '*')
   });
 
-  const onError = (text: string) => {
-    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe: true }, '*');
+  const onError = (text: string, closeIframe = true) => {
+    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe }, '*');
     setError(text);
   };
 
@@ -99,7 +99,7 @@ function SignMultichain() {
     try {
       const isUserAuthenticated = await getAuthState();
       if (isUserAuthenticated !== true) {
-        onError('You are not authenticated or there has been an indexer failure');
+        onError('You are not authenticated or there has been an indexer failure', false);
       } else {
         const response = await multichainSignAndSend({
           signMultichainRequest,
@@ -110,10 +110,12 @@ function SignMultichain() {
             type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
           }, '*');
         } else if (response.success === false) {
+          console.log('response ', response);
           onError(response.errorMessage);
         }
       }
     } catch (e) {
+      console.log('eeee ', e);
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
