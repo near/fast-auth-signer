@@ -136,6 +136,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
     try {
       const deserializedTransactions =      deserializeTransactionsFromString(transactionHashes);
       const allActions = deserializedTransactions.flatMap((t) => t.actions);
+
       setTransactionDetails({
         signerId:    deserializedTransactions[0].signerId,
         receiverId:  deserializedTransactions[0].receiverId,
@@ -325,16 +326,16 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
             <div className="more-details-opened">
               <div className="table-wrapper">
                 <h4>Actions</h4>
-                {transactionDetails.actions.map((action, i) => (
+                {transactionDetails.transactions.map((t) => t.actions.map((action) => (
                   <TableContent
-                    leftSide={transactionDetails.transactions[i].receiverId}
+                    leftSide={t.receiverId}
                     hasFunctionCall={!!action?.functionCall}
                     isFunctionCallOpen
                     rightSide={formatActionType(action.enum)}
                     functionDesc={action?.functionCall?.args}
-                    openLink={`${network.explorerUrl}/accounts/${transactionDetails.transactions[i].receiverId}`}
+                    openLink={`${network.explorerUrl}/accounts/${t.receiverId}`}
                   />
-                ))}
+                )))}
               </div>
             </div>
           )}
