@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import PageManager from '../pages/PageManager';
+import { TIMEOUT } from '../utils/constants';
 import { getRandomEmailAndAccountId } from '../utils/email';
 import {
   createAccountAndLandDevicePage, deleteAccount, initializeAdmin,
@@ -39,34 +40,33 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAppPage().isLoggedIn();
 });
 
-// test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
-//   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
+test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
+  test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
-// const pm = new PageManager(page);
-// test.setTimeout(240000);
-// const { email, accountId } = getRandomEmailAndAccountId();
+  const pm = new PageManager(page);
+  test.setTimeout(240000);
+  const { email, accountId } = getRandomEmailAndAccountId();
 
-//   await page.goto(baseURL);
-//   const walletSelector = page.locator('#ws-loaded');
-//   await expect(walletSelector).toBeVisible();
+  await page.goto(baseURL);
+  const walletSelector = page.locator('#ws-loaded');
+  await expect(walletSelector).toBeVisible();
 
-// await createAccountAndLandDevicePage({
-//   page,
-//   pm,
-//   email,
-//   accountId,
-//   testUserUidList: deviceTestEmailList,
-// });
+  await createAccountAndLandDevicePage({
+    pm,
+    email,
+    accountId,
+    testUserUidList: deviceTestEmailList,
+  });
 
-//   await pm.getDevicesPage().isCheckboxLoaded(5);
-//   await pm.getDevicesPage().selectAndDelete(2);
-//   await expect(page.getByRole('button', { name: 'Signing In...' })).toBeVisible({ timeout: TIMEOUT });
-//   await expect(page.getByRole('button', { name: 'Signing In...' })).not.toBeVisible({ timeout: TIMEOUT });
-//   await pm.getDevicesPage().isCheckboxLoaded(3);
-//   await pm.getDevicesPage().selectAndDelete(2);
+  await pm.getDevicesPage().isCheckboxLoaded(5);
+  await pm.getDevicesPage().selectAndDelete(2);
+  await expect(page.getByRole('button', { name: 'Signing In...' })).toBeVisible({ timeout: TIMEOUT });
+  await expect(page.getByRole('button', { name: 'Signing In...' })).not.toBeVisible({ timeout: TIMEOUT });
+  await pm.getDevicesPage().isCheckboxLoaded(3);
+  await pm.getDevicesPage().selectAndDelete(2);
 
-//   await pm.getAppPage().isLoggedIn();
-// });
+  await pm.getAppPage().isLoggedIn();
+});
 
 test.afterAll(async () => {
   // Delete test user acc
