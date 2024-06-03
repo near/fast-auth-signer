@@ -4,7 +4,7 @@ import { InMemoryKeyStore } from '@near-js/keystores';
 import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
-import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/createAccount';
+import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/firebase';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
