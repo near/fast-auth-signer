@@ -78,7 +78,8 @@ export default function App() {
     chainId: string | bigint
     address: string
   }) => {
-    const payload = await getTransactionPayload(values);
+    const accountId = JSON.parse(window.localStorage.accountId);
+    const payload = await getTransactionPayload({ ...values, accountId });
     await fastAuthWallet.signMultiChainTransaction(payload);
   };
 

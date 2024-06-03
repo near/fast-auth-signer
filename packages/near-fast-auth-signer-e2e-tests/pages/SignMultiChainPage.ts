@@ -2,17 +2,20 @@
 
 import { expect, Page, Frame } from '@playwright/test';
 
-// These are the derived address for the asset/key type combo below
-const derivedAddresses  = {
-  BNB_PERSONAL_KEY: '0xdac0011d991233e20fe6de018f7c7c715a4d6498',
-  ETH_UNKNOWN_KEY:  '0x1df778a46791d1ada0a256c7ed6956e2c99b7fb4',
-  ETH_DOMAIN_KEY:   '0x07df56c5adef01bd85bd229fde1a43e78054c01d',
-};
+// Below are the static derived addresses
+/* BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71'; */
 
 const TIMEOUT = 1000000;
 
-type KeyType = 'domainKey' | 'personalKey' | 'wrongKey';
+type KeyType = 'domainKey' | 'personalKey' | 'unknownKey';
 type AssetType = 'eth' | 'bnb' | 'btc';
+
+interface MessageEventResponse {
+  transactionHash?: string;
+  message: string;
+}
 
 type TransactionDetail = {
   keyType: KeyType,
@@ -22,8 +25,8 @@ type TransactionDetail = {
 }
 
 const assetSymbolMap = {
-  eth:   'ETH',
-  btc:  'BTC',
+  eth: 'ETH',
+  btc: 'BTC',
   bnb: 'BNB',
 };
 
@@ -34,91 +37,58 @@ class SignMultiChainPage {
     this.page = page;
   }
 
-  // Simulate transaction
-  async submitTransaction(values: TransactionDetail) {
-    await this.enterTransactionDetails(values);
-    await this.verifyTransactionDetails(values);
-  }
-
-  async enterTransactionDetails({
-    keyType, assetType, amount, address
-  }: TransactionDetail) {
-    await this.page.locator(`input[name="keyType"][value="${keyType}"]`).click();
-    await this.page.locator(`input[name="assetType"][id="${assetType.toLowerCase()}"]`).click();
-    await this.page.locator('input[name="amount"]').fill(`${amount}`);
-    await this.page.locator('input[name="address"]').fill(`${address}`);
-    await this.page.getByRole('button', { name: 'Submit' }).click();
-  }
-
-  async verifyTransactionDetails({
-    keyType, assetType, amount
-  }: TransactionDetail) {
-    const frame = await this.waitForIframeModal();
-    if (keyType === 'domainKey') return;
-
-    const symbol = assetSymbolMap[assetType.toLowerCase()];
-
-    await frame.locator(`text=Send ${amount} ${symbol}`).waitFor({ state: 'visible' });
-    await frame.locator('button:has-text("Approve")').waitFor({ state: 'visible' });
-
-    if (keyType === 'wrongKey') {
-      await this.handleWrongKeyTransaction(frame);
-    }
-  }
-
-  async waitForTransactionDetails(frame: Frame) {
+  async handleWrongKeyTransaction(frame: Frame) {
     await frame.locator('div.transaction-details').filter({ hasText: /^https:\/\/app\.unknowndomain\.com$/ }).waitFor({ state: 'visible' });
-  }
-
-  async expectWarningMessage(frame: Frame) {
     await expect(frame.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
-  }
-
-  // Expect "Approve button to be disabled and later enabled"
-  async expectApprovalButtonDisabled(frame: Frame) {
     await expect(frame.locator('button:has-text("Approve")')).toBeDisabled();
     await frame.locator('input[type="checkbox"]').check();
     await expect(frame.locator('button:has-text("Approve")')).toBeEnabled();
   }
 
-  // Look out for warning message for transaction with an unknown key
-  async handleWrongKeyTransaction(frame: Frame) {
-    await this.waitForTransactionDetails(frame);
-    await this.expectWarningMessage(frame);
-    await this.expectApprovalButtonDisabled(frame);
-  }
-
   async waitForIframeModal() {
     const iframeElement = await this.page.locator('#nfw-connect-iframe').elementHandle();
     const frame = await iframeElement.contentFrame();
-    if (!frame) {
-      throw new Error('Iframe is not available.');
-    }
     await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'networkidle', timeout: TIMEOUT });
     return frame;
   }
 
-  async waitForMessage(page: Page, timeout = 10000) {
-    return Promise.race([
+  async waitForMultiChainResponse(page: Page, timeout = 100000) {
+    return await Promise.race([
       page.evaluate(() => new Promise((resolve) => {
         window.addEventListener('message', (event) => {
-          resolve(event.data);
+          if (event.data.type === 'multiChainResponse') resolve(event.data);
         });
       })),
-      new Promise((_, reject) => { setTimeout(() => reject(new Error('Timeout waiting for message event')), timeout); })
-    ]);
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout waiting for message event')), timeout);
+      })
+    ]) as Promise<MessageEventResponse>;
   }
 
-  async approveTransaction(values: TransactionDetail) {
-    await this.submitTransaction(values);
+  async submitTransactionInfo({
+    keyType, assetType, amount, address
+  }: TransactionDetail) {
+    await this.page.check(`input[name="keyType"][value="${keyType}"]`);
+    await this.page.check(`input[name="assetType"][id="${assetType.toLowerCase()}"]`);
+    await this.page.fill('input[name="amount"]', `${amount}`);
+    await this.page.fill('input[name="address"]', `${address}`);
+    await this.page.click('button[type="submit"]');
+  }
+
+  async clickApproveButton(parent: Frame | Page) {
+    const approveButton = parent.locator('button', { hasText: 'Approve' });
+    await approveButton.waitFor();
+    await approveButton.click();
+  }
+
+  async submitAndApproveTransaction({
+    keyType, assetType, amount, address
+  }: TransactionDetail) {
+    await this.submitTransactionInfo({
+      keyType, assetType, amount, address
+    });
     const frame = await this.waitForIframeModal();
-    const buttonLocator = frame.locator('button', { hasText: 'Approve' });
-    await buttonLocator.waitFor({ state: 'visible' });
-    console.log('Locator found');
-    await buttonLocator.click();
-    console.log('Locator Clicked');
-    const message = await this.waitForMessage(this.page);
-    console.log('message ', message);
+    await this.clickApproveButton(frame);
   }
 }
 

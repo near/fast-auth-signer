@@ -44,10 +44,17 @@ export default function SignMultiChain(props: SignMultiChainProps) {
   };
 
   return (
-    <div id="multiChain-trnx">
-      <h5>Test MultiChain Transactions</h5>
+    <div
+      id="multiChain-trnx"
+      style={{
+        border: '1px solid #ddd', width: 'fit-content', margin: '15px 0'
+      }}
+    >
+      <h5>Sign MultiChain Transactions</h5>
       <form
-        style={{ display: 'flex', flexDirection: 'column', gap: 5 }}
+        style={{
+          display: 'flex', flexDirection: 'column', gap: 5, margin: '5px'
+        }}
         onSubmit={onSubmit}
       >
         <div
@@ -74,14 +81,14 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             Personal Key
           </label>
 
-          <label htmlFor="wrongKey" className="radio-label">
+          <label htmlFor="unknownKey" className="radio-label">
             <input
               type="radio"
-              id="wrongKey"
-              value="wrongKey"
+              id="unknownKey"
+              value="unknownKey"
               name="keyType"
             />
-            Wrong Key
+            Unknown Key
           </label>
         </div>
 
@@ -154,7 +161,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             />
           </label>
         </div>
-        <button type="submit" style={{ width: 'fit-content' }}>
+        <button type="submit" style={{ width: 'fit-content', marginBottom: '15px' }}>
           Submit
         </button>
       </form>

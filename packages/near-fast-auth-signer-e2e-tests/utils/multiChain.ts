@@ -40,10 +40,12 @@ export const fetchDerivedAddress = async ({ accountId, chainValue, keyType }: {
   accountId: string, keyType: string, chainValue: number
 }): Promise<string> => {
   try {
+    if (!accountId) {
+      throw new Error('Error: Missing accountId for address generation.');
+    }
     const domain = getDomain(keyType);
     const derivationPath = generateDerivationPath(chainValue, domain);
-
-    if (!derivationPath || !accountId) {
+    if (!derivationPath) {
       throw new Error('Error: Missing derivation path for address generation.');
     }
 
@@ -54,11 +56,12 @@ export const fetchDerivedAddress = async ({ accountId, chainValue, keyType }: {
         derivationPath,
         bitcoinLib.networks.testnet,
         'testnet',
-        'multichain-testnet-2.testnet',
+        'v2.multichain-mpc.testnet',
       );
       address = btcAddress;
     } else if (chainValue === 60) {
-      address = await fetchDerivedEVMAddress(accountId, derivationPath, 'testnet', 'multichain-testnet-2.testnet');
+      // address = await fetchDerivedEVMAddress(accountId, derivationPath, 'testnet', 'multichain-testnet-2.testnet');
+      address = await fetchDerivedEVMAddress(accountId, derivationPath, 'testnet', 'v2.multichain-mpc.testnet');
     }
 
     return address;
@@ -73,16 +76,17 @@ export const getTransactionPayload = async ({
   chainId,
   chainValue,
   amount,
-  address
+  address,
+  accountId
 }: {
   keyType: string,
   chainValue: number,
   amount: number,
   chainId: string | bigint,
-  address: string
+  address: string,
+  accountId: string,
 }): Promise<Record<string, string | number | bigint>> => {
   try {
-    const accountId = 'harisvalj.testnet';
     const derivedAddress = await fetchDerivedAddress({ accountId, chainValue, keyType });
     console.log('derivedAddress ', derivedAddress);
     const domain = getDomain(keyType);
