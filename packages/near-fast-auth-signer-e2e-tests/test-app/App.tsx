@@ -72,6 +72,18 @@ export default function App() {
           Sign In
         </button>
       )}
+      <button
+        type="button"
+        data-test-id="sign-transaction-button"
+        onClick={() => {
+          fastAuthWallet
+            .signAndSendTransaction(
+              JSON.parse(window.localStorage.transactionData)
+            );
+        }}
+      >
+        Sign and send transaction
+      </button>
     </div>
   );
 }

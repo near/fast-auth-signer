@@ -13,7 +13,6 @@ import {
 import { formatNearAmount } from './Values/formatNearAmount';
 import fiatValuesStore from './Values/store';
 import { getAuthState } from '../../hooks/useAuthState';
-import useFirebaseUser from '../../hooks/useFirebaseUser';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import ArrowDownSvg from '../../Images/arrow-down';
 import ArrowUpSvg from '../../Images/arrow-up';
@@ -83,7 +82,6 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
     element: signTransactionRef.current,
     onClose: () => window.parent.postMessage({ signedTransactions: '', signedDelegates: '', error:  'User cancelled action' }, '*')
   });
-  const { loading: firebaseUserLoading, user: firebaseUser } = useFirebaseUser();
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
 
@@ -158,7 +156,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
       .catch(() => {
         console.warn('Coin Gecko Error');
       });
-  }, [firebaseUser?.email, searchParams, storeFetchedUsdValues]);
+  }, [searchParams, storeFetchedUsdValues]);
 
   const fiatValueUsd = fiatValuesStore((state) => state.fiatValueUsd);
 
@@ -233,9 +231,9 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
 
     if (inIframe()) {
       if (signMethod === 'transaction') {
-        window.parent.postMessage({ signedTransactions: signedTransactions.join(','), signedDelegates: '' }, '*');
+        window.parent.postMessage({ signedTransactions: signedTransactions.join(','), signedDelegates: '', closeIframe: true }, '*');
       } else if (signMethod === 'delegate') {
-        window.parent.postMessage({ signedTransactions: '', signedDelegates: signedDelegates.join(',') }, '*');
+        window.parent.postMessage({ signedTransactions: '', signedDelegates: signedDelegates.join(','), closeIframe: true }, '*');
       }
     } else {
       const parsedUrl = new URL(success_url || window.location.origin + (basePath ? `/${basePath}` : ''));
@@ -252,7 +250,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
 
   return (
     <ModalSignWrapper ref={signTransactionRef}>
-      {firebaseUser && (
+      {(
         <>
           <div className="modal-top">
             <img width="48" height="48" src={`http://www.google.com/s2/favicons?domain=${callbackUrl}&sz=256`} alt={callbackUrl} />
@@ -283,6 +281,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
           {/*          eslint-disable-next-line */}
           <div
             className="more-details"
+            data-test-id="more-details-button"
             onClick={() => setShowDetails(!showDetails)}
           >
             More details
@@ -325,13 +324,12 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
               size="large"
               label={inFlight ? 'Loading...' : 'Confirm'}
               disabled={inFlight}
+              data-test-id="confirm-transaction-button"
               onClick={onConfirm}
             />
           </div>
         </>
       )}
-      {firebaseUserLoading && <p className="info-text">Loading...</p>}
-      {!firebaseUserLoading && !firebaseUser && <p className="info-text">You are not authenticated!</p>}
       {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
