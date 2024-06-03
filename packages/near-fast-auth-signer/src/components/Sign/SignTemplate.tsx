@@ -307,10 +307,10 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
                 {transactionDetails.actions.map((action, i) => (
                   <TableContent
                     leftSide={transactionDetails.transactions[i].receiverId}
-                    hasFunctionCall
+                    hasFunctionCall={!!action?.functionCall}
                     isFunctionCallOpen
                     rightSide={formatActionType(action.enum)}
-                    functionDesc={action.functionCall.args}
+                    functionDesc={action?.functionCall?.args}
                     openLink={`${network.explorerUrl}/accounts/${transactionDetails.transactions[i].receiverId}`}
                   />
                 ))}
