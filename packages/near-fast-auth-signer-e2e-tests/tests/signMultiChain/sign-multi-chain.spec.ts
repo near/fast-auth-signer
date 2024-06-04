@@ -4,7 +4,7 @@ import { expect, Page, test } from '@playwright/test';
 import PageManager from '../pages/PageManager';
 import SignMultiChainPage from '../pages/SignMultiChainPage';
 import { getFastAuthIframe } from '../utils/constants';
-import { setupPasskeysFunctions } from '../utils/passkeys';
+import { overridePasskeyFunctions } from '../utils/passkeys';
 
 const receivingAddresses = {
   ETH_BNB: '0x7F780C57D846501De4824046EF4c503Ce1c8eAF9',
@@ -51,9 +51,10 @@ test.describe('Sign MultiChain Transaction', () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
-    await setupPasskeysFunctions(page, 'iframe', {
-      isPassKeyAvailable:  false,
-      shouldCleanStorage:  false,
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  KeyPair.fromRandom('ed25519'),
+      retrievalKeypair: KeyPair.fromRandom('ed25519')
     });
     await signMultiChainPage.submitAndApproveTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
@@ -65,11 +66,10 @@ test.describe('Sign MultiChain Transaction', () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
-    await setupPasskeysFunctions(page, 'iframe', {
-      isPassKeyAvailable:  true,
-      keyPairForCreation:  fakKeyPair,
-      keyPairForRetrieval: fakKeyPair,
-      shouldCleanStorage:  false,
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  fakKeyPair,
+      retrievalKeypair: fakKeyPair
     });
     await signMultiChainPage.submitAndApproveTransaction({
       keyType: 'personalKey', assetType: 'bnb', amount: 0.001, address: receivingAddresses.ETH_BNB

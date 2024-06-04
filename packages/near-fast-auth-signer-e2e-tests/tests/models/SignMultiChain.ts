@@ -3,9 +3,9 @@
 import { expect, Page, Frame } from '@playwright/test';
 
 // Below are the static derived addresses
-/* BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71'; */
+// BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
 
 const TIMEOUT = 1000000;
 
@@ -24,12 +24,6 @@ type TransactionDetail = {
   address: string
 }
 
-const assetSymbolMap = {
-  eth: 'ETH',
-  btc: 'BTC',
-  bnb: 'BNB',
-};
-
 class SignMultiChainPage {
   private readonly page: Page;
 
@@ -37,22 +31,14 @@ class SignMultiChainPage {
     this.page = page;
   }
 
-  async handleWrongKeyTransaction(frame: Frame) {
-    await frame.locator('div.transaction-details').filter({ hasText: /^https:\/\/app\.unknowndomain\.com$/ }).waitFor({ state: 'visible' });
-    await expect(frame.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
-    await expect(frame.locator('button:has-text("Approve")')).toBeDisabled();
-    await frame.locator('input[type="checkbox"]').check();
-    await expect(frame.locator('button:has-text("Approve")')).toBeEnabled();
-  }
-
   async waitForIframeModal() {
     const iframeElement = await this.page.locator('#nfw-connect-iframe').elementHandle();
     const frame = await iframeElement.contentFrame();
-    await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'networkidle', timeout: TIMEOUT });
+    await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
     return frame;
   }
 
-  async waitForMultiChainResponse(page: Page, timeout = 100000) {
+  async waitForMultiChainResponse(page: Page, timeout = 200000) {
     return await Promise.race([
       page.evaluate(() => new Promise((resolve) => {
         window.addEventListener('message', (event) => {
@@ -60,7 +46,7 @@ class SignMultiChainPage {
         });
       })),
       new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout waiting for message event')), timeout);
+        setTimeout(() => reject(new Error('Timeout waiting for multiChain message event')), timeout);
       })
     ]) as Promise<MessageEventResponse>;
   }

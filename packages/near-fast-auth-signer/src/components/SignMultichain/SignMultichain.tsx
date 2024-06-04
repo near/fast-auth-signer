@@ -115,7 +115,6 @@ function SignMultichain() {
         }
       }
     } catch (e) {
-      console.log('eeee ', e);
       onError(e.message);
       throw new Error('Failed to sign delegate');
     }
