@@ -1,7 +1,7 @@
 import { Account, Connection, Contract } from '@near-js/accounts';
 import { KeyPair } from '@near-js/crypto';
 import { InMemoryKeyStore } from '@near-js/keystores';
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/createAccount';
@@ -10,16 +10,20 @@ import { TestDapp } from '../models/TestDapp';
 
 const { describe, beforeAll } = test;
 
-let page;
+let page: Page;
 const userFAK = KeyPair.fromRandom('ed25519');
 const userLAK = KeyPair.fromRandom('ed25519');
-let accountId;
+let accountId: string;
+
+let isAdminInitialized = false;
 
 describe('Sign transaction', () => {
   beforeAll(async ({ browser }, { workerIndex }) => {
-    if (isServiceAccountAvailable()) {
+    if (isServiceAccountAvailable() && !isAdminInitialized) {
       initializeAdmin();
+      isAdminInitialized = true;
     }
+
     const context = await browser.newContext();
     page = await context.newPage();
     const testDapp = new TestDapp(page);
@@ -69,32 +73,29 @@ describe('Sign transaction', () => {
 
   test('should display signerId, transaction amount, receiverId and args', async () => {
     await page.goto('/');
-    const walletSelector = page.locator('#ws-loaded');
-    await expect(walletSelector).toBeVisible();
-    await page.locator('data-test-id=sign-transaction-button').click();
+    await page.getByTestId('sign-transaction-button').click();
 
     await expect(getFastAuthIframe(page).getByText(accountId)).toBeVisible();
-    await expect(getFastAuthIframe(page).getByText('0.02 NEAR')).toBeVisible();
 
-    await getFastAuthIframe(page).locator('data-test-id=more-details-button').click();
-    await getFastAuthIframe(page).locator('data-test-id=function-call-button').click();
+    // Unstable due to GeckoAPI rate limits
+    // await expect(getFastAuthIframe(page).getByTestId('total-right-side-content')).not.toHaveText('$0.00');
 
-    await expect(getFastAuthIframe(page).getByText(/v1.social08.testnet/)).toBeVisible();
+    await getFastAuthIframe(page).getByTestId('more-details-button').click();
+    await getFastAuthIframe(page).getByTestId('function-call-button').click();
+
+    await expect(getFastAuthIframe(page).getByText(/v1.social08.testnet/)).toHaveCount(2);
     await expect(getFastAuthIframe(page).getByText(/"fast-auth-e2e-test": "true"/)).toBeVisible();
   });
 
   test('should fail if signer app is not authenticated', async () => {
     await page.goto('/');
 
-    const walletSelector = page.locator('#ws-loaded');
-    await expect(walletSelector).toBeVisible();
-
     await overridePasskeyFunctions(page, {
       creationKeypair:  KeyPair.fromRandom('ed25519'),
       retrievalKeypair: KeyPair.fromRandom('ed25519')
     });
 
-    await page.locator('data-test-id=sign-transaction-button').click();
+    await page.getByTestId('sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
 
     await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
@@ -103,15 +104,12 @@ describe('Sign transaction', () => {
   test('should succeed and dismiss when signer app is authenticated', async () => {
     await page.goto('/');
 
-    const walletSelector = page.locator('#ws-loaded');
-    await expect(walletSelector).toBeVisible();
-
     await overridePasskeyFunctions(page, {
       creationKeypair:  userFAK,
       retrievalKeypair: userFAK
     });
 
-    await page.locator('data-test-id=sign-transaction-button').click();
+    await page.getByTestId('sign-transaction-button').click();
     await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
     const socialdbContract = new Contract(new Account(Connection.fromConfig({
       networkId: 'testnet',
@@ -120,7 +118,7 @@ describe('Sign transaction', () => {
     }), 'dontcare'), 'v1.social08.testnet', {
       viewMethods:   ['get'],
       changeMethods: [],
-    }) as Contract & { get: (args) => Promise<string> };
+    }) as Contract & { get: (_args) => Promise<string> };
 
     await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).not.toBeVisible();
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();

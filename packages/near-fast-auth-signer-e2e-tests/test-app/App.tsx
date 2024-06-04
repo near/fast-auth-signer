@@ -74,7 +74,7 @@ export default function App() {
       )}
       <button
         type="button"
-        data-test-id="sign-transaction-button"
+        data-testid="sign-transaction-button"
         onClick={() => {
           fastAuthWallet
             .signAndSendTransaction(

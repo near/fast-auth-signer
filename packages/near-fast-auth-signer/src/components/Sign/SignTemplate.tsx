@@ -310,13 +310,16 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
                 leftSide="Total"
                 infoText={pageCopy[signMethod].totalFeeHint}
                 rightSide={`$${totalUsdAmount}`}
+                dataTestIds={{
+                  rightSideContent: 'total-right-side-content',
+                }}
               />
             </div>
           </div>
           {/* eslint-disable-next-line */}
           <div
             className="more-details"
-            data-test-id="more-details-button"
+            data-testid="more-details-button"
             onClick={() => setShowDetails(!showDetails)}
           >
             More details
@@ -347,9 +350,9 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
             data-test-id="confirm-transaction-button"
             onClick={onConfirm}
           />
+          {error && <p className="info-text error">{error}</p>}
         </div>
       )}
-      {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
 }
