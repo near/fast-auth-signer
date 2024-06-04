@@ -81,10 +81,10 @@ test('should create account and login with passkeys', async ({ page }) => {
   await pm.getAppPage().isLoggedIn();
 });
 
-test.afterAll(async () => {
-  // Delete test user acc
-  if (authTestEmailList.length > 0) {
-    // eslint-disable-next-line no-return-await
-    await Promise.all(authTestEmailList.map(async (email) => await deleteUserByEmail(email)));
-  }
-});
+// test.afterAll(async () => {
+//   // Delete test user acc
+//   if (authTestEmailList.length > 0) {
+//     // eslint-disable-next-line no-return-await
+//     await Promise.all(authTestEmailList.map(async (email) => await deleteUserByEmail(email)));
+//   }
+// });

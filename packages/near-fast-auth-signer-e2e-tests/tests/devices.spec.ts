@@ -68,10 +68,10 @@ test('device page delete one key and return to device page again', async ({ page
   await pm.getAppPage().isLoggedIn();
 });
 
-test.afterAll(async () => {
-  // Delete test user acc
-  if (isServiceAccountAvailable()) {
-    // eslint-disable-next-line no-return-await
-    await Promise.all(deviceTestEmailList.map(async (uid) => await deleteAccount(uid)));
-  }
-});
+// test.afterAll(async () => {
+//   // Delete test user acc
+//   if (isServiceAccountAvailable()) {
+//     // eslint-disable-next-line no-return-await
+//     await Promise.all(deviceTestEmailList.map(async (uid) => await deleteAccount(uid)));
+//   }
+// });
