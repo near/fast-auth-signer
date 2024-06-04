@@ -73,6 +73,8 @@ describe('Sign transaction', () => {
 
   test('should display signerId, transaction amount, receiverId and args', async () => {
     await page.goto('/');
+    const walletSelector = page.locator('#ws-loaded');
+    await expect(walletSelector).toBeVisible();
     await page.getByTestId('sign-transaction-button').click();
 
     await expect(getFastAuthIframe(page).getByText(accountId)).toBeVisible();
@@ -90,6 +92,9 @@ describe('Sign transaction', () => {
   test('should fail if signer app is not authenticated', async () => {
     await page.goto('/');
 
+    const walletSelector = page.locator('#ws-loaded');
+    await expect(walletSelector).toBeVisible();
+
     await overridePasskeyFunctions(page, {
       creationKeypair:  KeyPair.fromRandom('ed25519'),
       retrievalKeypair: KeyPair.fromRandom('ed25519')
@@ -103,6 +108,9 @@ describe('Sign transaction', () => {
 
   test('should succeed and dismiss when signer app is authenticated', async () => {
     await page.goto('/');
+
+    const walletSelector = page.locator('#ws-loaded');
+    await expect(walletSelector).toBeVisible();
 
     await overridePasskeyFunctions(page, {
       creationKeypair:  userFAK,
