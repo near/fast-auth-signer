@@ -16,7 +16,7 @@ export const getDomain = (keyTypeValue: string): string => {
   switch (keyTypeValue) {
     case 'domainKey':
       return window.location.origin;
-    case 'wrongKey':
+    case 'unknownKey':
       return 'https://app.unknowndomain.com';
     default:
       return '';

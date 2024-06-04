@@ -28,7 +28,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
     const keyType = formData.get('keyType') as string;
     const chainValue = Number(formData.get('assetType'));
     const amount = Number(formData.get('amount'));
-    const address = String(formData.get('address'));
+    const address = formData.get('address') as string;
 
     let chainId: bigint | string = document
       .querySelector('input[name="assetType"]:checked')

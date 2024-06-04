@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 
-import { expect, Page, Frame } from '@playwright/test';
+import { Page, Frame } from '@playwright/test';
 
 // Below are the static derived addresses
 // BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
@@ -24,7 +24,7 @@ type TransactionDetail = {
   address: string
 }
 
-class SignMultiChainPage {
+class SignMultiChain {
   private readonly page: Page;
 
   constructor(page: Page) {
@@ -34,7 +34,7 @@ class SignMultiChainPage {
   async waitForIframeModal() {
     const iframeElement = await this.page.locator('#nfw-connect-iframe').elementHandle();
     const frame = await iframeElement.contentFrame();
-    await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'domcontentloaded', timeout: TIMEOUT });
+    await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'networkidle', timeout: TIMEOUT });
     return frame;
   }
 
@@ -78,4 +78,4 @@ class SignMultiChainPage {
   }
 }
 
-export default SignMultiChainPage;
+export default SignMultiChain;
