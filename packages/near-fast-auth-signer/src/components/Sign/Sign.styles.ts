@@ -7,7 +7,7 @@ interface ModalSignWrapperProps {
 
 export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   ${(props) => props.hide && 'opacity: 0;'}
-  height: 660px;
+  max-height: 660px;
   width: 550px;
   margin: 0 auto;
   border-radius: 8px;
@@ -39,6 +39,11 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
       align-items: center;
       line-height: 17px;
       text-align: center;
+
+      h4 { 
+        font-size: 24px;
+        font-weight: 700;
+      }
 
       svg {
         height: 48px;
@@ -93,9 +98,6 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
       & > *:last-child {
         border-bottom-left-radius: 6px;
         border-bottom-right-radius: 6px;
-      }
-      &.margin-top {
-        margin-top: 20px;
       }
 
       > *:not(:last-child) {

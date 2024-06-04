@@ -340,7 +340,7 @@ function SignTemplate({ signMethod }: SignTemplateProps) {
             </div>
           )}
           <Button
-            variant="primary"
+            variant="affirmative"
             size="large"
             label={inFlight ? 'Loading...' : 'Confirm'}
             disabled={inFlight}
