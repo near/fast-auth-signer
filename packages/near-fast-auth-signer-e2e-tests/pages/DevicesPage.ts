@@ -17,8 +17,10 @@ class DevicesPage {
     const checkboxes = this.page.locator('input[type="checkbox"]');
     for (let i = 0; i < numberOfCheckboxes; i += 1) {
       const element = checkboxes.nth(i);
-      /* eslint-disable no-await-in-loop */
-      await element.click();
+      if (element !== null) {
+        /* eslint-disable no-await-in-loop */
+        await element.click();
+      }
     }
 
     await this.page.getByRole('button', { name: 'Delete key' }).click({ timeout: TIMEOUT });
