@@ -132,9 +132,9 @@ describe('Sign transaction', () => {
   });
 });
 
-// test.afterAll(async () => {
-//   // Delete test user acc
-//   if (isServiceAccountAvailable()) {
-//     await deleteAccount(uid);
-//   }
-// });
+test.afterAll(async () => {
+  // Delete test user acc
+  if (isServiceAccountAvailable()) {
+    await deleteAccount(uid);
+  }
+});
