@@ -231,7 +231,7 @@ class FastAuthController {
 
     const nonce = accessKey.nonce.add(new BN(1));
 
-    if (isPassKeyAvailable) {
+    if (await isPassKeyAvailable()) {
       return signTransaction(
         receiverId,
         nonce,
