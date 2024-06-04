@@ -4,7 +4,7 @@ import { InMemoryKeyStore } from '@near-js/keystores';
 import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
-import { createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/firebase';
+import { createAccount, deleteAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/firebase';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
@@ -13,17 +13,12 @@ const { describe, beforeAll } = test;
 let page: Page;
 const userFAK = KeyPair.fromRandom('ed25519');
 const userLAK = KeyPair.fromRandom('ed25519');
-let accountId: string;
-
-let isAdminInitialized = false;
+let accountId;
+let uid;
 
 describe('Sign transaction', () => {
   beforeAll(async ({ browser }, { workerIndex }) => {
-    if (isServiceAccountAvailable() && !isAdminInitialized) {
-      initializeAdmin();
-      isAdminInitialized = true;
-    }
-
+    initializeAdmin();
     const context = await browser.newContext();
     page = await context.newPage();
     const testDapp = new TestDapp(page);
@@ -31,7 +26,7 @@ describe('Sign transaction', () => {
     const email = `${user}@example.com`;
     accountId = `${user}.testnet`;
     const frpKeypair = KeyPair.fromRandom('ed25519');
-    await createAccount({
+    const { userUid } = await createAccount({
       email,
       accountId: user,
       FAKs:      [userFAK],
@@ -43,6 +38,7 @@ describe('Sign transaction', () => {
       }],
       oidcKeyPair: frpKeypair
     });
+    uid = userUid;
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await testDapp.loginWithKeyPairLocalStorage(accountId, userLAK, userFAK);
@@ -134,4 +130,11 @@ describe('Sign transaction', () => {
     const result = await new Promise((resolve) => { setTimeout(resolve, 5000); }).then(() => socialdbContract.get({ keys: [`${accountId}/**`] }));
     expect(result).toEqual({ [accountId]: { 'fast-auth-e2e-test': 'true' } });
   });
+});
+
+test.afterAll(async () => {
+  // Delete test user acc
+  if (isServiceAccountAvailable()) {
+    await deleteAccount(uid);
+  }
 });
