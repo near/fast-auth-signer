@@ -55,7 +55,8 @@ test('device page delete one key and return to device page again', async ({ page
 
   await pm.getDevicesPage().isCheckboxLoaded(5);
   await pm.getDevicesPage().selectAndDelete(1);
-  await page.waitForSelector('text="Delete key"', { state: 'visible', timeout: TIMEOUT });
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForSelector('text="Delete key"', { state: 'visible', timeout: 60000 });
   await pm.getDevicesPage().isCheckboxLoaded(4);
   await pm.getDevicesPage().selectAndDelete(2);
 
