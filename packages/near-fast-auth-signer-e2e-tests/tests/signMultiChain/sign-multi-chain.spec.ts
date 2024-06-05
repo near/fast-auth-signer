@@ -1,16 +1,19 @@
 import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
 
+import { fetchEVMWalletBalance, fillWallet } from '../../utils/api';
 import { getFastAuthIframe } from '../../utils/constants';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import SignMultiChain from '../models/SignMultiChain';
 
 // Below are the static derived addresses
-// ETH_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// BNB_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
+const ETH_PERSONAL_KEY_ADDRESS = '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+const BNB_DOMAIN_KEY_ADDRESS =  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
+
+// BNB_PERSONAL_KEY_ADDRESS => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_UNKNOWN_KEY_ADDRESS => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// BNB_UNKNOWN_KEY_ADDRESS => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_DOMAIN_KEY_ADDRESS =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
 
 const receivingAddresses = {
   ETH_BNB: '0x7F780C57D846501De4824046EF4c503Ce1c8eAF9',
@@ -41,6 +44,24 @@ test.describe('Sign MultiChain', () => {
       },
       [accountId]
     );
+  });
+
+  test.afterAll(async () => {
+    try {
+      const balances = await Promise.all([
+        fetchEVMWalletBalance(ETH_PERSONAL_KEY_ADDRESS, 'eth-sepolia'),
+        fetchEVMWalletBalance(BNB_DOMAIN_KEY_ADDRESS, 'bsc-testnet')
+      ]);
+      const faucetRequests = [];
+      if (balances[0] < 0.2) faucetRequests.push(fillWallet(ETH_PERSONAL_KEY_ADDRESS, 'eth'));
+      if (balances[1] < 0.2) faucetRequests.push(fillWallet(BNB_DOMAIN_KEY_ADDRESS, 'bnb'));
+      if (faucetRequests.length) {
+        console.log('Request token from faucet');
+        await Promise.all(faucetRequests);
+      }
+    } catch (e) {
+      console.log('Error requesting token from faucet ', e.message);
+    }
   });
 
   test('Should show transaction details', async () => {
@@ -106,7 +127,7 @@ test.describe('Sign MultiChain', () => {
       creationKeypair:  fakKeyPair,
       retrievalKeypair: fakKeyPair
     });
-    await signMultiChain.submitAndApproveTransaction({
+    await signMultiChain.submitTransactionInfo({
       keyType: 'domainKey', assetType: 'bnb', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
