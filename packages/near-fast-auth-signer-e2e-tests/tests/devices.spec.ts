@@ -59,10 +59,10 @@ test('device page delete one key and return to device page again', async ({ page
   });
 
   await pm.getDevicesPage().isCheckboxLoaded(5);
-  await pm.getDevicesPage().selectAndDelete(2);
+  await pm.getDevicesPage().selectAndDelete(1);
   await expect(page.getByRole('button', { name: 'Signing In...' })).toBeVisible({ timeout: TIMEOUT });
   await expect(page.getByRole('button', { name: 'Signing In...' })).not.toBeVisible({ timeout: TIMEOUT });
-  await pm.getDevicesPage().isCheckboxLoaded(3);
+  await pm.getDevicesPage().isCheckboxLoaded(4);
   await pm.getDevicesPage().selectAndDelete(2);
 
   await pm.getAppPage().isLoggedIn();
