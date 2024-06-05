@@ -115,7 +115,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               data-chainid={BigInt('97')}
               name="assetType"
             />
-            BNB testnet
+            BSC testnet
           </label>
 
           <label htmlFor="btc" className="radio-label">
