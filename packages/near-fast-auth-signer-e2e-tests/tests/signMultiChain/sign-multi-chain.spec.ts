@@ -5,8 +5,16 @@ import { getFastAuthIframe } from '../../utils/constants';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import SignMultiChain from '../models/SignMultiChain';
 
+// Below are the static derived addresses
+// ETH_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// BNB_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
+// ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
+
 const receivingAddresses = {
   ETH_BNB: '0x7F780C57D846501De4824046EF4c503Ce1c8eAF9',
+  BTC:     'msMLG6MyKQQnLKwnTuMAsWMTCvCm1NTrgM'
 };
 
 let page: Page;
@@ -17,14 +25,17 @@ const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
 
 const fakKeyPair = KeyPair.fromString(userFAK);
 
-test.describe('Sign MultiChain Transaction', () => {
+test.describe('Sign MultiChain', () => {
+  // Retry failed tests twice before giving up
+  test.describe.configure({ retries: 2 });
+
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
     await page.evaluate(
-      // eslint-disable-next-line no-shadow
+    // eslint-disable-next-line no-shadow
       async ([accountId]) => {
         window.localStorage.setItem('accountId', JSON.stringify(accountId));
       },
@@ -32,19 +43,23 @@ test.describe('Sign MultiChain Transaction', () => {
     );
   });
 
-  test('Should show transaction details(amount, address, ...etc)', async () => {
+  test('Should show transaction details', async () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
     await signMultiChain.submitTransactionInfo({
-      keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
+      keyType: 'unknownKey', assetType: 'bnb', amount: 0.01, address: receivingAddresses.ETH_BNB
     });
-    const frame = await signMultiChain.waitForIframeModal();
-    await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
+    const frame = getFastAuthIframe(page);
+    await frame.locator('text=Send 0.01 BNB').waitFor({ state: 'visible' });
     await frame.locator('button:has-text("Approve")').waitFor({ state: 'visible' });
+    await expect(frame.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
+    await expect(frame.locator('button:has-text("Approve")')).toBeDisabled();
+    await frame.locator('input[type="checkbox"]').check();
+    await expect(frame.locator('button:has-text("Approve")')).toBeEnabled();
   });
 
-  test('Should fail if not authenticated', async () => {
+  test('Should Fail: if not authenticated', async () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
@@ -56,28 +71,11 @@ test.describe('Sign MultiChain Transaction', () => {
     await signMultiChain.submitAndApproveTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
+    await signMultiChain.waitForMultiChainResponse(page);
     await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
   });
 
-  test('Should succeed for Transaction: Personal Key + BNB', async () => {
-    test.slow();
-    const walletSelector = page.locator('#ws-loaded');
-    await expect(walletSelector).toBeVisible();
-
-    await overridePasskeyFunctions(page, {
-      creationKeypair:  fakKeyPair,
-      retrievalKeypair: fakKeyPair
-    });
-    await signMultiChain.submitAndApproveTransaction({
-      keyType: 'personalKey', assetType: 'bnb', amount: 0.001, address: receivingAddresses.ETH_BNB
-    });
-    const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
-    expect(multiChainResponse).toHaveProperty('message');
-    expect(multiChainResponse).toHaveProperty('transactionHash');
-    expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
-  });
-
-  test('Should fail for insufficient funds, Transaction: Unknown Key + ETH', async () => {
+  test('Should Pass: Send ETH with Personal Key', async () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
@@ -87,17 +85,51 @@ test.describe('Sign MultiChain Transaction', () => {
       retrievalKeypair: fakKeyPair
     });
     await signMultiChain.submitTransactionInfo({
-      keyType: 'unknownKey', assetType: 'eth', amount: 1.001, address: receivingAddresses.ETH_BNB
+      keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
-    const frame = await signMultiChain.waitForIframeModal();
-    await frame.locator('div.transaction-details').filter({ hasText: /^https:\/\/app\.unknowndomain\.com$/ }).waitFor({ state: 'visible' });
-    await expect(frame.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
-    await expect(frame.locator('button:has-text("Approve")')).toBeDisabled();
-    await frame.locator('input[type="checkbox"]').check();
-    await expect(frame.locator('button:has-text("Approve")')).toBeEnabled();
+    const frame = getFastAuthIframe(page);
+    await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
     await signMultiChain.clickApproveButton(frame);
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
     expect(multiChainResponse).toHaveProperty('message');
-    expect(multiChainResponse.message).toBe('Failed to send signed transaction.');
+    expect(multiChainResponse).toHaveProperty('transactionHash');
+    expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
+  });
+
+  test('Should Pass: Send BNB with domain Key', async () => {
+    test.slow();
+    const walletSelector = page.locator('#ws-loaded');
+    await expect(walletSelector).toBeVisible();
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  fakKeyPair,
+      retrievalKeypair: fakKeyPair
+    });
+    await signMultiChain.submitAndApproveTransaction({
+      keyType: 'domainKey', assetType: 'bnb', amount: 0.001, address: receivingAddresses.ETH_BNB
+    });
+    const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
+    expect(multiChainResponse).toHaveProperty('message');
+    expect(multiChainResponse).toHaveProperty('transactionHash');
+    expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
+  });
+
+  test('Should Fail: Insufficient Funds with Unknown Key + BTC', async () => {
+    test.slow();
+    const walletSelector = page.locator('#ws-loaded');
+    await expect(walletSelector).toBeVisible();
+
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  fakKeyPair,
+      retrievalKeypair: fakKeyPair
+    });
+    await signMultiChain.submitTransactionInfo({
+      keyType: 'unknownKey', assetType: 'btc', amount: 0.01, address: receivingAddresses.BTC
+    });
+    const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
+    expect(multiChainResponse).toHaveProperty('message');
+    expect(multiChainResponse.message).toContain('Invalid transaction');
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 });

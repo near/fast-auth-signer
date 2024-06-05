@@ -1,11 +1,9 @@
 /* eslint-disable class-methods-use-this */
 
 import { Page, Frame } from '@playwright/test';
+import { FrameLocator } from 'playwright';
 
-// Below are the static derived addresses
-// BNB_PERSONAL_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// ETH_UNKNOWN_KEY => '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
-// ETH_DOMAIN_KEY =>  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
+import { getFastAuthIframe } from '../../utils/constants';
 
 const TIMEOUT = 1000000;
 
@@ -31,13 +29,6 @@ class SignMultiChain {
     this.page = page;
   }
 
-  async waitForIframeModal() {
-    const iframeElement = await this.page.locator('#nfw-connect-iframe').elementHandle();
-    const frame = await iframeElement.contentFrame();
-    await frame.waitForURL(/.*\/sign-multichain\//i, { waitUntil: 'networkidle', timeout: TIMEOUT });
-    return frame;
-  }
-
   async waitForMultiChainResponse(page: Page, timeout = 200000) {
     return await Promise.race([
       page.evaluate(() => new Promise((resolve) => {
@@ -61,7 +52,7 @@ class SignMultiChain {
     await this.page.click('button[type="submit"]');
   }
 
-  async clickApproveButton(parent: Frame | Page) {
+  async clickApproveButton(parent: Frame | Page | FrameLocator) {
     const approveButton = parent.locator('button', { hasText: 'Approve' });
     await approveButton.waitFor();
     await approveButton.click();
@@ -73,7 +64,7 @@ class SignMultiChain {
     await this.submitTransactionInfo({
       keyType, assetType, amount, address
     });
-    const frame = await this.waitForIframeModal();
+    const frame = getFastAuthIframe(this.page);
     await this.clickApproveButton(frame);
   }
 }

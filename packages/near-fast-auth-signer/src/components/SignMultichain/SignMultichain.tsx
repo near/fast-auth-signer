@@ -87,8 +87,8 @@ function SignMultichain() {
     onClose: () => window.parent.postMessage({ type: 'method', message: 'User cancelled action' }, '*')
   });
 
-  const onError = (text: string, closeIframe = true) => {
-    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe }, '*');
+  const onError = (text: string) => {
+    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe: true }, '*');
     setError(text);
   };
 
@@ -99,7 +99,7 @@ function SignMultichain() {
     try {
       const isUserAuthenticated = await getAuthState();
       if (isUserAuthenticated !== true) {
-        onError('You are not authenticated or there has been an indexer failure', false);
+        onError('You are not authenticated or there has been an indexer failure');
       } else {
         const response = await multichainSignAndSend({
           signMultichainRequest,
