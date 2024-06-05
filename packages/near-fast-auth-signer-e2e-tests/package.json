@@ -17,14 +17,13 @@
     "start": "webpack serve --mode development --history-api-fallback"
   },
   "dependencies": {
-    "@near-wallet-selector/core": "^8.9.7",
-    "bitcoinjs-lib": "^6.1.5",
-    "canonicalize": "^2.0.0",
     "@near-js/crypto": "^1.2.3",
     "@near-js/keystores": "^0.0.11",
     "@near-js/transactions": "^1.2.1",
     "@near-wallet-selector/core": "8.7.0",
+    "bitcoinjs-lib": "^6.1.5",
     "borsh": "0.7.0",
+    "canonicalize": "^2.0.0",
     "dotenv": "^16.4.5",
     "firebase-admin": "^12.1.0",
     "fs-extra": "^11.2.0",
