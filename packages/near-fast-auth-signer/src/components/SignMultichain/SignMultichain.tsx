@@ -110,7 +110,7 @@ function SignMultichain() {
             type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
           }, '*');
         } else if (response.success === false) {
-          console.log('response ', response);
+          console.log('response ', JSON.stringify(response));
           onError(response.errorMessage);
         }
       }

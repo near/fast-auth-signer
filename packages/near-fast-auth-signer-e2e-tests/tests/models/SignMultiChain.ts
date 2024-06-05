@@ -5,8 +5,6 @@ import { FrameLocator } from 'playwright';
 
 import { getFastAuthIframe } from '../../utils/constants';
 
-const TIMEOUT = 1000000;
-
 type KeyType = 'domainKey' | 'personalKey' | 'unknownKey';
 type AssetType = 'eth' | 'bnb' | 'btc';
 
