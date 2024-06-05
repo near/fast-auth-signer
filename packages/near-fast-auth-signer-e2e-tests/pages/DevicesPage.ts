@@ -10,7 +10,8 @@ class DevicesPage {
   }
 
   async isCheckboxLoaded(numberOfCheckboxes: number) {
-    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes, { timeout: TIMEOUT });
+    await this.page.waitForSelector('input[type="checkbox"]', { state: 'visible', timeout: TIMEOUT });
+    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes);
   }
 
   async selectAndDelete(numberOfCheckboxes: number) {
