@@ -71,6 +71,11 @@ jobs:
           MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
           MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
           FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
+          MULTICHAIN_TEST_ACCOUNT_ID: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_ID }}
+          MULTICHAIN_TEST_ACCOUNT_FAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_FAK }}
+          MULTICHAIN_TEST_ACCOUNT_LAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_LAK }}
+          COVALENT_API_KEY: ${{ secrets.COVALENT_API_KEY }}
+          CHAINSTACK_API_KEY: ${{ secrets.CHAINSTACK_API_KEY }}
       run: yarn playwright test
     - uses: actions/upload-artifact@v4
       if: always()
