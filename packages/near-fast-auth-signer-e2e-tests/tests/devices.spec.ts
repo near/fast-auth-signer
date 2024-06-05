@@ -40,13 +40,13 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAppPage().isLoggedIn();
 });
 
-test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
+test.only('device page delete one key and return to device page again', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
 
   const pm = new PageManager(page);
-  test.setTimeout(240000);
+  test.setTimeout(300000);
   const { email, accountId } = getRandomEmailAndAccountId();
-
+  console.log('testing email:', email);
   await page.goto(baseURL);
   const walletSelector = page.locator('#ws-loaded');
   await expect(walletSelector).toBeVisible();

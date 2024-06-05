@@ -14,6 +14,7 @@ class DevicesPage {
   }
 
   async selectAndDelete(numberOfCheckboxes: number) {
+    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible({ timeout: TIMEOUT });
     const checkboxes = this.page.locator('input[type="checkbox"]');
     for (let i = 0; i < numberOfCheckboxes; i += 1) {
       const element = checkboxes.nth(i);
