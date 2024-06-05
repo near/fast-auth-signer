@@ -135,6 +135,7 @@ describe('Sign transaction', () => {
 test.afterAll(async () => {
   // Delete test user acc
   if (isServiceAccountAvailable()) {
+    console.log('sign transaction uid', uid);
     await deleteAccount(uid);
   }
 });

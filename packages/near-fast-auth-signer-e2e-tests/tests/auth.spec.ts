@@ -84,6 +84,7 @@ test('should create account and login with passkeys', async ({ page }) => {
 test.afterAll(async () => {
   // Delete test user acc
   if (authTestEmailList.length > 0) {
+    console.log('auth page delete list', authTestEmailList);
     // eslint-disable-next-line no-return-await
     await Promise.all(authTestEmailList.map(async (email) => await deleteUserByEmail(email)));
   }

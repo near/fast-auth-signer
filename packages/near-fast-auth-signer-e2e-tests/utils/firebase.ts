@@ -47,6 +47,7 @@ export const initializeAdmin = () => {
 export const deleteAccount = async (userUid: string) => {
   if (userUid) {
     const user = await admin.auth().getUser(userUid);
+    console.log('deleteAccount', user.uid, user.email);
     if (user.uid) {
       await admin.auth().deleteUser(userUid);
     }
@@ -62,6 +63,7 @@ const addAccountPublicKeyToFirestore = async (accountId: string, publicKey: stri
 export const deleteUserByEmail = async (email: string) => {
   try {
     const user = await admin.auth().getUserByEmail(email);
+    console.log('deleteUserByEmail', user.uid, email);
     if (user && user.uid) {
       await deleteAccount(user.uid);
     }

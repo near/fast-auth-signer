@@ -71,6 +71,7 @@ test('device page delete one key and return to device page again', async ({ page
 test.afterAll(async () => {
   // Delete test user acc
   if (isServiceAccountAvailable()) {
+    console.log('devices page delete list', deviceTestEmailList);
     // eslint-disable-next-line no-return-await
     await Promise.all(deviceTestEmailList.map(async (uid) => await deleteAccount(uid)));
   }
