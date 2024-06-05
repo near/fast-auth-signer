@@ -3,10 +3,8 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
-import { deleteUserByEmail, initializeAdmin } from '../utils/firebase';
+import { addAccountToBeDeleted, initializeAdmin } from '../utils/firebase';
 import { rerouteToCustomURL } from '../utils/url';
-
-const authTestEmailList: string[] = [];
 
 test.beforeAll(async () => {
   initializeAdmin();
@@ -28,8 +26,6 @@ test('should create account and login with e-mail', async ({ page }) => {
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
-  authTestEmailList.push(email);
-
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
@@ -39,6 +35,7 @@ test('should create account and login with e-mail', async ({ page }) => {
   });
 
   readUIDLs.push(emailId);
+  await addAccountToBeDeleted({ type: 'email', email });
 
   await pm.getAppPage().signOut();
 
@@ -57,7 +54,6 @@ test('should create account and login with passkeys', async ({ page }) => {
   test.slow();
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
-  authTestEmailList.push(email);
 
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
@@ -71,6 +67,7 @@ test('should create account and login with passkeys', async ({ page }) => {
   });
 
   readUIDLs.push(emailId);
+  await addAccountToBeDeleted({ type: 'email', email });
 
   await pm.getAppPage().signOut();
 
@@ -79,13 +76,4 @@ test('should create account and login with passkeys', async ({ page }) => {
   });
 
   await pm.getAppPage().isLoggedIn();
-});
-
-test.afterAll(async () => {
-  // Delete test user acc
-  if (authTestEmailList.length > 0) {
-    console.log('auth page delete list', authTestEmailList);
-    // eslint-disable-next-line no-return-await
-    await Promise.all(authTestEmailList.map(async (email) => await deleteUserByEmail(email)));
-  }
 });

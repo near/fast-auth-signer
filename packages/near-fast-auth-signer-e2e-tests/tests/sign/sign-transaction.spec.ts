@@ -4,7 +4,7 @@ import { InMemoryKeyStore } from '@near-js/keystores';
 import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
-import { createAccount, deleteAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/firebase';
+import { addAccountToBeDeleted, createAccount, initializeAdmin, isServiceAccountAvailable } from '../../utils/firebase';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { TestDapp } from '../models/TestDapp';
 
@@ -14,7 +14,6 @@ let page: Page;
 const userFAK = KeyPair.fromRandom('ed25519');
 const userLAK = KeyPair.fromRandom('ed25519');
 let accountId;
-let uid;
 
 describe('Sign transaction', () => {
   beforeAll(async ({ browser }, { workerIndex }) => {
@@ -38,7 +37,7 @@ describe('Sign transaction', () => {
       }],
       oidcKeyPair: frpKeypair
     });
-    uid = userUid;
+    await addAccountToBeDeleted({ type: 'uid', uid: userUid });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await testDapp.loginWithKeyPairLocalStorage(accountId, userLAK, userFAK);
@@ -130,12 +129,4 @@ describe('Sign transaction', () => {
     const result = await new Promise((resolve) => { setTimeout(resolve, 5000); }).then(() => socialdbContract.get({ keys: [`${accountId}/**`] }));
     expect(result).toEqual({ [accountId]: { 'fast-auth-e2e-test': 'true' } });
   });
-});
-
-test.afterAll(async () => {
-  // Delete test user acc
-  if (isServiceAccountAvailable()) {
-    console.log('sign transaction uid', uid);
-    await deleteAccount(uid);
-  }
 });

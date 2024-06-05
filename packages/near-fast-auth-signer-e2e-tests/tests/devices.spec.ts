@@ -4,11 +4,9 @@ import PageManager from '../pages/PageManager';
 import { TIMEOUT } from '../utils/constants';
 import { getRandomEmailAndAccountId } from '../utils/email';
 import {
-  createAccountAndLandDevicePage, deleteAccount, initializeAdmin,
+  createAccountAndLandDevicePage, initializeAdmin,
   isServiceAccountAvailable
 } from '../utils/firebase';
-
-const deviceTestEmailList: string[] = [];
 
 test.beforeAll(async () => {
   initializeAdmin();
@@ -29,7 +27,6 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
     pm,
     email,
     accountId,
-    testUserUidList: deviceTestEmailList,
   });
 
   // Wait for page to render and execute async operations
@@ -46,7 +43,6 @@ test('device page delete one key and return to device page again', async ({ page
   const pm = new PageManager(page);
   test.setTimeout(300000);
   const { email, accountId } = getRandomEmailAndAccountId();
-  console.log('testing email:', email);
   await page.goto(baseURL);
   const walletSelector = page.locator('#ws-loaded');
   await expect(walletSelector).toBeVisible();
@@ -55,7 +51,6 @@ test('device page delete one key and return to device page again', async ({ page
     pm,
     email,
     accountId,
-    testUserUidList: deviceTestEmailList,
   });
 
   await pm.getDevicesPage().isCheckboxLoaded(5);
@@ -66,13 +61,4 @@ test('device page delete one key and return to device page again', async ({ page
   await pm.getDevicesPage().selectAndDelete(2);
 
   await pm.getAppPage().isLoggedIn();
-});
-
-test.afterAll(async () => {
-  // Delete test user acc
-  if (isServiceAccountAvailable()) {
-    console.log('devices page delete list', deviceTestEmailList);
-    // eslint-disable-next-line no-return-await
-    await Promise.all(deviceTestEmailList.map(async (uid) => await deleteAccount(uid)));
-  }
 });

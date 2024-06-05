@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 import { expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
@@ -11,6 +13,12 @@ import { serviceAccount } from './serviceAccount';
 import PageManager from '../pages/PageManager';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
+
+type MockAccount = {
+  type: 'email'|'uid',
+  email?: string,
+  uid?: string
+}
 
 function getRandomWaitTime(min, max) {
   // Generate a random number between min and max (inclusive)
@@ -47,7 +55,6 @@ export const initializeAdmin = () => {
 export const deleteAccount = async (userUid: string) => {
   if (userUid) {
     const user = await admin.auth().getUser(userUid);
-    console.log('deleteAccount', user.uid, user.email);
     if (user.uid) {
       await admin.auth().deleteUser(userUid);
     }
@@ -63,12 +70,19 @@ const addAccountPublicKeyToFirestore = async (accountId: string, publicKey: stri
 export const deleteUserByEmail = async (email: string) => {
   try {
     const user = await admin.auth().getUserByEmail(email);
-    console.log('deleteUserByEmail', user.uid, email);
     if (user && user.uid) {
       await deleteAccount(user.uid);
     }
   } catch (error) {
     console.error('Error deleting user:', error);
+  }
+};
+
+export const addAccountToBeDeleted = async (account: MockAccount) => {
+  if (isServiceAccountAvailable() && admin.apps.length) {
+    const { accounts } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
+    accounts.push(account);
+    fs.writeFileSync('testAccounts.json', JSON.stringify({ accounts }, null, 2));
   }
 };
 
@@ -181,12 +195,10 @@ export const createAccountAndLandDevicePage = async ({
   pm,
   email,
   accountId,
-  testUserUidList,
 }: {
   pm: PageManager;
   email: string;
   accountId: string;
-  testUserUidList: string[];
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
 
@@ -204,7 +216,7 @@ export const createAccountAndLandDevicePage = async ({
   });
 
   // will be used to delete account
-  testUserUidList.push(userUid);
+  await addAccountToBeDeleted({ type: 'uid', uid: userUid });
 
   expect(createAccountResponse.type).toEqual('ok');
 
