@@ -30,13 +30,14 @@ const fakKeyPair = KeyPair.fromString(userFAK);
 
 test.describe('Sign MultiChain', () => {
   // Retry failed tests twice before giving up
-  test.describe.configure({ retries: 2 });
+  // test.describe.configure({ retries: 2 });
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
     await page.evaluate(
     // eslint-disable-next-line no-shadow
       async ([accountId]) => {
@@ -47,6 +48,7 @@ test.describe('Sign MultiChain', () => {
   });
 
   test.afterAll(async () => {
+    // Check if the derived address are low on funds and request new testnet tokens
     try {
       const balances = await Promise.all([
         fetchEVMWalletBalance(ETH_PERSONAL_KEY_ADDRESS, 'eth-sepolia'),
@@ -93,6 +95,7 @@ test.describe('Sign MultiChain', () => {
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
     await signMultiChain.waitForMultiChainResponse(page);
+    await expect(page.locator('#nfw-connect-iframe')).toBeVisible();
     await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
   });
 
@@ -112,9 +115,10 @@ test.describe('Sign MultiChain', () => {
     await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
     await signMultiChain.clickApproveButton(frame);
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
+    expect(multiChainResponse.transactionHash).toBeDefined();
     expect(multiChainResponse).toHaveProperty('message');
-    expect(multiChainResponse).toHaveProperty('transactionHash');
     expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
@@ -128,12 +132,13 @@ test.describe('Sign MultiChain', () => {
       retrievalKeypair: fakKeyPair
     });
     await signMultiChain.submitTransactionInfo({
-      keyType: 'domainKey', assetType: 'bnb', amount: 0.001, address: receivingAddresses.ETH_BNB
+      keyType: 'domainKey', assetType: 'bnb', amount: 0.0001, address: receivingAddresses.ETH_BNB
     });
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
+    expect(multiChainResponse.transactionHash).toBeDefined();
     expect(multiChainResponse).toHaveProperty('message');
-    expect(multiChainResponse).toHaveProperty('transactionHash');
     expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
   test('Should Fail: Insufficient Funds with Unknown Key + BTC', async () => {

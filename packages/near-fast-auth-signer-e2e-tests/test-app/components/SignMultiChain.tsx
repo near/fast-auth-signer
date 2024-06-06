@@ -6,7 +6,7 @@ type SignMultiChainProps = {
     keyType: string,
     chainValue: number,
     amount: number,
-    chainId: string | bigint,
+    chainId: string,
     address: string}) => void
 }
 export default function SignMultiChain(props: SignMultiChainProps) {
@@ -27,16 +27,14 @@ export default function SignMultiChain(props: SignMultiChainProps) {
 
     const keyType = formData.get('keyType') as string;
     const chainValue = Number(formData.get('assetType'));
+
     const amount = Number(formData.get('amount'));
+
     const address = formData.get('address') as string;
 
-    let chainId: bigint | string = document
+    const chainId: bigint | string = document
       .querySelector('input[name="assetType"]:checked')
       .getAttribute('data-chainid');
-
-    if (Number.isInteger(Number(chainId))) {
-      chainId = BigInt(chainId);
-    }
 
     onSubmitForm({
       keyType, chainId, chainValue, amount, address
@@ -101,7 +99,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               type="radio"
               id="eth"
               value={60}
-              data-chainid={BigInt('11155111')}
+              data-chainid={11155111}
               name="assetType"
             />
             ETH sepolia
@@ -112,7 +110,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               type="radio"
               id="bnb"
               value={60}
-              data-chainid={BigInt('97')}
+              data-chainid={97}
               name="assetType"
             />
             BSC testnet
@@ -140,7 +138,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               type="text"
               id="amount"
               name="amount"
-              defaultValue={0.02}
               style={{ marginLeft: '3px' }}
             />
           </label>
@@ -156,7 +153,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               type="text"
               id="address"
               name="address"
-              defaultValue={0.02}
               style={{ marginLeft: '3px' }}
             />
           </label>

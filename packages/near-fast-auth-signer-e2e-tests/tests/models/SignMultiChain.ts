@@ -43,10 +43,10 @@ class SignMultiChain {
   async submitTransactionInfo({
     keyType, assetType, amount, address
   }: TransactionDetail) {
-    await this.page.check(`input[name="keyType"][value="${keyType}"]`);
-    await this.page.check(`input[name="assetType"][id="${assetType.toLowerCase()}"]`);
-    await this.page.fill('input[name="amount"]', `${amount}`);
-    await this.page.fill('input[name="address"]', `${address}`);
+    await this.page.check(`input#${keyType}`);
+    await this.page.check(`input#${assetType.toLowerCase()}`);
+    await this.page.fill('input#amount', `${amount}`);
+    await this.page.fill('input#address', `${address}`);
     await this.page.click('button[type="submit"]');
   }
 

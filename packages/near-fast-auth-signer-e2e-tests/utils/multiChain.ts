@@ -71,38 +71,37 @@ export const fetchDerivedAddress = async ({ accountId, chainValue, keyType }: {
   }
 };
 
-export const getTransactionPayload = async ({
-  keyType,
-  chainId,
-  chainValue,
-  amount,
-  address,
-  accountId
-}: {
+export const getTransactionPayload = async (values: {
   keyType: string,
   chainValue: number,
   amount: number,
-  chainId: string | bigint,
+  chainId: string,
   address: string,
   accountId: string,
 }): Promise<Record<string, string | number | bigint>> => {
+  const {
+    keyType,
+    chainId,
+    chainValue,
+    amount,
+    address,
+    accountId
+  } = values;
   try {
     const derivedAddress = await fetchDerivedAddress({ accountId, chainValue, keyType });
     console.log('derivedAddress ', derivedAddress);
     const domain = getDomain(keyType);
-    let payload: Record<string, string | number | bigint> = {
+    const payload: Record<string, string | number | bigint> = {
       chain: chainValue,
-      ...(domain ? { domain } : {}),
       to:    address,
       value: BigInt(getValue(chainValue, amount)),
       from:  derivedAddress,
     };
 
-    if (chainValue !== 0) {
-      payload = { ...payload, chainId: chainId as bigint };
-    } else {
-      payload = { ...payload, network: 'testnet' };
-    }
+    if (domain) payload.domain = domain;
+    if (chainValue !== 0) payload.chainId = BigInt(chainId);
+    else payload.network = 'testnet';
+
     return payload;
   } catch (error) {
     console.log('Error generating transaction payload ', error);

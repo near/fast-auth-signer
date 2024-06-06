@@ -75,7 +75,7 @@ export default function App() {
     keyType: string,
     chainValue: number,
     amount: number,
-    chainId: string | bigint
+    chainId: string
     address: string
   }) => {
     const accountId = JSON.parse(window.localStorage.accountId);
