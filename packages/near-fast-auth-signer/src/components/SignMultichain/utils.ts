@@ -68,7 +68,7 @@ const EVMChains: EVMChainMap<boolean> = {
 };
 export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
-const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
+const FAST_AUTH_RELAYER_URL = 'https://near-relayer-testnet.stage.api.pagoda.co';
 
 const CHAIN_CONFIG: ChainMap = {
   ETH: {
