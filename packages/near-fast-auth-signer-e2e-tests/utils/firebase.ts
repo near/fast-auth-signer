@@ -53,18 +53,26 @@ export const initializeAdmin = () => {
 };
 
 export const deleteAccount = async (userUid: string) => {
-  if (userUid) {
-    const user = await admin.auth().getUser(userUid);
+  try {
+    const user = userUid && await admin.auth().getUser(userUid);
     if (user.uid) {
+      // delete user auth record
       await admin.auth().deleteUser(userUid);
     }
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') {
+      console.error('Error deleting user auth record:', error);
+    }
   }
-};
 
-const addAccountPublicKeyToFirestore = async (accountId: string, publicKey: string) => {
-  const docRef = admin.firestore().collection('publicKeys').doc(publicKey);
-
-  await docRef.set({ accountId });
+  try {
+    const db = admin.firestore();
+    const docRef = db.collection('users').doc(userUid);
+    // delete user collection record
+    await docRef.delete();
+  } catch (error) {
+    console.error('Error deleting user Firestore record:', error);
+  }
 };
 
 export const deleteUserByEmail = async (email: string) => {
@@ -74,15 +82,34 @@ export const deleteUserByEmail = async (email: string) => {
       await deleteAccount(user.uid);
     }
   } catch (error) {
-    console.error('Error deleting user:', error);
+    if (error.code !== 'auth/user-not-found') {
+      console.error('Error fetching user by email:', error);
+    }
   }
+};
+
+export const deletePublicKey = (publicKey: string) => {
+  const db = admin.firestore();
+  const docRef = db.collection('publicKeys').doc(publicKey);
+  return docRef.delete();
 };
 
 export const addAccountToBeDeleted = async (account: MockAccount) => {
   if (isServiceAccountAvailable() && admin.apps.length) {
-    const { accounts } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
+    const { accounts, ...rest } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
     accounts.push(account);
-    fs.writeFileSync('testAccounts.json', JSON.stringify({ accounts }, null, 2));
+    fs.writeFileSync('testAccounts.json', JSON.stringify({ accounts, ...rest }, null, 2));
+  }
+};
+
+const addAccountIdPublicKey = async (publicKey: string, accountId: string) => {
+  if (isServiceAccountAvailable() && admin.apps.length) {
+    const db = admin.firestore();
+    const docRef = db.collection('publicKeys').doc(publicKey);
+    await docRef.set({ accountId });
+    const { publicKeys, ...rest } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
+    publicKeys.push({ publicKey, accountId });
+    fs.writeFileSync('testAccounts.json', JSON.stringify({ publicKeys, ...rest }, null, 2));
   }
 };
 
@@ -180,7 +207,7 @@ export const createAccount = async ({
 
   if (createAccountResponseJson.type === 'ok') {
     await Promise.all(createAccountResponseJson.create_account_options.full_access_keys
-      .map((publicKey) => addAccountPublicKeyToFirestore(createAccountResponseJson.near_account_id, publicKey)));
+      .map((publicKey) => addAccountIdPublicKey(publicKey, createAccountResponseJson.near_account_id)));
     return {
       createAccountResponse: createAccountResponseJson,
       userUid:               testUserRecord.uid

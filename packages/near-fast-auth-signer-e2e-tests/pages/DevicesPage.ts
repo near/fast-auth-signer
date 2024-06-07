@@ -23,7 +23,7 @@ class DevicesPage {
       if (element !== null) {
         /* eslint-disable no-await-in-loop */
         await element.waitFor({ state: 'visible' });
-        await element.click();
+        await element.click({ force: true });
       }
     }
 
