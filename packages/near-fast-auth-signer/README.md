@@ -48,3 +48,16 @@ yarn start
 - Navigates to the appropate UI route (/login)
 - Returns true if login was successful
 - Throws error if failed or cancelled by user
+
+
+### Provider URLs
+To configure provider urls, configure following environment variables. For local development, simply create `.env` on root directory and configure environment variables.
+
+```bash
+ETH_PROVIDER_URL_MAINNET=''
+ETH_PROVIDER_URL_TESTNET=''
+BNB_PROVIDER_URL_MAINNET=''
+BNB_PROVIDER_URL_TESTNET=''
+BTC_PROVIDER_URL_MAINNET=''
+BTC_PROVIDER_URL_TESTNET=''
+```
