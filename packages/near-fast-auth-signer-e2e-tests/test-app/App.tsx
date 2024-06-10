@@ -1,3 +1,4 @@
+import { SignedMessage, SignMessageParams } from '@near-wallet-selector/core';
 import React, { useEffect, useState } from 'react';
 
 import useWalletSelector from './hooks/useWalletSelector';
@@ -47,6 +48,17 @@ export default function App() {
     window.location.reload();
   };
 
+  const handleSignMessage = async () => {
+    const message = 'Hello, this is a test message!';
+    const signMessageParams: SignMessageParams = {
+      message,
+      recipient: 'myapp.com',
+      nonce:     Buffer.alloc(32),
+    };
+    const signedMessage: SignedMessage = await fastAuthWallet.signMessage(signMessageParams);
+    console.log({ signedMessage });
+  };
+
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
     return (
       <div id="loading-ws">Loading...</div>
@@ -83,6 +95,13 @@ export default function App() {
         }}
       >
         Sign and send transaction
+      </button>
+      <button
+        type="button"
+        data-test-id="sign-message-button"
+        onClick={handleSignMessage}
+      >
+        Sign Message
       </button>
     </div>
   );
