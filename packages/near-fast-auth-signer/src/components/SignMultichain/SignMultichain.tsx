@@ -128,7 +128,9 @@ function SignMultichain() {
           feeProperties,
         });
         if (response.success && 'transactionHash' in response) {
-          window.parent.postMessage({ type: 'multiChainResponse', message: `Successfully sign and send transaction, ${response.transactionHash}`, closeIframe: true }, '*');
+          window.parent.postMessage({
+            type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
+          }, '*');
         } else if (response.success === false) {
           onError(response.errorMessage);
         }
