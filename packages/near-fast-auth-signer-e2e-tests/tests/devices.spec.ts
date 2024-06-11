@@ -39,7 +39,6 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
 
 test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
-
   const pm = new PageManager(page);
   test.setTimeout(300000);
   const { email, accountId } = getRandomEmailAndAccountId();
@@ -55,8 +54,16 @@ test('device page delete one key and return to device page again', async ({ page
 
   await pm.getDevicesPage().isCheckboxLoaded(5);
   await pm.getDevicesPage().selectAndDelete(1);
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForSelector('text="Delete key"', { state: 'visible', timeout: 60000 });
+  // Wait for the button label to change back to "Delete Key"
+  await expect(page.getByTestId('devices-delete-key')).toHaveText('Deleting...');
+
+  await page.waitForFunction(
+    ({ selector, expectedText }) => {
+      const element = document.querySelector(selector);
+      return element && element.textContent === expectedText;
+    },
+    { selector: 'button[data-testid="devices-delete-key"]', expectedText: 'Delete key' }
+  );
   await pm.getDevicesPage().isCheckboxLoaded(4);
   await pm.getDevicesPage().selectAndDelete(2);
 

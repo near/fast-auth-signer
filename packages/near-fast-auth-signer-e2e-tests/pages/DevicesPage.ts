@@ -1,7 +1,5 @@
 import { expect, Page } from '@playwright/test';
 
-import { TIMEOUT } from '../utils/constants';
-
 class DevicesPage {
   private page: Page;
 
@@ -10,24 +8,24 @@ class DevicesPage {
   }
 
   async isCheckboxLoaded(numberOfCheckboxes: number) {
-    await this.page.waitForSelector('input[type="checkbox"]', { state: 'visible', timeout: TIMEOUT });
-    await expect(this.page.locator('input[type="checkbox"]')).toHaveCount(numberOfCheckboxes);
+    await this.page.waitForSelector('[data-testid^="devices-checkbox-"]');
+    const checkboxes = await this.page.locator('[data-testid^="devices-checkbox-"]');
+    const count = await checkboxes.count();
+    await expect(count).toBe(numberOfCheckboxes);
   }
 
   async selectAndDelete(numberOfCheckboxes: number) {
-    await this.page.waitForSelector('input[type="checkbox"]', { state: 'visible' });
-    await expect(this.page.getByRole('button', { name: 'Delete key' })).toBeVisible({ timeout: TIMEOUT });
-    const checkboxes = this.page.locator('input[type="checkbox"]');
+    await this.page.waitForSelector('[data-testid^="devices-checkbox-"]');
+    const deleteButtonTarget = this.page.getByTestId('devices-delete-key');
+    const checkboxes = await this.page.locator('[data-testid^="devices-checkbox-"]');
     for (let i = 0; i < numberOfCheckboxes; i += 1) {
-      const element = checkboxes.nth(i);
-      if (element !== null) {
-        /* eslint-disable no-await-in-loop */
-        await element.waitFor({ state: 'visible' });
-        await element.click({ force: true });
-      }
+      /* eslint-disable no-await-in-loop */
+      await checkboxes.nth(i).scrollIntoViewIfNeeded();
+      await checkboxes.nth(i).click();
     }
 
-    await this.page.getByRole('button', { name: 'Delete key' }).click({ timeout: TIMEOUT, force: true });
+    await deleteButtonTarget.click({ force: true });
+    await expect(deleteButtonTarget).toHaveText('Deleting...');
   }
 }
 
