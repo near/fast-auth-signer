@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useCallback, useRef, useMemo
+  useState, useCallback, useRef, useMemo
 } from 'react';
 import styled from 'styled-components';
 
@@ -18,6 +18,7 @@ import {
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
+import { IframeRequestEvent, useIframeRequest } from '../../hooks/useiFrameRequest';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
 import WarningCircleSVG from '../../Images/WarningCircle';
@@ -28,11 +29,6 @@ import { StyledCheckbox } from '../Devices/Devices';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
-
-type IncomingMessageEvent = MessageEvent<{
-  data: SendMultichainMessage;
-  type: string;
-}>;
 
 // const sampleMessageForEthereum: EvmSendMultichainMessage = {
 //   chainId: BigInt('5'),
@@ -141,72 +137,63 @@ function SignMultichain() {
     }
   }, []);
 
-  useEffect(() => {
-    const handleMessage = async (event: IncomingMessageEvent) => {
-      if (event.data.type === 'multiChainRequest' && event?.data?.data) {
-        setOrigin(event?.origin);
-        try {
-          const { data: transaction } = event.data;
-          setInFlight(true);
+  const iframeEventHandler = useCallback(async (event: IframeRequestEvent<SendMultichainMessage>) => {
+    setOrigin(event?.origin);
+    try {
+      const { data: transaction } = event.data;
+      setInFlight(true);
 
-          const validation = await validateMessage(transaction);
-          if (validation instanceof Error || !validation) {
-            onError(validation.toString());
-            return;
-          }
-
-          // if the domain is the same as the origin, hide the modal
-          if (transaction?.domain === event?.origin && !isSafariBrowser) {
-            // Check early to hide the UI quicker
-            window.parent.postMessage({ hideModal: true }, '*');
-          }
-
-          if (transaction?.domain && transaction?.domain !== event?.origin) {
-            setUnsafe(true);
-          }
-
-          const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
-          const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
-            chain: transaction.chain,
-            to:    transaction.to,
-            value: transaction.value.toString(),
-            from:  transaction.from,
-          });
-          const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
-          const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
-
-          setAmountInfo({
-            price: transactionCost,
-            tokenAmount,
-            feeProperties
-          });
-          setValid(true);
-          setIsDomainKey(transaction?.domain === event?.origin);
-          setMessage(transaction);
-          if (transaction?.domain === event?.origin && !isSafariBrowser) {
-            await signMultichainTransaction(transaction, feeProperties);
-          }
-        } catch (e) {
-          onError(e.message);
-        } finally {
-          setInFlight(false);
-        }
+      const validation = await validateMessage(transaction);
+      if (validation instanceof Error || !validation) {
+        onError(validation.toString());
+        return;
       }
-    };
 
-    window.addEventListener(
-      'message',
-      handleMessage,
-    );
+      // if the domain is the same as the origin, hide the modal
+      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+        // Check early to hide the UI quicker
+        window.parent.postMessage({ hideModal: true }, '*');
+      }
 
-    window.parent.postMessage({ type: 'signMultiChainLoaded' }, '*');
+      if (transaction?.domain && transaction?.domain !== event?.origin) {
+        setUnsafe(true);
+      }
 
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-    // add amountInfo.feeProperties to the dependency array when the test code is removed and remove the eslint-disable-next-line
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signMultichainTransaction]);
+      const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
+      const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
+        chain: transaction.chain,
+        to:    transaction.to,
+        value: transaction.value.toString(),
+        from:  transaction.from,
+      });
+      const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
+      const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
+
+      setAmountInfo({
+        price: transactionCost,
+        tokenAmount,
+        feeProperties
+      });
+      setValid(true);
+      setIsDomainKey(transaction?.domain === event?.origin);
+      setMessage(transaction);
+      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+        await signMultichainTransaction(transaction, feeProperties);
+      }
+    } catch (e) {
+      onError(e.message);
+    } finally {
+      setInFlight(false);
+    }
+  }, [isSafariBrowser, signMultichainTransaction]);
+
+  useIframeRequest<SendMultichainMessage>({
+    eventType: {
+      loaded:   'signMultiChainLoaded',
+      request:  'multiChainRequest',
+    },
+    eventHandler: iframeEventHandler
+  });
 
   const onConfirm = async () => {
     setError(null);
