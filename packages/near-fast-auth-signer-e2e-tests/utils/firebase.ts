@@ -222,15 +222,15 @@ export const createAccountAndLandDevicePage = async ({
   pm,
   email,
   accountId,
+  numberOfKeyPairs,
 }: {
   pm: PageManager;
   email: string;
   accountId: string;
+  numberOfKeyPairs: number;
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
-
-  // As of 14 May 2024, creating an account with 5 keypairs will be just enough to redirected to devices page
-  const keypairs = generateKeyPairs(5);
+  const keypairs = generateKeyPairs(numberOfKeyPairs);
   const {
     createAccountResponse,
     userUid

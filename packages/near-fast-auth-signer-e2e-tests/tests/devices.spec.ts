@@ -26,6 +26,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
     pm,
     email,
     accountId,
+    numberOfKeyPairs: 5,
   });
 
   // Wait for page to render and execute async operations
@@ -48,9 +49,10 @@ test('device page delete one key and return to device page again', async ({ page
     pm,
     email,
     accountId,
+    numberOfKeyPairs: 6,
   });
 
-  await pm.getDevicesPage().isCheckboxLoaded(5);
+  await pm.getDevicesPage().isCheckboxLoaded(6);
   await pm.getDevicesPage().selectAndDelete(1);
   // Wait for the button label to change back to "Delete Key"
   await expect(page.getByTestId('devices-delete-key')).toHaveText('Deleting...');
@@ -62,8 +64,8 @@ test('device page delete one key and return to device page again', async ({ page
     },
     { selector: 'button[data-testid="devices-delete-key"]', expectedText: 'Delete key' }
   );
-  await pm.getDevicesPage().isCheckboxLoaded(4);
-  await pm.getDevicesPage().selectAndDelete(2);
+  await pm.getDevicesPage().isCheckboxLoaded(5);
+  await pm.getDevicesPage().selectAndDelete(3);
 
   await pm.getAppPage().isLoggedIn();
 });
