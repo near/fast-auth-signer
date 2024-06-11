@@ -5,7 +5,7 @@ import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 import {
-  addAccountToBeDeleted, createAccount, initializeAdmin, isServiceAccountAvailable
+  addAccountToBeDeleted, createAccount, initializeAdmin,
 } from '../../utils/firebase';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
@@ -101,7 +101,7 @@ describe('Sign transaction', () => {
     await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
   });
 
-  // TODO: below is keep failing the test, please confirm that it is working as expected
+  // TODO: this test is constantly failing, need to be fixed
   // test('should succeed and dismiss when signer app is authenticated', async () => {
   //   await page.goto('/');
   //   await isWalletSelectorLoaded(page);
