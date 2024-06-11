@@ -61,7 +61,7 @@ type TransactionAmountDisplay = {
 const Container = styled.div`
   display: flex;
   font-size: 12px;
-  margin-top: 16px;
+  margin-top: 32px;
 
   > button {
     width: 100%;
@@ -221,106 +221,110 @@ function SignMultichain() {
   if (isDomainKey && isSafariBrowser) {
     return (
       <ModalSignWrapper ref={signTransactionRef}>
-        <div className="modal-top">
-          <h3>Passkey Required</h3>
-          <h5>{inFlight ? 'Follow the prompts to continue.' : 'Use your passkey to confirm the transaction'}</h5>
+        <div className="modal-body">
+          <div className="modal-top">
+            <h3>Passkey Required</h3>
+            <h5>{inFlight ? 'Follow the prompts to continue.' : 'Use your passkey to confirm the transaction'}</h5>
+          </div>
+          <Container>
+            <Button
+              variant="primary"
+              size="large"
+              label={inFlight ? 'Loading...' : 'Continue'}
+              onClick={onConfirm}
+              disabled={
+                inFlight || !isValid || typeof amountInfo.price !== 'number'
+              }
+            />
+          </Container>
+          {error && <p className="info-text error">{error}</p>}
         </div>
-        <Container>
-          <Button
-            variant="primary"
-            size="large"
-            label={inFlight ? 'Loading...' : 'Continue'}
-            onClick={onConfirm}
-            disabled={
-              inFlight || !isValid || typeof amountInfo.price !== 'number'
-            }
-          />
-        </Container>
-        {error && <p className="info-text error">{error}</p>}
       </ModalSignWrapper>
     );
   }
 
   return (
     <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin} warning={isUnsafe}>
-      <div className="modal-top">
-        <ModalIconSvg />
-        <h3>Approve Transaction?</h3>
-        <div className="transaction-details">
-          { isUnsafe ? <WarningCircleSVG /> : <InternetSvg />}
-          { message?.domain || origin || 'Unknown App'}
+      <div className="modal-body">
+        <div className="modal-top">
+          <ModalIconSvg />
+          <h3>Approve Transaction?</h3>
+          <div className="transaction-details">
+            { isUnsafe ? <WarningCircleSVG /> : <InternetSvg />}
+            { message?.domain || origin || 'Unknown App'}
+          </div>
         </div>
+        <div className="modal-middle">
+          <div className="table-wrapper">
+            <TableContent
+              leftSide="Details"
+              rightSide={(
+                <TableRow
+                  content={`${amountInfo.tokenAmount ? `Send ${amountInfo.tokenAmount} ${tokenSymbol}` : '...'}`}
+                />
+              )}
+            />
+            <TableContent
+              leftSide="to"
+              rightSide={(
+                <TableRow
+                  asset={tokenSymbol as Chain}
+                  content={<b><span title={message?.to || ''}>{`${shortenAddress(message?.to || '...')}`}</span></b>}
+                />
+              )}
+            />
+            <TableContent
+              leftSide="Network"
+              rightSide={(
+                <TableRow
+                  asset={tokenSymbol as Chain}
+                  content={multichainAssetToNetworkName({
+                    chain:   message?.chain,
+                    chainId: (message as EvmSendMultichainMessage)?.chainId,
+                  })}
+                />
+              )}
+            />
+          </div>
+          <div className="table-wrapper">
+            <TableContent
+              leftSide="Estimated Fees"
+              infoText="The estimated total of your transaction including fees."
+              rightSide={`${typeof amountInfo?.price === 'number' ? `$${amountInfo.price}` : '...'}`}
+            />
+          </div>
+        </div>
+        {
+          isUnsafe && (
+            <>
+              <Container>
+                <StyledCheckbox type="checkbox" onChange={() => setCheck(!check)} checked={check} />
+                <p>
+                  I’ve carefully reviewed the request and trust
+                  {' '}
+                  <b>{message?.domain}</b>
+                </p>
+              </Container>
+              <WarningContainer>
+                <WarningTriangleSVG />
+                <span>
+                  We don’t recognize this app, proceed with caution
+                </span>
+              </WarningContainer>
+            </>
+          )
+        }
+        <Container>
+          <Button
+            variant="affirmative"
+            size="large"
+            label={inFlight ? 'Loading...' : 'Approve'}
+            onClick={onConfirm}
+            disabled={inFlight || !isValid || typeof amountInfo.price !== 'number' || (isUnsafe && !check)}
+          />
+        </Container>
+        {error && <p className="info-text error">{error}</p>}
       </div>
-      <div className="modal-middle">
-        <div className="table-wrapper">
-          <TableContent
-            leftSide="Details"
-            rightSide={(
-              <TableRow
-                content={`${amountInfo.tokenAmount ? `Send ${amountInfo.tokenAmount} ${tokenSymbol}` : '...'}`}
-              />
-            )}
-          />
-          <TableContent
-            leftSide="to"
-            rightSide={(
-              <TableRow
-                asset={tokenSymbol as Chain}
-                content={<b><span title={message?.to || ''}>{`${shortenAddress(message?.to || '...')}`}</span></b>}
-              />
-            )}
-          />
-          <TableContent
-            leftSide="Network"
-            rightSide={(
-              <TableRow
-                asset={tokenSymbol as Chain}
-                content={multichainAssetToNetworkName({
-                  chain:   message?.chain,
-                  chainId: (message as EvmSendMultichainMessage)?.chainId,
-                })}
-              />
-            )}
-          />
-        </div>
-        <div className="table-wrapper margin-top">
-          <TableContent
-            leftSide="Estimated Fees"
-            infoText="The estimated total of your transaction including fees."
-            rightSide={`${typeof amountInfo?.price === 'number' ? `$${amountInfo.price}` : '...'}`}
-          />
-        </div>
-      </div>
-      {
-        isUnsafe && (
-          <>
-            <Container>
-              <StyledCheckbox type="checkbox" onChange={() => setCheck(!check)} checked={check} />
-              <p>
-                I’ve carefully reviewed the request and trust
-                {' '}
-                <b>{message?.domain}</b>
-              </p>
-            </Container>
-            <WarningContainer>
-              <WarningTriangleSVG />
-              <span>
-                We don’t recognize this app, proceed with caution
-              </span>
-            </WarningContainer>
-          </>
-        )
-      }
-      <Container>
-        <Button
-          variant="affirmative"
-          size="large"
-          label={inFlight ? 'Loading...' : 'Approve'}
-          onClick={onConfirm}
-          disabled={inFlight || !isValid || typeof amountInfo.price !== 'number' || (isUnsafe && !check)}
-        />
-      </Container>
-      {error && <p className="info-text error">{error}</p>}
     </ModalSignWrapper>
   );
 }

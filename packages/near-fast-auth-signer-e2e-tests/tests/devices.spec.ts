@@ -9,9 +9,12 @@ import { getRandomEmailAndAccountId } from '../utils/email';
 
 const testUserUidList: string[] = [];
 
+let isAdminInitialized = false;
+
 test.beforeAll(async () => {
-  if (isServiceAccountAvailable()) {
+  if (isServiceAccountAvailable() && !isAdminInitialized) {
     initializeAdmin();
+    isAdminInitialized = true;
   }
 });
 

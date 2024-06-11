@@ -17,6 +17,15 @@ interface TableContentProps {
   rightSide?: string| React.ReactElement;
   infoText?: string;
   openLink?: string;
+  isDelegated?: boolean;
+  dataTestIds?: {
+    wrapper?: string;
+    leftSide?: string;
+    rightSide?: string;
+    rightSideContent?: string;
+    currencyValue?: string;
+    tooltip?: string;
+  };
 }
 function TableContent({
   hasFunctionCall,
@@ -27,15 +36,17 @@ function TableContent({
   currencyValue,
   infoText,
   openLink,
+  isDelegated,
+  dataTestIds = {}
 }: TableContentProps) {
   const [methodDetails, setMethodDetails] = React.useState(false);
 
   return (
-    <TableContentWrapper hasFunctionCall={hasFunctionCall}>
-      <div className="left-side">
+    <TableContentWrapper hasFunctionCall={hasFunctionCall} data-testid={dataTestIds.wrapper}>
+      <div className="left-side" data-testid={dataTestIds.leftSide}>
         {leftSide}
         {infoText && (
-          <Tooltip infoText={infoText}>
+          <Tooltip infoText={infoText} data-testid={dataTestIds.tooltip}>
             <InfoSvg />
           </Tooltip>
         )}
@@ -43,17 +54,16 @@ function TableContent({
         {openLink && <a href={openLink} target="_blank" rel="noreferrer"><OpenLinkSvg /></a>}
       </div>
 
-      <div className="right-side">
+      <div className="right-side" data-testid={dataTestIds.rightSide}>
         {hasFunctionCall ? (
           <div className="button function-call">
             <Button
+              data-testid="function-call-button"
               type="button"
               size="small"
-              data-test-id="function-call-button"
               onClick={() => setMethodDetails(!methodDetails)}
             >
               {rightSide}
-              {' '}
               {isFunctionCallOpen && methodDetails ? (
                 <ArrowUpSvg />
               ) : (
@@ -62,9 +72,9 @@ function TableContent({
             </Button>
           </div>
         ) : (
-          <div>
-            {rightSide}
-            {currencyValue ? <small>{currencyValue}</small> : null}
+          <div className={`${isDelegated ? 'delegated' : ''}`}>
+            <span className="right-side" data-testid={dataTestIds.rightSideContent}>{rightSide}</span>
+            {currencyValue ? <small className="currency-value" data-testid={dataTestIds.currencyValue}>{currencyValue}</small> : null}
           </div>
         )}
       </div>

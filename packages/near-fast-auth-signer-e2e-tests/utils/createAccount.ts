@@ -4,6 +4,7 @@ import { sha256 } from 'js-sha256';
 import {
   KeyPair,
 } from 'near-api-js';
+import { NewAccountResponse } from 'near-fast-auth-signer/src/api/types';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
 import { serviceAccount } from './serviceAccount';
@@ -24,6 +25,12 @@ export const deleteAccount = async (userUid: string) => {
       await admin.auth().deleteUser(userUid);
     }
   }
+};
+
+const addAccountPublicKeyToFirestore = async (accountId: string, publicKey: string) => {
+  const docRef = admin.firestore().collection('publicKeys').doc(publicKey);
+
+  await docRef.set({ accountId });
 };
 
 export const createAccount = async ({
@@ -112,10 +119,17 @@ export const createAccount = async ({
   };
 
   const createAccountResponse = await fetch('https://mpc-recovery-leader-testnet.api.pagoda.co/new_account', options);
-  return {
-    createAccountResponse: await createAccountResponse.json(),
-    userUid:               testUserRecord.uid
-  };
+  const createAccountResponseJson: NewAccountResponse = await createAccountResponse.json();
+
+  if (createAccountResponseJson.type === 'ok') {
+    await Promise.all(createAccountResponseJson.create_account_options.full_access_keys
+      .map((publicKey) => addAccountPublicKeyToFirestore(createAccountResponseJson.near_account_id, publicKey)));
+    return {
+      createAccountResponse: createAccountResponseJson,
+      userUid:               testUserRecord.uid
+    };
+  }
+  throw new Error(`Failed to create account: ${createAccountResponseJson.type}`);
 };
 
 export const generateKeyPairs = (count:number) => Array.from({ length: count }, () => Object.freeze(KeyPair.fromRandom('ED25519')));

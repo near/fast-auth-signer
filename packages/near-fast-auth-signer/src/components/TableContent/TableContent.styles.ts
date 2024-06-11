@@ -24,12 +24,25 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
     letter-spacing: 0.02em;
     text-align: left;
     color: #1b1b1b;
-    > svg {
-      margin: 0px 3px 5px 3px;
-    }
+    display: flex;
+    gap: 4px;
+    align-items: center;
   }
 
   .right-side {
+    text-align: right;
+
+    .delegated {
+      .right-side {
+        text-decoration: line-through;
+        color: var(--Sand-Light-11, var(--Sand-Light-11, #706F6C));
+      }
+
+      .currency-value {
+        color: var(--Red-Light-10, var(--Red-Light-10, #EE6F5D));
+      }
+    }
+
     .function-call {
       display: inline-flex;
       flex-wrap: wrap;
@@ -43,12 +56,15 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
         border: 1px solid #e3e3e0;
         border-radius: 50px;
         background-color: #fdfdfc;
-        padding: 8px 15px;
+        padding: 0px 12px;
         font-family: FK Grotesk SemiMono Trial;
         font-weight: 500;
         line-height: 17px;
         letter-spacing: 0.02em;
         text-align: left;
+        display: flex;
+        align-items:center;
+        justify-content: space-between;
       }
     }
   }
