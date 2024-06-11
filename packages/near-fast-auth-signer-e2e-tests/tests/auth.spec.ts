@@ -22,7 +22,7 @@ test.beforeEach(async ({ page, baseURL, relayerURL }) => {
 
 test('should create account and login with e-mail', async ({ page }) => {
   const pm = new PageManager(page);
-  test.slow();
+  test.setTimeout(120000);
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
@@ -51,7 +51,7 @@ test('should create account and login with e-mail', async ({ page }) => {
 });
 
 test('should create account and login with passkeys', async ({ page }) => {
-  test.slow();
+  test.setTimeout(120000);
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
