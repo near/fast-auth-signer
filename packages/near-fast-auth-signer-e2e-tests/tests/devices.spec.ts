@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 import PageManager from '../pages/PageManager';
-import { TIMEOUT } from '../utils/constants';
 import { getRandomEmailAndAccountId } from '../utils/email';
 import {
   createAccountAndLandDevicePage, initializeAdmin,
   isServiceAccountAvailable
 } from '../utils/firebase';
+import { isWalletSelectorLoaded } from '../utils/walletSelector';
 
 test.beforeAll(async () => {
   initializeAdmin();
@@ -20,8 +20,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   const { email, accountId } = getRandomEmailAndAccountId();
 
   await page.goto(baseURL);
-  const walletSelector = page.locator('#ws-loaded');
-  await expect(walletSelector).toBeVisible();
+  await isWalletSelectorLoaded(page);
 
   await createAccountAndLandDevicePage({
     pm,
@@ -43,8 +42,7 @@ test('device page delete one key and return to device page again', async ({ page
   test.setTimeout(300000);
   const { email, accountId } = getRandomEmailAndAccountId();
   await page.goto(baseURL);
-  const walletSelector = page.locator('#ws-loaded');
-  await expect(walletSelector).toBeVisible();
+  await isWalletSelectorLoaded(page);
 
   await createAccountAndLandDevicePage({
     pm,

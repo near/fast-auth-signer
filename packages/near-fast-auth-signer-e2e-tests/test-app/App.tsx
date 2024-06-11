@@ -54,7 +54,7 @@ export default function App() {
   }
 
   return (
-    <div id="ws-loaded">
+    <div id="ws-loaded" data-testid="app-container">
       <p>Wallet selector instance is ready</p>
       <button type="button" onClick={handleSignUp}>
         Create Account
