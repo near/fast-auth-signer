@@ -29,7 +29,7 @@
     "mailpop3": "^0.1.0",
     "near-api-js": "^2.1.4",
     "near-fast-auth-signer": "*",
-    "near-fastauth-wallet": "^0.0.15",
+    "near-fastauth-wallet": "^0.0.17",
     "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

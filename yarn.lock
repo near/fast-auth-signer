@@ -9940,10 +9940,10 @@ near-api-js@^3.0.4:
     near-abi "0.1.1"
     node-fetch "2.6.7"
 
-near-fastauth-wallet@^0.0.15:
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/near-fastauth-wallet/-/near-fastauth-wallet-0.0.15.tgz#4155ff8f7f8803f2abd6debeef92261919673678"
-  integrity sha512-KmM9p6dPC6JpqOgElp32mzOv+LIbHmvy9UDvO0pE9pvBivP1TQ8QXH+d1FrPpXVsZdmzEBaEJ4uZCfJK+Rt6CQ==
+near-fastauth-wallet@^0.0.17:
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/near-fastauth-wallet/-/near-fastauth-wallet-0.0.17.tgz#8daf1284f29329962286ea3225b6ef9b4e7d8a84"
+  integrity sha512-EH0gMsIQKPpcKn5AZVTyzg/fj1GP+GeFzsn+3U1ARHl1rFg+IB+DG4z7YnpQ0J7tUUWfJC+rOLG0BlXk+8Q9qg==
   dependencies:
     "@ant-design/icons" "^5.3.6"
     "@near-js/transactions" "^0.2.1"
@@ -9951,11 +9951,8 @@ near-fastauth-wallet@^0.0.15:
     "@near-wallet-selector/wallet-utils" "^8.5.2"
     "@vitejs/plugin-react" "^4.2.1"
     antd "^5.12.8"
-    bitcoinjs-lib "^6.1.5"
-    bs58 "^5.0.0"
     class-variance-authority "^0.7.0"
-    elliptic "^6.5.5"
-    ethers "^6.11.1"
+    multichain-tools "^1.0.8"
     near-api-js "^2.1.4"
     tslib "^2.3.0"
     usehooks-ts "^2.9.2"
