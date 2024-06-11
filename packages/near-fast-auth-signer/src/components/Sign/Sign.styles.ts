@@ -20,7 +20,7 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
   .modal-body {
     height: 100%;
     width: 100%;
-    overflow: scroll;
+    overflow: auto;
 
     .info-text {
       font-size: 12px;
@@ -138,7 +138,7 @@ export const ModalSignWrapper = styled.div<ModalSignWrapperProps>`
     }
 
     .more-details-opened {
-      overflow: scroll;
+      overflow: auto;
     }
 
     & > button{

@@ -15,7 +15,7 @@ import { captureException } from '@sentry/react';
 import BN from 'bn.js';
 import { baseEncode, serialize } from 'borsh';
 import { sha256 } from 'js-sha256';
-import { InMemorySigner, keyStores } from 'near-api-js';
+import { keyStores } from 'near-api-js';
 import { TypedError } from 'near-api-js/lib/utils/errors';
 
 import networkParams from './networkParams';
@@ -243,18 +243,7 @@ class FastAuthController {
       );
     }
 
-    const oidcToken = await firebaseAuth.currentUser.getIdToken();
-    const localKey = await this.getKey(`oidc_keypair_${oidcToken}`) || await this.getLocalStoreKey(`oidc_keypair_${oidcToken}`);
-    const inMemorySigner = await InMemorySigner.fromKeyPair(this.connection.networkId, this.accountId, localKey);
-    return signTransaction(
-      receiverId,
-      nonce,
-      actions,
-      baseDecode(blockHash),
-      inMemorySigner,
-      this.accountId,
-      this.connection.networkId
-    );
+    throw new Error('Passkeys not supported');
   }
 
   async signAndSendDelegateAction({ receiverId, actions }) {
