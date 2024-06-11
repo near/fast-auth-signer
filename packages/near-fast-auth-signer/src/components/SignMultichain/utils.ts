@@ -167,7 +167,7 @@ export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
     return {
       1:        'Ethereum Mainnet',
       56:       'Binance Smart Chain Mainnet',
-      97:       'Binace Smart Chain Testnet',
+      97:       'Binance Smart Chain Testnet',
       11155111: 'Ethereum Sepolia Network'
     }[Number(chainDetails.chainId)];
   }
