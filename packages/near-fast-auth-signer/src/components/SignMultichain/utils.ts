@@ -28,8 +28,8 @@ import environment from '../../utils/environment';
 import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
-const MULTICHAIN_CONTRACT_TESTNET = 'multichain-testnet-2.testnet';
-const MULTICHAIN_CONTRACT_MAINNET = 'multichain-testnet-2.testnet';
+const MULTICHAIN_CONTRACT_TESTNET = 'v2.multichain-mpc.testnet';
+const MULTICHAIN_CONTRACT_MAINNET = 'v2.multichain-mpc.testnet';
 
 function toBTC(satoshis: number): number {
   return satoshis / 100000000;
@@ -68,7 +68,7 @@ const EVMChains: EVMChainMap<boolean> = {
 };
 export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
-const FAST_AUTH_RELAYER_URL = 'http://34.136.82.88:3030';
+const FAST_AUTH_RELAYER_URL = 'https://near-relayer-testnet.stage.api.pagoda.co';
 
 const CHAIN_CONFIG: ChainMap = {
   ETH: {
