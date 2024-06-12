@@ -18,7 +18,7 @@ import {
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
-import { IframeRequestEvent, useIframeRequest } from '../../hooks/useiFrameRequest';
+import { IframeRequestEvent, useIframeRequest } from '../../hooks/useIframeRequest';
 import InternetSvg from '../../Images/Internet';
 import ModalIconSvg from '../../Images/ModalIcon';
 import WarningCircleSVG from '../../Images/WarningCircle';
