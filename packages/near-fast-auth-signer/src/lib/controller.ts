@@ -253,6 +253,14 @@ class FastAuthController {
   }> {
     const signature = await this.connection.signer.signMessage(payload, this.accountId, this.networkId);
 
+    const account = new Account(this.connection, this.accountId);
+    const accessKeys = await account.getAccessKeys();
+    const isFullAccessKey = accessKeys.some((key) => key.public_key === signature.publicKey.toString() && key.access_key.permission === 'FullAccess');
+
+    if (!isFullAccessKey) {
+      throw new Error('The public key used to sign is not a full access key');
+    }
+
     return {
       accountId: this.accountId,
       signature: signature.signature,

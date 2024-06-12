@@ -21,6 +21,12 @@ export interface SignMessageParams {
   callbackUrl?: string;
   state?: string;
 }
+export interface SignedMessage {
+  accountId: string;
+  publicKey: string;
+  signature: string;
+  state?: string;
+}
 
 class Payload {
   tag: number;
@@ -41,16 +47,32 @@ class Payload {
   }
 }
 
+type SignMessageResponse = {
+  ok: false
+} | {
+  ok: true
+  data: SignedMessage
+}
+
+function postMessageToParent(data: SignMessageResponse) {
+  window.parent.postMessage({
+    type:        RESPONSE_TYPE,
+    data,
+    closeIframe: true,
+  }, '*');
+}
+
 function SignMessage() {
   const signTransactionRef = useRef(null);
-  useIframeDialogConfig({
-    element: signTransactionRef.current,
-    onClose: () => window.parent.postMessage({ type: 'method', message: 'User cancelled action' }, '*')
-  });
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState<string | null>(null);
   const [data, setData] = useState<SignMessageParams | null>(null);
+
+  useIframeDialogConfig({
+    element: signTransactionRef.current,
+    onClose: () => window.parent.postMessage({ type: 'method', message: 'User cancelled action' }, '*')
+  });
 
   const iframeEventHandler = useCallback((event: IframeRequestEvent<SignMessageParams>) => {
     setOrigin(event.origin);
@@ -66,6 +88,9 @@ function SignMessage() {
   });
 
   const onConfirm = useCallback(async () => {
+    setInFlight(true);
+    setError(null);
+
     try {
       if (!data) {
         throw new Error('No data received');
@@ -75,15 +100,9 @@ function SignMessage() {
         throw Error('Expected nonce to be a 32 bytes buffer');
       }
 
-      setInFlight(true);
-      setError(null);
-      setInFlight(true);
       const isUserAuthenticated = await getAuthState();
       if (isUserAuthenticated !== true) {
-        const errorMessage = 'You are not authenticated or there has been an indexer failure';
-        setError(errorMessage);
-        window.parent.postMessage({ type: RESPONSE_TYPE, message: errorMessage, closeIframe: true }, '*');
-        setInFlight(false);
+        setError('You are not authenticated or there has been an indexer failure');
         return;
       }
 
@@ -96,26 +115,27 @@ function SignMessage() {
 
       const { signature, publicKey, accountId } = await window.fastAuthController.signMessage(borshPayload);
 
-      window.parent.postMessage({
-        type: RESPONSE_TYPE,
+      postMessageToParent({
+        ok:      true,
         data: {
           signature: Buffer.from(signature).toString('base64'),
           publicKey,
           accountId,
           state:     data.state
-        },
-        closeIframe: true
-      }, '*');
+        }
+      });
     } catch (e) {
-      setError(e.message);
-      window.parent.postMessage({ type: RESPONSE_TYPE, message: e.message, closeIframe: true }, '*');
+      console.error(e);
+      setError('An error occurred while signing the message');
     } finally {
       setInFlight(false);
     }
   }, [data]);
 
   const onCancel = useCallback(() => {
-    window.parent.postMessage({ type: RESPONSE_TYPE, message: 'User cancelled action', closeIframe: true }, '*');
+    postMessageToParent({
+      ok: false,
+    });
   }, []);
 
   return (
