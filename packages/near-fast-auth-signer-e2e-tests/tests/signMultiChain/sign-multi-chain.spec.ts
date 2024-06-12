@@ -122,7 +122,8 @@ test.describe('Sign MultiChain', () => {
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
-  test('Should Pass: Send BNB with domain Key', async () => {
+  // Skipping this because of the unpredictable nature concerning replacement fee
+  test.skip('Should Pass: Send BNB with domain Key', async () => {
     test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
