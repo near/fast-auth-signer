@@ -13,6 +13,7 @@ import Login from './components/Login/Login';
 import RemoveTrailingSlash from './components/RemoveTrailingSlash/RemoveTrailingSlash';
 import RpcRoute from './components/RpcRoute/RpcRoute';
 import Sign from './components/Sign/Sign';
+import SignMessage from './components/SignMessage/SignMesage';
 import SignMultichain from './components/SignMultichain/SignMultichain';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
 import FastAuthController from './lib/controller';
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="rpc" element={<RpcRoute />} />
             <Route path="create-account" element={<CreateAccount />} />
             <Route path="add-device" element={<AddDevice />} />
+            <Route path="sign-message" element={<SignMessage />} />
             <Route path="sign" element={<Sign />} />
             {/* TODO: This isn't available on mainnet, and isn't production ready, clean the code for production release */}
             {environment.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
