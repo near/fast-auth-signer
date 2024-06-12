@@ -23,13 +23,13 @@ export interface SignMessageParams {
 }
 
 class Payload {
-  tag: number; // Always the same tag: 2**31 + 413
+  tag: number;
 
-  message: string; // The same message passed in `SignMessageParams.message`
+  message: string;
 
-  nonce: number[]; // The same nonce passed in `SignMessageParams.nonce`
+  nonce: number[];
 
-  recipient: string; // The same recipient passed in `SignMessageParams.recipient`
+  recipient: string;
 
   constructor({
     message, nonce, recipient
