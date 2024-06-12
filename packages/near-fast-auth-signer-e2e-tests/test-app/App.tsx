@@ -1,4 +1,4 @@
-import { SignedMessage, SignMessageParams } from '@near-wallet-selector/core';
+import { SignMessageParams } from '@near-wallet-selector/core';
 import React, { useEffect, useState } from 'react';
 
 import useWalletSelector from './hooks/useWalletSelector';
@@ -7,6 +7,7 @@ export default function App() {
   const selectorInstance = useWalletSelector();
   const [fastAuthWallet, setFastAuthWallet] = useState<any>();
   const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
+  const [isMessageSignatureValid, setIsMessageSignatureValid] = useState(false);
 
   useEffect(() => {
     const getWallet = async () => {
@@ -56,8 +57,9 @@ export default function App() {
       nonce:     Buffer.alloc(32),
       state:     'test-state',
     };
-    const signedMessage: SignedMessage = await fastAuthWallet.signMessage(signMessageParams);
-    console.log({ signedMessage });
+    const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
+    const isValid = await fastAuthWallet.verifyMessageSignature(signMessageParams, messageSignature);
+    setIsMessageSignatureValid(isValid);
   };
 
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
@@ -104,6 +106,7 @@ export default function App() {
       >
         Sign Message
       </button>
+      <p>{isMessageSignatureValid ? 'Message Signature is valid' : 'Message Signature is not valid'}</p>
     </div>
   );
 }
