@@ -57,9 +57,14 @@ export default function App() {
       nonce:     Buffer.alloc(32),
       state:     'test-state',
     };
-    const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
-    const isValid = await fastAuthWallet.verifyMessageSignature(signMessageParams, messageSignature);
-    setIsMessageSignatureValid(isValid);
+    try {
+      setIsMessageSignatureValid(false);
+      const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
+      const isValid = await fastAuthWallet.verifyMessageSignature(signMessageParams, messageSignature);
+      setIsMessageSignatureValid(isValid);
+    } catch (error) {
+      console.error('Error signing message:', error);
+    }
   };
 
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
