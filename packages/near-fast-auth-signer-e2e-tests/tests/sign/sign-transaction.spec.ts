@@ -102,27 +102,30 @@ describe('Sign transaction', () => {
   });
 
   // TODO: this test is constantly failing, need to be fixed
-  // test('should succeed and dismiss when signer app is authenticated', async () => {
-  //   await page.goto('/');
-  //   await isWalletSelectorLoaded(page);
+  test('should succeed and dismiss when signer app is authenticated', async () => {
+    await page.goto('/');
+    await isWalletSelectorLoaded(page);
 
-  //   await overridePasskeyFunctions(page, {
-  //     creationKeypair:  userFAK,
-  //     retrievalKeypair: userFAK
-  //   });
+    await overridePasskeyFunctions(page, {
+      creationKeypair:  userFAK,
+      retrievalKeypair: userFAK
+    });
 
-  //   await page.getByTestId('sign-transaction-button').click();
-  //   await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
-  //   const socialdbContract = new Contract(new Account(Connection.fromConfig({
-  //     networkId: 'testnet',
-  //     provider:  { type: 'JsonRpcProvider', args: { url: 'https://rpc.testnet.near.org' } },
-  //     signer:    { type: 'InMemorySigner', keyStore: new InMemoryKeyStore() },
-  //   }), 'dontcare'), 'v1.social08.testnet', {
-  //     viewMethods:   ['get'],
-  //     changeMethods: [],
-  //   }) as Contract & { get: (_args) => Promise<string> };
+    await page.getByTestId('sign-transaction-button').click();
+    await getFastAuthIframe(page).locator('data-test-id=confirm-transaction-button').click();
+    const socialdbContract = new Contract(new Account(Connection.fromConfig({
+      networkId: 'testnet',
+      provider:  { type: 'JsonRpcProvider', args: { url: 'https://rpc.testnet.near.org' } },
+      signer:    { type: 'InMemorySigner', keyStore: new InMemoryKeyStore() },
+    }), 'dontcare'), 'v1.social08.testnet', {
+      viewMethods:   ['get'],
+      changeMethods: [],
+    }) as Contract & { get: (_args) => Promise<string> };
 
-  //   const result = await new Promise((resolve) => { setTimeout(resolve, 5000); }).then(() => socialdbContract.get({ keys: [`${accountId}/**`] }));
-  //   expect(result).toEqual({ [accountId]: { 'fast-auth-e2e-test': 'true' } });
-  // });
+    await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).not.toBeVisible();
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
+
+    const result = await new Promise((resolve) => { setTimeout(resolve, 5000); }).then(() => socialdbContract.get({ keys: [`${accountId}/**`] }));
+    expect(result).toEqual({ [accountId]: { 'fast-auth-e2e-test': 'true' } });
+  });
 });
