@@ -246,6 +246,20 @@ class FastAuthController {
     throw new Error('Passkeys not supported');
   }
 
+  async signMessage(payload: Uint8Array): Promise<{
+    accountId: string,
+    signature: Uint8Array,
+    publicKey: string,
+  }> {
+    const signature = await this.connection.signer.signMessage(payload, this.accountId, this.networkId);
+
+    return {
+      accountId: this.accountId,
+      signature: signature.signature,
+      publicKey: signature.publicKey.toString(),
+    };
+  }
+
   async signAndSendDelegateAction({ receiverId, actions }) {
     const signedDelegate = await this.signDelegateAction({ receiverId, actions, signerId: this.accountId });
     return fetch(network.relayerUrl, {

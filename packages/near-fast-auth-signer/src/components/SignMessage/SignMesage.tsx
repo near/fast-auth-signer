@@ -1,6 +1,8 @@
+import { serialize } from 'near-api-js/lib/utils/serialize';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { Message } from './SignMessage.styles';
+import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { IframeRequestEvent, useIframeRequest } from '../../hooks/useIframeRequest';
 import InternetSvg from '../../Images/Internet';
@@ -9,6 +11,8 @@ import { Button } from '../../lib/Button';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 
+const RESPONSE_TYPE = 'signMessageResponse';
+
 // Keep it in sync with wallet selector type: https://github.com/near/wallet-selector/blob/ae7f7acb7a0696554afdaf1909004e0ec0c4b645/packages/core/src/lib/wallet/wallet.types.ts#L83
 export interface SignMessageParams {
   message: string;
@@ -16,6 +20,25 @@ export interface SignMessageParams {
   nonce: Buffer;
   callbackUrl?: string;
   state?: string;
+}
+
+class Payload {
+  tag: number; // Always the same tag: 2**31 + 413
+
+  message: string; // The same message passed in `SignMessageParams.message`
+
+  nonce: number[]; // The same nonce passed in `SignMessageParams.nonce`
+
+  recipient: string; // The same recipient passed in `SignMessageParams.recipient`
+
+  constructor({
+    message, nonce, recipient
+  }: Payload) {
+    this.tag = 2147484061;
+    Object.assign(this, {
+      message, nonce, recipient
+    });
+  }
 }
 
 function SignMessage() {
@@ -42,13 +65,57 @@ function SignMessage() {
     eventHandler: iframeEventHandler,
   });
 
-  const onConfirm = useCallback(() => {
-    setInFlight(true);
-    console.log(data);
+  const onConfirm = useCallback(async () => {
+    try {
+      if (!data) {
+        throw new Error('No data received');
+      }
+
+      if (data.nonce.byteLength !== 32) {
+        throw Error('Expected nonce to be a 32 bytes buffer');
+      }
+
+      setInFlight(true);
+      setError(null);
+      setInFlight(true);
+      const isUserAuthenticated = await getAuthState();
+      if (isUserAuthenticated !== true) {
+        const errorMessage = 'You are not authenticated or there has been an indexer failure';
+        setError(errorMessage);
+        window.parent.postMessage({ type: RESPONSE_TYPE, message: errorMessage, closeIframe: true }, '*');
+        setInFlight(false);
+        return;
+      }
+
+      const payload = new Payload({
+        tag: 2147484061, message: data.message, nonce: Array.from(data.nonce), recipient: data.recipient
+      });
+
+      const schema = new Map([[Payload, { kind: 'struct', fields: [['tag', 'u32'], ['message', 'string'], ['nonce', ['u8']], ['recipient', 'string']] }]]);
+      const borshPayload = serialize(schema, payload);
+
+      const { signature, publicKey, accountId } = await window.fastAuthController.signMessage(borshPayload);
+
+      window.parent.postMessage({
+        type: RESPONSE_TYPE,
+        data: {
+          signature: Buffer.from(signature).toString('base64'),
+          publicKey,
+          accountId,
+          state:     data.state
+        },
+        closeIframe: true
+      }, '*');
+    } catch (e) {
+      setError(e.message);
+      window.parent.postMessage({ type: RESPONSE_TYPE, message: e.message, closeIframe: true }, '*');
+    } finally {
+      setInFlight(false);
+    }
   }, [data]);
 
   const onCancel = useCallback(() => {
-    window.parent.postMessage({ type: 'method', message: 'User cancelled action', closeIframe: true }, '*');
+    window.parent.postMessage({ type: RESPONSE_TYPE, message: 'User cancelled action', closeIframe: true }, '*');
   }, []);
 
   return (
