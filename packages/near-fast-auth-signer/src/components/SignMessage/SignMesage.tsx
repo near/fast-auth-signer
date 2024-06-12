@@ -168,7 +168,7 @@ function SignMessage() {
         <Button
           variant="primary"
           size="large"
-          label={inFlight ? 'Loading...' : 'Approve'}
+          label={inFlight ? 'Loading...' : 'Sign'}
           onClick={onConfirm}
           disabled={inFlight}
         />
