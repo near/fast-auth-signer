@@ -16,6 +16,8 @@ class DevicesPage {
 
   async selectAndDelete(numberOfCheckboxes: number) {
     await this.page.waitForSelector('[data-testid^="devices-checkbox-"]');
+    // wait for the checkboxes to ready
+    await this.page.waitForTimeout(3000);
     const deleteButtonTarget = this.page.getByTestId('devices-delete-key');
     const checkboxes = await this.page.locator('[data-testid^="devices-checkbox-"]');
 
@@ -28,6 +30,9 @@ class DevicesPage {
 
       await checkboxes.nth(i).scrollIntoViewIfNeeded();
       await checkboxes.nth(i).click();
+
+      // wait for click action to finish smoothly
+      await this.page.waitForTimeout(1000);
     }
 
     await deleteButtonTarget.click({ force: true });
