@@ -20,6 +20,7 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
   flex-wrap: ${({ hasFunctionCall }) => (hasFunctionCall ? 'wrap' : 'nowrap')};
 
   .left-side {
+    flex-grow: 1;
     font-weight: 450;
     letter-spacing: 0.02em;
     text-align: left;

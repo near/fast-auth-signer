@@ -53,7 +53,6 @@ function TableContent({
         {/* eslint-disable-next-line */}
         {openLink && <a href={openLink} target="_blank" rel="noreferrer"><OpenLinkSvg /></a>}
       </div>
-
       <div className="right-side" data-testid={dataTestIds.rightSide}>
         {hasFunctionCall ? (
           <div className="button function-call">
