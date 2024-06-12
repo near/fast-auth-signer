@@ -30,24 +30,6 @@ import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
 import { TableRow } from '../TableRow/TableRow';
 
-// const sampleMessageForEthereum: EvmSendMultichainMessage = {
-//   chainId: BigInt('5'),
-//   chain: 60,
-//   domain: "near.org",
-//   to: "0x47bF16C0e80aacFf796E621AdFacbFaaf73a94A4",
-//   value: BigInt('10000000000000000'),
-//   meta: {id: 10}
-// }
-
-// const sampleMessageForBTC: BTCSendMultichainMessage = {
-//   network: 'mainnet',
-//   chain: 0,
-//   domain: "near.org",
-//   to: "1K7xkspJg6J8kEZjX9jowFtyXo6JLXUhYj",
-//   value: BigInt('10000000000000000'),
-//   meta: {id: 10}
-// }
-
 type TransactionAmountDisplay = {
   price: string | number;
   tokenAmount: string | number;

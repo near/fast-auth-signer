@@ -60,6 +60,7 @@ export const useIframeRequest = <D>(
     return () => {
       window.removeEventListener('message', handleMessage);
     };
+
   // Do not add args to dependencies as the object reference will change every render
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [args.eventHandler, args.eventType.loaded, args.eventType.request]);
