@@ -44,7 +44,8 @@ function SignMessage() {
 
   const onConfirm = useCallback(() => {
     setInFlight(true);
-  }, []);
+    console.log(data);
+  }, [data]);
 
   const onCancel = useCallback(() => {
     window.parent.postMessage({ type: 'method', message: 'User cancelled action', closeIframe: true }, '*');

@@ -54,6 +54,7 @@ export default function App() {
       message,
       recipient: 'myapp.com',
       nonce:     Buffer.alloc(32),
+      state:     'test-state',
     };
     const signedMessage: SignedMessage = await fastAuthWallet.signMessage(signMessageParams);
     console.log({ signedMessage });
