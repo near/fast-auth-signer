@@ -1,7 +1,6 @@
 /* eslint-disable class-methods-use-this */
 
-import { Page, Frame } from '@playwright/test';
-import { FrameLocator } from 'playwright';
+import { Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 
@@ -43,28 +42,28 @@ class SignMultiChain {
   async submitTransactionInfo({
     keyType, assetType, amount, address
   }: TransactionDetail) {
-    // Disable iframe interception
-    await this.page.addScriptTag({ content: 'document.addEventListener("pointerdown", (event) => event.stopPropagation());' });
-
     // Wait for the iframe to finish loading
-    await this.page.waitForLoadState('load');
-    const iframe = this.page.frame('iframe#webpack-dev-server-client');
-    if (iframe) {
-      console.log('Webpack iframe found');
-      await iframe.waitForLoadState('load');
-    }
+
+    /*    await this.page.waitForSelector(`input#${keyType}`, { state: 'visible' });
+    await this.page.waitForSelector(`input#${assetType.toLowerCase()}`, { state: 'visible' });
+    await this.page.waitForSelector('input#amount', { state: 'visible' });
+    await this.page.waitForSelector('input#address', { state: 'visible' });
+    await this.page.waitForSelector('button[type="submit"]', { state: 'visible' }); */
 
     await this.page.check(`input#${keyType}`);
     await this.page.check(`input#${assetType.toLowerCase()}`);
     await this.page.fill('input#amount', `${amount}`);
     await this.page.fill('input#address', `${address}`);
     await this.page.click('button[type="submit"]');
+    await this.disablePointerEventsInterruption();
   }
 
-  async clickApproveButton(parent: Frame | Page | FrameLocator) {
-    const approveButton = parent.locator('button', { hasText: 'Approve' });
-    await approveButton.waitFor();
-    await approveButton.click();
+  async clickApproveButton() {
+    // Ensure the button inside the iframe is visible and interactable
+    const frame = getFastAuthIframe(this.page);
+    const approveButton = frame.locator('button:has-text("Approve")');
+    await approveButton.waitFor({ state: 'visible' });
+    await approveButton.click({ force: true });
   }
 
   async submitAndApproveTransaction({
@@ -73,8 +72,28 @@ class SignMultiChain {
     await this.submitTransactionInfo({
       keyType, assetType, amount, address
     });
-    const frame = getFastAuthIframe(this.page);
-    await this.clickApproveButton(frame);
+    await this.clickApproveButton();
+  }
+
+  // Disable pointer events on overlay elements within the iframe and page
+  async disablePointerEventsInterruption() {
+    // Hide webpack overlay
+    await this.page.evaluate(() => {
+      const overlay = document.getElementById('webpack-dev-server-client-overlay');
+      if (overlay) overlay.style.display = 'none';
+    });
+
+    this.page.on('frameattached', async (frame) => {
+      const frameElement = await frame.frameElement();
+      const frameId = await frameElement.getAttribute('id');
+      if (frameId === 'nfw-connect-iframe') {
+        await this.page.evaluate(() => {
+          document.querySelectorAll('.ant-modal-wrap, .ant-modal-root, .ant-modal-mask')
+            // eslint-disable-next-line no-return-assign
+            .forEach((element) => (element as HTMLElement).style.pointerEvents = 'none');
+        });
+      }
+    });
   }
 }
 

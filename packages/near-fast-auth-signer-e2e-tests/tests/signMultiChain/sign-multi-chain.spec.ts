@@ -38,7 +38,6 @@ test.describe('Sign MultiChain', () => {
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-
     await page.evaluate(
     // eslint-disable-next-line no-shadow
       async ([accountId]) => {
@@ -69,20 +68,14 @@ test.describe('Sign MultiChain', () => {
 
   test.beforeEach(async () => {
     test.setTimeout(120000);
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('Should show transaction details', async () => {
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
-    await page.evaluate(() => {
-      const iframes = document.getElementsByTagName('iframe');
-      //  const iframe = document.getElementById('webpack-dev-server-client-iframe');
-      console.log('iframes 2 ', iframes);
-      /* if (iframe) {
-        console.log('iframe found. Removing iframe before test...');
-        iframe.remove(); // or iframe.style.display = 'none';
-      } */
-    });
+
     await signMultiChain.submitTransactionInfo({
       keyType: 'unknownKey', assetType: 'bnb', amount: 0.01, address: receivingAddresses.ETH_BNB
     });
@@ -124,7 +117,7 @@ test.describe('Sign MultiChain', () => {
     });
     const frame = getFastAuthIframe(page);
     await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
-    await signMultiChain.clickApproveButton(frame);
+    await signMultiChain.clickApproveButton();
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse(page);
     expect(multiChainResponse.transactionHash).toBeDefined();
     expect(multiChainResponse).toHaveProperty('message');

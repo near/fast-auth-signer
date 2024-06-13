@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "test": "yarn playwright test",
-    "start": "webpack serve --mode development --history-api-fallback"
+    "start": "webpack serve  --mode development --history-api-fallback"
   },
   "dependencies": {
     "@covalenthq/client-sdk": "^1.0.2",
