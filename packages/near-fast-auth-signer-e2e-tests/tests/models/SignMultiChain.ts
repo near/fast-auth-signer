@@ -43,6 +43,17 @@ class SignMultiChain {
   async submitTransactionInfo({
     keyType, assetType, amount, address
   }: TransactionDetail) {
+    // Disable iframe interception
+    await this.page.addScriptTag({ content: 'document.addEventListener("pointerdown", (event) => event.stopPropagation());' });
+
+    // Wait for the iframe to finish loading
+    await this.page.waitForLoadState('load');
+    const iframe = this.page.frame('iframe#webpack-dev-server-client');
+    if (iframe) {
+      console.log('Webpack iframe found');
+      await iframe.waitForLoadState('load');
+    }
+
     await this.page.check(`input#${keyType}`);
     await this.page.check(`input#${assetType.toLowerCase()}`);
     await this.page.fill('input#amount', `${amount}`);
