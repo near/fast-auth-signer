@@ -37,7 +37,6 @@ test.describe('Sign MultiChain', () => {
     page = await context.newPage();
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
     await page.evaluate(
     // eslint-disable-next-line no-shadow
       async ([accountId]) => {
@@ -66,8 +65,12 @@ test.describe('Sign MultiChain', () => {
     }
   });
 
+  test.beforeEach(async () => {
+    test.setTimeout(120000);
+    await page.waitForLoadState('domcontentloaded');
+  });
+
   test('Should show transaction details', async () => {
-    test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
     await signMultiChain.submitTransactionInfo({
@@ -83,7 +86,6 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Fail: if not authenticated', async () => {
-    test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
 
@@ -100,7 +102,6 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Pass: Send ETH with Personal Key', async () => {
-    test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
 
@@ -124,7 +125,6 @@ test.describe('Sign MultiChain', () => {
 
   // Skipping this because of the unpredictable nature concerning replacement fee
   test.skip('Should Pass: Send BNB with domain Key', async () => {
-    test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
 
@@ -143,7 +143,6 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Fail: Insufficient Funds with Unknown Key + BTC', async () => {
-    test.slow();
     const walletSelector = page.locator('#ws-loaded');
     await expect(walletSelector).toBeVisible();
 
