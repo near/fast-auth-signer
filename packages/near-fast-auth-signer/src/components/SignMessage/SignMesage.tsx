@@ -1,4 +1,4 @@
-import { serialize } from 'near-api-js/lib/utils/serialize';
+import { serialize } from 'borsh';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { Message } from './SignMessage.styles';
@@ -37,12 +37,14 @@ class Payload {
 
   recipient: string;
 
+  callbackUrl?: string;
+
   constructor({
-    message, nonce, recipient
+    message, nonce, recipient, callbackUrl
   }: Payload) {
     this.tag = 2147484061;
     Object.assign(this, {
-      message, nonce, recipient
+      message, nonce, recipient, callbackUrl
     });
   }
 }
@@ -107,10 +109,23 @@ function SignMessage() {
       }
 
       const payload = new Payload({
-        tag: 2147484061, message: data.message, nonce: Array.from(data.nonce), recipient: data.recipient
+        tag:         2147484061,
+        message:     data.message,
+        recipient:   data.recipient,
+        nonce:       Array.from(data.nonce),
+        callbackUrl: data.callbackUrl ?? null
       });
 
-      const schema = new Map([[Payload, { kind: 'struct', fields: [['tag', 'u32'], ['message', 'string'], ['nonce', ['u8']], ['recipient', 'string']] }]]);
+      const schema = new Map([[Payload, {
+        kind:   'struct',
+        fields: [
+          ['tag', 'u32'],
+          ['message', 'string'],
+          ['nonce', ['u8', 32]],
+          ['recipient', 'string'],
+          ['callbackUrl', { kind: 'option', type: 'string' }]
+        ]
+      }]]);
       const borshPayload = serialize(schema, payload);
 
       const { signature, publicKey, accountId } = await window.fastAuthController.signMessage(borshPayload);

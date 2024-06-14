@@ -60,7 +60,7 @@ export default function App() {
     try {
       setIsMessageSignatureValid(false);
       const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
-      const isValid = await fastAuthWallet.verifyMessageSignature(signMessageParams, messageSignature);
+      const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
       setIsMessageSignatureValid(isValid);
     } catch (error) {
       console.error('Error signing message:', error);
