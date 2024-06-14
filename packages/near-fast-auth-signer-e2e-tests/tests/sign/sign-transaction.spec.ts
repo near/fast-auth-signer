@@ -5,7 +5,7 @@ import { test, expect, Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 import {
-  addAccountToBeDeleted, createAccount, initializeAdmin,
+  createAccount, initializeAdmin,
 } from '../../utils/firebase';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
@@ -29,7 +29,7 @@ describe('Sign transaction', () => {
     const email = `${user}@example.com`;
     accountId = `${user}.testnet`;
     const frpKeypair = KeyPair.fromRandom('ed25519');
-    const { userUid } = await createAccount({
+    await createAccount({
       email,
       accountId: user,
       FAKs:      [userFAK],
@@ -41,7 +41,6 @@ describe('Sign transaction', () => {
       }],
       oidcKeyPair: frpKeypair
     });
-    await addAccountToBeDeleted({ type: 'uid', uid: userUid });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await testDapp.loginWithKeyPairLocalStorage(accountId, userLAK, userFAK);

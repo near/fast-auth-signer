@@ -1,8 +1,7 @@
-import * as fs from 'fs';
-
 import { deleteUserByEmail, deleteAccount, deletePublicKey } from './utils/firebase';
+import { DeleteAccount, emptyTestAccountJSON, readTestAccountJSON } from './utils/queue';
 
-const deleteMockAccount = async (account) => {
+const deleteMockAccount = async (account: DeleteAccount) => {
   switch (account.type) {
     case 'email':
       await deleteUserByEmail(account.email);
@@ -18,11 +17,14 @@ const deleteMockAccount = async (account) => {
 };
 
 async function globalTeardown() {
-  const { accounts, publicKeys } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
+  const { accounts, publicKeys } = await readTestAccountJSON();
+  console.log(`${accounts.length} accounts on firebase to delete`);
   // eslint-disable-next-line no-return-await
   await Promise.all(accounts.map(async (account) => await deleteMockAccount(account)));
+  console.log(`${publicKeys.length} public keys on firebase to delete`);
   await Promise.all(publicKeys.map(async ({ publicKey }) => deletePublicKey(publicKey)));
-  fs.writeFileSync('testAccounts.json', JSON.stringify({ accounts: [], publicKeys: [] }, null, 2));
+  await emptyTestAccountJSON();
+  console.log('Completed firebase cleanup');
 }
 
 export default globalTeardown;

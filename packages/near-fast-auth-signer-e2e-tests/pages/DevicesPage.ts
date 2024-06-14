@@ -24,10 +24,10 @@ class DevicesPage {
       // check to make sure if the checkbox is ready to be clicked
       const checkboxSelector = `[data-testid="devices-checkbox-${i}"]`;
       await this.page.waitForSelector(checkboxSelector, { state: 'visible' });
-      await this.page.getByTestId(`devices-checkbox-${i}`).click({ force: true });
+      await this.page.getByTestId(`devices-checkbox-${i}`).click();
     }
 
-    await deleteButtonTarget.click({ force: true });
+    await deleteButtonTarget.click();
     await expect(deleteButtonTarget).toHaveText('Deleting...');
   }
 }

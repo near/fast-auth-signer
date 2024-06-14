@@ -3,7 +3,7 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
-import { addAccountToBeDeleted, initializeAdmin } from '../utils/firebase';
+import { initializeAdmin } from '../utils/firebase';
 import { rerouteToCustomURL } from '../utils/url';
 
 test.beforeAll(async () => {
@@ -35,7 +35,6 @@ test('should create account and login with e-mail', async ({ page }) => {
   });
 
   readUIDLs.push(emailId);
-  await addAccountToBeDeleted({ type: 'email', email });
 
   await pm.getAppPage().signOut();
 
@@ -67,7 +66,6 @@ test('should create account and login with passkeys', async ({ page }) => {
   });
 
   readUIDLs.push(emailId);
-  await addAccountToBeDeleted({ type: 'email', email });
 
   await pm.getAppPage().signOut();
 

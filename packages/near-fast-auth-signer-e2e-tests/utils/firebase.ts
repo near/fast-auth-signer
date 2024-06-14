@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-
 import { expect } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
@@ -9,27 +7,11 @@ import {
 import { NewAccountResponse } from 'near-fast-auth-signer/src/api/types';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
+import { addToDeleteQueue } from './queue';
 import { serviceAccount } from './serviceAccount';
 import PageManager from '../pages/PageManager';
 
 const FIREBASE_API_KEY_TESTNET = 'AIzaSyDAh6lSSkEbpRekkGYdDM5jazV6IQnIZFU';
-
-type MockAccount = {
-  type: 'email'|'uid',
-  email?: string,
-  uid?: string
-}
-
-function getRandomWaitTime(min, max) {
-  // Generate a random number between min and max (inclusive)
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const performTaskWithRandomDelay = async () => {
-  const randomWaitTime = getRandomWaitTime(1000, 5000);
-
-  await new Promise((resolve) => { setTimeout(resolve, randomWaitTime); });
-};
 
 export const isServiceAccountAvailable = () => {
   if (
@@ -94,22 +76,12 @@ export const deletePublicKey = (publicKey: string) => {
   return docRef.delete();
 };
 
-export const addAccountToBeDeleted = async (account: MockAccount) => {
-  if (isServiceAccountAvailable() && admin.apps.length) {
-    const { accounts, ...rest } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
-    accounts.push(account);
-    fs.writeFileSync('testAccounts.json', JSON.stringify({ accounts, ...rest }, null, 2));
-  }
-};
-
 const addAccountIdPublicKey = async (publicKey: string, accountId: string) => {
   if (isServiceAccountAvailable() && admin.apps.length) {
     const db = admin.firestore();
     const docRef = db.collection('publicKeys').doc(publicKey);
     await docRef.set({ accountId });
-    const { publicKeys, ...rest } = JSON.parse(fs.readFileSync('testAccounts.json', 'utf-8'));
-    publicKeys.push({ publicKey, accountId });
-    fs.writeFileSync('testAccounts.json', JSON.stringify({ publicKeys, ...rest }, null, 2));
+    await addToDeleteQueue({ accountId, publicKey });
   }
 };
 
@@ -141,9 +113,6 @@ export const createAccount = async ({
     password:          testPassword,
     returnSecureToken: true,
   };
-
-  // create random delay on creating account, to avoid parallel requests to google endpoint
-  await performTaskWithRandomDelay();
 
   const tokenResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY_TESTNET}`, {
     method:  'POST',
@@ -208,6 +177,8 @@ export const createAccount = async ({
   if (createAccountResponseJson.type === 'ok') {
     await Promise.all(createAccountResponseJson.create_account_options.full_access_keys
       .map((publicKey) => addAccountIdPublicKey(publicKey, createAccountResponseJson.near_account_id)));
+
+    await addToDeleteQueue({ type: 'email', email });
     return {
       createAccountResponse: createAccountResponseJson,
       userUid:               testUserRecord.uid
@@ -231,19 +202,13 @@ export const createAccountAndLandDevicePage = async ({
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
   const keypairs = generateKeyPairs(numberOfKeyPairs);
-  const {
-    createAccountResponse,
-    userUid
-  } = await createAccount({
+  const { createAccountResponse } = await createAccount({
     email,
     accountId,
     oidcKeyPair,
     FAKs: keypairs,
     LAKs: []
   });
-
-  // will be used to delete account
-  await addAccountToBeDeleted({ type: 'uid', uid: userUid });
 
   expect(createAccountResponse.type).toEqual('ok');
 
