@@ -82,10 +82,10 @@ test('device page delete one key and return to device page again', async ({ page
     { selector: 'button[data-testid="devices-delete-key"]', expectedText: 'Delete key' }
   );
 
-  // if it is certain that LackBalanceForState error is received, conduct rest of the steps
-  if (failureCount === 1) {
+  // // if it is certain that LackBalanceForState error is received, conduct rest of the steps
+  // if (failureCount === 1) {
     await pm.getDevicesPage().isCheckboxLoaded(5);
     await pm.getDevicesPage().selectAndDelete(3);
     await pm.getAppPage().isLoggedIn();
-  }
+  // }
 });
