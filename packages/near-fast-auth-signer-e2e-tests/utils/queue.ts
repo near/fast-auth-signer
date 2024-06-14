@@ -23,6 +23,32 @@ const FILE_PATH = path.join(__dirname, '../testAccounts.json');
 let writeQueue: (DeleteAccount | DeletePublicKey)[] = [];
 let isWriting = false;
 
+// eslint-disable-next-line no-promise-executor-return
+const retryDelay = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// eslint-disable-next-line consistent-return
+const lockFileWithRetry = async (filePath: string, retries = 5, delay = 100) => {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const release = await lockfile.lock(filePath);
+      return release;
+    } catch (error) {
+      if (error.code === 'ELOCKED') {
+        console.log('attempt count', attempt);
+        if (attempt < retries - 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await retryDelay(delay);
+        } else {
+          throw error;
+        }
+      } else {
+        throw error;
+      }
+    }
+  }
+};
+
 const processQueue = async () => {
   if (isWriting || writeQueue.length === 0) {
     return;
@@ -34,7 +60,7 @@ const processQueue = async () => {
 
   let release;
   try {
-    release = await lockfile.lock(FILE_PATH);
+    release = await lockFileWithRetry(FILE_PATH);
 
     const fileExists = await fs.pathExists(FILE_PATH);
     const fileContent = fileExists ? await fs.readJson(FILE_PATH) : {};
@@ -43,7 +69,8 @@ const processQueue = async () => {
     dataBatch.forEach((data) => {
       if ('publicKey' in data) {
         const { publicKey, accountId } = data;
-        newContent.publicKeys = newContent.publicKeys ? [...newContent.publicKeys, { publicKey, accountId }] : [{ publicKey, accountId }];
+        newContent.publicKeys = newContent.publicKeys
+          ? [...newContent.publicKeys, { publicKey, accountId }] : [{ publicKey, accountId }];
       } else {
         newContent.accounts = newContent.accounts ? [...newContent.accounts, data] : [data];
       }
