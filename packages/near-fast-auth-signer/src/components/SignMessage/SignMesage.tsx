@@ -6,7 +6,7 @@ import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { IframeRequestEvent, useIframeRequest } from '../../hooks/useIframeRequest';
 import InternetSvg from '../../Images/Internet';
-import ModalIconSvg from '../../Images/ModalIcon';
+import { NEARLogoRound } from '../../Images/NearLogoRound';
 import { Button } from '../../lib/Button';
 import { ModalSignWrapper } from '../Sign/Sign.styles';
 import TableContent from '../TableContent/TableContent';
@@ -157,7 +157,7 @@ function SignMessage() {
     <ModalSignWrapper ref={signTransactionRef}>
       <div className="modal-body">
         <div className="modal-top">
-          <ModalIconSvg />
+          <NEARLogoRound />
           <h3>Signature Request</h3>
           <div className="transaction-details">
             <InternetSvg />
