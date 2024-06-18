@@ -7,7 +7,7 @@ import {
 import { NewAccountResponse } from 'near-fast-auth-signer/src/api/types';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
-import { addToDeleteQueue } from './queue';
+import { addToDeleteQueue, DeleteAccount } from './queue';
 import { serviceAccount } from './serviceAccount';
 import PageManager from '../pages/PageManager';
 
@@ -57,12 +57,22 @@ export const deleteAccount = async (userUid: string) => {
   }
 };
 
-export const deleteUserByEmail = async (email: string) => {
+const getUserUidByEmail = async (email: string) => {
   try {
     const user = await admin.auth().getUserByEmail(email);
-    if (user && user.uid) {
-      await deleteAccount(user.uid);
+    return user.uid;
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') {
+      console.error('Error fetching user by email:', error);
     }
+  }
+  return null;
+};
+
+export const deleteUserByEmail = async (email: string) => {
+  try {
+    const uid = await getUserUidByEmail(email);
+    await deleteAccount(uid);
   } catch (error) {
     if (error.code !== 'auth/user-not-found') {
       console.error('Error fetching user by email:', error);
@@ -74,6 +84,37 @@ export const deletePublicKey = (publicKey: string) => {
   const db = admin.firestore();
   const docRef = db.collection('publicKeys').doc(publicKey);
   return docRef.delete();
+};
+
+export const deleteAllTestAccounts = async (accounts: DeleteAccount[]) => {
+  const uids = await Promise.all(accounts.map(async (account) => {
+    if (account.type === 'email') {
+      const uid = await getUserUidByEmail(account.email);
+      return uid;
+    }
+    return account.uid;
+  }));
+  // Function to process a chunk of UIDs
+  const deleteChunk = async (chunk) => {
+    try {
+      const result = await admin.auth().deleteUsers(chunk);
+      console.log('Successfully deleted users:', result.successCount);
+      console.log('Errors encountered:', result.errors.length);
+      result.errors.forEach((error) => {
+        console.error('Error deleting user:', error.index, error.error);
+      });
+    } catch (error) {
+      console.error('Error deleting users:', error);
+    }
+  };
+
+  // Process the UIDs in chunks of 1000
+  const chunkSize = 1000;
+  for (let i = 0; i < uids.length; i += chunkSize) {
+    const chunk = uids.slice(i, i + chunkSize);
+    // eslint-disable-next-line no-await-in-loop
+    await deleteChunk(chunk);
+  }
 };
 
 const addAccountIdPublicKey = async (publicKey: string, accountId: string) => {
