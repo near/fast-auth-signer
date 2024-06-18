@@ -89,7 +89,6 @@ export const getTransactionPayload = async (values: {
   } = values;
   try {
     const derivedAddress = await fetchDerivedAddress({ accountId, chainValue, keyType });
-    console.log('derivedAddress ', derivedAddress);
     const domain = getDomain(keyType);
     const payload: Record<string, string | number | bigint> = {
       chain: chainValue,

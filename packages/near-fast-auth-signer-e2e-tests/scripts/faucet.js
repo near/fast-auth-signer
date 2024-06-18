@@ -27,8 +27,6 @@ async function fetchEVMWalletBalance(
   return fromWei(BigInt(balance).toString());
 }
 
-// API config
-
 function getWalletChain(chain) {
   switch (chain) {
     case 'eth':
@@ -47,7 +45,6 @@ async function fillWallet(address, chain) {
     throw new Error(`Unsupported chain: ${chain}`);
   }
 
-  console.log(`Requesting some ${chain} testnet tokens for ${address}`);
   const apiUrl = `https://api.chainstack.com/v1/faucet/${walletChain}`;
 
   const response = await fetch(apiUrl, {
@@ -63,7 +60,7 @@ async function fillWallet(address, chain) {
     return response.text().then((text) => { throw new Error(text); });
   }
 
-  console.log(`Faucet request for ${chain} address ${address} successful`);
+  console.log(`Testnet token request for ${chain} address ${address} successful`);
 
   return response.json();
 }
