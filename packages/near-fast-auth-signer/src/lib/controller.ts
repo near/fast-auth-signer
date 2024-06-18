@@ -246,6 +246,28 @@ class FastAuthController {
     throw new Error('Passkeys not supported');
   }
 
+  async signMessage(payload: Uint8Array): Promise<{
+    accountId: string,
+    signature: Uint8Array,
+    publicKey: string,
+  }> {
+    const signature = await this.connection.signer.signMessage(payload, this.accountId, this.networkId);
+
+    const account = new Account(this.connection, this.accountId);
+    const accessKeys = await account.getAccessKeys();
+    const isFullAccessKey = accessKeys.some((key) => key.public_key === signature.publicKey.toString() && key.access_key.permission === 'FullAccess');
+
+    if (!isFullAccessKey) {
+      throw new Error('The public key used to sign is not a full access key');
+    }
+
+    return {
+      accountId: this.accountId,
+      signature: signature.signature,
+      publicKey: signature.publicKey.toString(),
+    };
+  }
+
   async signAndSendDelegateAction({ receiverId, actions }) {
     const signedDelegate = await this.signDelegateAction({ receiverId, actions, signerId: this.accountId });
     return fetch(network.relayerUrl, {

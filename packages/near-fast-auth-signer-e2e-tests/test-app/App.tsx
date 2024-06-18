@@ -1,3 +1,4 @@
+import { SignMessageParams } from '@near-wallet-selector/core';
 import React, { useEffect, useState } from 'react';
 
 import useWalletSelector from './hooks/useWalletSelector';
@@ -6,6 +7,7 @@ export default function App() {
   const selectorInstance = useWalletSelector();
   const [fastAuthWallet, setFastAuthWallet] = useState<any>();
   const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
+  const [isMessageSignatureValid, setIsMessageSignatureValid] = useState(false);
 
   useEffect(() => {
     const getWallet = async () => {
@@ -47,6 +49,24 @@ export default function App() {
     window.location.reload();
   };
 
+  const handleSignMessage = async () => {
+    const message = 'Hello, this is a test message!';
+    const signMessageParams: SignMessageParams = {
+      message,
+      recipient: 'myapp.com',
+      nonce:     Buffer.alloc(32),
+      state:     'test-state',
+    };
+    try {
+      setIsMessageSignatureValid(false);
+      const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
+      const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
+      setIsMessageSignatureValid(isValid);
+    } catch (error) {
+      console.error('Error signing message:', error);
+    }
+  };
+
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
     return (
       <div id="loading-ws">Loading...</div>
@@ -84,6 +104,14 @@ export default function App() {
       >
         Sign and send transaction
       </button>
+      <button
+        type="button"
+        data-test-id="sign-message-button"
+        onClick={handleSignMessage}
+      >
+        Sign Message
+      </button>
+      <p>{isMessageSignatureValid ? 'Message Signature is valid' : 'Message Signature is not valid'}</p>
     </div>
   );
 }
