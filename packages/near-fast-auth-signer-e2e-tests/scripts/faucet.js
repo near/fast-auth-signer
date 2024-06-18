@@ -47,7 +47,7 @@ async function fillWallet(address, chain) {
     throw new Error(`Unsupported chain: ${chain}`);
   }
 
-  console.log(`Requesting some ${chain} tokens from faucet for address ${address}`);
+  console.log(`Requesting some ${chain} testnet tokens for ${address}`);
   const apiUrl = `https://api.chainstack.com/v1/faucet/${walletChain}`;
 
   const response = await fetch(apiUrl, {
