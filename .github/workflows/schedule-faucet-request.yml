@@ -2,11 +2,7 @@ name: Request Tokens from Faucet
 
 on:
   schedule:
-    - cron: '0 3 * * 1' # Runs every Monday at 3am
-  workflow_dispatch: # Allows manual triggering
-  pull_request: # Runs on pull requests to the main branch
-    branches:
-      - main
+    - cron: '0 1 * * 1' # Runs every Monday at 1am
 
 jobs:
   faucet-request:
@@ -26,6 +22,6 @@ jobs:
 
       - name: Run faucet.js script
         env:
-            COVALENT_API_KEY: ${{ secrets.COVALENT_API_KEY }}
-            CHAINSTACK_API_KEY: ${{ secrets.CHAINSTACK_API_KEY }}
+          COVALENT_API_KEY: ${{ secrets.COVALENT_API_KEY }}
+          CHAINSTACK_API_KEY: ${{ secrets.CHAINSTACK_API_KEY }}
         run: node ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests/scripts/faucet.js
