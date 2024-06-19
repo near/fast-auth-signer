@@ -17,7 +17,6 @@
     "start": "webpack serve  --mode development --history-api-fallback"
   },
   "dependencies": {
-    "@covalenthq/client-sdk": "^1.0.2",
     "@near-js/crypto": "^1.2.3",
     "@near-js/keystores": "^0.0.11",
     "@near-js/transactions": "^1.2.1",
@@ -48,6 +47,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.23.3",
     "@babel/preset-react": "^7.23.3",
+    "@covalenthq/client-sdk": "^1.0.2",
     "@playwright/test": "^1.44.0",
     "@types/node": "^20.9.0",
     "@types/uuid": "^9.0.8",
