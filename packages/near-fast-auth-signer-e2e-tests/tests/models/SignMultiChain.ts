@@ -69,22 +69,6 @@ class SignMultiChain {
   // Disable pointer events on overlay elements within the iframe and page
   async disablePointerEventsInterruption() {
     await this.page.addStyleTag({ content: 'iframe#webpack-dev-server-client-overlay { pointer-events: none; z-index: -1; }' });
-
-    // Hide blocking overlays from ant-modal
-    this.page.on('frameattached', async (frame) => {
-      const frameElement = await frame.frameElement();
-      const frameId = await frameElement.getAttribute('id');
-      if (frameId === 'nfw-connect-iframe') {
-        await this.page.evaluate(() => {
-          document.querySelectorAll('.ant-modal-wrap, .ant-modal-root, .ant-modal-mask')
-            .forEach((element) => {
-              const htmlElement = element as HTMLElement;
-              htmlElement.style.pointerEvents = 'none';
-              htmlElement.style.zIndex = '-1';
-            });
-        });
-      }
-    });
   }
 }
 
