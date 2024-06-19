@@ -16,16 +16,18 @@ const numberOfWorkers = Math.max(1, os.cpus().length - 1);
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig<TestOptions>({
-  testDir:       './tests',
-  fullyParallel: true,
+  testDir:        './tests',
+  globalSetup:    require.resolve('./global-setup'),
+  globalTeardown: require.resolve('./global-teardown'),
+  fullyParallel:  true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly:    !!process.env.CI,
-  retries:       2,
-  workers:       numberOfWorkers,
+  forbidOnly:     !!process.env.CI,
+  retries:        2,
+  workers:        numberOfWorkers,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter:      'html',
+  reporter:       'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use:           {
+  use:            {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL:     'http://127.0.0.1:3001/',
 
@@ -47,26 +49,14 @@ export default defineConfig<TestOptions>({
       name: 'webkit',
       use:  { ...devices['Desktop Safari'] },
     },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    {
+      name: 'Mobile Chrome',
+      use:  { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use:  { ...devices['iPhone 12'] },
+    },
   ],
 
   /* Run your local dev serve`r` before starting the tests */

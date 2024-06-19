@@ -3,6 +3,7 @@ import { expect, Page } from '@playwright/test';
 import { TIMEOUT } from '../utils/constants';
 import { getFirebaseAuthLink } from '../utils/email';
 import { KeyPairs, overridePasskeyFunctions } from '../utils/passkeys';
+import { addToDeleteQueue } from '../utils/queue';
 
 class AuthCallBackPage {
   private page: Page;
@@ -21,6 +22,11 @@ class AuthCallBackPage {
     });
 
     await overridePasskeyFunctions(this.page, keyPairs);
+
+    if (!isRecovery) {
+      // only add to delete queue if it's a new account
+      await addToDeleteQueue({ type: 'email', email });
+    }
 
     expect(emailData.link).toBeDefined();
     await this.page.goto(emailData.link);

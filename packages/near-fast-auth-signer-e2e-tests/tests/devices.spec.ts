@@ -1,21 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 import PageManager from '../pages/PageManager';
-import {
-  createAccountAndLandDevicePage, deleteAccount, initializeAdmin,
-  isServiceAccountAvailable
-} from '../utils/createAccount';
 import { getRandomEmailAndAccountId } from '../utils/email';
-
-const testUserUidList: string[] = [];
-
-let isAdminInitialized = false;
+import {
+  createAccountAndLandDevicePage, initializeAdmin,
+  isServiceAccountAvailable
+} from '../utils/firebase';
+import { isWalletSelectorLoaded } from '../utils/walletSelector';
 
 test.beforeAll(async () => {
-  if (isServiceAccountAvailable() && !isAdminInitialized) {
-    initializeAdmin();
-    isAdminInitialized = true;
-  }
+  initializeAdmin();
 });
 
 test('device page delete existing keys and continue sign in', async ({ page, baseURL }) => {
@@ -26,14 +20,13 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   const { email, accountId } = getRandomEmailAndAccountId();
 
   await page.goto(baseURL);
-  const walletSelector = page.locator('#ws-loaded');
-  await expect(walletSelector).toBeVisible();
+  await isWalletSelectorLoaded(page);
 
   await createAccountAndLandDevicePage({
     pm,
     email,
     accountId,
-    testUserUidList,
+    numberOfKeyPairs: 5,
   });
 
   // Wait for page to render and execute async operations
@@ -44,39 +37,55 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
   await pm.getAppPage().isLoggedIn();
 });
 
-// test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
-//   test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
+test('device page delete one key and return to device page again', async ({ page, baseURL }) => {
+  test.skip(!isServiceAccountAvailable(), 'Skipping test due to missing service account');
+  const pm = new PageManager(page);
+  test.setTimeout(300000);
+  const { email, accountId } = getRandomEmailAndAccountId();
+  await page.goto(baseURL);
+  await isWalletSelectorLoaded(page);
+  let failureCount = 0;
+  // TODO: remove this part when relayer is fixed with flakiness on sometimes not returning LackBalanceForState error
+  page.on('response', async (response) => {
+    // Check if the response URL matches the specific endpoint
+    if (response.url().includes('/relay')) {
+      try {
+        const responseBody = await response.json();
+        // console.log(`Response body: ${JSON.stringify(responseBody, null, 2)}`);
+        const failure = responseBody['Receipts Outcome'].find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
+        if (failure?.ActionError?.kind?.LackBalanceForState) {
+          failureCount += 1;
+        }
+      } catch (error) {
+        console.error('Failed to parse response as JSON:', error);
+      }
+    }
+  });
 
-//   const pm = new PageManager(page);
-//   test.setTimeout(180000);
-//   const { email, accountId } = getRandomEmailAndAccountId();
+  await createAccountAndLandDevicePage({
+    pm,
+    email,
+    accountId,
+    numberOfKeyPairs: 6,
+  });
 
-//   await page.goto(baseURL);
-//   const walletSelector = page.locator('#ws-loaded');
-//   await expect(walletSelector).toBeVisible();
+  await pm.getDevicesPage().isCheckboxLoaded(6);
+  await pm.getDevicesPage().selectAndDelete(1);
+  // Wait for the button label to change back to "Delete Key"
+  await expect(page.getByTestId('devices-delete-key')).toHaveText('Deleting...');
 
-//   await createAccountAndLandDevicePage({
-//     page,
-//     pm,
-//     email,
-//     accountId,
-//     testUserUidList,
-//   });
+  await page.waitForFunction(
+    ({ selector, expectedText }) => {
+      const element = document.querySelector(selector);
+      return element && element.textContent === expectedText;
+    },
+    { selector: 'button[data-testid="devices-delete-key"]', expectedText: 'Delete key' }
+  );
 
-//   await pm.getDevicesPage().isCheckboxLoaded(5);
-//   await pm.getDevicesPage().selectAndDelete(2);
-//   await expect(page.getByRole('button', { name: 'Signing In...' })).toBeVisible({ timeout: TIMEOUT });
-//   await expect(page.getByRole('button', { name: 'Signing In...' })).not.toBeVisible({ timeout: TIMEOUT });
-//   await pm.getDevicesPage().isCheckboxLoaded(3);
-//   await pm.getDevicesPage().selectAndDelete(2);
-
-//   await pm.getAppPage().isLoggedIn();
-// });
-
-test.afterAll(async () => {
-  // Delete test user acc
-  if (isServiceAccountAvailable()) {
-    // eslint-disable-next-line no-return-await
-    await Promise.all(testUserUidList.map(async (uid) => await deleteAccount(uid)));
+  // if it is certain that LackBalanceForState error is received, conduct rest of the steps
+  if (failureCount === 1) {
+    await pm.getDevicesPage().isCheckboxLoaded(5);
+    await pm.getDevicesPage().selectAndDelete(3);
+    await pm.getAppPage().isLoggedIn();
   }
 });

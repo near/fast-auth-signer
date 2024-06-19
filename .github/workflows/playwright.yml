@@ -10,12 +10,12 @@ jobs:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-4core
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 18.x
     # - name: Checkout pagoda-relayer-rs repository
     #   uses: actions/checkout@v3
     #   with:
@@ -72,7 +72,7 @@ jobs:
           MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
           FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
       run: yarn playwright test
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report

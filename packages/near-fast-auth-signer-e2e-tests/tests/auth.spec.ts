@@ -3,7 +3,12 @@ import { KeyPair } from 'near-api-js';
 import PageManager from '../pages/PageManager';
 import { test } from '../test-options';
 import { getRandomEmailAndAccountId } from '../utils/email';
+import { initializeAdmin } from '../utils/firebase';
 import { rerouteToCustomURL } from '../utils/url';
+
+test.beforeAll(async () => {
+  initializeAdmin();
+});
 
 test.beforeEach(async ({ page, baseURL, relayerURL }) => {
   await page.goto(baseURL);
@@ -17,7 +22,7 @@ test.beforeEach(async ({ page, baseURL, relayerURL }) => {
 
 test('should create account and login with e-mail', async ({ page }) => {
   const pm = new PageManager(page);
-  test.slow();
+  test.setTimeout(120000);
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
@@ -45,9 +50,10 @@ test('should create account and login with e-mail', async ({ page }) => {
 });
 
 test('should create account and login with passkeys', async ({ page }) => {
-  test.slow();
+  test.setTimeout(120000);
   const readUIDLs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
+
   const pm = new PageManager(page);
   const keyPair = KeyPair.fromRandom('ED25519');
 

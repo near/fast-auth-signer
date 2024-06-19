@@ -243,9 +243,9 @@ function Devices() {
               )}
 
               {
-                collections.map((collection) => (
+                collections.map((collection, index) => (
                   <Row key={collection.id}>
-                    <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} />
+                    <StyledCheckbox type="checkbox" id={collection.id} onChange={() => onClick(collection.id)} checked={deleteCollections.includes(collection.id)} data-testid={`devices-checkbox-${index}`} />
                     <label htmlFor={collection.id} title={`Created At: ${collection.createdAt}`}>{collection.label}</label>
                   </Row>
                 ))
@@ -257,7 +257,7 @@ function Devices() {
           collections.length > 0 && (
             <DevicesBottom>
 
-              <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleting}>
+              <Button type="button" onClick={onDeleteCollections} disabled={!deleteCollections.length || isDeleting} data-testid="devices-delete-key">
                 {deleteCollectionText}
               </Button>
 
