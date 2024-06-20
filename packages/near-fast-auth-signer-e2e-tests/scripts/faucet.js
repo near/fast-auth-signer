@@ -1,11 +1,12 @@
 const { CovalentClient } = require('@covalenthq/client-sdk');
+const { ethers } = require('ethers');
 
-// Same addresses as the ones in constants.ts, they can't be imported here because this script is run by node.js
+// These are the derived addresses through the tests that needs to receive some tokens from a faucet periodically, same thing and the commented ones below
 const ETH_PERSONAL_KEY_ADDRESS = '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb';
 const BNB_DOMAIN_KEY_ADDRESS =  '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71';
 
 function fromWei(wei) {
-  return Number(BigInt(wei)) / 1e18;
+  return ethers.formatEther(wei.toString());
 }
 async function fetchEVMWalletBalance(
   address,
@@ -23,7 +24,6 @@ async function fetchEVMWalletBalance(
 
   const { balance } = response.data.items[0];
   if (balance === null) return 0;
-  // type: Response<BalancesResponse>
   return fromWei(BigInt(balance).toString());
 }
 
