@@ -1,10 +1,10 @@
 import * as bitcoinLib from 'bitcoinjs-lib';
 import canonicalize from 'canonicalize';
+import { ethers } from 'ethers';
 import { fetchDerivedEVMAddress, fetchDerivedBTCAddressAndPublicKey } from 'multichain-tools';
 
-export function toWei(eth: number): string {
-  const wei = eth * 1e18;
-  return wei.toString();
+export function toWei(eth: number): bigint {
+  return ethers.parseEther(eth.toString());
 }
 
 export function toSatoshis(btc: number): string {
@@ -60,7 +60,6 @@ export const fetchDerivedAddress = async ({ accountId, chainValue, keyType }: {
       );
       address = btcAddress;
     } else if (chainValue === 60) {
-      // address = await fetchDerivedEVMAddress(accountId, derivationPath, 'testnet', 'multichain-testnet-2.testnet');
       address = await fetchDerivedEVMAddress(accountId, derivationPath, 'testnet', 'v2.multichain-mpc.testnet');
     }
 
