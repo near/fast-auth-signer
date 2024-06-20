@@ -3,6 +3,8 @@ import canonicalize from 'canonicalize';
 import { ethers } from 'ethers';
 import { fetchDerivedEVMAddress, fetchDerivedBTCAddressAndPublicKey } from 'multichain-tools';
 
+import { TransactionFormValues } from '../test-app/components/SignMultiChain';
+
 export function toWei(eth: number): bigint {
   return ethers.parseEther(eth.toString());
 }
@@ -70,18 +72,11 @@ export const fetchDerivedAddress = async ({ accountId, chainValue, keyType }: {
   }
 };
 
-export const getTransactionPayload = async (values: {
-  keyType: string,
-  chainValue: number,
-  amount: number,
-  chainId: string,
-  address: string,
-  accountId: string,
-}): Promise<Record<string, string | number | bigint>> => {
+export const getTransactionPayload = async (values: TransactionFormValues & { accountId: string }): Promise<Record<string, string | number | bigint>> => {
   const {
     keyType,
     chainId,
-    chainValue,
+    assetType: chainValue,
     amount,
     address,
     accountId
