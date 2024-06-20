@@ -1,49 +1,75 @@
-import React, { FormEvent } from 'react';
+import { yupResolver } from '@hookform/resolvers/yup';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+
+export type TransactionFormValues = {
+  keyType: string,
+  assetType: number,
+  amount: number,
+  address: string,
+  chainId: number,
+}
 
 type SignMultiChainProps = {
-  // eslint-disable-next-line no-unused-vars
-  onSubmitForm: (values: {
-    keyType: string,
-    chainValue: number,
-    amount: number,
-    chainId: string,
-    address: string}) => void
+  onSubmitForm: (_values: TransactionFormValues) => void
 }
+
+const schema = yup.object().shape({
+  keyType: yup
+    .string()
+    .required('Please select a key type'),
+  assetType: yup
+    .number()
+    .required('Please select an asset type'),
+  amount: yup
+    .number()
+    .required('Please enter amount'),
+  address: yup
+    .string()
+    .required('Please enter wallet address'),
+  chainId: yup
+    .number()
+    .required(),
+});
+
+const keyTypes = [
+  { id: 'domainKey', value: 'domainKey', label: 'Domain Key' },
+  { id: 'personalKey', value: 'personalKey', label: 'Personal Key' },
+  { id: 'unknownKey', value: 'unknownKey', label: 'Unknown Key' },
+];
+
+const assetTypes = [
+  {
+    id: 'eth', value: 60, dataChainId: 11155111, label: 'ETH sepolia'
+  },
+  {
+    id: 'bnb', value: 60, dataChainId: 97, label: 'BSC testnet'
+  },
+  {
+    id: 'btc', value: 0, dataChainId: 0, label: 'BTC testnet'
+  },
+];
+
 export default function SignMultiChain(props: SignMultiChainProps) {
   const { onSubmitForm } = props;
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
-    const formData = new FormData(event.target as HTMLFormElement);
+  const {
+    handleSubmit, setValue, register,
+  } = useForm({
+    mode:          'all',
+    resolver:      yupResolver(schema),
+    defaultValues: {}
+  });
 
-    // Check if keyType and assetType is checked
-    const keyTypeChecked = formData.has('keyType');
-    const assetTypeChecked = formData.has('assetType');
-    const isAmountPresent = formData.has('amount');
-    if (!keyTypeChecked || !assetTypeChecked || !isAmountPresent) {
-      console.log('Some input fields are missing');
-      return;
-    }
-
-    const keyType = formData.get('keyType') as string;
-    const chainValue = Number(formData.get('assetType'));
-
-    const amount = Number(formData.get('amount'));
-
-    const address = formData.get('address') as string;
-
-    const chainId: bigint | string = document
-      .querySelector('input[name="assetType"]:checked')
-      .getAttribute('data-chainid');
-
-    onSubmitForm({
-      keyType, chainId, chainValue, amount, address
-    });
+  const handleAssetTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue('chainId', parseInt(event.target.getAttribute('data-chainid'), 10));
   };
+
+  const onSubmit = (values: TransactionFormValues) => onSubmitForm(values);
 
   return (
     <div
-      id="multiChain-trnx"
       style={{
         border: '1px solid #ddd', width: 'fit-content', margin: '15px 0'
       }}
@@ -53,79 +79,42 @@ export default function SignMultiChain(props: SignMultiChainProps) {
         style={{
           display: 'flex', flexDirection: 'column', gap: 5, margin: '5px'
         }}
-        onSubmit={onSubmit}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <div
           className="input-group"
           style={{ display: 'flex', gap: 3, marginBottom: '5px' }}
         >
-          <label htmlFor="domainKey" className="radio-label">
-            <input
-              type="radio"
-              id="domainKey"
-              value="domainKey"
-              name="keyType"
-            />
-            Domain Key
-          </label>
-
-          <label htmlFor="personalKey" className="radio-label">
-            <input
-              type="radio"
-              id="personalKey"
-              value="personalKey"
-              name="keyType"
-            />
-            Personal Key
-          </label>
-
-          <label htmlFor="unknownKey" className="radio-label">
-            <input
-              type="radio"
-              id="unknownKey"
-              value="unknownKey"
-              name="keyType"
-            />
-            Unknown Key
-          </label>
+          {keyTypes.map((keyType) => (
+            <label htmlFor={keyType.id} className="radio-label" key={keyType.id}>
+              <input
+                type="radio"
+                id={keyType.id}
+                value={keyType.value}
+                {...register('keyType')}
+              />
+              {keyType.label}
+            </label>
+          ))}
         </div>
 
         <div
           className="input-group"
           style={{ display: 'flex', gap: 3, marginBottom: '5px' }}
         >
-          <label htmlFor="eth" className="radio-label">
-            <input
-              type="radio"
-              id="eth"
-              value={60}
-              data-chainid={11155111}
-              name="assetType"
-            />
-            ETH sepolia
-          </label>
-
-          <label htmlFor="bnb" className="radio-label">
-            <input
-              type="radio"
-              id="bnb"
-              value={60}
-              data-chainid={97}
-              name="assetType"
-            />
-            BSC testnet
-          </label>
-
-          <label htmlFor="btc" className="radio-label">
-            <input
-              type="radio"
-              id="btc"
-              value={0}
-              data-chainid="testnet"
-              name="assetType"
-            />
-            BTC testnet
-          </label>
+          {assetTypes.map((assetType) => (
+            <label htmlFor={assetType.id} className="radio-label" key={assetType.id}>
+              <input
+                type="radio"
+                id={assetType.id}
+                value={assetType.value}
+                data-chainid={assetType.dataChainId}
+                {...register('assetType')}
+                onChange={handleAssetTypeChange}
+              />
+              {assetType.label}
+            </label>
+          ))}
         </div>
 
         <div
@@ -137,7 +126,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             <input
               type="text"
               id="amount"
-              name="amount"
+              {...register('amount')}
               style={{ marginLeft: '3px' }}
             />
           </label>
@@ -152,7 +141,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             <input
               type="text"
               id="address"
-              name="address"
+              {...register('address')}
               style={{ marginLeft: '3px' }}
             />
           </label>
