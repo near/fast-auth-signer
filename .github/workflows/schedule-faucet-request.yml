@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
-          npm install -g yarn && yarn
+          npm install --no-save ts-node ethers
 
       - name: Run faucet.ts script
         env:
