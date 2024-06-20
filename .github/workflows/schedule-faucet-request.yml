@@ -3,7 +3,10 @@ name: Request Tokens from Faucet
 on:
   schedule:
     - cron: '0 1 * * 1' # Runs every Monday at 1am
-
+  workflow_dispatch: # Allows manual triggering
+  pull_request: # Runs on pull requests to the main branch
+    branches:
+      - main
 jobs:
   faucet-request:
     runs-on: ubuntu-latest
@@ -27,4 +30,4 @@ jobs:
           CHAINSTACK_API_KEY: ${{ secrets.CHAINSTACK_API_KEY }}
           ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
           BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
-        run: node ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests/scripts/faucet.ts
+        run: yarn ts-node ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests/scripts/faucet.ts
