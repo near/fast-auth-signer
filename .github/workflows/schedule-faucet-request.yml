@@ -3,10 +3,7 @@ name: Request Tokens from Faucet
 on:
   schedule:
     - cron: '0 1 * * 1' # Runs every Monday at 1am
-  workflow_dispatch: # Allows manual triggering
-  pull_request: # Runs on pull requests to the main branch
-    branches:
-      - main
+
 jobs:
   faucet-request:
     runs-on: ubuntu-latest
