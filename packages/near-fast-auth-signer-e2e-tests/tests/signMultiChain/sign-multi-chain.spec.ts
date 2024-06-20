@@ -5,6 +5,7 @@ import {
   receivingAddresses, getFastAuthIframe
 } from '../../utils/constants';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
+import { isWalletSelectorLoaded } from '../../utils/walletSelector';
 import SignMultiChain from '../models/SignMultiChain';
 
 let page: Page;
@@ -52,13 +53,8 @@ test.describe('Sign MultiChain', () => {
     test.slow();
   });
 
-  const ensureWalletSelectorIsLoaded = async () => {
-    const walletSelector = page.locator('#ws-loaded');
-    await expect(walletSelector).toBeVisible();
-  };
-
   test('Should show transaction details', async () => {
-    await ensureWalletSelectorIsLoaded();
+    await isWalletSelectorLoaded(page);
     await signMultiChain.submitTransaction({
       keyType: 'unknownKey', assetType: 'bnb', amount: 0.01, address: receivingAddresses.ETH_BNB
     });
@@ -72,7 +68,7 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Fail: if not authenticated', async () => {
-    await ensureWalletSelectorIsLoaded();
+    await isWalletSelectorLoaded(page);
     await isAuthenticated(false);
     await signMultiChain.submitAndApproveTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
@@ -83,7 +79,7 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Pass: Send ETH with Personal Key', async () => {
-    await ensureWalletSelectorIsLoaded();
+    await isWalletSelectorLoaded(page);
     await isAuthenticated(true);
     await signMultiChain.submitTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
@@ -96,12 +92,11 @@ test.describe('Sign MultiChain', () => {
     expect(multiChainResponse).toHaveProperty('message');
     expect(multiChainResponse.message).toBe('Successfully signed and sent transaction');
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
-    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
   // Skipping this because of the unpredictable nature concerning replacement fee
   test.skip('Should Pass: Send BNB with domain Key', async () => {
-    await ensureWalletSelectorIsLoaded();
+    await isWalletSelectorLoaded(page);
     await isAuthenticated(true);
     await signMultiChain.submitTransaction({
       keyType: 'domainKey', assetType: 'bnb', amount: 0.0001, address: receivingAddresses.ETH_BNB
@@ -114,7 +109,7 @@ test.describe('Sign MultiChain', () => {
   });
 
   test('Should Fail: Insufficient Funds with Unknown Key + BTC', async () => {
-    await ensureWalletSelectorIsLoaded();
+    await isWalletSelectorLoaded(page);
     await isAuthenticated(true);
     await signMultiChain.submitTransaction({
       keyType: 'unknownKey', assetType: 'btc', amount: 0.01, address: receivingAddresses.BTC
