@@ -116,6 +116,7 @@ describe('Sign transaction', () => {
       networkId: 'testnet',
       provider:  { type: 'JsonRpcProvider', args: { url: 'https://rpc.testnet.near.org' } },
       signer:    { type: 'InMemorySigner', keyStore: new InMemoryKeyStore() },
+      // @ts-ignore: If this is not commented, it brings an error "Property useLocalViewExecution is missing in type"
     }), 'dontcare'), 'v1.social08.testnet', {
       viewMethods:   ['get'],
       changeMethods: [],
