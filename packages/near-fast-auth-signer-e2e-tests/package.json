@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "test": "yarn playwright test",
-    "start": "webpack serve  --mode development --history-api-fallback"
+    "start": "webpack serve --mode development --history-api-fallback"
   },
   "dependencies": {
     "@near-js/crypto": "^1.2.3",
