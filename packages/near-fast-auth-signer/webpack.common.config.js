@@ -1,12 +1,23 @@
 const childProcess = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
+const dotenv = require('dotenv');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
 // Execute Git command to get the current commit ID
 const commitHash = childProcess.execSync('git rev-parse --short HEAD').toString().trim();
+// Load environment variables from .env file or process.env
+const envFilePath = path.resolve(__dirname, '.env');
+const envConfig = fs.existsSync(envFilePath) ? dotenv.parse(fs.readFileSync(envFilePath)) : process.env;
+
+// Convert environment variables for EnvironmentPlugin
+const envVars = Object.keys(envConfig).reduce((prev, next) => {
+  prev[next] = envConfig[next];
+  return prev;
+}, {});
 
 module.exports =      {
   entry:  './src/index.tsx',
@@ -46,6 +57,7 @@ module.exports =      {
       SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
       SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
       GIT_COMMIT_HASH:                      commitHash,
+      ...envVars
     }),
     ...(process.env.SENTRY_AUTH_TOKEN
       ? [sentryWebpackPlugin({
