@@ -27,7 +27,7 @@ jobs:
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
       - run: yarn bundle
-      - env:
+        env:
           ETH_PROVIDER_URL_MAINNET: ${{ secrets.ETH_PROVIDER_URL_MAINNET }}
           ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
           BNB_PROVIDER_URL_MAINNET: ${{ secrets.BNB_PROVIDER_URL_MAINNET }}
