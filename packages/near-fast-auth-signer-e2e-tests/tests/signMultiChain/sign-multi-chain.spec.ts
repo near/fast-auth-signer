@@ -38,7 +38,10 @@ test.describe('Sign MultiChain', () => {
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    // Disable pointer events that will interrupt click event on "Approve button"
+
+    /* webpack-dev-server adds a hidden iframe for hot reloading, which interferes with event propagation,
+    causing Playwright tests to run longer (up to 40 minutes). To prevent this, the iframe needs to be disabled.
+    This issue doesn't occur in production since webpack-dev-server is only used in development. */
     await signMultiChain.disablePointerEventsInterruption();
     await page.evaluate(
     // eslint-disable-next-line no-shadow
