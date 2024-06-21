@@ -27,6 +27,14 @@ jobs:
           cache: 'yarn'
       - run: yarn install --frozen-lockfile
       - run: yarn bundle
+      - env:
+          ETH_PROVIDER_URL_MAINNET: ${{ secrets.ETH_PROVIDER_URL_MAINNET }}
+          ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
+          BNB_PROVIDER_URL_MAINNET: ${{ secrets.BNB_PROVIDER_URL_MAINNET }}
+          BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
+          BTC_PROVIDER_URL_MAINNET: ${{ secrets.BTC_PROVIDER_URL_MAINNET }}
+          BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
+
       - uses: google-github-actions/setup-gcloud@v1
       - uses: google-github-actions/auth@v1
         with:

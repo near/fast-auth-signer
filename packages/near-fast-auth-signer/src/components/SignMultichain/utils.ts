@@ -72,15 +72,15 @@ const FAST_AUTH_RELAYER_URL = 'https://near-relayer-testnet.api.pagoda.co';
 
 const CHAIN_CONFIG: ChainMap = {
   ETH: {
-    providerUrl: 'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
+    providerUrl: environment.NETWORK_ID === 'mainnet' ? process.env.ETH_PROVIDER_URL_MAINNET : process.env.ETH_PROVIDER_URL_TESTNET,
   },
   BNB: {
-    providerUrl: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+    providerUrl: environment.NETWORK_ID === 'mainnet' ? process.env.BNB_PROVIDER_URL_MAINNET : process.env.BNB_PROVIDER_URL_TESTNET,
   },
   BTC: {
-    networkType: 'testnet',
+    networkType: environment.NETWORK_ID || 'testnet',
     // API ref: https://github.com/Blockstream/esplora/blob/master/API.md
-    providerUrl: 'https://blockstream.info/testnet/api/',
+    providerUrl: environment.NETWORK_ID === 'mainnet' ? process.env.BTC_PROVIDER_URL_MAINNET : process.env.BTC_PROVIDER_URL_TESTNET,
   },
 };
 
