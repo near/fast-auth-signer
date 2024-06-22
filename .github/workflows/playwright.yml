@@ -59,12 +59,20 @@ jobs:
     # - name: Print server logs
     #   if: failure()
     #   run: cat ${{ github.workspace }}/server.log
+
     - name: Install dependencies
       run: |
         cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
         npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
+
+    - name: Send secrets to process.env
+      run: |
+        echo "ETH_PROVIDER_URL_TESTNET=${{ secrets.ETH_PROVIDER_URL_TESTNET }}" >> $GITHUB_ENV
+        echo "BNB_PROVIDER_URL_TESTNET=${{ secrets.BNB_PROVIDER_URL_TESTNET }}" >> $GITHUB_ENV
+        echo "BTC_PROVIDER_URL_TESTNET=${{ secrets.BTC_PROVIDER_URL_TESTNET }}" >> $GITHUB_ENV
+
     - name: Run Playwright tests
       env:
           MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
