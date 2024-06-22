@@ -22,8 +22,6 @@ const envVars = Object.keys(process.env).reduce((prev, next) => {
   return prev;
 }, {});
 
-console.log('envVars ', envVars);
-
 module.exports =      {
   entry:  './src/index.tsx',
   output: {
