@@ -11,13 +11,18 @@ const webpack = require('webpack');
 const commitHash = childProcess.execSync('git rev-parse --short HEAD').toString().trim();
 // Load environment variables from .env file or process.env
 const envFilePath = path.resolve(__dirname, '.env');
-const envConfig = fs.existsSync(envFilePath) ? dotenv.parse(fs.readFileSync(envFilePath)) : process.env;
+if (fs.existsSync(envFilePath)) {
+  dotenv.config({ path: envFilePath });
+}
 
-// Convert environment variables for EnvironmentPlugin
-const envVars = Object.keys(envConfig).reduce((prev, next) => {
-  prev[next] = envConfig[next];
+// Convert the environment variables to the format required by EnvironmentPlugin
+// C.env variables passed via commandline takes precedence
+const envVars = Object.keys(process.env).reduce((prev, next) => {
+  prev[next] = process.env[next];
   return prev;
 }, {});
+
+console.log('envVars ', envVars);
 
 module.exports =      {
   entry:  './src/index.tsx',
