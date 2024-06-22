@@ -16,7 +16,7 @@ if (fs.existsSync(envFilePath)) {
 }
 
 // Convert the environment variables to the format required by EnvironmentPlugin
-// C.env variables passed via commandline takes precedence
+// .env variables passed via commandline takes precedence
 const envVars = Object.keys(process.env).reduce((prev, next) => {
   prev[next] = process.env[next];
   return prev;
