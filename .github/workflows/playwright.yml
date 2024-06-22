@@ -66,7 +66,7 @@ jobs:
         npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
-
+    # This .env variables will be available to be used in the signer app
     - name: Send secrets to process.env
       run: |
         echo "ETH_PROVIDER_URL_TESTNET=${{ secrets.ETH_PROVIDER_URL_TESTNET }}" >> $GITHUB_ENV
