@@ -11,6 +11,11 @@ jobs:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
     timeout-minutes: 60
     runs-on: ubuntu-22.04-4core
+    env:
+      ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
+      BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
+      BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
+
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
