@@ -249,6 +249,11 @@ function CreateAccount() {
     recordEvent('click-has-account-sign-in');
   };
 
+  const loginQueryParam = useCallback(() => {
+    searchParams.set('isRecovery', 'true');
+    return searchParams.toString();
+  }, [searchParams]);
+
   return (
     <StyledContainer inIframe={inIframe()}>
       <CreateAccountForm ref={createAccountFormRef} inIframe={inIframe()} onSubmit={handleSubmit(createAccount)}>
@@ -257,7 +262,7 @@ function CreateAccount() {
           <p className="desc">
             <span>Have an account?</span>
             {' '}
-            <Link to="/login" data-test-id="create_login_link" onClick={handleSignInClick}>Sign in</Link>
+            <Link to={{ pathname: '/login', search: loginQueryParam() }} data-test-id="create_login_link" onClick={handleSignInClick}>Sign in</Link>
           </p>
         </header>
         <Input
