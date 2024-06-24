@@ -1,7 +1,11 @@
 import { SignMessageParams } from '@near-wallet-selector/core';
 import React, { useEffect, useState } from 'react';
 
+import SignMultiChain, { TransactionFormValues } from './components/SignMultiChain';
 import useWalletSelector from './hooks/useWalletSelector';
+import {
+  getTransactionPayload,
+} from '../utils/multiChain';
 
 export default function App() {
   const selectorInstance = useWalletSelector();
@@ -67,6 +71,12 @@ export default function App() {
     }
   };
 
+  const handleSubmitTransaction = async (values: TransactionFormValues) => {
+    const accountId = JSON.parse(window.localStorage.accountId);
+    const payload = await getTransactionPayload({ ...values, accountId });
+    await fastAuthWallet.signMultiChainTransaction(payload);
+  };
+
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
     return (
       <div id="loading-ws">Loading...</div>
@@ -92,6 +102,7 @@ export default function App() {
           Sign In
         </button>
       )}
+      <SignMultiChain onSubmitForm={handleSubmitTransaction} />
       <button
         type="button"
         data-testid="sign-transaction-button"

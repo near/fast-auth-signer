@@ -1,0 +1,30 @@
+name: Request Tokens from Faucet
+
+on:
+  schedule:
+    - cron: '0 1 * * 1' # Runs every Monday at 1am
+
+jobs:
+  faucet-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
+          npm install --no-save ts-node ethers
+
+      - name: Run faucet.ts script
+        env:
+          CHAINSTACK_API_KEY: ${{ secrets.CHAINSTACK_API_KEY }}
+          ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
+          BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
+        run: yarn ts-node ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests/scripts/faucet.ts
