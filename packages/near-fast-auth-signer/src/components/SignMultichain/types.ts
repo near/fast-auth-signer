@@ -1,3 +1,5 @@
+import { EVMRequest, BitcoinRequest } from 'multichain-tools';
+
 export type EVMChain = 'ETH' | 'BNB';
 export type Chain = EVMChain | 'BTC';
 
@@ -13,26 +15,4 @@ export type ChainMap<T = any> = {
   [key in Chain]: T
 };
 
-export type SLIP044ChainId = 60 | 0;
-
-interface BaseSendMultichainMessage {
-  chain: SLIP044ChainId;
-  domain?: string;
-  to: string;
-  value: bigint;
-  meta?: { [k: string]: any };
-  from: string;
-}
-
-export type EvmSendMultichainMessage = BaseSendMultichainMessage & {
-  chainId: bigint;
-  maxFeePerGas?: bigint;
-  maxPriorityFeePerGas?: bigint;
-  gasLimit?: number;
-};
-
-export type BTCSendMultichainMessage = BaseSendMultichainMessage & {
-  network: 'mainnet' | 'testnet';
-};
-
-export type SendMultichainMessage = BTCSendMultichainMessage | EvmSendMultichainMessage;
+export type SendMultichainMessage = Omit<EVMRequest | BitcoinRequest, 'nearAuthentication'>;

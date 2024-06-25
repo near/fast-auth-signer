@@ -4,7 +4,8 @@ import React, {
 import styled from 'styled-components';
 
 import {
-  Chain, EvmSendMultichainMessage, SendMultichainMessage
+  Chain,
+  SendMultichainMessage,
 } from './types';
 import {
   validateMessage,
@@ -132,22 +133,20 @@ function SignMultichain() {
       }
 
       // if the domain is the same as the origin, hide the modal
-      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+      if (transaction?.derivationPath.domain === event?.origin && !isSafariBrowser) {
         // Check early to hide the UI quicker
         window.parent.postMessage({ hideModal: true }, '*');
       }
 
-      if (transaction?.domain && transaction?.domain !== event?.origin) {
+      if (transaction?.derivationPath.domain && transaction?.derivationPath.domain !== event?.origin) {
         setUnsafe(true);
       }
 
       const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
-      const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
-        chain: transaction.chain,
-        to:    transaction.to,
-        value: transaction.value.toString(),
-        from:  transaction.from,
-      });
+      const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties(
+        transaction,
+        window.fastAuthController.getAccountId()
+      );
       const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
       const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
 
@@ -157,9 +156,9 @@ function SignMultichain() {
         feeProperties
       });
       setValid(true);
-      setIsDomainKey(transaction?.domain === event?.origin);
+      setIsDomainKey(transaction?.derivationPath.domain === event?.origin);
       setMessage(transaction);
-      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+      if (transaction?.derivationPath.domain === event?.origin && !isSafariBrowser) {
         await signMultichainTransaction(transaction, feeProperties);
       }
     } catch (e) {
