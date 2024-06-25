@@ -15,4 +15,6 @@ export type ChainMap<T = any> = {
   [key in Chain]: T
 };
 
-export type SendMultichainMessage = Omit<EVMRequest | BitcoinRequest, 'nearAuthentication'>;
+export type SendMultichainMessage = Omit<EVMRequest | BitcoinRequest, 'nearAuthentication' | 'chainConfig'> & {
+  chainConfig?: EVMRequest['chainConfig'] | BitcoinRequest['chainConfig'];
+};

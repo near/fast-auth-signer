@@ -1,3 +1,4 @@
+import { EVMRequest } from 'multichain-tools';
 import React, {
   useState, useCallback, useRef, useMemo
 } from 'react';
@@ -73,8 +74,8 @@ function SignMultichain() {
   const [isDomainKey, setIsDomainKey] = useState(true);
   const tokenSymbol = useMemo(
     () => getTokenSymbol({
-      chain:   message?.chain,
-      chainId: (message as EvmSendMultichainMessage)?.chainId,
+      chain:   message.derivationPath?.chain,
+      chainId: BigInt((message as EVMRequest).transaction?.chainId),
     }),
     [message]
   );
@@ -214,14 +215,14 @@ function SignMultichain() {
   }
 
   return (
-    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin} warning={isUnsafe}>
+    <ModalSignWrapper ref={signTransactionRef} hide={message.derivationPath?.domain === origin} warning={isUnsafe}>
       <div className="modal-body">
         <div className="modal-top">
           <ModalIconSvg />
           <h3>Approve Transaction?</h3>
           <div className="transaction-details">
             { isUnsafe ? <WarningCircleSVG /> : <InternetSvg />}
-            { message?.domain || origin || 'Unknown App'}
+            { message.derivationPath?.domain || origin || 'Unknown App'}
           </div>
         </div>
         <div className="modal-middle">
@@ -239,7 +240,7 @@ function SignMultichain() {
               rightSide={(
                 <TableRow
                   asset={tokenSymbol as Chain}
-                  content={<b><span title={message?.to || ''}>{`${shortenAddress(message?.to || '...')}`}</span></b>}
+                  content={<b><span title={message.transaction?.to || ''}>{`${shortenAddress(message?.transaction.to || '...')}`}</span></b>}
                 />
               )}
             />
@@ -249,8 +250,8 @@ function SignMultichain() {
                 <TableRow
                   asset={tokenSymbol as Chain}
                   content={multichainAssetToNetworkName({
-                    chain:   message?.chain,
-                    chainId: (message as EvmSendMultichainMessage)?.chainId,
+                    chain:   message.derivationPath?.chain,
+                    chainId: BigInt((message as EVMRequest)?.transaction.chainId),
                   })}
                 />
               )}
@@ -272,7 +273,7 @@ function SignMultichain() {
                 <p>
                   I’ve carefully reviewed the request and trust
                   {' '}
-                  <b>{message?.domain}</b>
+                  <b>{message.derivationPath?.domain}</b>
                 </p>
               </Container>
               <WarningContainer>
