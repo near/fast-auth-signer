@@ -249,13 +249,6 @@ export const multichainSignAndSend = async ({
 }) => {
   const accountId = window.fastAuthController.getAccountId();
   const keypair = await window.fastAuthController.getKey(accountId);
-  const signMultiChainWithFee: SendMultichainMessage = {
-    ...signMultichainRequest,
-    transaction: {
-      ...signMultichainRequest.transaction,
-      ...feeProperties
-    }
-  };
 
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
@@ -265,45 +258,46 @@ export const multichainSignAndSend = async ({
     })],
   };
 
+  const signMultiChainWithFee: EVMRequest | BitcoinRequest = {
+    nearAuthentication: { networkId, keypair, accountId },
+    fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
+    ...signMultichainRequest,
+    chainConfig:        {
+      ...chainConfig,
+      ...signMultichainRequest.chainConfig,
+    },
+    transaction:        {
+      ...signMultichainRequest.transaction,
+      ...feeProperties,
+    }
+  };
+
   // chain is the slip04 chain id
   if (signMultichainRequest.derivationPath.chain === 60) {
-    return signAndSendEVMTransaction({
-      nearAuthentication: { networkId, keypair, accountId },
-      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
-      chainConfig,
-      ...signMultiChainWithFee
-    });
+    return signAndSendEVMTransaction(signMultiChainWithFee);
   }
 
   if (signMultichainRequest.derivationPath.chain === 0) {
     return signAndSendBTCTransaction({
-      nearAuthentication: { networkId, keypair, accountId },
-      fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
       chainConfig:        chainConfig as BTCChainConfigWithProviders,
       ...signMultiChainWithFee as BitcoinRequest,
     });
   }
 
-  try {
-    assertNever(signMultichainRequest.derivationPath.chain);
-    // unreachable
-    return null;
-  } catch (e) {
-    return {
-      success:      false,
-      errorMessage: 'Chain not supported',
-    };
-  }
+  return {
+    success:      false,
+    errorMessage: 'Chain not supported',
+  };
 };
 
 export const multichainGetFeeProperties = async (request: SendMultichainMessage, signerId: string) => {
   if (request.derivationPath.chain === 0) {
     const { address } = await fetchDerivedBTCAddressAndPublicKey({
       signerId,
-      path:          request.derivationPath,
-      network:        (request as BitcoinRequest).chainConfig.network,
-      nearNetworkId:  environment.NETWORK_ID,
-      contract:       getMultiChainContract(),
+      path:                 request.derivationPath,
+      btcNetworkId:         (request as BitcoinRequest).chainConfig.network,
+      nearNetworkId:        environment.NETWORK_ID,
+      multichainContractId:       getMultiChainContract(),
     });
 
     const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, address, [{
@@ -316,11 +310,6 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
     const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, request.transaction);
     return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
-  try {
-    assertNever(request.derivationPath.chain);
-    // unreachable
-    return null;
-  } catch (e) {
-    return null;
-  }
+
+  return null;
 };

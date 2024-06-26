@@ -1,4 +1,5 @@
-import { EVMRequest, BitcoinRequest } from 'multichain-tools';
+import { EVMRequest, BitcoinRequest, BTCNetworkIds } from 'multichain-tools';
+import { KeyDerivationPath } from 'multichain-tools/src/kdf/types';
 
 export type EVMChain = 'ETH' | 'BNB';
 export type Chain = EVMChain | 'BTC';
@@ -15,6 +16,20 @@ export type ChainMap<T = any> = {
   [key in Chain]: T
 };
 
-export type SendMultichainMessage = Omit<EVMRequest | BitcoinRequest, 'nearAuthentication' | 'chainConfig'> & {
-  chainConfig?: EVMRequest['chainConfig'] | BitcoinRequest['chainConfig'];
-};
+export type SendMultichainMessage =
+  | (Omit<
+      EVMRequest,
+      'nearAuthentication' | 'chainConfig' | 'derivationPath'
+    > & {
+      chainConfig?: Partial<EVMRequest['chainConfig']>;
+      derivationPath: Omit<KeyDerivationPath, 'chain'> & { chain: 60 };
+    })
+  | (Omit<
+      BitcoinRequest,
+      'nearAuthentication' | 'chainConfig' | 'derivationPath'
+    > & {
+      chainConfig: {
+        network: BTCNetworkIds;
+      } & Partial<Omit<BitcoinRequest['chainConfig'], 'network'>>;
+      derivationPath: Omit<KeyDerivationPath, 'chain'> & { chain: 0 };
+    });

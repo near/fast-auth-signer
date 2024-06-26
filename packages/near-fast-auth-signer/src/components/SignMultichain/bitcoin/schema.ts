@@ -3,15 +3,32 @@ import * as yup from 'yup';
 import { BaseSendMultichainMessageSchema } from '../schema';
 
 export const SendBTCMultichainMessageSchema = BaseSendMultichainMessageSchema.shape({
-  chain:   yup.number().required().test('is-btc', 'Invalid BTC chain value', (value) => value === 0),
-  network: yup.string().oneOf(['mainnet', 'testnet']).required(),
-  fee:     yup.number().optional(),
-  utxos:   yup.array().optional(),
-}).test('fee and utxos check', 'If fee is present, utxos must be present and vice versa', (value) => {
-  const { fee, utxos } = value;
-  // Check if both are present or both are undefined
-  if ((fee && utxos) || (!fee && !utxos)) {
-    return true; // Validation succeeds
+  transaction: yup.object().shape({
+    to:      yup.string().required(),
+    value:   yup.string().required(),
+    inputs:  yup.array().optional(),
+    outputs: yup.array(yup.object({
+      address: yup.string().required(),
+      value:   yup.number().required()
+    })).optional()
+  }).required(),
+  chainConfig: yup.object().shape({
+    providerUrl: yup.string().required(),
+    contract:    yup.string().required(),
+    network:     yup.string().oneOf(['mainnet', 'testnet', 'regtest']).required()
+  }).required(),
+  derivationPath:     yup.object().shape({
+    chain:  yup.number().oneOf([0]).required(),
+    domain: yup.string().optional(),
+    meta:   yup.object().optional()
+  }).required()
+}).test('inputs and outputs check', 'If inputs are present, outputs must be present and vice versa', (value) => {
+  const { transaction } = value;
+  if (transaction) {
+    const { inputs, outputs } = transaction;
+    if ((inputs && outputs) || (!inputs && !outputs)) {
+      return true;
+    }
   }
-  return false; // Validation fails
+  return false;
 });
