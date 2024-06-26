@@ -13,8 +13,8 @@ export const SendBTCMultichainMessageSchema = BaseSendMultichainMessageSchema.sh
     })).optional()
   }).required(),
   chainConfig: yup.object().shape({
-    providerUrl: yup.string().required(),
-    contract:    yup.string().required(),
+    providerUrl: yup.string().optional(),
+    contract:    yup.string().optional(),
     network:     yup.string().oneOf(['mainnet', 'testnet', 'regtest']).required()
   }).required(),
   derivationPath:     yup.object().shape({

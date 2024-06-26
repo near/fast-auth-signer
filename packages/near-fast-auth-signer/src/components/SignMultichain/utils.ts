@@ -7,9 +7,9 @@ import {
   EVMRequest,
   SLIP044ChainId,
   fetchDerivedBTCAddressAndPublicKey,
-  BitcoinRequest
+  BitcoinRequest,
+  BTCChainConfigWithProviders
 } from 'multichain-tools';
-import { BTCChainConfigWithProviders } from 'multichain-tools/chains/Bitcoin/types';
 import * as yup from 'yup';
 
 import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
@@ -84,16 +84,15 @@ const CHAIN_CONFIG: ChainMap = {
 export const getMultiChainContract = () => (environment.NETWORK_ID === 'mainnet'
   ? MULTICHAIN_CONTRACT_MAINNET : MULTICHAIN_CONTRACT_TESTNET);
 
-const SendMultichainMessageSchema = yup.lazy((value: { chain: SLIP044ChainId }) => {
+const SendMultichainMessageSchema = yup.lazy((value: SendMultichainMessage) => {
   // chain is the slip044 chain id
-  if (value.chain === 60) {
+  if (value.derivationPath.chain === 60) {
     return SendEVMMultichainMessageSchema;
   }
-  if (value.chain === 0) {
+  if (value.derivationPath.chain === 0) {
     return SendBTCMultichainMessageSchema;
   }
-  assertNever(value.chain, `Schema for chain ${value.chain} is not defined`);
-  // unreachable
+
   return null;
 });
 
