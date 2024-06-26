@@ -6,9 +6,10 @@ import {
   signAndSendBTCTransaction,
   EVMRequest,
   SLIP044ChainId,
-  fetchDerivedBTCAddressAndPublicKey
+  fetchDerivedBTCAddressAndPublicKey,
+  BitcoinRequest
 } from 'multichain-tools';
-import { BitcoinRequest, BTCChainConfigWithProviders } from 'multichain-tools/src/chains/Bitcoin/types';
+import { BTCChainConfigWithProviders } from 'multichain-tools/chains/Bitcoin/types';
 import * as yup from 'yup';
 
 import { SendBTCMultichainMessageSchema } from './bitcoin/schema';

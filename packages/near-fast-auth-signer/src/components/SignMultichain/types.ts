@@ -1,5 +1,6 @@
-import { EVMRequest, BitcoinRequest, BTCNetworkIds } from 'multichain-tools';
-import { KeyDerivationPath } from 'multichain-tools/src/kdf/types';
+import {
+  EVMRequest, BitcoinRequest, BTCNetworkIds, KeyDerivationPath
+} from 'multichain-tools';
 
 export type EVMChain = 'ETH' | 'BNB';
 export type Chain = EVMChain | 'BTC';
