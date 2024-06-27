@@ -22,8 +22,11 @@ type TransactionDetail = {
 class SignMultiChain {
   private readonly page: Page;
 
+  private isWebkit: boolean;
+
   constructor(page: Page) {
     this.page = page;
+    this.isWebkit = false;
   }
 
   // Wait for about 4 minutes to get multichain response
@@ -47,13 +50,18 @@ class SignMultiChain {
     await this.page.check(`input#${assetType.toLowerCase()}`);
     await this.page.fill('input#amount', `${amount}`);
     await this.page.fill('input#address', `${address}`);
-    await this.page.click('button[type="submit"]');
+    // Webkit browsers only trigger submit if button is double-clicked, this is only happening with our test dapp
+    if (this.isWebkit) {
+      await this.page.dblclick('button[type="submit"]');
+    } else {
+      await this.page.click('button[type="submit"]');
+    }
   }
 
   async clickApproveButton() {
     const frame = getFastAuthIframe(this.page);
     const approveButton = frame.locator('button:has-text("Approve")');
-    await approveButton.waitFor({ state: 'visible' });
+    await approveButton.waitFor();
     await approveButton.click();
   }
 
@@ -69,6 +77,10 @@ class SignMultiChain {
   // Disable pointer events on overlay elements within the iframe and page
   async disablePointerEventsInterruption() {
     await this.page.addStyleTag({ content: 'iframe#webpack-dev-server-client-overlay { pointer-events: none; z-index: -1; }' });
+  }
+
+  setIsWebkit(isWebkit: boolean) {
+    this.isWebkit = isWebkit;
   }
 }
 
