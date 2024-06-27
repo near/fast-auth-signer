@@ -50,12 +50,14 @@ class SignMultiChain {
     await this.page.check(`input#${assetType.toLowerCase()}`);
     await this.page.fill('input#amount', `${amount}`);
     await this.page.fill('input#address', `${address}`);
+    await this.page.click('button[type="submit"]');
+
     // Webkit browsers only trigger submit if button is double-clicked, this is only happening with our test dapp
-    if (this.isWebkit) {
+    /* if (this.isWebkit && !process.env.CI) {
       await this.page.dblclick('button[type="submit"]');
     } else {
       await this.page.click('button[type="submit"]');
-    }
+    } */
   }
 
   async clickApproveButton() {
