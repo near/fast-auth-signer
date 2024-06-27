@@ -9389,6 +9389,11 @@ lodash.once@^4.0.0:
   resolved "https://registry.npmjs.org/lodash.once/-/lodash.once-4.1.1.tgz"
   integrity sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==
 
+lodash.pickby@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.pickby/-/lodash.pickby-4.6.0.tgz#7dea21d8c18d7703a27c704c15d3b84a67e33aff"
+  integrity sha512-AZV+GsS/6ckvPOVQPXSiFFacKvKB4kOQu6ynt9wz0F3LO4R9Ij4K1ddYsIytDpSgLz88JHd9P+oaLeej5/Sl7Q==
+
 lodash@^4.17.20, lodash@^4.17.21:
   version "4.17.21"
   resolved "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"
@@ -9887,6 +9892,21 @@ multicast-dns@^7.2.5:
     dns-packet "^5.2.2"
     thunky "^1.0.2"
 
+multichain-tools@1.0.13-beta.3:
+  version "1.0.13-beta.3"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.13-beta.3.tgz#b16ca32bd0a945a92fae25a77e3d0a618b8df30a"
+  integrity sha512-FzHMyvcXgzOI5IlV0xAh53y02npY88RreDZU23UnkRMY7JnWeqvRspmJBr7EH/iIJ9a2bnVkwKWPGvu0K+3CSw==
+  dependencies:
+    axios "^1.6.8"
+    bitcoinjs-lib "^6.1.5"
+    bn.js "^5.2.1"
+    canonicalize "^2.0.0"
+    coinselect "^3.1.13"
+    elliptic "^6.5.5"
+    ethers "^6.11.1"
+    lodash.pickby "^4.6.0"
+    near-api-js "^3.0.4"
+
 multichain-tools@^1.0.12:
   version "1.0.12"
   resolved "https://registry.npmjs.org/multichain-tools/-/multichain-tools-1.0.12.tgz"
@@ -9900,10 +9920,10 @@ multichain-tools@^1.0.12:
     ethers "^6.11.1"
     near-api-js "^3.0.4"
 
-multichain-tools@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.npmjs.org/multichain-tools/-/multichain-tools-1.0.8.tgz"
-  integrity sha512-67L92xHJkP2OsMH9PXuSDi/5DMmDcL29Yjb7yI2mrue+IKQOdIVByI2kbageeTJ5ubx27OOwfjPDlNGM68+Oew==
+multichain-tools@^1.0.13-beta.3:
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.13.tgz#5b4376249b0a8f764c821f7cb5f805c835bfd01c"
+  integrity sha512-VDA/IgNBIAK045nAV4868PFNmN1/kNlkYcC5aEEFEH/EiLOb62gwiM0b2ayjgfFHcZmvNt2SCD79T8rEZMKOlw==
   dependencies:
     axios "^1.6.8"
     bitcoinjs-lib "^6.1.5"
@@ -10024,10 +10044,10 @@ near-api-js@^3.0.4:
     near-abi "0.1.1"
     node-fetch "2.6.7"
 
-near-fastauth-wallet@^0.0.17:
-  version "0.0.17"
-  resolved "https://registry.npmjs.org/near-fastauth-wallet/-/near-fastauth-wallet-0.0.17.tgz"
-  integrity sha512-EH0gMsIQKPpcKn5AZVTyzg/fj1GP+GeFzsn+3U1ARHl1rFg+IB+DG4z7YnpQ0J7tUUWfJC+rOLG0BlXk+8Q9qg==
+near-fastauth-wallet@2.0.1-beta.1:
+  version "2.0.1-beta.1"
+  resolved "https://registry.yarnpkg.com/near-fastauth-wallet/-/near-fastauth-wallet-2.0.1-beta.1.tgz#d4a7d2c2de8bc324fc6fb0e62537bdbca06b696f"
+  integrity sha512-whqe8vbm1YL+jaqNrMX/lCzj9iV2GJcSbEgzJW3kaSnBo+o42vkPcv/fv6JosZqAxhfYokfnhobOMb+dncXrRQ==
   dependencies:
     "@ant-design/icons" "^5.3.6"
     "@near-js/transactions" "^0.2.1"
@@ -10036,7 +10056,8 @@ near-fastauth-wallet@^0.0.17:
     "@vitejs/plugin-react" "^4.2.1"
     antd "^5.12.8"
     class-variance-authority "^0.7.0"
-    multichain-tools "^1.0.8"
+    js-sha256 "^0.11.0"
+    multichain-tools "^1.0.13-beta.3"
     near-api-js "^2.1.4"
     tslib "^2.3.0"
     usehooks-ts "^2.9.2"

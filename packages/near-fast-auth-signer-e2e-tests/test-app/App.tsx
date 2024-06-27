@@ -1,15 +1,16 @@
 import { SignMessageParams } from '@near-wallet-selector/core';
+import { FastAuthWallet } from 'near-fastauth-wallet';
 import React, { useEffect, useState } from 'react';
 
 import SignMultiChain, { TransactionFormValues } from './components/SignMultiChain';
 import useWalletSelector from './hooks/useWalletSelector';
-import {
-  getTransactionPayload,
-} from '../utils/multiChain';
+import { getDomain } from '../utils/multiChain';
+
+type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
 export default function App() {
   const selectorInstance = useWalletSelector();
-  const [fastAuthWallet, setFastAuthWallet] = useState<any>();
+  const [fastAuthWallet, setFastAuthWallet] = useState<FastAuthWalletInterface | null>(null);
   const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
   const [isMessageSignatureValid, setIsMessageSignatureValid] = useState(false);
 
@@ -18,7 +19,8 @@ export default function App() {
       if (!selectorInstance) return;
 
       const wallet = await selectorInstance.wallet('fast-auth-wallet');
-      setFastAuthWallet(wallet);
+      // Using any because the selector exposes the NEP wallet interface that cannot be cast to the current FastAuthWallet interface
+      setFastAuthWallet(wallet as any);
     };
 
     getWallet();
@@ -64,17 +66,45 @@ export default function App() {
     try {
       setIsMessageSignatureValid(false);
       const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
-      const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
-      setIsMessageSignatureValid(isValid);
+      if (messageSignature) {
+        const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
+        setIsMessageSignatureValid(isValid);
+      }
     } catch (error) {
       console.error('Error signing message:', error);
     }
   };
 
   const handleSubmitTransaction = async (values: TransactionFormValues) => {
-    const accountId = JSON.parse(window.localStorage.accountId);
-    const payload = await getTransactionPayload({ ...values, accountId });
-    await fastAuthWallet.signMultiChainTransaction(payload);
+    const domain = getDomain(values.keyType);
+
+    if (values.assetType === 0) {
+      await fastAuthWallet.signMultiChainTransaction({
+        derivationPath: {
+          chain: values.assetType,
+          ...(domain ? { domain } : {}),
+        },
+        transaction: {
+          to:      values.address,
+          value:   values.amount,
+        },
+        chainConfig: {
+          network: 'testnet',
+        },
+      });
+    } else if (values.assetType === 60) {
+      await fastAuthWallet.signMultiChainTransaction({
+        derivationPath: {
+          chain: values.assetType,
+          ...(domain ? { domain } : {}),
+        },
+        transaction: {
+          to:      values.address,
+          value:   values.amount,
+          chainId: values.assetType,
+        },
+      });
+    }
   };
 
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {

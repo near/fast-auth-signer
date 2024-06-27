@@ -5,7 +5,7 @@ import * as yup from 'yup';
 
 export type TransactionFormValues = {
   keyType: string,
-  assetType: number,
+  assetType: 0 | 60,
   amount: number,
   address: string,
   chainId: number,
