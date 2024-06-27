@@ -6,7 +6,7 @@ import * as yup from 'yup';
 export type TransactionFormValues = {
   keyType: string,
   assetType: 0 | 60,
-  amount: number,
+  amount: string,
   address: string,
   chainId: number,
 }
@@ -16,22 +16,12 @@ type SignMultiChainProps = {
 }
 
 const schema = yup.object().shape({
-  keyType: yup
-    .string()
-    .required('Please select a key type'),
-  assetType: yup
-    .number()
-    .required('Please select an asset type'),
-  amount: yup
-    .number()
-    .required('Please enter amount'),
-  address: yup
-    .string()
-    .required('Please enter wallet address'),
-  chainId: yup
-    .number()
-    .required(),
-});
+  keyType:   yup.string().required('Please select a key type'),
+  assetType: yup.number().oneOf([0, 60]).required('Please select an asset type'),
+  amount:    yup.string().required('Please enter amount'),
+  address:   yup.string().required('Please enter wallet address'),
+  chainId:   yup.number().required(),
+}).required();
 
 const keyTypes = [
   { id: 'domainKey', value: 'domainKey', label: 'Domain Key' },
@@ -66,8 +56,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
     setValue('chainId', parseInt(event.target.getAttribute('data-chainid'), 10));
   };
 
-  const onSubmit = (values: TransactionFormValues) => onSubmitForm(values);
-
   return (
     <div
       style={{
@@ -79,7 +67,7 @@ export default function SignMultiChain(props: SignMultiChainProps) {
         style={{
           display: 'flex', flexDirection: 'column', gap: 5, margin: '5px'
         }}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmitForm)}
       >
         <div
           className="input-group"

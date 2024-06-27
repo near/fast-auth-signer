@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
-export function toWei(eth: number): bigint {
-  return ethers.parseEther(eth.toString());
+export function toWei(eth: number): string {
+  return ethers.parseEther(eth.toString()).toString();
 }
 
 export function toSatoshis(btc: number): string {

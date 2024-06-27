@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import SignMultiChain, { TransactionFormValues } from './components/SignMultiChain';
 import useWalletSelector from './hooks/useWalletSelector';
-import { getDomain } from '../utils/multiChain';
+import { getDomain, toSatoshis, toWei } from '../utils/multiChain';
 
 type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
@@ -86,7 +86,7 @@ export default function App() {
         },
         transaction: {
           to:      values.address,
-          value:   values.amount,
+          value:   toSatoshis(Number(values.amount)),
         },
         chainConfig: {
           network: 'testnet',
@@ -100,8 +100,8 @@ export default function App() {
         },
         transaction: {
           to:      values.address,
-          value:   values.amount,
-          chainId: values.assetType,
+          value:   toWei(Number(values.amount)),
+          chainId: values.chainId,
         },
       });
     }

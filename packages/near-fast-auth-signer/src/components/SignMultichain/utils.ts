@@ -250,7 +250,8 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (request.derivationPath.chain === 60) {
     let providerUrl: string;
-    switch ((request as EVMRequest).transaction.chainId) {
+    const chainId = BigInt((request as EVMRequest).transaction.chainId);
+    switch (chainId) {
       case BigInt(11155111):
         providerUrl = CHAIN_CONFIG.ETH.providerUrl;
         break;
