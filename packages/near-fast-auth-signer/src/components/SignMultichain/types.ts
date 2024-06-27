@@ -16,7 +16,7 @@ export type ChainMap<T = any> = {
   // eslint-disable-next-line no-unused-vars
   [key in Chain]: T
 };
-
+// This type should be kept in sync with near-fastauth-wallet receiving message: https://github.com/near/near-fastauth-wallet/blob/bc01be297c3fc140e330f8ec7a6e05382807dc51/src/lib/fastAuthWalletConnection.ts#L81
 export type SendMultichainMessage =
   | (Omit<
       EVMRequest,
