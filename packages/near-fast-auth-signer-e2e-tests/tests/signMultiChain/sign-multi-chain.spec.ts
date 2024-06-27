@@ -14,9 +14,9 @@ let signMultiChain: SignMultiChain;
 const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
 const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
 
-const fakKeyPair = KeyPair.fromString(userFAK);
-
 const isAuthenticated = async (loggedIn: boolean) => {
+  const fakKeyPair = KeyPair.fromString(userFAK);
+
   if (!page) return;
   if (loggedIn) {
     await overridePasskeyFunctions(page, {
