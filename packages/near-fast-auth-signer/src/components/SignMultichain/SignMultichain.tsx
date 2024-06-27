@@ -1,4 +1,3 @@
-import { EVMRequest } from 'multichain-tools';
 import React, {
   useState, useCallback, useRef, useMemo
 } from 'react';
@@ -65,17 +64,14 @@ const WarningContainer = styled.div`
 function SignMultichain() {
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
-  const [message, setMessage] = useState<SendMultichainMessage>(null);
+  const [message, setMessage] = useState<SendMultichainMessage | null>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
   const [isValid, setValid] = useState(null);
   const [origin, setOrigin] = useState(null);
   const [isDomainKey, setIsDomainKey] = useState(true);
   const tokenSymbol = useMemo(
-    () => getMultichainAssetInfo({
-      chain:   message?.derivationPath?.chain,
-      chainId: BigInt((message as EVMRequest)?.transaction?.chainId ?? 0),
-    })?.tokenSymbol,
+    () => message && getMultichainAssetInfo(message)?.tokenSymbol,
     [message]
   );
   const [isUnsafe, setUnsafe] = useState(false);
@@ -248,10 +244,7 @@ function SignMultichain() {
               rightSide={(
                 <TableRow
                   asset={tokenSymbol as Chain}
-                  content={getMultichainAssetInfo({
-                    chain:   message?.derivationPath?.chain,
-                    chainId: BigInt((message as EVMRequest)?.transaction.chainId ?? 0),
-                  })?.networkName}
+                  content={message && getMultichainAssetInfo(message)?.networkName}
                 />
               )}
             />
