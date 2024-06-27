@@ -15,9 +15,7 @@ import * as yup from 'yup';
 import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
 import { SendEVMMultichainMessageSchema } from './evm/schema';
 import {
-  Chain,
   ChainMap,
-  EVMChainMap,
   SendMultichainMessage,
 } from './types';
 import { assertNever } from '../../utils';
@@ -55,12 +53,6 @@ type EVMFeeProperties = {
 }
 
 export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties;
-
-const EVMChains: EVMChainMap<boolean> = {
-  ETH: true,
-  BNB: true,
-};
-export const isTokenSymbolEVMChain = (chain: Chain): boolean => !!EVMChains[chain];
 
 const FAST_AUTH_RELAYER_URL = 'https://near-relayer-testnet.api.pagoda.co';
 
@@ -108,83 +100,49 @@ export const validateMessage = async (message: SendMultichainMessage): Promise<b
 
 type ChainDetails = { chain: SLIP044ChainId; chainId?: bigint };
 
-export const getTokenSymbol = (chainDetails: ChainDetails) => {
-  // chain is the slip044 chain id
+export const getMultichainAssetInfo = (chainDetails: ChainDetails): {
+  tokenSymbol: string;
+  coinGeckoId: string;
+  networkName: string;
+} | null => {
   if (chainDetails.chain === 60) {
+    switch (chainDetails.chainId) {
+      case BigInt(1):
+      case BigInt(11155111):
+        return {
+          tokenSymbol: 'ETH',
+          coinGeckoId: 'ethereum',
+          networkName: chainDetails.chainId === BigInt(1) ? 'Ethereum Mainnet' : 'Ethereum Sepolia Network'
+        };
+      case BigInt(56):
+      case BigInt(97):
+        return {
+          tokenSymbol: 'BNB',
+          coinGeckoId: 'binancecoin',
+          networkName: chainDetails.chainId === BigInt(56) ? 'Binance Smart Chain Mainnet' : 'Binance Smart Chain Testnet'
+        };
+      default:
+        throw new Error('Chain not supported');
+    }
+  }
+
+  if (chainDetails.chain === 0) {
     return {
-      1:        'ETH',
-      56:       'BNB',
-      97:       'BNB',
-      11155111: 'ETH'
-    }[Number(chainDetails.chainId)];
-  }
-  if (chainDetails.chain === 0) {
-    return 'BTC';
-  }
-  try {
-    assertNever(chainDetails.chain);
-    // unreachable
-    return null;
-  } catch (e) {
-    return null;
-  }
-};
-
-export const multichainAssetToCoinGeckoId = (chainDetails: ChainDetails) => {
-  const chainIdMap = {
-    1:        'ethereum',
-    56:       'binancecoin',
-    97:       'binancecoin',
-    11155111: 'ethereum'
-  };
-
-  const evmChainId = Number(chainDetails.chainId);
-
-  // chain is the slip044 chain id
-  if (chainDetails.chain === 60) {
-    return chainIdMap[evmChainId];
-  }
-
-  if (chainDetails.chain === 0) {
-    return 'bitcoin';
+      tokenSymbol: 'BTC',
+      coinGeckoId: 'bitcoin',
+      networkName: 'Bitcoin Network'
+    };
   }
 
   try {
     assertNever(chainDetails.chain);
+
     // unreachable
     return null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
-
-export const multichainAssetToNetworkName = (chainDetails: ChainDetails) => {
-  // chain is the slip044 chain id
-  if (chainDetails.chain === 60) {
-    return {
-      1:        'Ethereum Mainnet',
-      56:       'Binance Smart Chain Mainnet',
-      97:       'Binance Smart Chain Testnet',
-      11155111: 'Ethereum Sepolia Network'
-    }[Number(chainDetails.chainId)];
-  }
-
-  if (chainDetails.chain === 0) {
-    return 'Bitcoin Network';
-  }
-
-  try {
-    assertNever(chainDetails.chain);
-    // unreachable
-    return null;
-  } catch (e) {
-    return null;
-  }
-};
-
-export async function getMultichainCoinGeckoPrice(chainDetails: ChainDetails) {
-  return fetchGeckoPrices(multichainAssetToCoinGeckoId(chainDetails));
-}
 
 const convertTokenToReadable = (value : SendMultichainMessage['transaction']['value'], chain: SLIP044ChainId) => {
   // chain is the slip044 chain id
@@ -209,11 +167,11 @@ export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
     chainId: BigInt((message as EVMRequest)?.transaction?.chainId)
   };
 
-  const id = multichainAssetToCoinGeckoId(chainDetails);
+  const { coinGeckoId: id } = getMultichainAssetInfo(chainDetails);
   const tokenAmount = convertTokenToReadable(message.transaction.value, message.derivationPath.chain);
 
   if (id) {
-    const res = await getMultichainCoinGeckoPrice(chainDetails);
+    const res = await fetchGeckoPrices(id);
     if (!res) {
       return {
         price:       0,
@@ -252,10 +210,10 @@ export const multichainSignAndSend = async ({
 
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
-    ...CHAIN_CONFIG[getTokenSymbol({
+    ...CHAIN_CONFIG[getMultichainAssetInfo({
       chain:   signMultichainRequest.derivationPath.chain,
       chainId: BigInt((signMultichainRequest as EVMRequest)?.transaction?.chainId)
-    })],
+    }).tokenSymbol],
   };
 
   const signMultiChainWithFee: EVMRequest | BitcoinRequest = {
@@ -307,7 +265,19 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
 
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (request.derivationPath.chain === 60) {
-    const feeProperties = await fetchEVMFeeProperties(CHAIN_CONFIG.ETH.providerUrl, request.transaction);
+    let providerUrl: string;
+    switch ((request as EVMRequest).transaction.chainId) {
+      case BigInt(11155111):
+        providerUrl = CHAIN_CONFIG.ETH.providerUrl;
+        break;
+      case BigInt(97):
+        providerUrl = CHAIN_CONFIG.BNB.providerUrl;
+        break;
+      default:
+        throw new Error('Chain not supported');
+    }
+
+    const feeProperties = await fetchEVMFeeProperties(providerUrl, request.transaction);
     return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
 

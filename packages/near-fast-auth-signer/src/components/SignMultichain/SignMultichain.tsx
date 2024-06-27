@@ -11,12 +11,11 @@ import {
 import {
   validateMessage,
   getTokenAndTotalPrice,
-  multichainAssetToNetworkName,
   shortenAddress,
   multichainSignAndSend,
   multichainGetFeeProperties,
   TransactionFeeProperties,
-  getTokenSymbol
+  getMultichainAssetInfo,
 } from './utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
@@ -73,10 +72,10 @@ function SignMultichain() {
   const [origin, setOrigin] = useState(null);
   const [isDomainKey, setIsDomainKey] = useState(true);
   const tokenSymbol = useMemo(
-    () => getTokenSymbol({
+    () => getMultichainAssetInfo({
       chain:   message?.derivationPath?.chain,
       chainId: BigInt((message as EVMRequest)?.transaction?.chainId ?? 0),
-    }),
+    })?.tokenSymbol,
     [message]
   );
   const [isUnsafe, setUnsafe] = useState(false);
@@ -249,10 +248,10 @@ function SignMultichain() {
               rightSide={(
                 <TableRow
                   asset={tokenSymbol as Chain}
-                  content={multichainAssetToNetworkName({
+                  content={getMultichainAssetInfo({
                     chain:   message?.derivationPath?.chain,
                     chainId: BigInt((message as EVMRequest)?.transaction.chainId ?? 0),
-                  })}
+                  })?.networkName}
                 />
               )}
             />
