@@ -30,7 +30,6 @@ export const getValue = (assetTypeValue: number, amount: number): string => {
   }
   return '';
 };
-const CONTRACT_ADDRESS = '0x2fa5f72e70771ec5b238b4E4EAFfd6F21bF6adf5';
 
 export async function connectToProvider(): Promise<ethers.JsonRpcProvider> {
   return new ethers.JsonRpcProvider(
