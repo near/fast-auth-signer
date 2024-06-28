@@ -1,17 +1,16 @@
-import { SignMessageParams } from '@near-wallet-selector/core';
+import { Account, SignMessageParams } from '@near-wallet-selector/core';
 import { FastAuthWallet } from 'near-fastauth-wallet';
 import React, { useEffect, useState } from 'react';
 
-import SignMultiChain, { TransactionFormValues } from './components/SignMultiChain';
+import SignMultiChain from './components/SignMultiChain';
 import useWalletSelector from './hooks/useWalletSelector';
-import { getDomain, toSatoshis, toWei } from '../utils/multiChain';
 
 type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
 export default function App() {
   const selectorInstance = useWalletSelector();
   const [fastAuthWallet, setFastAuthWallet] = useState<FastAuthWalletInterface | null>(null);
-  const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
+  const [accounts, setAccounts] = useState<Account[] | undefined>(undefined);
   const [isMessageSignatureValid, setIsMessageSignatureValid] = useState(false);
 
   useEffect(() => {
@@ -75,38 +74,6 @@ export default function App() {
     }
   };
 
-  const handleSubmitTransaction = async (values: TransactionFormValues) => {
-    const domain = getDomain(values.keyType);
-
-    if (values.assetType === 0) {
-      await fastAuthWallet.signMultiChainTransaction({
-        derivationPath: {
-          chain: values.assetType,
-          ...(domain ? { domain } : {}),
-        },
-        transaction: {
-          to:      values.address,
-          value:   toSatoshis(Number(values.amount)),
-        },
-        chainConfig: {
-          network: 'testnet',
-        },
-      });
-    } else if (values.assetType === 60) {
-      await fastAuthWallet.signMultiChainTransaction({
-        derivationPath: {
-          chain: values.assetType,
-          ...(domain ? { domain } : {}),
-        },
-        transaction: {
-          to:      values.address,
-          value:   toWei(Number(values.amount)),
-          chainId: values.chainId,
-        },
-      });
-    }
-  };
-
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
     return (
       <div id="loading-ws">Loading...</div>
@@ -119,7 +86,6 @@ export default function App() {
       <button type="button" onClick={handleSignUp}>
         Create Account
       </button>
-
       {accounts.length > 0 ? (
         <div>
           <button type="button" onClick={handleSignOut}>
@@ -132,7 +98,7 @@ export default function App() {
           Sign In
         </button>
       )}
-      <SignMultiChain onSubmitForm={handleSubmitTransaction} />
+      <SignMultiChain />
       <button
         type="button"
         data-testid="sign-transaction-button"

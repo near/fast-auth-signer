@@ -4,6 +4,8 @@ import { expect, Page, test } from '@playwright/test';
 import {
   receivingAddresses, getFastAuthIframe
 } from '../../utils/constants';
+import { getRandomEmailAndAccountId } from '../../utils/email';
+import { connectToProvider, viewCallerDataWithDataField } from '../../utils/multiChain';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
 import SignMultiChain from '../models/SignMultiChain';
@@ -31,7 +33,7 @@ const isAuthenticated = async (loggedIn: boolean) => {
   });
 };
 
-test.describe('Sign MultiChain', () => {
+test.describe.only('Sign MultiChain', () => {
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
@@ -120,6 +122,35 @@ test.describe('Sign MultiChain', () => {
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
     expect(multiChainResponse).toHaveProperty('message');
     expect(multiChainResponse.message).toContain('Invalid transaction');
+    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
+  });
+
+  test.only('Should Pass: Send ETH with Personal Key and Function Call', async () => {
+    const { accountId: randomString } = getRandomEmailAndAccountId();
+    await page.evaluate(
+      ([randomStringForTest]) => {
+        window.localStorage.setItem('randomStringForTest', randomStringForTest);
+      },
+      [randomString]
+    );
+    await isWalletSelectorLoaded(page);
+    await isAuthenticated(true);
+    await signMultiChain.submitTransaction({
+      keyType:        'personalKey',
+      assetType:      'eth',
+      amount:         0,
+      address:        receivingAddresses.ETH_SMART_CONTRACT,
+      isFunctionCall: true
+    });
+    await signMultiChain.clickApproveButton();
+    const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+    expect(multiChainResponse.transactionHash).toBeDefined();
+
+    const provider = await connectToProvider();
+    await new Promise((resolve) => { setTimeout(resolve, 50000); });
+    const result = await viewCallerDataWithDataField(provider, randomString);
+    expect(result).toEqual('test');
+
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 });

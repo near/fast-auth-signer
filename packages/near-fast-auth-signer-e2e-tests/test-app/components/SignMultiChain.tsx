@@ -1,26 +1,32 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React from 'react';
+import { FastAuthWallet } from 'near-fastauth-wallet';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
+
+import {
+  callContractWithDataField, getDomain, toSatoshis, toWei
+} from '../../utils/multiChain';
+import useWalletSelector from '../hooks/useWalletSelector';
 
 export type TransactionFormValues = {
   keyType: string,
   assetType: 0 | 60,
-  amount: string,
+  amount: number,
   address: string,
   chainId: number,
+  isFunctionCall: boolean,
 }
 
-type SignMultiChainProps = {
-  onSubmitForm: (_values: TransactionFormValues) => void
-}
+type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
 const schema = yup.object().shape({
-  keyType:   yup.string().required('Please select a key type'),
-  assetType: yup.number().oneOf([0, 60]).required('Please select an asset type'),
-  amount:    yup.string().required('Please enter amount'),
-  address:   yup.string().required('Please enter wallet address'),
-  chainId:   yup.number().required(),
+  keyType:        yup.string().required('Please select a key type'),
+  assetType:      yup.number().oneOf([0, 60]).required('Please select an asset type'),
+  amount:         yup.number().required('Please enter amount'),
+  address:        yup.string().required('Please enter wallet address'),
+  chainId:        yup.number().required(),
+  isFunctionCall: yup.boolean().required(),
 }).required();
 
 const keyTypes = [
@@ -41,19 +47,72 @@ const assetTypes = [
   },
 ];
 
-export default function SignMultiChain(props: SignMultiChainProps) {
-  const { onSubmitForm } = props;
-
+export default function SignMultiChain() {
+  const selectorInstance = useWalletSelector();
   const {
     handleSubmit, setValue, register,
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
-    defaultValues: {}
+    defaultValues: {
+      isFunctionCall: false,
+    }
   });
+
+  const [fastAuthWallet, setFastAuthWallet] = useState<FastAuthWalletInterface | null>(null);
+
+  useEffect(() => {
+    const getWallet = async () => {
+      if (!selectorInstance) return;
+
+      const wallet = await selectorInstance.wallet('fast-auth-wallet');
+      // Using any because the selector exposes the NEP wallet interface that cannot be cast to the current FastAuthWallet interface
+      setFastAuthWallet(wallet as any);
+    };
+
+    getWallet();
+  }, [selectorInstance]);
 
   const handleAssetTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue('chainId', parseInt(event.target.getAttribute('data-chainid'), 10));
+  };
+
+  const onSubmitForm = async (values: TransactionFormValues) => {
+    const domain = getDomain(values.keyType);
+
+    if (!fastAuthWallet) return;
+
+    if (values.assetType === 0) {
+      await fastAuthWallet.signMultiChainTransaction({
+        derivationPath: {
+          chain: values.assetType,
+          ...(domain ? { domain } : {}),
+        },
+        transaction: {
+          to:      values.address,
+          value:   toSatoshis(Number(values.amount)),
+        },
+        chainConfig: {
+          network: 'testnet',
+        },
+      });
+    } else if (values.assetType === 60) {
+      await fastAuthWallet.signMultiChainTransaction({
+        derivationPath: {
+          chain: values.assetType,
+          ...(domain ? { domain } : {}),
+        },
+        transaction: {
+          to:      values.address,
+          value:   toWei(Number(values.amount)),
+          chainId: values.chainId,
+          data:    values.isFunctionCall ? callContractWithDataField('setCallerData(string,string)', [
+            window.localStorage.getItem('randomStringForTest'),
+            'test'
+          ]) : undefined,
+        },
+      });
+    }
   };
 
   return (
@@ -85,7 +144,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             </label>
           ))}
         </div>
-
         <div
           className="input-group"
           style={{ display: 'flex', gap: 3, marginBottom: '5px' }}
@@ -104,7 +162,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             </label>
           ))}
         </div>
-
         <div
           className="input-group"
           style={{ marginBottom: '10px' }}
@@ -119,7 +176,6 @@ export default function SignMultiChain(props: SignMultiChainProps) {
             />
           </label>
         </div>
-
         <div
           className="input-group"
           style={{ marginBottom: '10px' }}
@@ -132,6 +188,19 @@ export default function SignMultiChain(props: SignMultiChainProps) {
               {...register('address')}
               style={{ marginLeft: '3px' }}
             />
+          </label>
+        </div>
+        <div
+          className="input-group"
+          style={{ marginBottom: '10px' }}
+        >
+          <label htmlFor="isFunctionCall" className="checkbox-label">
+            <input
+              type="checkbox"
+              id="isFunctionCall"
+              {...register('isFunctionCall')}
+            />
+            Is Function Call
           </label>
         </div>
         <button type="submit" style={{ width: 'fit-content', marginBottom: '15px' }}>

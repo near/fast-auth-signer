@@ -16,7 +16,8 @@ type TransactionDetail = {
   keyType: KeyType,
   assetType: AssetType,
   amount: number,
-  address: string
+  address: string,
+  isFunctionCall?: boolean
 }
 
 class SignMultiChain {
@@ -41,12 +42,15 @@ class SignMultiChain {
   }
 
   async submitTransaction({
-    keyType, assetType, amount, address
+    keyType, assetType, amount, address, isFunctionCall
   }: TransactionDetail) {
     await this.page.check(`input#${keyType}`);
     await this.page.check(`input#${assetType.toLowerCase()}`);
     await this.page.fill('input#amount', `${amount}`);
     await this.page.fill('input#address', `${address}`);
+    if (isFunctionCall) {
+      await this.page.check('input#isFunctionCall');
+    }
     await this.page.click('button[type="submit"]');
   }
 
