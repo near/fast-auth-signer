@@ -33,7 +33,7 @@ const isAuthenticated = async (loggedIn: boolean) => {
   });
 };
 
-test.describe.only('Sign MultiChain', () => {
+test.describe('Sign MultiChain', () => {
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
@@ -125,7 +125,7 @@ test.describe.only('Sign MultiChain', () => {
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
-  test.only('Should Pass: Send ETH with Personal Key and Function Call', async () => {
+  test('Should Pass: Send ETH with Personal Key and Function Call', async () => {
     const { accountId: randomString } = getRandomEmailAndAccountId();
     await page.evaluate(
       ([randomStringForTest]) => {
