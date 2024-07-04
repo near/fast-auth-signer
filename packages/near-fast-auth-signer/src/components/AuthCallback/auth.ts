@@ -29,6 +29,7 @@ type OnSignInParams = BaseParams & {
   searchParams: URLSearchParams;
   navigate: NavigateFunction;
   devicePageCallback?: () => void; // Optional
+  onAccountNotFound?: () => void; // Optional
 };
 
 export const onCreateAccount = async ({
@@ -72,7 +73,6 @@ export const onCreateAccount = async ({
 
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   await window.firestoreController.addAccountIdPublicKey(recoveryPK, accountId);
-
   const parsedUrl = new URL(
     success_url && isUrlNotJavascriptProtocol(success_url)
       ? success_url
@@ -81,7 +81,6 @@ export const onCreateAccount = async ({
   parsedUrl.searchParams.set('account_id', res.near_account_id);
   parsedUrl.searchParams.set('public_key', public_key_lak);
   parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
-
   window.location.replace(parsedUrl.href);
 };
 
@@ -97,10 +96,15 @@ export const onSignIn = async ({
   navigate,
   gateway,
   devicePageCallback,
+  onAccountNotFound
 }: OnSignInParams) => {
   // Stop from LAK with multi-chain contract
   const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
   const accountIds = await fetchAccountIds(recoveryPK);
+  if (!accountIds.length) {
+    onAccountNotFound?.();
+    return;
+  }
   // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
   // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
   // // delete old lak key attached to webAuthN public Key
