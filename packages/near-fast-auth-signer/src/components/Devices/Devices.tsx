@@ -7,7 +7,7 @@ import { Button } from '../../lib/Button';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, inIframe } from '../../utils';
 import { basePath } from '../../utils/config';
-import { onSignIn } from '../AuthCallback/AuthCallback';
+import { onSignIn } from '../AuthCallback/auth';
 import { StyledContainer } from '../Layout';
 
 const DevicesWrapper = styled.div<{ inIframe?: boolean }>`
