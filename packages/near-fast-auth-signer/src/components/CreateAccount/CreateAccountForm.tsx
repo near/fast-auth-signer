@@ -98,12 +98,18 @@ const schema = yup.object().shape({
     }),
 });
 
-type CreateAccountFormProps = {
-  onSubmit: SubmitHandler<Record<string, unknown>>;
-  loading: boolean;
+type FormValues = {
+  email: string;
+  username: string
 }
 
-const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, loading }, ref) => {
+type CreateAccountFormProps = {
+  onSubmit: SubmitHandler<FormValues>;
+  loading: boolean;
+  initialValues?: FormValues;
+}
+
+const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, loading, initialValues }, ref) => {
   const [searchParams] = useSearchParams();
 
   const {
@@ -117,7 +123,7 @@ const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
-    defaultValues: {
+    defaultValues: initialValues ?? {
       email:    '',
       username: '',
     },
