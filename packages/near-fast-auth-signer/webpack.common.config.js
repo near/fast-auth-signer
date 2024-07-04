@@ -60,6 +60,9 @@ module.exports =      {
       SENTRY_DSN:                           'https://1049553ebca8337848160ca53a49ff2a@o398573.ingest.sentry.io/4506148066164736',
       SENTRY_DSN_TESTNET:                   'https://ce94b1ec626e971719c20fa7979158f3@o398573.ingest.sentry.io/4506702275411968',
       GIT_COMMIT_HASH:                      commitHash,
+      ETH_PROVIDER_URL_TESTNET:             'https://sepolia.infura.io/v3/6df51ccaa17f4e078325b5050da5a2dd',
+      BNB_PROVIDER_URL_TESTNET:             'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+      BTC_PROVIDER_URL_TESTNET:             'https://blockstream.info/testnet/api/',
       ...envVars
     }),
     ...(process.env.SENTRY_AUTH_TOKEN
