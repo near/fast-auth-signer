@@ -137,7 +137,7 @@ function AuthCallbackPage() {
   if (!isAccountExisting) {
     return (
       <PageWrap>
-        <AccountInfo>Oops! This account doesn&apos;t seem to exist. Please create a new one below</AccountInfo>
+        <AccountInfo>Oops! This account doesn&apos;t seem to exist. Please create a new one below.</AccountInfo>
         <CreateAccountForm
           onSubmit={createAccount}
           loading={inFlight}
