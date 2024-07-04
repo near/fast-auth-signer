@@ -109,6 +109,7 @@ type CreateAccountFormProps = {
   initialValues?: FormValues;
 }
 
+// eslint-disable-next-line max-len
 const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, loading, initialValues }, ref) => {
   const [searchParams] = useSearchParams();
 
