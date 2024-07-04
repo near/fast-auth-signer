@@ -7,104 +7,112 @@ import { recordEvent } from '../utils/analytics';
 import { basePath, network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
 
-export const createFirebaseAccount = async ({
-  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
+const EMAIL_FOR_SIGN_IN = 'emailForSignIn';
+const EVENT_SIGNUP_CONTINUE = 'click-signup-continue';
+const EVENT_SIGNUP_ERROR = 'signup-error';
+const ERROR_MESSAGE_DEFAULT = 'Something went wrong';
+
+const createFirebaseAccount = async ({
+  accountId, email, isRecovery, successUrl, failureUrl, publicKey, contractId, methodNames
 }) => {
   const searchParams = new URLSearchParams({
-    ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery } : {}),
-    ...(success_url ? { success_url } : {}),
-    ...(failure_url ? { failure_url } : {}),
-    ...(public_key ? { public_key_lak: public_key } : {}),
-    ...(contract_id ? { contract_id } : {}),
-    ...(methodNames ? { methodNames } : {})
+    ...(accountId && { accountId }),
+    ...(isRecovery && { isRecovery }),
+    ...(successUrl && { success_url: successUrl }),
+    ...(failureUrl && { failure_url: failureUrl }),
+    ...(publicKey && { public_key_lak: publicKey }),
+    ...(contractId && { contract_id: contractId }),
+    ...(methodNames && { methodNames })
   });
 
   await sendSignInLinkToEmail(firebaseAuth, email, {
     url: encodeURI(
-      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
+      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`
     ),
     handleCodeInApp: true,
   });
-  window.localStorage.setItem('emailForSignIn', email);
-  return {
-    accountId,
-  };
+  window.localStorage.setItem(EMAIL_FOR_SIGN_IN, email);
+  return { accountId };
 };
+
 export type CreateAccountFormValues = {
- email: string;
- username: string;
+  email: string;
+  username: string;
 }
 
 type ReturnProps = {
   createAccount(values: CreateAccountFormValues): void;
-  loading: boolean
+  loading: boolean;
 }
+
+const handleCreateAccountError = (error) => {
+  const errorMessage = typeof error?.message === 'string' ? error.message : ERROR_MESSAGE_DEFAULT;
+  recordEvent(EVENT_SIGNUP_ERROR, { errorMessage });
+  console.error('error', error);
+
+  window.parent.postMessage({
+    type:    'CreateAccountError',
+    message: errorMessage,
+  }, '*');
+
+  openToast({
+    type:  'ERROR',
+    title: errorMessage,
+  });
+};
 
 export const useCreateAccount = (): ReturnProps => {
   const [searchParams] = useSearchParams();
-
-  const [inFlight, setInFlight] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const createAccount = useCallback(async (data: CreateAccountFormValues) => {
-    setInFlight(true);
-    recordEvent('click-signup-continue');
-    const success_url = searchParams.get('success_url');
-    const failure_url = searchParams.get('failure_url');
-    const public_key =  searchParams.get('public_key');
+    setLoading(true);
+    recordEvent(EVENT_SIGNUP_CONTINUE);
+
+    const successUrl = searchParams.get('success_url');
+    const failureUrl = searchParams.get('failure_url');
+    const publicKey = searchParams.get('public_key');
     const methodNames = searchParams.get('methodNames');
-    const contract_id = searchParams.get('contract_id');
+    const contractId = searchParams.get('contract_id');
 
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const {
-        accountId
-      } = await createFirebaseAccount({
+      const { accountId } = await createFirebaseAccount({
         accountId:  fullAccountId,
         email:      data.email,
         isRecovery: false,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
+        successUrl,
+        failureUrl,
+        publicKey,
+        contractId,
         methodNames,
       });
+
       const newSearchParams = new URLSearchParams({
         accountId,
         email:      data.email,
         isRecovery: 'false',
-        ...(success_url ? { success_url } : {}),
-        ...(failure_url ? { failure_url } : {}),
-        ...(public_key ? { public_key_lak: public_key } : {}),
-        ...(contract_id ? { contract_id } : {}),
-        ...(methodNames ? { methodNames } : {})
+        ...(successUrl && { success_url: successUrl }),
+        ...(failureUrl && { failure_url: failureUrl }),
+        ...(publicKey && { public_key_lak: publicKey }),
+        ...(contractId && { contract_id: contractId }),
+        ...(methodNames && { methodNames })
       });
+
       window.parent.postMessage({
         type:   'method',
         method: 'query',
         id:     1234,
-        params: {
-          request_type: 'complete_authentication',
-        }
+        params: { request_type: 'complete_authentication' },
       }, '*');
+
       window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/verify-email?${newSearchParams.toString()}`, '_parent');
-    } catch (error: any) {
-      recordEvent('signup-error', { errorMessage: error.message });
-      console.log('error', error);
-
-      window.parent.postMessage({
-        type:    'CreateAccountError',
-        message: typeof error?.message === 'string' ? error.message : 'Something went wrong'
-      }, '*');
-
-      openToast({
-        type:  'ERROR',
-        title: error.message,
-      });
+    } catch (error) {
+      handleCreateAccountError(error);
     } finally {
-      setInFlight(false);
+      setLoading(false);
     }
   }, [searchParams]);
 
-  return { loading: inFlight, createAccount };
+  return { loading, createAccount };
 };
