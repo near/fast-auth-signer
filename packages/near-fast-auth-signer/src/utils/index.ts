@@ -24,11 +24,18 @@ export function inIframe() {
     return true;
   }
 }
-
 export const decodeIfTruthy = (paramVal) => {
   if (paramVal === 'true' || paramVal === 'false') return paramVal === 'true';
+
   if (paramVal) {
-    return decodeURIComponent(paramVal);
+    const decodedVal = decodeURIComponent(paramVal);
+
+    // Check if the decoded value is different and contains percent-encoded characters
+    if (decodedVal !== paramVal) {
+      return decodeIfTruthy(decodedVal);
+    }
+
+    return decodedVal;
   }
 
   return paramVal;
@@ -90,11 +97,16 @@ export const withTimeout = async (promise, timeoutMs) => {
 export const isSafari = () => /^((?!chrome|android).)*safari/i
   .test(navigator.userAgent);
 
-export const extractQueryParams = (searchParams: URLSearchParams, paramNames: string[]) => {
+type ExtractQueryParamsOptions = {
+  decode?: boolean;
+  allowNull?: boolean;
+}
+export const extractQueryParams = (searchParams: URLSearchParams, paramNames: string[], options?: ExtractQueryParamsOptions) => {
+  const { decode, allowNull } = options || {};
   const params = {};
   paramNames.forEach((paramName) => {
-    const paramValue = searchParams.get(paramName);
-    if (paramValue !== null) {
+    const paramValue = decode ? decodeIfTruthy(searchParams.get(paramName)) : searchParams.get(paramName);
+    if (paramValue !== null || allowNull) {
       params[paramName] = paramValue;
     }
   });
