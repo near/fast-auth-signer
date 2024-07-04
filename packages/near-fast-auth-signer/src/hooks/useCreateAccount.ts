@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { openToast } from '../lib/Toast';
+import { extractQueryParams } from '../utils';
 import { recordEvent } from '../utils/analytics';
 import { basePath, network } from '../utils/config';
 import { firebaseAuth } from '../utils/firebase';
@@ -12,7 +13,7 @@ const EVENT_SIGNUP_CONTINUE = 'click-signup-continue';
 const EVENT_SIGNUP_ERROR = 'signup-error';
 const ERROR_MESSAGE_DEFAULT = 'Something went wrong';
 
-const createFirebaseAccount = async ({
+const sendSignInLink = async ({
   accountId, email, isRecovery, successUrl, failureUrl, publicKey, contractId, methodNames
 }) => {
   const searchParams = new URLSearchParams({
@@ -69,16 +70,22 @@ export const useCreateAccount = (): ReturnProps => {
     setLoading(true);
     recordEvent(EVENT_SIGNUP_CONTINUE);
 
-    const successUrl = searchParams.get('success_url');
-    const failureUrl = searchParams.get('failure_url');
-    // In AuthCallbackPage public_key param is not available because it has been changed to public_key_lak
-    const publicKey = searchParams.get('public_key') || searchParams.get('public_key_lak');
-    const methodNames = searchParams.get('methodNames');
-    const contractId = searchParams.get('contract_id');
+    const paramNames = ['success_url', 'failure_url', 'public_key', 'public_key_lak', 'methodNames', 'contract_id'];
+    const {
+      success_url: successUrl, failure_url: failureUrl, methodNames, contract_id: contractId,
+      // In AuthCallbackPage public_key param is not available because it has been changed to public_key_lak
+      public_key, public_key_lak
+    } = extractQueryParams(searchParams, paramNames, {
+      decode:    true,
+      allowNull: false,
+    });
+
+    // Handle the case where public_key or public_key_lak might be used (AuthCallback page)
+    const publicKey = public_key || public_key_lak;
 
     try {
       const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const { accountId } = await createFirebaseAccount({
+      const { accountId } = await sendSignInLink({
         accountId:  fullAccountId,
         email:      data.email,
         isRecovery: false,

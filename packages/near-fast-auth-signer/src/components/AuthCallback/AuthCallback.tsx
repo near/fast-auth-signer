@@ -10,7 +10,7 @@ import AuthCallbackError from './AuthCallbackError';
 import { useCreateAccount } from '../../hooks/useCreateAccount';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { decodeIfTruthy } from '../../utils';
+import { decodeIfTruthy, extractQueryParams } from '../../utils';
 import { networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
@@ -60,14 +60,8 @@ function AuthCallbackPage() {
         return;
       }
 
-      const params = {
-        accountId:      decodeIfTruthy(searchParams.get('accountId')),
-        isRecovery:     decodeIfTruthy(searchParams.get('isRecovery')),
-        success_url:    decodeIfTruthy(searchParams.get('success_url')),
-        public_key_lak: decodeIfTruthy(searchParams.get('public_key_lak')),
-        contract_id:    decodeIfTruthy(searchParams.get('contract_id')),
-        methodNames:    decodeIfTruthy(searchParams.get('methodNames'))
-      };
+      const paramNames = ['accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id'];
+      const params = extractQueryParams(searchParams, paramNames);
 
       const email = window.localStorage.getItem('emailForSignIn');
 
