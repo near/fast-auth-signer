@@ -71,7 +71,8 @@ export const useCreateAccount = (): ReturnProps => {
 
     const successUrl = searchParams.get('success_url');
     const failureUrl = searchParams.get('failure_url');
-    const publicKey = searchParams.get('public_key');
+    // In AuthCallbackPage public_key param is not available because it has been changed to public_key_lak
+    const publicKey = searchParams.get('public_key') || searchParams.get('public_key_lak');
     const methodNames = searchParams.get('methodNames');
     const contractId = searchParams.get('contract_id');
 
