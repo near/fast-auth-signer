@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 const FormContainer = styled.form<{ inIframe?: boolean }>`
   width: 375px;
-  margin: 16px auto;
+  //margin: 16px auto;
   background-color: #ffffff;
   padding: 20px;
   border-radius: 12px;

@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   useRef
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
 
 import CreateAccountForm from './CreateAccountForm';
 import { useCreateAccount } from '../../hooks/useCreateAccount';
@@ -26,7 +25,7 @@ function CreateAccount() {
       <CreateAccountForm
         ref={createAccountFormRef}
         onSubmit={createAccount}
-        inFlight={inFlight}
+        loading={inFlight}
       />
     </StyledContainer>
   );

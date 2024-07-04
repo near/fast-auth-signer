@@ -100,10 +100,10 @@ const schema = yup.object().shape({
 
 type CreateAccountFormProps = {
   onSubmit: SubmitHandler<Record<string, unknown>>;
-  inFlight: boolean;
+  loading: boolean;
 }
 
-const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, inFlight }, ref) => {
+const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, loading }, ref) => {
   const [searchParams] = useSearchParams();
 
   const {
@@ -230,8 +230,8 @@ const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
         }}
       />
       <Button
-        disabled={!isValid || inFlight}
-        label={inFlight ? 'Sending...' : 'Continue'}
+        disabled={!isValid || loading}
+        label={loading ? 'Sending...' : 'Continue'}
         variant="affirmative"
         type="submit"
         size="large"
