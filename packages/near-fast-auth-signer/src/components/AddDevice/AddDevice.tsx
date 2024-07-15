@@ -31,6 +31,7 @@ import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
 import { getMultiChainContract } from '../SignMultichain/utils';
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const ErrorContainer = styled.div`
 .stats-message {
@@ -89,7 +90,7 @@ const schema = yup.object().shape({
 });
 
 const AddDeviceForm = styled(FormContainer)`
-  height: 420px;
+  height: 560px;
   gap: 18px;
   justify-content: center;
 `;
@@ -422,6 +423,8 @@ function AddDevicePage() {
           data-test-id="add-device-continue-button"
           disabled={loading}
         />
+
+        <SocialLogin isRecovery />
         <SeparatorWrapper>
           <Separator />
           Or

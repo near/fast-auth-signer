@@ -15,9 +15,11 @@ import { recordEvent } from '../../utils/analytics';
 import { network } from '../../utils/config';
 import { accountAddressPatternNoSubAccount, getEmailId } from '../../utils/form-validation';
 import { FormContainer } from '../Layout';
+// eslint-disable-next-line import/no-cycle
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const CreateAccountFormContainer = styled(FormContainer)`
-  height: 500px;
+  height: 560px;
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
@@ -242,6 +244,7 @@ const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
         size="large"
         data-test-id="continue_button_create"
       />
+      <SocialLogin />
     </CreateAccountFormContainer>
   );
 });

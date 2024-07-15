@@ -1,6 +1,4 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import firebase from 'firebase/app';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React, { useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -14,8 +12,7 @@ import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { inIframe } from '../../utils';
 import { FormContainer, StyledContainer } from '../Layout';
-import { firebaseAuth } from '../../utils/firebase';
-// import { firebaseAuth } from '../../utils/firebase';
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const schema = yup.object().shape({
   email: yup
@@ -25,7 +22,7 @@ const schema = yup.object().shape({
 });
 
 const LoginForm = styled(FormContainer)`
-  height: 400px;
+  height: 560px;
 `;
 
 function Login() {
@@ -72,19 +69,6 @@ function Login() {
       showWalletSelector:    true,
     }, '*');
   };
-  const provider = new GoogleAuthProvider();
-  const signInWithGoogle = () => {
-    signInWithPopup(firebaseAuth, provider)
-      .then((result) => {
-        // Handle successful sign-in
-        const { user } = result;
-        console.log(user);
-      })
-      .catch((error) => {
-        // Handle errors here
-        console.error(error);
-      });
-  };
 
   return (
     <StyledContainer inIframe={inIframe()}>
@@ -109,7 +93,7 @@ function Login() {
           variant="affirmative"
           data-test-id="login_button"
         />
-
+        <SocialLogin isRecovery />
         <SeparatorWrapper>
           <Separator />
           Or
@@ -130,9 +114,6 @@ function Login() {
           onClick={handleConnectWallet}
         />
       </LoginForm>
-      <Button onClick={signInWithGoogle}>
-        Google Sign In
-      </Button>
     </StyledContainer>
   );
 }
