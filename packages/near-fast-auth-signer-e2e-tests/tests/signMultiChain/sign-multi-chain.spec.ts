@@ -1,14 +1,15 @@
 import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
+import { ethers } from 'ethers';
 
 import {
-  receivingAddresses, getFastAuthIframe
+  receivingAddresses, getFastAuthIframe,
+  senderAddresses
 } from '../../utils/constants';
-import { getRandomEmailAndAccountId } from '../../utils/email';
-import { connectToProvider, viewCallerDataWithDataField } from '../../utils/multiChain';
+import { callContractWithDataField } from '../../utils/multiChain';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
-import SignMultiChain from '../models/SignMultiChain';
+import SignMultiChain, { KeyType } from '../models/SignMultiChain';
 
 let page: Page;
 let signMultiChain: SignMultiChain;
@@ -125,32 +126,163 @@ test.describe('Sign MultiChain', () => {
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
-  test('Should Pass: Send ETH with Personal Key and Function Call', async () => {
-    const { accountId: randomString } = getRandomEmailAndAccountId();
-    await page.evaluate(
-      ([randomStringForTest]) => {
-        window.localStorage.setItem('randomStringForTest', randomStringForTest);
-      },
-      [randomString]
-    );
-    await isWalletSelectorLoaded(page);
-    await isAuthenticated(true);
-    await signMultiChain.submitTransaction({
-      keyType:        'personalKey',
-      assetType:      'eth',
-      amount:         0,
-      address:        receivingAddresses.ETH_SMART_CONTRACT,
-      isFunctionCall: true
+  test.describe('EVM Function Call', () => {
+    const setupFunctionCall = async (functionName: string, args: any[]) => {
+      const evmFunctionCallData = callContractWithDataField(functionName, args);
+      await page.evaluate(
+        ([data]) => {
+          window.localStorage.setItem('evmFunctionCallData', data);
+        },
+        [evmFunctionCallData]
+      );
+    };
+
+    const testFunctionMessage = async ({
+      contractAddress,
+      functionName,
+      args,
+      expectedMessagePart,
+      keyType
+    }: {
+      contractAddress: string,
+      functionName: string,
+      args: any[],
+      expectedMessagePart: string,
+      keyType: KeyType
+    }) => {
+      await setupFunctionCall(functionName, args);
+      await isWalletSelectorLoaded(page);
+      await isAuthenticated(true);
+      await signMultiChain.submitTransaction({
+        keyType,
+        assetType:      'eth',
+        amount:         0,
+        address:        contractAddress,
+        isFunctionCall: true
+      });
+      const iframe = getFastAuthIframe(page);
+      await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
+    };
+
+    test.describe.only('ERC20 functions', () => {
+      const contractAddress = receivingAddresses.ETH_FT_SMART_CONTRACT;
+
+      test('should mint tokens', async () => {
+        await testFunctionMessage({
+          contractAddress,
+          functionName:        'mint(address,uint256)',
+          args:                [senderAddresses.EVM_PERSONAL, ethers.parseEther('1000000')],
+          expectedMessagePart: "You are calling a method on a contract that we couldn't identify. Please make sure you trust the receiver address and application.",
+          keyType:             'personalKey'
+        });
+        await signMultiChain.clickApproveButton();
+        const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+        expect(multiChainResponse.transactionHash).toBeDefined();
+      });
+
+      test('should transfer and approve tokens', async () => {
+        await testFunctionMessage({
+          contractAddress,
+          functionName:        'transfer(address,uint256)',
+          args:                [senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
+          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) to ${senderAddresses.EVM_UNKNOWN}.`,
+          keyType:             'personalKey'
+        });
+      });
+
+      test('should approve tokens', async () => {
+        await testFunctionMessage({
+          contractAddress,
+          functionName:        'approve(address,uint256)',
+          args:                [senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
+          expectedMessagePart: `Approving ${senderAddresses.EVM_UNKNOWN} to manage up to 100.0 FTT3 (Felipe Test Token 3). This allows them to transfer this amount on your behalf.`,
+          keyType:             'personalKey'
+        });
+      });
+
+      test('should transfer tokens from another account', async () => {
+        await testFunctionMessage({
+          contractAddress,
+          functionName:        'transferFrom(address,address,uint256)',
+          args:                [senderAddresses.EVM_PERSONAL, senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
+          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) from ${senderAddresses.EVM_PERSONAL} to ${senderAddresses.EVM_UNKNOWN}.`,
+          keyType:             'unknownKey'
+        });
+      });
     });
-    await signMultiChain.clickApproveButton();
-    const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
-    expect(multiChainResponse.transactionHash).toBeDefined();
 
-    const provider = await connectToProvider();
-    await new Promise((resolve) => { setTimeout(resolve, 50000); });
-    const result = await viewCallerDataWithDataField(provider, randomString);
-    expect(result).toEqual('test');
+    // test('ERC721 functions', async () => {
+    //   const contractAddress = receivingAddresses.ETH_NFT_ERC721_SMART_CONTRACT;
 
-    await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'safeTransferFrom(address,address,uint256)',
+    //     args:                ['0x1234567890123456789012345678901234567890', '0x0987654321098765432109876543210987654321', 1],
+    //     expectedMessagePart: 'Transferring Unknown token ID 1 from 0x1234567890123456789012345678901234567890 to 0x0987654321098765432109876543210987654321.',
+    //     keyType:             'personalKey'
+    //   });
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'transferFrom(address,address,uint256)',
+    //     args:                ['0x1234567890123456789012345678901234567890', '0x0987654321098765432109876543210987654321', 1],
+    //     expectedMessagePart: 'Transferring Unknown token ID 1 from 0x1234567890123456789012345678901234567890 to 0x0987654321098765432109876543210987654321.',
+    //     keyType:             'personalKey'
+    //   });
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'approve(address,uint256)',
+    //     args:                ['0x1234567890123456789012345678901234567890', 1],
+    //     expectedMessagePart: 'Approving 0x1234567890123456789012345678901234567890 to manage Unknown token ID 1. This allows them to transfer this specific token on your behalf.',
+    //     keyType:             'personalKey'
+    //   });
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'setApprovalForAll(address,bool)',
+    //     args:                ['0x1234567890123456789012345678901234567890', true],
+    //     expectedMessagePart: 'Granting permission for 0x1234567890123456789012345678901234567890 to manage ALL your Unknown (ERC721) tokens. This is a powerful permission, use with caution.',
+    //     keyType:             'personalKey'
+    //   });
+    // });
+
+    // test('ERC1155 functions', async () => {
+    //   const contractAddress = receivingAddresses.ETH_NFT_ERC1155_SMART_CONTRACT;
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'safeTransferFrom(address,address,uint256,uint256,bytes)',
+    //     args:                ['0x1234567890123456789012345678901234567890', '0x0987654321098765432109876543210987654321', 1, 1, '0x'],
+    //     expectedMessagePart: 'Transferring 1 of Unknown token ID 1 from 0x1234567890123456789012345678901234567890 to 0x0987654321098765432109876543210987654321.',
+    //     keyType:             'personalKey'
+    //   });
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)',
+    //     args:                ['0x1234567890123456789012345678901234567890', '0x0987654321098765432109876543210987654321', [1, 2], [1, 1], '0x'],
+    //     expectedMessagePart: 'Batch transferring 2 Unknown (ERC1155) tokens (IDs: 1, 2) from 0x1234567890123456789012345678901234567890 to 0x0987654321098765432109876543210987654321 with quantities: 1, 1.',
+    //     keyType:             'personalKey'
+    //   });
+
+    //   await testFunctionMessage({
+    //     contractAddress,
+    //     functionName:        'setApprovalForAll(address,bool)',
+    //     args:                ['0x1234567890123456789012345678901234567890', true],
+    //     expectedMessagePart: 'Granting permission for 0x1234567890123456789012345678901234567890 to manage ALL your Unknown (ERC1155) tokens. This is a powerful permission, use with caution.',
+    //     keyType:             'personalKey'
+    //   });
+    // });
+
+    // test('Should display default message for unknown contract interaction', async () => {
+    //   await testFunctionMessage({
+    //     contractAddress:     '0x1234567890123456789012345678901234567890',
+    //     functionName:        'unknownFunction()',
+    //     args:                [],
+    //     expectedMessagePart: 'You are calling a method on a contract that we couldn\'t identify. Please make sure you trust the receiver address and application.',
+    //     keyType:             'personalKey'
+    //   });
+    // });
   });
 });

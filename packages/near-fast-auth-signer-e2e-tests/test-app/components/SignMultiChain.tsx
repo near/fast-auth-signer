@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 
 import {
-  callContractWithDataField, getDomain, toSatoshis, toWei
+  getDomain, toSatoshis, toWei
 } from '../../utils/multiChain';
 import useWalletSelector from '../hooks/useWalletSelector';
 
@@ -106,10 +106,7 @@ export default function SignMultiChain() {
           to:      values.address,
           value:   toWei(Number(values.amount)),
           chainId: values.chainId,
-          data:    values.isFunctionCall ? callContractWithDataField('setCallerData(string,string)', [
-            window.localStorage.getItem('randomStringForTest'),
-            'test'
-          ]) : undefined,
+          data:    values.isFunctionCall ? window.localStorage.getItem('evmFunctionCallData') : undefined,
         },
       });
     }

@@ -4,8 +4,8 @@ import { Page } from '@playwright/test';
 
 import { getFastAuthIframe } from '../../utils/constants';
 
-type KeyType = 'domainKey' | 'personalKey' | 'unknownKey';
-type AssetType = 'eth' | 'bnb' | 'btc';
+export type KeyType = 'domainKey' | 'personalKey' | 'unknownKey';
+export type AssetType = 'eth' | 'bnb' | 'btc';
 
 interface MultiChainResponse {
   transactionHash?: string;
