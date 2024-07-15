@@ -1,3 +1,5 @@
+import { senderAddresses } from '../utils/constants';
+
 const { ethers } = require('ethers');
 
 interface WalletInfo {
@@ -83,9 +85,9 @@ async function requestTokensFromFaucet(wallets: WalletInfo[]): Promise<void> {
   }
 }
 
-const wallets: WalletInfo[] = [
-  { address: '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb', chain: 'eth' },
-  { address: '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71', chain: 'bnb' }
+export const walletsAddresses: WalletInfo[] = [
+  { address: senderAddresses.EVM_PERSONAL, chain: 'eth' },
+  { address: senderAddresses.EVM_DOMAIN, chain: 'bnb' }
 ];
 
-requestTokensFromFaucet(wallets);
+requestTokensFromFaucet(walletsAddresses);
