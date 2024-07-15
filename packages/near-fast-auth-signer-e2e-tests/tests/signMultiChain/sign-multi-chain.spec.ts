@@ -35,7 +35,7 @@ const isAuthenticated = async (loggedIn: boolean) => {
 };
 
 test.describe('Sign MultiChain', () => {
-  test.beforeAll(async ({ browser }) => {
+  test.beforeEach(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
     signMultiChain = new SignMultiChain(page);
@@ -126,7 +126,9 @@ test.describe('Sign MultiChain', () => {
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
-  test.describe('EVM Function Call', () => {
+  // NOTE: The following tests are skipped due to rate limiting on Infura's free plan (10 requests/second).
+  // To run these tests, consider upgrading to a paid plan or run local EVM blockchains with Ganache.
+  test.describe.skip('EVM Function Call', () => {
     const setupFunctionCall = async (functionName: string, args: any[]) => {
       const evmFunctionCallData = callContractWithDataField(functionName, args);
       await page.evaluate(
@@ -164,7 +166,7 @@ test.describe('Sign MultiChain', () => {
       await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
     };
 
-    test.describe.only('ERC20 functions', () => {
+    test.describe('ERC20 functions', () => {
       const contractAddress = receivingAddresses.ETH_FT_SMART_CONTRACT;
 
       test('should mint tokens', async () => {
