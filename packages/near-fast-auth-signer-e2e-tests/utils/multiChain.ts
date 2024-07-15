@@ -20,21 +20,6 @@ export const getDomain = (keyTypeValue: string): string => {
   }
 };
 
-export const getValue = (assetTypeValue: number, amount: number): string => {
-  if (assetTypeValue === 0) {
-    return toSatoshis(amount).toString();
-  } if (assetTypeValue === 60) {
-    return toWei(amount).toString();
-  }
-  return '';
-};
-
-export async function connectToProvider(): Promise<ethers.JsonRpcProvider> {
-  return new ethers.JsonRpcProvider(
-    `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
-  );
-}
-
 export function callContractWithDataField(
   functionSignature: string,
   params: any[]
