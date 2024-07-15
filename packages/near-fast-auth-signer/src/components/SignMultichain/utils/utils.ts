@@ -9,7 +9,6 @@ import {
   fetchDerivedBTCAddressAndPublicKey,
   BitcoinRequest,
   BTCChainConfigWithProviders,
-  fetchDerivedEVMAddress
 } from 'multichain-tools';
 import * as yup from 'yup';
 
