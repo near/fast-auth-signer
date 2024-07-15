@@ -1,4 +1,4 @@
-import { senderAddresses } from '../utils/constants';
+import { derivedAddresses } from '../utils/constants';
 
 const { ethers } = require('ethers');
 
@@ -86,8 +86,8 @@ async function requestTokensFromFaucet(wallets: WalletInfo[]): Promise<void> {
 }
 
 export const walletsAddresses: WalletInfo[] = [
-  { address: senderAddresses.EVM_PERSONAL, chain: 'eth' },
-  { address: senderAddresses.EVM_DOMAIN, chain: 'bnb' }
+  { address: derivedAddresses.EVM_PERSONAL, chain: 'eth' },
+  { address: derivedAddresses.EVM_DOMAIN, chain: 'bnb' }
 ];
 
 requestTokensFromFaucet(walletsAddresses);

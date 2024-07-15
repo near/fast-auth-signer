@@ -91,6 +91,7 @@ function SignMultichain() {
   });
 
   const onError = (text: string) => {
+    console.error(text);
     window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe: true }, '*');
     setError(text);
   };

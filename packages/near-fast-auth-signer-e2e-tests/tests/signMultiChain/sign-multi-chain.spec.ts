@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 
 import {
   receivingAddresses, getFastAuthIframe,
-  senderAddresses
+  derivedAddresses
 } from '../../utils/constants';
 import { callContractWithDataField } from '../../utils/multiChain';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
@@ -128,7 +128,7 @@ test.describe('Sign MultiChain', () => {
 
   // NOTE: The following tests are skipped due to rate limiting on Infura's free plan (10 requests/second).
   // To run these tests, consider upgrading to a paid plan or run local EVM blockchains with Ganache.
-  test.describe.skip('EVM Function Call', () => {
+  test.describe('EVM Function Call', () => {
     const setupFunctionCall = async (functionName: string, args: any[]) => {
       const evmFunctionCallData = callContractWithDataField(functionName, args);
       await page.evaluate(
@@ -173,7 +173,7 @@ test.describe('Sign MultiChain', () => {
         await testFunctionMessage({
           contractAddress,
           functionName:        'mint(address,uint256)',
-          args:                [senderAddresses.EVM_PERSONAL, ethers.parseEther('1000000')],
+          args:                [derivedAddresses.EVM_PERSONAL, ethers.parseEther('1000000')],
           expectedMessagePart: "You are calling a method on a contract that we couldn't identify. Please make sure you trust the receiver address and application.",
           keyType:             'personalKey'
         });
@@ -182,12 +182,12 @@ test.describe('Sign MultiChain', () => {
         expect(multiChainResponse.transactionHash).toBeDefined();
       });
 
-      test('should transfer and approve tokens', async () => {
+      test('should transfer', async () => {
         await testFunctionMessage({
           contractAddress,
           functionName:        'transfer(address,uint256)',
-          args:                [senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
-          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) to ${senderAddresses.EVM_UNKNOWN}.`,
+          args:                [derivedAddresses.EVM_UNKNOWN, ethers.parseUnits('100', 18)],
+          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) to ${derivedAddresses.EVM_UNKNOWN}.`,
           keyType:             'personalKey'
         });
       });
@@ -196,8 +196,8 @@ test.describe('Sign MultiChain', () => {
         await testFunctionMessage({
           contractAddress,
           functionName:        'approve(address,uint256)',
-          args:                [senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
-          expectedMessagePart: `Approving ${senderAddresses.EVM_UNKNOWN} to manage up to 100.0 FTT3 (Felipe Test Token 3). This allows them to transfer this amount on your behalf.`,
+          args:                [derivedAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
+          expectedMessagePart: `Approving ${derivedAddresses.EVM_UNKNOWN} to manage up to 100.0 FTT3 (Felipe Test Token 3). This allows them to transfer this amount on your behalf.`,
           keyType:             'personalKey'
         });
       });
@@ -206,8 +206,8 @@ test.describe('Sign MultiChain', () => {
         await testFunctionMessage({
           contractAddress,
           functionName:        'transferFrom(address,address,uint256)',
-          args:                [senderAddresses.EVM_PERSONAL, senderAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
-          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) from ${senderAddresses.EVM_PERSONAL} to ${senderAddresses.EVM_UNKNOWN}.`,
+          args:                [derivedAddresses.EVM_PERSONAL, derivedAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
+          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) from ${derivedAddresses.EVM_PERSONAL} to ${derivedAddresses.EVM_UNKNOWN}.`,
           keyType:             'unknownKey'
         });
       });
