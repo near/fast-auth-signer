@@ -9,6 +9,7 @@ import {
   fetchDerivedBTCAddressAndPublicKey,
   BitcoinRequest,
   BTCChainConfigWithProviders,
+  fetchDerivedEVMAddress,
 } from 'multichain-tools';
 import * as yup from 'yup';
 
@@ -249,6 +250,13 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
 
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (request.derivationPath.chain === 60) {
+    const address = await fetchDerivedEVMAddress({
+      signerId,
+      path:                 request.derivationPath,
+      nearNetworkId:        environment.NETWORK_ID,
+      multichainContractId: getMultiChainContract(),
+    });
+
     let providerUrl: string;
     const chainId = BigInt((request as EVMRequest).transaction.chainId);
     switch (chainId) {
@@ -262,7 +270,10 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
         throw new Error('Chain not supported');
     }
 
-    const feeProperties = await fetchEVMFeeProperties(providerUrl, request.transaction);
+    const feeProperties = await fetchEVMFeeProperties(
+      providerUrl,
+      { ...request.transaction, from: address }
+    );
     return { ...feeProperties, feeDisplay: formatUnits(feeProperties.maxFee) };
   }
 

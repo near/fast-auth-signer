@@ -101,21 +101,16 @@ function SignMultichain() {
     feeProperties: TransactionFeeProperties
   ) => {
     try {
-      const isUserAuthenticated = await getAuthState();
-      if (isUserAuthenticated !== true) {
-        onError('You are not authenticated or there has been an indexer failure');
-      } else {
-        const response = await multichainSignAndSend({
-          signMultichainRequest,
-          feeProperties,
-        });
-        if (response.success && 'transactionHash' in response) {
-          window.parent.postMessage({
-            type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
-          }, '*');
-        } else if (response.success === false) {
-          onError(response.errorMessage);
-        }
+      const response = await multichainSignAndSend({
+        signMultichainRequest,
+        feeProperties,
+      });
+      if (response.success && 'transactionHash' in response) {
+        window.parent.postMessage({
+          type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
+        }, '*');
+      } else if (response.success === false) {
+        onError(response.errorMessage);
       }
     } catch (e) {
       onError(e.message);
@@ -132,6 +127,12 @@ function SignMultichain() {
       const validation = await validateMessage(transaction);
       if (validation instanceof Error || !validation) {
         onError(validation.toString());
+        return;
+      }
+
+      const isUserAuthenticated = await getAuthState();
+      if (isUserAuthenticated !== true) {
+        onError('You are not authenticated or there has been an indexer failure');
         return;
       }
 
