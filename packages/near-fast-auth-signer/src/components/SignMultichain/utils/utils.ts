@@ -8,20 +8,21 @@ import {
   SLIP044ChainId,
   fetchDerivedBTCAddressAndPublicKey,
   BitcoinRequest,
-  BTCChainConfigWithProviders
+  BTCChainConfigWithProviders,
+  fetchDerivedEVMAddress
 } from 'multichain-tools';
 import * as yup from 'yup';
 
-import { SendBTCMultichainMessageSchema } from './bitcoin/schema';
-import { SendEVMMultichainMessageSchema } from './evm/schema';
+import { assertNever } from '../../../utils';
+import { networkId } from '../../../utils/config';
+import environment from '../../../utils/environment';
+import { fetchGeckoPrices } from '../../Sign/Values/fiatValueManager';
+import { SendBTCMultichainMessageSchema } from '../bitcoin/schema';
+import { SendEVMMultichainMessageSchema } from '../evm/schema';
 import {
   ChainMap,
   SendMultichainMessage,
-} from './types';
-import { assertNever } from '../../utils';
-import { networkId } from '../../utils/config';
-import environment from '../../utils/environment';
-import { fetchGeckoPrices } from '../Sign/Values/fiatValueManager';
+} from '../types';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
 const MULTICHAIN_CONTRACT_TESTNET = 'v2.multichain-mpc.testnet';
@@ -56,7 +57,7 @@ export type TransactionFeeProperties = BTCFeeProperties | EVMFeeProperties;
 
 const FAST_AUTH_RELAYER_URL = 'https://near-relayer-testnet.api.pagoda.co';
 
-const CHAIN_CONFIG: ChainMap = {
+export const CHAIN_CONFIG: ChainMap = {
   ETH: {
     providerUrl: environment.NETWORK_ID === 'mainnet'
       ? process.env.ETH_PROVIDER_URL_MAINNET : process.env.ETH_PROVIDER_URL_TESTNET,

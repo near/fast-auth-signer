@@ -1,3 +1,5 @@
+import { ethers } from 'ethers';
+import { EVMRequest } from 'multichain-tools';
 import React, {
   useState, useCallback, useRef, useMemo
 } from 'react';
@@ -7,6 +9,7 @@ import {
   Chain,
   SendMultichainMessage,
 } from './types';
+import { getEVMFunctionCallMessage } from './utils/evm';
 import {
   validateMessage,
   getTokenAndTotalPrice,
@@ -15,7 +18,8 @@ import {
   multichainGetFeeProperties,
   TransactionFeeProperties,
   getMultichainAssetInfo,
-} from './utils';
+  CHAIN_CONFIG,
+} from './utils/utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { IframeRequestEvent, useIframeRequest } from '../../hooks/useIframeRequest';
@@ -77,6 +81,8 @@ function SignMultichain() {
   const [isUnsafe, setUnsafe] = useState(false);
   const [check, setCheck] = useState(false);
   const isSafariBrowser = isSafari();
+  const [isEVMFunctionCall, setIsEVMFunctionCall] = useState(false);
+  const [evmFunctionCallMessage, setEVMFunctionCallMessage] = useState(null);
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -134,6 +140,23 @@ function SignMultichain() {
         window.parent.postMessage({ hideModal: true }, '*');
       }
 
+      if (transaction.derivationPath.chain === 60) {
+        const evmRequest = transaction as EVMRequest;
+        if (evmRequest.transaction.data) {
+          setIsEVMFunctionCall(true);
+          const { data, value, to } = evmRequest.transaction;
+          const ethersProvider = new ethers
+            .JsonRpcProvider(CHAIN_CONFIG[getMultichainAssetInfo(transaction).tokenSymbol].providerUrl);
+
+          const temp = await getEVMFunctionCallMessage(
+            { data, value, to },
+            ethersProvider
+          );
+
+          setEVMFunctionCallMessage(temp);
+        }
+      }
+
       if (transaction?.derivationPath.domain && transaction?.derivationPath.domain !== event?.origin) {
         setUnsafe(true);
       }
@@ -143,6 +166,7 @@ function SignMultichain() {
         transaction,
         window.fastAuthController.getAccountId()
       );
+
       const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
       const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
 
@@ -154,6 +178,7 @@ function SignMultichain() {
       setValid(true);
       setIsDomainKey(transaction?.derivationPath.domain === event?.origin);
       setMessage(transaction);
+
       if (transaction?.derivationPath.domain === event?.origin && !isSafariBrowser) {
         await signMultichainTransaction(transaction, feeProperties);
       }
@@ -248,6 +273,11 @@ function SignMultichain() {
                 />
               )}
             />
+            {isEVMFunctionCall && evmFunctionCallMessage && (
+              <TableContent
+                leftSide={evmFunctionCallMessage}
+              />
+            )}
           </div>
           <div className="table-wrapper">
             <TableContent

@@ -23,7 +23,7 @@ import {
 } from '../../utils/form-validation';
 import { handleCreateAccount } from '../AddDevice/AddDevice';
 import { FormContainer, StyledContainer } from '../Layout';
-import { getMultiChainContract } from '../SignMultichain/utils';
+import { getMultiChainContract } from '../SignMultichain/utils/utils';
 
 const CreateAccountForm = styled(FormContainer)`
   height: 500px;
