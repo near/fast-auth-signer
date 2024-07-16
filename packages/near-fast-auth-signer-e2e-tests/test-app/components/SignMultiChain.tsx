@@ -16,6 +16,7 @@ export type TransactionFormValues = {
   address: string,
   chainId: number,
   isFunctionCall: boolean,
+  useLocalRpc: boolean,
 }
 
 type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
@@ -27,6 +28,7 @@ const schema = yup.object().shape({
   address:        yup.string().required('Please enter wallet address'),
   chainId:        yup.number().required(),
   isFunctionCall: yup.boolean().required(),
+  useLocalRpc:    yup.boolean().required(),
 }).required();
 
 const keyTypes = [
@@ -56,6 +58,7 @@ export default function SignMultiChain() {
     resolver:      yupResolver(schema),
     defaultValues: {
       isFunctionCall: false,
+      useLocalRpc:    false,
     }
   });
 
@@ -102,6 +105,11 @@ export default function SignMultiChain() {
           chain: values.assetType,
           ...(domain ? { domain } : {}),
         },
+        ...(values.useLocalRpc ? {
+          chainConfig: {
+            providerUrl: 'http://localhost:8545',
+          }
+        } : {}),
         transaction: {
           to:      values.address,
           value:   toWei(Number(values.amount)),
@@ -198,6 +206,19 @@ export default function SignMultiChain() {
               {...register('isFunctionCall')}
             />
             Is Function Call
+          </label>
+        </div>
+        <div
+          className="input-group"
+          style={{ marginBottom: '10px' }}
+        >
+          <label htmlFor="useLocalRpc" className="checkbox-label">
+            <input
+              type="checkbox"
+              id="useLocalRpc"
+              {...register('useLocalRpc')}
+            />
+            Use Local RPC
           </label>
         </div>
         <button type="submit" style={{ width: 'fit-content', marginBottom: '15px' }}>

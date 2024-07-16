@@ -17,7 +17,8 @@ type TransactionDetail = {
   assetType: AssetType,
   amount: number,
   address: string,
-  isFunctionCall?: boolean
+  isFunctionCall?: boolean,
+  useLocalRpc?: boolean
 }
 
 class SignMultiChain {
@@ -42,7 +43,7 @@ class SignMultiChain {
   }
 
   async submitTransaction({
-    keyType, assetType, amount, address, isFunctionCall
+    keyType, assetType, amount, address, isFunctionCall, useLocalRpc
   }: TransactionDetail) {
     await this.page.check(`input#${keyType}`);
     await this.page.check(`input#${assetType.toLowerCase()}`);
@@ -50,6 +51,9 @@ class SignMultiChain {
     await this.page.fill('input#address', `${address}`);
     if (isFunctionCall) {
       await this.page.check('input#isFunctionCall');
+    }
+    if (useLocalRpc) {
+      await this.page.check('input#useLocalRpc');
     }
     await this.page.click('button[type="submit"]');
   }
@@ -59,6 +63,12 @@ class SignMultiChain {
     const approveButton = frame.locator('button:has-text("Approve")');
     await approveButton.waitFor({ state: 'visible' });
     await approveButton.click();
+  }
+
+  async closeModal() {
+    const frame = getFastAuthIframe(this.page);
+    const closeButton = frame.locator('button[aria-label="Close"]');
+    await closeButton.click();
   }
 
   async submitAndApproveTransaction({

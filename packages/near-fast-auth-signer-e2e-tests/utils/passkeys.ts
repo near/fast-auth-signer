@@ -15,8 +15,8 @@ export const overridePasskeyFunctions = async (page: Page, keyPairs: KeyPairs): 
   await page.addInitScript(
     // eslint-disable-next-line no-shadow
     (keyPairs: KeyPairsString) => {
-      // @ts-ignore
       window.test = {
+        // @ts-ignore
         isPassKeyAvailable: async () => true,
         createKey:          () => keyPairs.creationKeypair,
         getKeys:            () => [
