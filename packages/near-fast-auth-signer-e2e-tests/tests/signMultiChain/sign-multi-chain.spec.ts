@@ -1,7 +1,8 @@
 import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
-import { ethers } from 'ethers';
+import { JsonRpcProvider, ethers } from 'ethers';
 
+import FTContractJSON from '../../artifacts/contracts/FT.sol/EIP20.json';
 import {
   receivingAddresses, getFastAuthIframe,
   derivedAddresses
@@ -129,6 +130,31 @@ test.describe('Sign MultiChain', () => {
   // NOTE: The following tests are skipped due to rate limiting on Infura's free plan (10 requests/second).
   // To run these tests, consider upgrading to a paid plan or run local EVM blockchains with Ganache.
   test.describe('EVM Function Call', () => {
+    async function deployFTContract() {
+      const provider = new JsonRpcProvider('http://localhost:8545');
+      const contractABI = FTContractJSON.abi;
+
+      const signer = await provider.getSigner();
+      const factory = new ethers.ContractFactory(
+        contractABI,
+        FTContractJSON.bytecode,
+        signer
+      );
+
+      const FTContract = await factory.deploy(
+        ethers.parseUnits('1000000', 18),
+        'FungibleToken',
+        18,
+        'FT'
+      );
+
+      await FTContract.waitForDeployment();
+
+      const deployedAddress = await FTContract.getAddress();
+
+      return { contract: FTContract, address: deployedAddress };
+    }
+
     const setupFunctionCall = async (functionName: string, args: any[]) => {
       const evmFunctionCallData = callContractWithDataField(functionName, args);
       await page.evaluate(
@@ -182,7 +208,10 @@ test.describe('Sign MultiChain', () => {
         expect(multiChainResponse.transactionHash).toBeDefined();
       });
 
-      test('should transfer', async () => {
+      test.only('should transfer', async () => {
+        const contractDeployed = await deployFTContract();
+        console.log({ address: contractDeployed.address });
+
         await testFunctionMessage({
           contractAddress,
           functionName:        'transfer(address,uint256)',
