@@ -18,7 +18,6 @@ import {
   multichainGetFeeProperties,
   TransactionFeeProperties,
   getMultichainAssetInfo,
-  CHAIN_CONFIG,
 } from './utils/utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
@@ -148,7 +147,7 @@ function SignMultichain() {
           setIsEVMFunctionCall(true);
           const { data, value, to } = evmRequest.transaction;
           const ethersProvider = new ethers
-            .JsonRpcProvider(CHAIN_CONFIG[getMultichainAssetInfo(transaction).tokenSymbol].providerUrl);
+            .JsonRpcProvider(getMultichainAssetInfo(transaction)?.chainConfig.providerUrl);
 
           const temp = await getEVMFunctionCallMessage(
             { data, value, to },

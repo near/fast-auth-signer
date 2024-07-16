@@ -99,27 +99,37 @@ export const validateMessage = async (message: SendMultichainMessage): Promise<b
   }
 };
 
+export interface ChainConfig {
+  providerUrl: string;
+  networkType?: string;
+}
+
 export const getMultichainAssetInfo = (message: SendMultichainMessage): {
   tokenSymbol: string;
   coinGeckoId: string;
   networkName: string;
+  chainConfig: ChainConfig;
 } | null => {
   if (message.derivationPath.chain === 60) {
     const chainId = BigInt((message as EVMRequest)?.transaction?.chainId);
+    let chainConfig = (message as EVMRequest)?.chainConfig || CHAIN_CONFIG.ETH;
     switch (chainId) {
       case BigInt(1):
       case BigInt(11155111):
         return {
           tokenSymbol: 'ETH',
           coinGeckoId: 'ethereum',
-          networkName: chainId === BigInt(1) ? 'Ethereum Mainnet' : 'Ethereum Sepolia Network'
+          networkName: chainId === BigInt(1) ? 'Ethereum Mainnet' : 'Ethereum Sepolia Network',
+          chainConfig
         };
       case BigInt(56):
       case BigInt(97):
+        chainConfig = (message as EVMRequest)?.chainConfig || CHAIN_CONFIG.BNB;
         return {
           tokenSymbol: 'BNB',
           coinGeckoId: 'binancecoin',
-          networkName: chainId === BigInt(56) ? 'Binance Smart Chain Mainnet' : 'Binance Smart Chain Testnet'
+          networkName: chainId === BigInt(56) ? 'Binance Smart Chain Mainnet' : 'Binance Smart Chain Testnet',
+          chainConfig
         };
       default:
         throw new Error('Chain not supported');
@@ -127,10 +137,12 @@ export const getMultichainAssetInfo = (message: SendMultichainMessage): {
   }
 
   if (message.derivationPath.chain === 0) {
+    const chainConfig = (message as BitcoinRequest)?.chainConfig || CHAIN_CONFIG.BTC;
     return {
       tokenSymbol: 'BTC',
       coinGeckoId: 'bitcoin',
-      networkName: 'Bitcoin Network'
+      networkName: 'Bitcoin Network',
+      chainConfig
     };
   }
 
@@ -198,7 +210,7 @@ export const multichainSignAndSend = async ({
 
   const chainConfig = {
     contract:    MULTICHAIN_CONTRACT_TESTNET,
-    ...CHAIN_CONFIG[getMultichainAssetInfo(signMultichainRequest).tokenSymbol],
+    ...getMultichainAssetInfo(signMultichainRequest)?.chainConfig,
   };
 
   const signMultiChainWithFee: EVMRequest | BitcoinRequest = {
@@ -243,10 +255,14 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
       multichainContractId:       getMultiChainContract(),
     });
 
-    const feeProperties =  (await fetchBTCFeeProperties(CHAIN_CONFIG.BTC.providerUrl, address, [{
-      address: request.transaction.to,
-      value:   Number(request.transaction.value)
-    }]));
+    const feeProperties =  (await fetchBTCFeeProperties(
+      getMultichainAssetInfo(request)?.chainConfig.providerUrl,
+      address,
+      [{
+        address: request.transaction.to,
+        value:   Number(request.transaction.value)
+      }]
+    ));
 
     return { ...feeProperties, feeDisplay: toBTC(feeProperties.fee) };
   } if (request.derivationPath.chain === 60) {
@@ -261,10 +277,10 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
     const chainId = BigInt((request as EVMRequest).transaction.chainId);
     switch (chainId) {
       case BigInt(11155111):
-        providerUrl = CHAIN_CONFIG.ETH.providerUrl;
+        providerUrl = getMultichainAssetInfo(request)?.chainConfig.providerUrl;
         break;
       case BigInt(97):
-        providerUrl = CHAIN_CONFIG.BNB.providerUrl;
+        providerUrl = getMultichainAssetInfo(request)?.chainConfig.providerUrl;
         break;
       default:
         throw new Error('Chain not supported');
