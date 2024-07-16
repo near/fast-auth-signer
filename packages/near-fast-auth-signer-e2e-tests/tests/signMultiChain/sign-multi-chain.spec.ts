@@ -1,38 +1,56 @@
 import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
 import { JsonRpcProvider, ethers } from 'ethers';
+import { fetchDerivedEVMAddress } from 'multichain-tools';
 
 import FTContractJSON from '../../artifacts/contracts/FT.sol/EIP20.json';
 import {
   receivingAddresses, getFastAuthIframe,
-  derivedAddresses
 } from '../../utils/constants';
+import { getRandomEmailAndAccountId } from '../../utils/email';
+import { createAccount, initializeAdmin } from '../../utils/firebase';
 import { callContractWithDataField } from '../../utils/multiChain';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
 import SignMultiChain, { KeyType } from '../models/SignMultiChain';
+import { TestDapp } from '../models/TestDapp';
 
 let page: Page;
 let signMultiChain: SignMultiChain;
 
-const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
-const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
+test.beforeAll(async () => {
+  initializeAdmin();
+});
 
-const isAuthenticated = async (loggedIn: boolean) => {
-  const fakKeyPair = KeyPair.fromString(userFAK);
+const isAuthenticated = async (loggedIn: boolean): Promise<{accountId: string, keypair: KeyPair}> => {
+  const { email, accountId } = getRandomEmailAndAccountId();
 
-  if (!page) return;
+  const oidcKeyPair = KeyPair.fromRandom('ED25519');
+  const keypair = KeyPair.fromRandom('ED25519');
+  const { createAccountResponse } = await createAccount({
+    email,
+    accountId,
+    oidcKeyPair,
+    FAKs: [keypair],
+    LAKs: []
+  });
+
+  expect(createAccountResponse.type).toBe('ok');
+
+  if (!page) return { accountId: `${accountId}.testnet`, keypair };
   if (loggedIn) {
     await overridePasskeyFunctions(page, {
-      creationKeypair:  fakKeyPair,
-      retrievalKeypair: fakKeyPair
+      creationKeypair:  keypair,
+      retrievalKeypair: keypair
     });
-    return;
+    return { accountId: `${accountId}.testnet`, keypair };
   }
   await overridePasskeyFunctions(page, {
     creationKeypair:  KeyPair.fromRandom('ed25519'),
     retrievalKeypair: KeyPair.fromRandom('ed25519')
   });
+
+  return { accountId: `${accountId}.testnet`, keypair };
 };
 
 test.describe('Sign MultiChain', () => {
@@ -47,13 +65,13 @@ test.describe('Sign MultiChain', () => {
     causing Playwright tests to run longer (up to 40 minutes). To prevent this, the iframe needs to be disabled.
     This issue doesn't occur in production since webpack-dev-server is only used in development. */
     await signMultiChain.disablePointerEventsInterruption();
-    await page.evaluate(
-    // eslint-disable-next-line no-shadow
-      async ([accountId]) => {
-        window.localStorage.setItem('accountId', JSON.stringify(accountId));
-      },
-      [accountId]
-    );
+    // await page.evaluate(
+    // // eslint-disable-next-line no-shadow
+    //   async ([accountId]) => {
+    //     window.localStorage.setItem('accountId', JSON.stringify(accountId));
+    //   },
+    //   [accountId]
+    // );
   });
 
   test.beforeEach(() => {
@@ -127,11 +145,26 @@ test.describe('Sign MultiChain', () => {
     await expect(page.locator('#nfw-connect-iframe')).not.toBeVisible();
   });
 
-  // NOTE: The following tests are skipped due to rate limiting on Infura's free plan (10 requests/second).
-  // To run these tests, consider upgrading to a paid plan or run local EVM blockchains with Ganache.
   test.describe('EVM Function Call', () => {
+    const provider = new JsonRpcProvider('http://localhost:8545');
+
+    test.beforeEach(() => {
+      test.setTimeout(180000);
+    });
+
+    async function topUpAccount(address: string, amount: string) {
+      const funderSigner = await provider.getSigner();
+      const tx = await funderSigner.sendTransaction({
+        to:    address,
+        value: ethers.parseEther(amount)
+      });
+
+      await tx.wait();
+
+      return address;
+    }
+
     async function deployFTContract() {
-      const provider = new JsonRpcProvider('http://localhost:8545');
       const contractABI = FTContractJSON.abi;
 
       const signer = await provider.getSigner();
@@ -180,65 +213,95 @@ test.describe('Sign MultiChain', () => {
     }) => {
       await setupFunctionCall(functionName, args);
       await isWalletSelectorLoaded(page);
-      await isAuthenticated(true);
       await signMultiChain.submitTransaction({
         keyType,
         assetType:      'eth',
         amount:         0,
         address:        contractAddress,
-        isFunctionCall: true
+        isFunctionCall: true,
+        useLocalRpc:    true
       });
       const iframe = getFastAuthIframe(page);
       await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
     };
 
-    test.describe('ERC20 functions', () => {
-      const contractAddress = receivingAddresses.ETH_FT_SMART_CONTRACT;
+    test.only('ERC20 functions', async () => {
+      const contractDeployed = await deployFTContract();
+      const { accountId, keypair } = await isAuthenticated(true);
+      await new TestDapp(page).loginWithKeyPairLocalStorage(accountId, KeyPair.fromRandom('ed25519'), keypair);
 
-      test('should mint tokens', async () => {
-        await testFunctionMessage({
-          contractAddress,
-          functionName:        'mint(address,uint256)',
-          args:                [derivedAddresses.EVM_PERSONAL, ethers.parseEther('1000000')],
-          expectedMessagePart: "You are calling a method on a contract that we couldn't identify. Please make sure you trust the receiver address and application.",
-          keyType:             'personalKey'
-        });
-        await signMultiChain.clickApproveButton();
-        const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
-        expect(multiChainResponse.transactionHash).toBeDefined();
+      const personalKey = await fetchDerivedEVMAddress({
+        signerId: accountId,
+        path:     {
+          chain:  60,
+        },
+        nearNetworkId:        'testnet',
+        multichainContractId: 'v2.multichain-mpc.testnet'
+      });
+      // const domainKey = await fetchDerivedEVMAddress({
+      //   signerId: accountId,
+      //   path:     {
+      //     chain:  60,
+      //     domain: 'http://127.0.0.1:3001/'
+      //   },
+      //   nearNetworkId:        'testnet',
+      //   multichainContractId: 'v2.multichain-mpc.testnet'
+      // });
+      const unknownKey = await fetchDerivedEVMAddress({
+        signerId: accountId,
+        path:     {
+          chain:  60,
+          domain: 'https://app.unknowndomain.com'
+        },
+        nearNetworkId:        'testnet',
+        multichainContractId: 'v2.multichain-mpc.testnet'
       });
 
-      test.only('should transfer', async () => {
-        const contractDeployed = await deployFTContract();
-        console.log({ address: contractDeployed.address });
+      await topUpAccount(personalKey, '100');
+      // await topUpAccount(domainKey, '100');
+      await topUpAccount(unknownKey, '100');
 
-        await testFunctionMessage({
-          contractAddress,
-          functionName:        'transfer(address,uint256)',
-          args:                [derivedAddresses.EVM_UNKNOWN, ethers.parseUnits('100', 18)],
-          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) to ${derivedAddresses.EVM_UNKNOWN}.`,
-          keyType:             'personalKey'
-        });
+      await testFunctionMessage({
+        contractAddress:     contractDeployed.address,
+        functionName:        'mint(address,uint256)',
+        args:                [personalKey, ethers.parseEther('1000000')],
+        expectedMessagePart: "You are calling a method on a contract that we couldn't identify. Please make sure you trust the receiver address and application.",
+        keyType:             'personalKey'
+      });
+      await signMultiChain.clickApproveButton();
+      let multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+      expect(multiChainResponse.transactionHash).toBeDefined();
+
+      await testFunctionMessage({
+        contractAddress:     contractDeployed.address,
+        functionName:        'transfer(address,uint256)',
+        args:                [unknownKey, ethers.parseUnits('100', 18)],
+        expectedMessagePart: `Transferring 100.0 FT (FungibleToken) to ${unknownKey}.`,
+        keyType:             'personalKey'
       });
 
-      test('should approve tokens', async () => {
-        await testFunctionMessage({
-          contractAddress,
-          functionName:        'approve(address,uint256)',
-          args:                [derivedAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
-          expectedMessagePart: `Approving ${derivedAddresses.EVM_UNKNOWN} to manage up to 100.0 FTT3 (Felipe Test Token 3). This allows them to transfer this amount on your behalf.`,
-          keyType:             'personalKey'
-        });
+      await signMultiChain.clickApproveButton();
+      multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+      expect(multiChainResponse.transactionHash).toBeDefined();
+
+      await testFunctionMessage({
+        contractAddress:     contractDeployed.address,
+        functionName:        'approve(address,uint256)',
+        args:                [unknownKey, ethers.parseEther('100')],
+        expectedMessagePart: `Approving ${unknownKey} to manage up to 100.0 FT (FungibleToken). This allows them to transfer this amount on your behalf.`,
+        keyType:             'personalKey'
       });
 
-      test('should transfer tokens from another account', async () => {
-        await testFunctionMessage({
-          contractAddress,
-          functionName:        'transferFrom(address,address,uint256)',
-          args:                [derivedAddresses.EVM_PERSONAL, derivedAddresses.EVM_UNKNOWN, ethers.parseEther('100')],
-          expectedMessagePart: `Transferring 100.0 FTT3 (Felipe Test Token 3) from ${derivedAddresses.EVM_PERSONAL} to ${derivedAddresses.EVM_UNKNOWN}.`,
-          keyType:             'unknownKey'
-        });
+      await signMultiChain.clickApproveButton();
+      multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+      expect(multiChainResponse.transactionHash).toBeDefined();
+
+      await testFunctionMessage({
+        contractAddress:     contractDeployed.address,
+        functionName:        'transferFrom(address,address,uint256)',
+        args:                [personalKey, unknownKey, ethers.parseEther('100')],
+        expectedMessagePart: `Transferring 100.0 FT (FungibleToken) from ${personalKey} to ${unknownKey}.`,
+        keyType:             'unknownKey'
       });
     });
 

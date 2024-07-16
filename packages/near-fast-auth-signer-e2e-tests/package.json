@@ -15,7 +15,7 @@
   "scripts": {
     "test": "yarn playwright test",
     "start": "webpack serve --mode development --history-api-fallback",
-    "start:hardhat": "hardhat node"
+    "start:hardhat": "hardhat compile && hardhat node"
   },
   "dependencies": {
     "@near-js/crypto": "^1.2.3",
@@ -30,6 +30,7 @@
     "https-browserify": "^1.0.0",
     "js-sha256": "^0.11.0",
     "mailpop3": "^0.1.0",
+    "multichain-tools": "1.0.14-beta.1",
     "near-api-js": "^2.1.4",
     "near-fast-auth-signer": "*",
     "near-fastauth-wallet": "2.0.2-beta.1",
@@ -58,7 +59,6 @@
     "@typechain/hardhat": "^9.0.0",
     "@types/chai": "^4.2.0",
     "@types/mocha": ">=9.1.0",
-    "@types/node": ">=18.0.0",
     "@types/uuid": "^9.0.8",
     "chai": "^4.2.0",
     "ethers": "^6.4.0",
