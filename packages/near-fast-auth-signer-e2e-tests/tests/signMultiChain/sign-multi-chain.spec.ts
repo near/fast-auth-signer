@@ -225,7 +225,7 @@ test.describe('Sign MultiChain', () => {
       await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
     };
 
-    test.only('ERC20 functions', async () => {
+    test('ERC20 functions', async () => {
       const contractDeployed = await deployFTContract();
       const { accountId, keypair } = await isAuthenticated(true);
       await new TestDapp(page).loginWithKeyPairLocalStorage(accountId, KeyPair.fromRandom('ed25519'), keypair);
