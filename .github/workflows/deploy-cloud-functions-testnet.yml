@@ -2,7 +2,7 @@ name: Deploy Cloud Functions
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, add-otp-cloud-functions ]
 
 jobs:
   deploy:
