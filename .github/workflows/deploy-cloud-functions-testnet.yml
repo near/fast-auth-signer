@@ -34,6 +34,8 @@ jobs:
     - name: 'Deploy Cloud Functions'
       run: |
         cd packages/functions
+        echo "Current directory contents:"
+        ls -R
         gcloud functions deploy verifyOTP \
           --runtime nodejs18 \
           --trigger-http \
@@ -41,7 +43,7 @@ jobs:
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=verifyOTP \
-          --source=.
+          --source=lib
 
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
@@ -50,4 +52,4 @@ jobs:
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=sendOTP \
-          --source=.
+          --source=lib
