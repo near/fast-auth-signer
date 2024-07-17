@@ -10,6 +10,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
       with:
@@ -18,20 +23,29 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
 
-    - name: 'Deploy Cloud Functions'
+    - name: 'Install dependencies and build'
       run: |
         cd packages/functions
         npm install
+        npm run build
+
+    - name: 'Deploy Cloud Functions'
+      run: |
+        cd packages/functions
         gcloud functions deploy verifyOTP \
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
-          --region=us-central1
+          --region=us-central1 \
+          --entry-point=verifyOTP \
+          --source=.
 
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
-          --region=us-central1
+          --region=us-central1 \
+          --entry-point=sendOTP \
+          --source=.
