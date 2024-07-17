@@ -28,6 +28,8 @@ jobs:
         cd packages/functions
         npm install
         npm run build
+        echo "Directory structure after build:"
+        find . -type f
 
     - name: 'Deploy Cloud Functions'
       run: |
