@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { initializeApp, FirebaseError } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 
 import { network } from './config';
 
@@ -12,6 +13,9 @@ const errorCodeMessageMap = {
 // Initialize Firebase
 export const firebaseApp = initializeApp(network.fastAuth.firebase);
 export const firebaseAuth = getAuth(firebaseApp);
+export const functions = getFunctions(firebaseApp);
+
+// connectFunctionsEmulator(functions, "localhost", 5001);
 
 export const checkFirestoreReady = async () => firebaseAuth.authStateReady()
   .then(async () => {

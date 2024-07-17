@@ -16,6 +16,7 @@ import SignTemplate from './components/Sign/SignTemplate';
 import SignMessage from './components/SignMessage/SignMesage';
 import SignMultichain from './components/SignMultichain/SignMultichain';
 import VerifyEmailPage from './components/VerifyEmail/verify-email';
+import VerifyOtpPage from './components/VerifyOtp/verify-otp';
 import FastAuthController from './lib/controller';
 import './styles/theme.css';
 import './styles/globals.css';
@@ -75,6 +76,7 @@ export default function App() {
             {/* TODO: This isn't available on mainnet, and isn't production ready, clean the code for production release */}
             {environment.NETWORK_ID === 'testnet' && <Route path="sign-multichain" element={<SignMultichain />} />}
             <Route path="verify-email" element={<VerifyEmailPage />} />
+            <Route path="verify-otp" element={<VerifyOtpPage />} />
             <Route path="auth-callback" element={<AuthCallbackPage />} />
             <Route path="devices" element={<Devices />} />
           </Route>
