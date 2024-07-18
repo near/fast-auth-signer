@@ -21,11 +21,6 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
 
-    - name: 'Set Firebase config'
-      run: |
-        gcloud functions config set gmail/sender "${{ secrets.GMAIL_OTP_SENDER }}" # gmail or gsuite
-        gcloud functions config set gmail/pass "${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"
-
     - name: 'Install dependencies and build'
       run: |
         cd packages/functions
@@ -46,7 +41,8 @@ jobs:
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=verifyOTP \
-          --source=lib
+          --source=lib \
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_APP_PASSWORD="${{ secrets.GMAIL_APP_PASSWORD }}"  # gmail or gsuite
 
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
@@ -55,4 +51,5 @@ jobs:
           --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=sendOTP \
-          --source=lib
+          --source=lib \
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_APP_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
