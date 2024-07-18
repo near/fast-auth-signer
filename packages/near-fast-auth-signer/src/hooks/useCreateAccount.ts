@@ -49,8 +49,6 @@ type ReturnProps = {
 const handleCreateAccountError = (error) => {
   const errorMessage = typeof error?.message === 'string' ? error.message : ERROR_MESSAGE_DEFAULT;
   recordEvent(EVENT_SIGNUP_ERROR, { errorMessage });
-  console.error('error', error);
-
   window.parent.postMessage({
     type:    'CreateAccountError',
     message: errorMessage,

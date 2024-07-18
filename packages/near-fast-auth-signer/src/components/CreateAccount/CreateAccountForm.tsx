@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import isEmail from 'validator/lib/isEmail';
 import * as yup from 'yup';
 
+import { CreateAccountFormValues } from '../../hooks/useCreateAccount';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
@@ -98,19 +99,16 @@ const schema = yup.object().shape({
     }),
 });
 
-type FormValues = {
-  email: string;
-  username: string
-}
-
 type CreateAccountFormProps = {
-  onSubmit: SubmitHandler<FormValues>;
+  onSubmit: SubmitHandler<CreateAccountFormValues>;
   loading: boolean;
-  initialValues?: FormValues;
+  initialValues?: CreateAccountFormValues;
 }
 
 // eslint-disable-next-line max-len
-const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({ onSubmit, loading, initialValues }, ref) => {
+const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
+  onSubmit, loading, initialValues
+}, ref) => {
   const [searchParams] = useSearchParams();
 
   const {
@@ -238,7 +236,7 @@ const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
       />
       <Button
         disabled={!isValid || loading}
-        label={loading ? 'Sending...' : 'Continue'}
+        label={loading ? 'Please wait...' : 'Continue'}
         variant="affirmative"
         type="submit"
         size="large"
