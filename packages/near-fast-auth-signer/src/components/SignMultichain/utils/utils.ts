@@ -34,14 +34,14 @@ function toBTC(satoshis: number): number {
 
 type BTCFeeProperties = {
   inputs: {
-      txid: string;
-      vout: number;
-      value: number;
-      script: string;
+    txid: string;
+    vout: number;
+    value: number;
+    script: string;
   }[];
   outputs: {
-      address: string;
-      value: number;
+    address: string;
+    value: number;
   }[];
   fee: number;
 };
@@ -90,7 +90,7 @@ const SendMultichainMessageSchema = yup.lazy((value: SendMultichainMessage) => {
 });
 
 export const validateMessage = async (message: SendMultichainMessage): Promise<boolean
-| Error> => {
+  | Error> => {
   try {
     await SendMultichainMessageSchema.validate(message);
     return true;
@@ -112,7 +112,6 @@ export const getMultichainAssetInfo = (message: SendMultichainMessage): {
 } | null => {
   if (message.derivationPath.chain === 60) {
     const chainId = BigInt((message as EVMRequest)?.transaction?.chainId);
-    let chainConfig = (message as EVMRequest)?.chainConfig || CHAIN_CONFIG.ETH;
     switch (chainId) {
       case BigInt(1):
       case BigInt(11155111):
@@ -120,16 +119,15 @@ export const getMultichainAssetInfo = (message: SendMultichainMessage): {
           tokenSymbol: 'ETH',
           coinGeckoId: 'ethereum',
           networkName: chainId === BigInt(1) ? 'Ethereum Mainnet' : 'Ethereum Sepolia Network',
-          chainConfig
+          chainConfig: { ...CHAIN_CONFIG.ETH, ...message.chainConfig }
         };
       case BigInt(56):
       case BigInt(97):
-        chainConfig = (message as EVMRequest)?.chainConfig || CHAIN_CONFIG.BNB;
         return {
           tokenSymbol: 'BNB',
           coinGeckoId: 'binancecoin',
           networkName: chainId === BigInt(56) ? 'Binance Smart Chain Mainnet' : 'Binance Smart Chain Testnet',
-          chainConfig
+          chainConfig: { ...CHAIN_CONFIG.BNB, ...message.chainConfig }
         };
       default:
         throw new Error('Chain not supported');
@@ -137,19 +135,18 @@ export const getMultichainAssetInfo = (message: SendMultichainMessage): {
   }
 
   if (message.derivationPath.chain === 0) {
-    const chainConfig = (message as BitcoinRequest)?.chainConfig || CHAIN_CONFIG.BTC;
     return {
       tokenSymbol: 'BTC',
       coinGeckoId: 'bitcoin',
       networkName: 'Bitcoin Network',
-      chainConfig
+      chainConfig: { ...CHAIN_CONFIG.BTC, ...message.chainConfig }
     };
   }
 
   return null;
 };
 
-const convertTokenToReadable = (value : SendMultichainMessage['transaction']['value'], chain: SLIP044ChainId) => {
+const convertTokenToReadable = (value: SendMultichainMessage['transaction']['value'], chain: SLIP044ChainId) => {
   // chain is the slip044 chain id
   if (chain === 60) {
     return parseFloat(formatEther(value));
@@ -174,7 +171,7 @@ export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
     const res = await fetchGeckoPrices(id);
     if (!res) {
       return {
-        price:       0,
+        price: 0,
         tokenAmount
       };
     }
@@ -186,7 +183,7 @@ export const getTokenAndTotalPrice = async (message: SendMultichainMessage) => {
     };
   }
   return {
-    price:       0,
+    price: 0,
     tokenAmount
   };
 };
@@ -209,7 +206,7 @@ export const multichainSignAndSend = async ({
   const keypair = await window.fastAuthController.getKey(accountId);
 
   const chainConfig = {
-    contract:    MULTICHAIN_CONTRACT_TESTNET,
+    contract: MULTICHAIN_CONTRACT_TESTNET,
     ...getMultichainAssetInfo(signMultichainRequest)?.chainConfig,
   };
 
@@ -221,7 +218,7 @@ export const multichainSignAndSend = async ({
       ...chainConfig,
       ...signMultichainRequest.chainConfig,
     },
-    transaction:        {
+    transaction: {
       ...signMultichainRequest.transaction,
       ...feeProperties,
     }
@@ -234,7 +231,7 @@ export const multichainSignAndSend = async ({
 
   if (signMultichainRequest.derivationPath.chain === 0) {
     return signAndSendBTCTransaction({
-      chainConfig:        chainConfig as BTCChainConfigWithProviders,
+      chainConfig: chainConfig as BTCChainConfigWithProviders,
       ...signMultiChainWithFee as BitcoinRequest,
     });
   }
@@ -252,10 +249,10 @@ export const multichainGetFeeProperties = async (request: SendMultichainMessage,
       path:                 request.derivationPath,
       btcNetworkId:         (request as BitcoinRequest).chainConfig.network,
       nearNetworkId:        environment.NETWORK_ID,
-      multichainContractId:       getMultiChainContract(),
+      multichainContractId: getMultiChainContract(),
     });
 
-    const feeProperties =  (await fetchBTCFeeProperties(
+    const feeProperties = (await fetchBTCFeeProperties(
       getMultichainAssetInfo(request)?.chainConfig.providerUrl,
       address,
       [{
