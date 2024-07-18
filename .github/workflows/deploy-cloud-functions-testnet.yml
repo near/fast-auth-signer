@@ -1,9 +1,7 @@
 name: Deploy Cloud Functions
-
 on:
   push:
     branches: [ main, add-otp-cloud-functions ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,10 +21,15 @@ jobs:
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
 
+    - name: 'Set Firebase config'
+      run: |
+        gcloud functions config set gmail/sender "${{ secrets.GMAIL_OTP_SENDER }}" # gmail or gsuite
+        gcloud functions config set gmail/pass "${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"
+
     - name: 'Install dependencies and build'
       run: |
         cd packages/functions
-        npm install
+        npm ci
         npm run build
         echo "Directory structure after build:"
         find . -type f
