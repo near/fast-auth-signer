@@ -1,17 +1,17 @@
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { onSignIn, onCreateAccount } from './auth';
 import AuthCallbackError from './AuthCallbackError';
-import { useCreateAccount } from '../../hooks/useCreateAccount';
+import { CreateAccountFormValues } from '../../hooks/useCreateAccount';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, extractQueryParams } from '../../utils';
-import { networkId } from '../../utils/config';
+import { network, networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
 
@@ -25,11 +25,12 @@ const PageWrap = styled.div`
   width: 100%;
 `;
 
-const AccountInfo = styled.div`
+const AccountInfo = styled.div<{ textCentered?: boolean }>`
   width: 375px;
   display: flex;
   padding: 8px 12px;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   border-radius: 4px;
   border: 1px solid #FBD38D;
@@ -40,18 +41,23 @@ const AccountInfo = styled.div`
   }
   margin-bottom: 12px;
   color: #2D3748;
+  p{
+    margin: 0;
+  }
 `;
 
-const StatusMessage = styled.p``;
+const StatusMessage = styled.p`
+`;
 
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
   const [callbackError, setCallbackError] = useState<Error | null>(null);
   const [isAccountExisting, setAccountAsExisting] = useState(true);
+  const onSubmitRef = useRef(null);
+  const [inFlight, setInFlight] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const { createAccount, loading: inFlight } = useCreateAccount();
 
   useEffect(() => {
     const signInProcess = async () => {
@@ -108,7 +114,7 @@ function AuthCallbackPage() {
         });
 
         const callback = params.isRecovery ? onSignIn : onCreateAccount;
-        await callback({
+        const callbackParams = {
           oidcKeypair,
           accessToken,
           accountId:         params.accountId,
@@ -123,8 +129,15 @@ function AuthCallbackPage() {
           gateway:           params.success_url,
           onAccountNotFound: () => {
             setAccountAsExisting(false);
+            setStatusMessage('Oops! This account doesn\'t seem to exist. Please create one below.');
           },
-        });
+        };
+
+        onSubmitRef.current = async (extraParams: { accountId: string }) => {
+          await onCreateAccount({ ...callbackParams, ...extraParams });
+        };
+
+        await callback(callbackParams);
       } catch (e) {
         captureException(e);
         setCallbackError(e);
@@ -134,12 +147,28 @@ function AuthCallbackPage() {
     signInProcess();
   }, [navigate, searchParams]);
 
+  const handleFormSubmit = async (values: CreateAccountFormValues) => {
+    setInFlight(true);
+    setStatusMessage('Loading...');
+    try {
+      const accountId = `${values.username}.${network.fastAuth.accountIdSuffix}`;
+      await onSubmitRef.current({ accountId });
+    } catch (error) {
+      captureException(error);
+      setCallbackError(error);
+    } finally {
+      setInFlight(false);
+    }
+  };
+
   if (!isAccountExisting) {
     return (
       <PageWrap>
-        <AccountInfo>Oops! This account doesn&apos;t seem to exist. Please create one below.</AccountInfo>
+        <AccountInfo>
+          <StatusMessage data-test-id="callback-status-message">{statusMessage}</StatusMessage>
+        </AccountInfo>
         <CreateAccountForm
-          onSubmit={createAccount}
+          onSubmit={handleFormSubmit}
           loading={inFlight}
           initialValues={{
             email:    window.localStorage.getItem('emailForSignIn'),
