@@ -4,6 +4,7 @@
   "scripts": {
     "lint": "eslint .",
     "build": "tsc",
+    "postbuild": "cp package.json lib/ && cd lib && npm install --only=production",
     "build:watch": "tsc --watch",
     "serve": "yarn run build && firebase emulators:start --only functions",
     "shell": "yarn run build && firebase functions:shell",

@@ -6,13 +6,11 @@ import * as nodemailer from 'nodemailer';
 
 admin.initializeApp();
 
-const SENDER_EMAIL = functions.config().gmail?.sender;
-const GMAIL_PASSWORD = functions.config().gmail?.pass;
+const SENDER_EMAIL = process.env.GMAIL_SENDER;
+const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
 
 if (!SENDER_EMAIL || !GMAIL_PASSWORD) {
-  throw new Error(
-    'Sender email and password must be configured using Firebase Functions config.'
-  );
+  throw new Error('Sender email and password must be set as environment variables.');
 }
 
 const transporter = nodemailer.createTransport({

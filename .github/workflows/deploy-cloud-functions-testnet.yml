@@ -42,8 +42,7 @@ jobs:
           --region=us-central1 \
           --entry-point=verifyOTP \
           --source=lib \
-          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_APP_PASSWORD="${{ secrets.GMAIL_APP_PASSWORD }}"  # gmail or gsuite
-
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
           --trigger-http \
@@ -52,4 +51,4 @@ jobs:
           --region=us-central1 \
           --entry-point=sendOTP \
           --source=lib \
-          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_APP_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
