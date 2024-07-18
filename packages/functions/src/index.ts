@@ -9,6 +9,8 @@ admin.initializeApp();
 const SENDER_EMAIL = process.env.GMAIL_SENDER;
 const GMAIL_PASSWORD = process.env.GMAIL_PASSWORD;
 
+console.log(SENDER_EMAIL, GMAIL_PASSWORD, '<<< email creds')
+
 if (!SENDER_EMAIL || !GMAIL_PASSWORD) {
   throw new Error('Sender email and password must be set as environment variables.');
 }
@@ -26,6 +28,7 @@ const transporter = nodemailer.createTransport({
 export const sendOTP = functions.https.onCall(
   async (data: { email: string }, _context) => {
     const { email } = data;
+    console.log(SENDER_EMAIL, GMAIL_PASSWORD, '<<< email creds2')
 
     const otp = crypto.randomInt(100000, 999999).toString();
 
