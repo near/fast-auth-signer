@@ -10,6 +10,7 @@ jobs:
     strategy:
       matrix:
         test-type: [testnet, local, remaining]
+      max-parallel: 1
     defaults:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
