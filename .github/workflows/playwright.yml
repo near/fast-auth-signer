@@ -4,45 +4,12 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-jobs:
-  test-sign-multi-chain-testnet:
-    defaults:
-      run:
-        working-directory: ./packages/near-fast-auth-signer-e2e-tests
-    timeout-minutes: 60
-    runs-on: ubuntu-22.04-4core
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 18.x
-    - name: Install dependencies
-      run: |
-        cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
-        npm install -g yarn && yarn
-    - name: Install Playwright Browsers
-      run: yarn playwright install --with-deps
-    - name: Run Playwright tests (Testnet)
-      env:
-          MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
-          MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
-          MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
-          FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
-          MULTICHAIN_TEST_ACCOUNT_ID: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_ID }}
-          MULTICHAIN_TEST_ACCOUNT_FAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_FAK }}
-          MULTICHAIN_TEST_ACCOUNT_LAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_LAK }}
-          ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
-          BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
-          BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
-      run: yarn playwright test --grep @testnet
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report-testnet
-        path: ./packages/near-fast-auth-signer-e2e-tests/playwright-report/
-        retention-days: 30
 
-  test-sign-multi-chain-local:
+jobs:
+  playwright-tests:
+    strategy:
+      matrix:
+        test-type: [testnet, local, remaining]
     defaults:
       run:
         working-directory: ./packages/near-fast-auth-signer-e2e-tests
@@ -60,61 +27,33 @@ jobs:
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
     - name: Setup local RPC environment
+      if: matrix.test-type == 'local'
       run: |
-        # Add commands to start your local RPC server here
-        # For example:
         yarn run start:hardhat &
-        sleep 10  # Wait for the server to start
-    - name: Run Playwright tests (Local)
+        sleep 10
+    - name: Run Playwright tests
       env:
-          MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
-          MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
-          MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
-          FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
-          MULTICHAIN_TEST_ACCOUNT_ID: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_ID }}
-          MULTICHAIN_TEST_ACCOUNT_FAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_FAK }}
-          MULTICHAIN_TEST_ACCOUNT_LAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_LAK }}
-      run: yarn playwright test --grep @local
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report-local
-        path: ./packages/near-fast-auth-signer-e2e-tests/playwright-report/
-        retention-days: 30
-
-  test-remaining:
-    defaults:
-      run:
-        working-directory: ./packages/near-fast-auth-signer-e2e-tests
-    timeout-minutes: 60
-    runs-on: ubuntu-22.04-4core
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 18.x
-    - name: Install dependencies
+        MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
+        MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
+        MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
+        FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
+        MULTICHAIN_TEST_ACCOUNT_ID: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_ID }}
+        MULTICHAIN_TEST_ACCOUNT_FAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_FAK }}
+        MULTICHAIN_TEST_ACCOUNT_LAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_LAK }}
+        ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
+        BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
+        BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
       run: |
-        cd ${{ github.workspace }}/packages/near-fast-auth-signer-e2e-tests
-        npm install -g yarn && yarn
-    - name: Install Playwright Browsers
-      run: yarn playwright install --with-deps
-    - name: Run remaining Playwright tests
-      env:
-          MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
-          MAILTRAP_PASS: ${{ secrets.MAILTRAP_PASS }}
-          MAILTRAP_EMAIL: ${{ secrets.MAILTRAP_EMAIL }}
-          FIREBASE_SERVICE_ACCOUNT_TESTNET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TESTNET }}
-          MULTICHAIN_TEST_ACCOUNT_ID: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_ID }}
-          MULTICHAIN_TEST_ACCOUNT_FAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_FAK }}
-          MULTICHAIN_TEST_ACCOUNT_LAK: ${{ secrets.MULTICHAIN_TEST_ACCOUNT_LAK }}
-          ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
-          BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
-          BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
-      run: yarn playwright test --grep-invert "@testnet|@local"
+        if [ "${{ matrix.test-type }}" = "testnet" ]; then
+          yarn playwright test --grep @testnet
+        elif [ "${{ matrix.test-type }}" = "local" ]; then
+          yarn playwright test --grep @local
+        else
+          yarn playwright test --grep-invert "@testnet|@local"
+        fi
     - uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: playwright-report-remaining
+        name: playwright-report-${{ matrix.test-type }}
         path: ./packages/near-fast-auth-signer-e2e-tests/playwright-report/
         retention-days: 30
