@@ -1,7 +1,7 @@
 import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
 import { JsonRpcProvider, ethers } from 'ethers';
-import { fetchDerivedEVMAddress, SLIP044ChainId } from 'multichain-tools';
+import { fetchDerivedEVMAddress } from 'multichain-tools';
 
 import FTContractJSON from '../../artifacts/contracts/FT.sol/EIP20.json';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../../utils/constants';
 import { getRandomEmailAndAccountId } from '../../utils/email';
 import { createAccount, initializeAdmin } from '../../utils/firebase';
-import { callContractWithDataField } from '../../utils/multiChain';
+import { callContractWithDataField, getDomain } from '../../utils/multiChain';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
 import { isWalletSelectorLoaded } from '../../utils/walletSelector';
 import SignMultiChain, { KeyType } from '../models/SignMultiChain';
@@ -86,11 +86,6 @@ test.describe('Sign MultiChain', () => {
     signMultiChain = new SignMultiChain(page);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-
-    /* webpack-dev-server adds a hidden iframe for hot reloading, which interferes with event propagation,
-    causing Playwright tests to run longer (up to 40 minutes). To prevent this, the iframe needs to be disabled.
-    This issue doesn't occur in production since webpack-dev-server is only used in development. */
-    await signMultiChain.disablePointerEventsInterruption();
   });
 
   // We are limited in the number of tests we can run concurrently due to using a single accountId.
@@ -171,8 +166,6 @@ test.describe('Sign MultiChain', () => {
       });
 
       await tx.wait();
-
-      return address;
     }
 
     const fetchAddressAndTopUp = async ({
@@ -185,25 +178,22 @@ test.describe('Sign MultiChain', () => {
         keyType: KeyType;
         shouldTopUp?: boolean
       }): Promise<string> => {
-      const path: { chain: SLIP044ChainId; domain?: string } = { chain: 60 };
+      const domain = getDomain(keyType);
 
-      if (keyType === 'unknownKey') {
-        path.domain = 'https://app.unknowndomain.com';
-      } else if (keyType === 'domainKey') {
-        path.domain = 'http://127.0.0.1:3001/';
-      }
-
-      const key = await fetchDerivedEVMAddress({
+      const address = await fetchDerivedEVMAddress({
         signerId:             accountId,
-        path,
+        path:     {
+          chain: 60,
+          ...(domain ? { domain } : {})
+        },
         nearNetworkId:        'testnet',
         multichainContractId: 'v2.multichain-mpc.testnet'
       });
 
       if (shouldTopUp) {
-        await topUpAccount(key, '100');
+        await topUpAccount(address, '100');
       }
-      return key;
+      return address;
     };
 
     test.describe('EVM Function Call', () => {
@@ -287,7 +277,7 @@ test.describe('Sign MultiChain', () => {
           keyType:             'personalKey'
         });
         await signMultiChain.clickApproveButton();
-        const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+        let multiChainResponse = await signMultiChain.waitForMultiChainResponse();
         expect(multiChainResponse.transactionHash).toBeDefined();
 
         await testFunctionMessage({
@@ -308,13 +298,19 @@ test.describe('Sign MultiChain', () => {
           keyType:             'personalKey'
         });
 
-        await signMultiChain.closeModal();
+        // The approval is necessary for the subsequent transferFrom test.
+        // In ERC20 tokens, the owner must approve another address to spend tokens on their behalf
+        // before that address can execute a transferFrom. This approval step ensures
+        // that the following transferFrom function call will have the necessary permissions to operate.
+        await signMultiChain.clickApproveButton();
+        multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+        expect(multiChainResponse.transactionHash).toBeDefined();
 
         await testFunctionMessage({
           contractAddress:     contractDeployed.address,
           functionName:        'transferFrom(address,address,uint256)',
-          args:                [personalKey, unknownKey, ethers.parseEther('100')],
-          expectedMessagePart: `Transferring 100.0 FT (FungibleToken) from ${personalKey} to ${unknownKey}.`,
+          args:                [personalKey, unknownKey, ethers.parseEther('20')],
+          expectedMessagePart: `Transferring 20.0 FT (FungibleToken) from ${personalKey} to ${unknownKey}.`,
           keyType:             'unknownKey'
         });
       });

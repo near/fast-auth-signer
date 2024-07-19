@@ -11,10 +11,9 @@ import useWalletSelector from '../hooks/useWalletSelector';
 
 export type TransactionFormValues = {
   keyType: string,
-  assetType: 0 | 60,
+  assetType: 'BTC' | 'ETH' | 'BNB',
   amount: number,
   address: string,
-  chainId: number,
   isFunctionCall: boolean,
   useLocalRpc: boolean,
 }
@@ -23,10 +22,9 @@ type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
 const schema = yup.object().shape({
   keyType:        yup.string().required('Please select a key type'),
-  assetType:      yup.number().oneOf([0, 60]).required('Please select an asset type'),
+  assetType:      yup.string().oneOf(['BTC', 'ETH', 'BNB']).required('Please select an asset type'),
   amount:         yup.number().required('Please enter amount'),
   address:        yup.string().required('Please enter wallet address'),
-  chainId:        yup.number().required(),
   isFunctionCall: yup.boolean().required(),
   useLocalRpc:    yup.boolean().required(),
 }).required();
@@ -39,20 +37,20 @@ const keyTypes = [
 
 const assetTypes = [
   {
-    id: 'eth', value: 60, dataChainId: 11155111, label: 'ETH sepolia'
+    id: 'eth', value: 'ETH', chainId: 11155111, label: 'ETH (Sepolia Testnet)'
   },
   {
-    id: 'bnb', value: 60, dataChainId: 97, label: 'BSC testnet'
+    id: 'bnb', value: 'BNB', chainId: 97, label: 'BNB (BSC Testnet)'
   },
   {
-    id: 'btc', value: 0, dataChainId: 0, label: 'BTC testnet'
+    id: 'btc', value: 'BTC', chainId: 0, label: 'BTC (Testnet)'
   },
 ];
 
 export default function SignMultiChain() {
   const selectorInstance = useWalletSelector();
   const {
-    handleSubmit, setValue, register,
+    handleSubmit, register,
   } = useForm({
     mode:          'all',
     resolver:      yupResolver(schema),
@@ -76,19 +74,17 @@ export default function SignMultiChain() {
     getWallet();
   }, [selectorInstance]);
 
-  const handleAssetTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('chainId', parseInt(event.target.getAttribute('data-chainid'), 10));
-  };
-
   const onSubmitForm = async (values: TransactionFormValues) => {
+    console.log({ keyType: values.keyType });
     const domain = getDomain(values.keyType);
+    const selectedAsset = assetTypes.find((asset) => asset.value === values.assetType);
 
-    if (!fastAuthWallet) return;
+    if (!fastAuthWallet || !selectedAsset) return;
 
-    if (values.assetType === 0) {
+    if (values.assetType === 'BTC') {
       await fastAuthWallet.signMultiChainTransaction({
         derivationPath: {
-          chain: values.assetType,
+          chain: 0,
           ...(domain ? { domain } : {}),
         },
         transaction: {
@@ -99,10 +95,10 @@ export default function SignMultiChain() {
           network: 'testnet',
         },
       });
-    } else if (values.assetType === 60) {
+    } else {
       await fastAuthWallet.signMultiChainTransaction({
         derivationPath: {
-          chain: values.assetType,
+          chain: 60,
           ...(domain ? { domain } : {}),
         },
         ...(values.useLocalRpc ? {
@@ -113,7 +109,7 @@ export default function SignMultiChain() {
         transaction: {
           to:      values.address,
           value:   toWei(Number(values.amount)),
-          chainId: values.chainId,
+          chainId: selectedAsset.chainId,
           data:    values.isFunctionCall ? window.localStorage.getItem('evmFunctionCallData') : undefined,
         },
       });
@@ -131,7 +127,7 @@ export default function SignMultiChain() {
         style={{
           display: 'flex', flexDirection: 'column', gap: 5, margin: '5px'
         }}
-        onSubmit={handleSubmit(onSubmitForm)}
+        onSubmit={handleSubmit(onSubmitForm, (e) => console.error(e))}
       >
         <div
           className="input-group"
@@ -159,9 +155,7 @@ export default function SignMultiChain() {
                 type="radio"
                 id={assetType.id}
                 value={assetType.value}
-                data-chainid={assetType.dataChainId}
                 {...register('assetType')}
-                onChange={handleAssetTypeChange}
               />
               {assetType.label}
             </label>

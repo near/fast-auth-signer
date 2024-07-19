@@ -67,9 +67,9 @@ class SignMultiChain {
 
   async closeModal() {
     // TODO: Consider replacing Ant Design in fast-auth-wallet
-    // - Current usage is limited (only 4 components imported in IframeDialog.tsx)
     // - Ant Design limits customization options for elements like this close button
-    // - Removing it could reduce bundle size and simplify the codebase
+    // - Current usage is limited (only 4 components imported in IframeDialog.tsx)
+    // - Removing it could reduce bundle size as Ant Design is a heavy library
     // Ref: https://github.com/near/near-fastauth-wallet/blob/ac49e3b50a0f180bd9d4df9ebed634d3e1458214/src/ui/IframeDialog.tsx#L3
     const closeButton = this.page.getByRole('img', { name: 'close' });
     await closeButton.click();
@@ -82,11 +82,6 @@ class SignMultiChain {
       keyType, assetType, amount, address
     });
     await this.clickApproveButton();
-  }
-
-  // Disable pointer events on overlay elements within the iframe and page
-  async disablePointerEventsInterruption() {
-    await this.page.addStyleTag({ content: 'iframe#webpack-dev-server-client-overlay { pointer-events: none; z-index: -1; }' });
   }
 }
 
