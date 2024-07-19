@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test", 
-    "test:testnet": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:testnet",
-    "test:local": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:local",
+    "test:multichain-testnet": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:multichain-testnet",
+    "test:multichain-local": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:multichain-local",
     "test:remaining": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:remaining"
   },
   "devDependencies": {

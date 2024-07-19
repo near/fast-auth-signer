@@ -14,9 +14,9 @@
   ],
   "scripts": {
     "test": "yarn playwright test",
-    "test:testnet": "yarn playwright test --grep @testnet",
-    "test:local": "yarn playwright test --grep @local",
-    "test:remaining": "yarn playwright test --grep-invert \"@testnet|@local\"",
+    "test:multichain-testnet": "yarn playwright test --grep @multichain-testnet",
+    "test:multichain-local": "yarn playwright test --grep @multichain-local",
+    "test:remaining": "yarn playwright test --grep-invert \"@multichain-testnet|@multichain-local\"",
     "start": "webpack serve --mode development --history-api-fallback",
     "start:hardhat": "hardhat compile && hardhat node"
   },

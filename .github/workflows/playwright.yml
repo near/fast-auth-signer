@@ -8,8 +8,9 @@ on:
 jobs:
   playwright-tests:
     strategy:
+    # Re-order those to run remaining first and pre-pend the names for tests with multichain
       matrix:
-        test-type: [testnet, local, remaining]
+        test-type: [remaining, multichain-testnet, multichain-local]
       max-parallel: 1
     defaults:
       run:
@@ -40,10 +41,10 @@ jobs:
         BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
         BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
       run: |
-        if [ "${{ matrix.test-type }}" = "testnet" ]; then
-          yarn test:testnet
-        elif [ "${{ matrix.test-type }}" = "local" ]; then
-          yarn test:local
+        if [ "${{ matrix.test-type }}" = "multichain-testnet" ]; then
+          yarn test:multichain-testnet
+        elif [ "${{ matrix.test-type }}" = "multichain-local" ]; then
+          yarn test:multichain-local
         else
           yarn test:remaining
         fi
