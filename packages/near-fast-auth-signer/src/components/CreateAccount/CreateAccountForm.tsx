@@ -19,7 +19,7 @@ import { FormContainer } from '../Layout';
 import SocialLogin from '../SocialLogin/SocialLogin';
 
 const CreateAccountFormContainer = styled(FormContainer)`
-  height: 560px;
+  height: 625px;
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
