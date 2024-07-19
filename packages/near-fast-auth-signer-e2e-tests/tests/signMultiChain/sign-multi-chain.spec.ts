@@ -46,10 +46,8 @@ const isAuthenticated = async ({
 
       return { accountId: fullAccountId, keypair };
     } if (isLoggedIn) {
-      // const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
-      // const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
-      const userFAK = 'ed25519:wxW3ZxKJhmrXEB5ru4cQEjvP69cMCms3UQ5CxQ6NZE1EXv2bgey6r8kb9SMs2cjvhZuARyMRHxLcq4nqxCmLG8y';
-      const accountId = 'johndoe12.testnet';
+      const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
+      const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
 
       const fakKeyPair = KeyPair.fromString(userFAK);
 
@@ -258,7 +256,10 @@ test.describe('Sign MultiChain', () => {
         await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
       };
 
-      test.only('ERC20 functions', async () => {
+      test('ERC20 functions', async () => {
+        // Very slow test due to 2 ETH/NEAR transactions
+        test.setTimeout(180000);
+
         const contractDeployed = await deployFTContract();
         const { accountId, keypair } = await isAuthenticated({ isLoggedIn: true, isNewAccount: true });
         await new TestDapp(page).loginWithKeyPairLocalStorage(accountId, KeyPair.fromRandom('ed25519'), keypair);
