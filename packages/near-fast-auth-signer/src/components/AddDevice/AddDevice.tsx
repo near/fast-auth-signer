@@ -26,6 +26,7 @@ import {
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
 import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
+import environment from '../../utils/environment';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
@@ -89,8 +90,9 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+// TODO: remove condition when we release on mainnet
 const AddDeviceForm = styled(FormContainer)`
-  height: 560px;
+  height: ${environment.NETWORK_ID === 'testnet' ? '560px' : '420px'}
   gap: 18px;
   justify-content: center;
 `;
