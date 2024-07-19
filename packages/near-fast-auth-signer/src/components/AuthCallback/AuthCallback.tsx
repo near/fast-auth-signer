@@ -40,13 +40,11 @@ const AccountInfo = styled.div<{ textCentered?: boolean }>`
     max-width: 380px;
   }
   margin-bottom: 12px;
-  color: #2D3748;
-  p{
-    margin: 0;
-  }
 `;
 
 const StatusMessage = styled.p`
+  color: #2D3748;
+  margin: 0;
 `;
 
 function AuthCallbackPage() {
