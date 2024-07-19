@@ -75,3 +75,20 @@ test('should create account and login with passkeys', async ({ page }) => {
 
   await pm.getAppPage().isLoggedIn();
 });
+
+test('should create account if logged in with an unregistered account details ', async ({ page }) => {
+  const pm = new PageManager(page);
+  test.setTimeout(120000);
+  const readUIDLs = [];
+  const { email } = getRandomEmailAndAccountId();
+
+  await pm.getLoginPage().signInWithEmail(email);
+  await pm.getEmailPage().hasLoaded();
+
+  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, true, {
+    creationKeypair:  KeyPair.fromRandom('ED25519'),
+    retrievalKeypair: KeyPair.fromRandom('ED25519'),
+  });
+  await pm.getAuthCallBackPage().handleInPageAccountCreation(email);
+  await pm.getAppPage().isLoggedIn();
+});
