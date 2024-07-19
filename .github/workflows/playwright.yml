@@ -45,7 +45,7 @@ jobs:
         ETH_PROVIDER_URL_TESTNET: ${{ secrets.ETH_PROVIDER_URL_TESTNET }}
         BNB_PROVIDER_URL_TESTNET: ${{ secrets.BNB_PROVIDER_URL_TESTNET }}
         BTC_PROVIDER_URL_TESTNET: ${{ secrets.BTC_PROVIDER_URL_TESTNET }}
-     run: |
+      run: |
         if [ "${{ matrix.test-type }}" = "testnet" ]; then
           yarn test:testnet
         elif [ "${{ matrix.test-type }}" = "local" ]; then
