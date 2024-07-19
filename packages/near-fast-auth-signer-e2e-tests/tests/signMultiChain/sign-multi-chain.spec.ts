@@ -155,7 +155,7 @@ test.describe('Sign MultiChain', () => {
     });
   });
 
-  test.describe('Local RPC', { tag: 'local' }, async () => {
+  test.describe('Local RPC', { tag: '@local' }, async () => {
     async function topUpAccount(address: string, amount: string) {
       const funderSigner = await provider.getSigner();
       const tx = await funderSigner.sendTransaction({
