@@ -14,6 +14,9 @@
   ],
   "scripts": {
     "test": "yarn playwright test",
+    "test:testnet": "yarn playwright test --grep @testnet",
+    "test:local": "yarn playwright test --grep @local",
+    "test:remaining": "yarn playwright test --grep-invert \"@testnet|@local\"",
     "start": "webpack serve --mode development --history-api-fallback",
     "start:hardhat": "hardhat compile && hardhat node"
   },
@@ -33,7 +36,7 @@
     "multichain-tools": "1.0.14-beta.1",
     "near-api-js": "^2.1.4",
     "near-fast-auth-signer": "*",
-    "near-fastauth-wallet": "2.0.2-beta.1",
+    "near-fastauth-wallet": "2.0.2-beta.3",
     "process": "^0.11.10",
     "proper-lockfile": "^4.1.2",
     "react": "^18.2.0",

@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test"
+    "test": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test", 
+    "test:testnet": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:testnet",
+    "test:local": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:local",
+    "test:remaining": "yarn && yarn workspace near-fast-auth-signer-e2e-tests test:remaining"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
