@@ -173,7 +173,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
           <div className="stats-message success">
             <SuccessSvg />
-            <span data-test-id={dataTest?.success}>{success}</span>
+            <span data-testid={dataTest?.success}>{success}</span>
           </div>
         );
       }
@@ -182,7 +182,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
           <div className="stats-message error">
             <ErrorSvg />
-            <span data-test-id={dataTest?.error}>{error}</span>
+            <span data-testid={dataTest?.error}>{error}</span>
           </div>
         );
       }
@@ -206,7 +206,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {...rest}
             name={name}
             ref={ref}
-            data-test-id={dataTest?.input}
+            data-testid={dataTest?.input}
             {...debounceTime ? { onChange: debounce(rest.onChange, debounceTime) } : {}}
           />
           {right && (
