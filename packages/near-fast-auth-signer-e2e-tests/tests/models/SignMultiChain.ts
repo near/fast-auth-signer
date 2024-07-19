@@ -66,8 +66,12 @@ class SignMultiChain {
   }
 
   async closeModal() {
-    const frame = getFastAuthIframe(this.page);
-    const closeButton = frame.locator('button[aria-label="Close"]');
+    // TODO: Consider replacing Ant Design in fast-auth-wallet
+    // - Current usage is limited (only 4 components imported in IframeDialog.tsx)
+    // - Ant Design limits customization options for elements like this close button
+    // - Removing it could reduce bundle size and simplify the codebase
+    // Ref: https://github.com/near/near-fastauth-wallet/blob/ac49e3b50a0f180bd9d4df9ebed634d3e1458214/src/ui/IframeDialog.tsx#L3
+    const closeButton = this.page.getByRole('img', { name: 'close' });
     await closeButton.click();
   }
 

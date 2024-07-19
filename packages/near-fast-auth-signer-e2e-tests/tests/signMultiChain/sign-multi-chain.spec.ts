@@ -266,14 +266,9 @@ test.describe('Sign MultiChain', () => {
         });
         const iframe = getFastAuthIframe(page);
         await expect(iframe.getByText(expectedMessagePart)).toBeVisible({ timeout: 10000 });
-        await signMultiChain.clickApproveButton();
-        const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
-        expect(multiChainResponse.transactionHash).toBeDefined();
       };
 
-      test('ERC20 functions', async () => {
-        test.setTimeout(180000);
-
+      test.only('ERC20 functions', async () => {
         const contractDeployed = await deployFTContract();
         const { accountId, keypair } = await isAuthenticated({ isLoggedIn: true, isNewAccount: true });
         await new TestDapp(page).loginWithKeyPairLocalStorage(accountId, KeyPair.fromRandom('ed25519'), keypair);
@@ -281,6 +276,9 @@ test.describe('Sign MultiChain', () => {
         const personalKey = await fetchAddressAndTopUp({ accountId, keyType: 'personalKey' });
         const unknownKey = await fetchAddressAndTopUp({ accountId, keyType: 'unknownKey' });
 
+        // Minting tokens is necessary for the subsequent tests. During EVM gas estimation,
+        // the contract methods are actually called, validating the user's balance and permissions.
+        // This ensures that the following function calls have sufficient tokens to operate on.
         await testFunctionMessage({
           contractAddress:     contractDeployed.address,
           functionName:        'mint(address,uint256)',
@@ -288,6 +286,9 @@ test.describe('Sign MultiChain', () => {
           expectedMessagePart: "You are calling a method on a contract that we couldn't identify. Please make sure you trust the receiver address and application.",
           keyType:             'personalKey'
         });
+        await signMultiChain.clickApproveButton();
+        const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
+        expect(multiChainResponse.transactionHash).toBeDefined();
 
         await testFunctionMessage({
           contractAddress:     contractDeployed.address,
@@ -297,6 +298,8 @@ test.describe('Sign MultiChain', () => {
           keyType:             'personalKey'
         });
 
+        await signMultiChain.closeModal();
+
         await testFunctionMessage({
           contractAddress:     contractDeployed.address,
           functionName:        'approve(address,uint256)',
@@ -304,6 +307,8 @@ test.describe('Sign MultiChain', () => {
           expectedMessagePart: `Approving ${unknownKey} to manage up to 100.0 FT (FungibleToken). This allows them to transfer this amount on your behalf.`,
           keyType:             'personalKey'
         });
+
+        await signMultiChain.closeModal();
 
         await testFunctionMessage({
           contractAddress:     contractDeployed.address,
