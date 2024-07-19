@@ -27,12 +27,6 @@ jobs:
         npm install -g yarn && yarn
     - name: Install Playwright Browsers
       run: yarn playwright install --with-deps
-    - name: Start servers
-      run: |
-        cd ../near-fast-auth-signer && NETWORK_ID=testnet yarn run start:test &
-        yarn run start:hardhat &
-        yarn run start &
-        sleep 30  # Give servers time to start
     - name: Run Playwright tests
       env:
         MAILTRAP_USER: ${{ secrets.MAILTRAP_USER }}
