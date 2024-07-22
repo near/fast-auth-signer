@@ -1,4 +1,3 @@
-import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { FacebookAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -9,7 +8,8 @@ import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy } from '../../utils';
 import { networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
-import { generateRandomString } from '../../utils/string';
+import { storePassKeyAsFAK } from '../../utils/passkey';
+import { getSocialLoginAccountId } from '../../utils/string';
 import { onCreateAccount, onSignIn } from '../AuthCallback/AuthCallback';
 
 const Button = styled.button`
@@ -69,73 +69,69 @@ function SocialButton({
 }: SocialButtonProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const onClick = () => {
-    signInWithPopup(firebaseAuth, provider)
-      .then(async (result) => {
-        const { user } = result;
-        // TODO: construct accountId, confirm with UX
-        const accountId = `${generateRandomString(8)}.${networkId === 'testnet' ? 'testnet' : 'near'}`;
-        const { email } = user;
+  const onClick = async () => {
+    try {
+      const result = await signInWithPopup(firebaseAuth, provider);
+      const { user } = result;
 
-        const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
-        const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
-        const accessToken = await user.getIdToken();
+      // TODO: construct accountId, confirm with UX
+      const accountId = getSocialLoginAccountId();
+      const { email } = user;
 
-        setAccountIdToController({ accountId, networkId });
+      const success_url = decodeIfTruthy(searchParams.get('success_url'));
+      const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
+      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
+      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+      const accessToken = await user.getIdToken();
 
-        let publicKeyFak: string;
-        if (await isPassKeyAvailable()) {
-          const keyPair = await createKey(email);
-          publicKeyFak = keyPair.getPublicKey().toString();
-          await window.fastAuthController.setKey(keyPair);
-        }
+      setAccountIdToController({ accountId, networkId });
 
-        if (!window.fastAuthController.getAccountId()) {
-          await window.fastAuthController.setAccountId(accountId);
-        }
+      const publicKeyFak = await storePassKeyAsFAK(email);
+      if (!window.fastAuthController.getAccountId()) {
+        await window.fastAuthController.setAccountId(accountId);
+      }
 
-        await window.fastAuthController.claimOidcToken(accessToken);
-        const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-        if (!window.firestoreController) {
-          window.firestoreController = new FirestoreController();
-        }
-        window.firestoreController.updateUser({
-          userUid:   user.uid,
-          oidcToken: accessToken,
-        });
-        const isNewUser = shouldCreateAccount(user.metadata.creationTime, user.metadata.lastSignInTime);
-        let callback;
-        if (isNewUser) {
-          callback = onCreateAccount;
-        } else if (isRecovery) {
-          callback = onSignIn;
-        } else {
-          callback = onCreateAccount;
-        }
+      await window.fastAuthController.claimOidcToken(accessToken);
+      const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
 
-        await callback({
-          oidcKeypair,
-          accessToken,
-          accountId,
-          publicKeyFak,
-          public_key_lak,
-          contract_id,
-          methodNames,
-          success_url,
-          setStatusMessage: () => {},
-          navigate,
-          searchParams,
-          gateway:          success_url,
-        });
-      })
-      .catch((error) => {
-        // Handle errors here
-        console.error(error);
+      if (!window.firestoreController) {
+        window.firestoreController = new FirestoreController();
+      }
+
+      window.firestoreController.updateUser({
+        userUid:   user.uid,
+        oidcToken: accessToken,
       });
-  };
 
+      const isNewUser = shouldCreateAccount(user.metadata.creationTime, user.metadata.lastSignInTime);
+      let callback;
+      if (isNewUser) {
+        callback = onCreateAccount;
+      } else if (isRecovery) {
+        callback = onSignIn;
+      } else {
+        callback = onCreateAccount;
+      }
+
+      await callback({
+        oidcKeypair,
+        accessToken,
+        accountId,
+        publicKeyFak,
+        public_key_lak,
+        contract_id,
+        methodNames,
+        success_url,
+        setStatusMessage: () => {},
+        navigate,
+        searchParams,
+        gateway:          success_url,
+      });
+    } catch (error) {
+      // Handle errors here
+      console.error(error);
+    }
+  };
   return (
     <Button onClick={onClick} type="button" disabled={disabled}>
       { logoComponent }

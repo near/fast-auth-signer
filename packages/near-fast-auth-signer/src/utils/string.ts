@@ -1,9 +1,8 @@
-export function generateRandomString(length: number) {
-  const characters = 'abcdefghijklmnopqrstuvwxyz';
-  let result = '';
-  const charactersLength = characters.length;
-  for (let i = 0; i < length; i += 1) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
+import { v4 as uuid } from 'uuid';
+
+import { networkId } from './config';
+
+export function getSocialLoginAccountId() {
+  const randomString = uuid();
+  return `sli-${randomString}.${networkId === 'testnet' ? 'testnet' : 'near'}`;
 }

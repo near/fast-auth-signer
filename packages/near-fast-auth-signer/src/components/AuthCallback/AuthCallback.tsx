@@ -1,4 +1,3 @@
-import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import React, { useEffect, useState, useRef } from 'react';
@@ -13,6 +12,7 @@ import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, extractQueryParams } from '../../utils';
 import { network, networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
+// eslint-disable-next-line import/no-cycle
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
 
 // Styled components
