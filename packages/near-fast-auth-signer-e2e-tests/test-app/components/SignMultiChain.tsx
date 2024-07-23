@@ -75,7 +75,6 @@ export default function SignMultiChain() {
   }, [selectorInstance]);
 
   const onSubmitForm = async (values: TransactionFormValues) => {
-    console.log({ keyType: values.keyType });
     const domain = getDomain(values.keyType);
     const selectedAsset = assetTypes.find((asset) => asset.value === values.assetType);
 

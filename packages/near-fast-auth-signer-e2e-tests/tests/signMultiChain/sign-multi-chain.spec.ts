@@ -114,14 +114,16 @@ test.describe('Sign MultiChain', () => {
     });
 
     // Can fail on relayer or contract signature
-    test('Should Pass: Send ETH with Personal Key', async () => {
+    test.only('Should Pass: Send ETH with Personal Key', async () => {
       await isWalletSelectorLoaded(page);
       await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
+      // Add randomization to the amount to avoid "Smart contract panicked: Signature for this payload already requested"
+      const randomAmount = (Math.random() * 0.0009 + 0.0001).toFixed(6);
       await signMultiChain.submitTransaction({
-        keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
+        keyType: 'personalKey', assetType: 'eth', amount: parseFloat(randomAmount), address: receivingAddresses.ETH_BNB
       });
       const frame = getFastAuthIframe(page);
-      await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
+      await frame.locator(`text=Send ${randomAmount} ETH`).waitFor({ state: 'visible' });
       await signMultiChain.clickApproveButton();
       const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
       expect(multiChainResponse.transactionHash).toBeDefined();
