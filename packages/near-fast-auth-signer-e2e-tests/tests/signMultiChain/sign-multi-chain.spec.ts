@@ -74,7 +74,7 @@ const isAuthenticated = async ({
 };
 
 test.describe('Sign MultiChain', () => {
-  const provider = new JsonRpcProvider('http://localhost:8545');
+  const provider = new JsonRpcProvider('http://127.0.0.1:8545');
 
   test.beforeEach(async ({ browser }) => {
     test.slow();
