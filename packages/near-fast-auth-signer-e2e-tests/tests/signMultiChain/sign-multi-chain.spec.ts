@@ -117,7 +117,7 @@ test.describe('Sign MultiChain', () => {
     test.only('Should Pass: Send ETH with Personal Key', async () => {
       await isWalletSelectorLoaded(page);
       await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
-      // Add randomization to the amount to avoid "Smart contract panicked: Signature for this payload already requested"
+      // Add randomization to the amount to avoid "Smart contract panicked: Signature for this payload already requested" while running the tests in parallel
       const randomAmount = (Math.random() * 0.0009 + 0.0001).toFixed(6);
       await signMultiChain.submitTransaction({
         keyType: 'personalKey', assetType: 'eth', amount: parseFloat(randomAmount), address: receivingAddresses.ETH_BNB
