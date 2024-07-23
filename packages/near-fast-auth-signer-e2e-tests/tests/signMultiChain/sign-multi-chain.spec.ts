@@ -114,7 +114,7 @@ test.describe('Sign MultiChain', () => {
     });
 
     // Can fail on relayer or contract signature
-    test.only('Should Pass: Send ETH with Personal Key', async () => {
+    test('Should Pass: Send ETH with Personal Key', async () => {
       await isWalletSelectorLoaded(page);
       await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
       // Add randomization to the amount to avoid "Smart contract panicked: Signature for this payload already requested" while running the tests in parallel
