@@ -10613,10 +10613,10 @@ multichain-tools@1.0.14-beta.1:
     lodash.pickby "^4.6.0"
     near-api-js "^3.0.4"
 
-multichain-tools@1.0.14-beta.10:
-  version "1.0.14-beta.10"
-  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.14-beta.10.tgz#5064315e7c257fe4c76e81e7b44ca274dc3aa14c"
-  integrity sha512-evKZPsLMUTKTtCc/tL7nsp1PZ2AHpzppyTQBQYMfEny+g7rGWy4DrB0w4k/BV2donX2V8cF8JG22mjDtRV0TpQ==
+multichain-tools@1.0.14-beta.11:
+  version "1.0.14-beta.11"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.14-beta.11.tgz#c0dd38483af7c13fe695a7eb772e02f5c013c4bc"
+  integrity sha512-ajg4q66pIKhGd7NysUIrzq2/jBHf9a5xWdB183z2lg5NzHYH5u8S4lsGhyJshaeUFG3qdQmrkL4N3KGjWrvlMA==
   dependencies:
     axios "^1.6.8"
     bitcoinjs-lib "^6.1.5"
