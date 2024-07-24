@@ -19,7 +19,5 @@ export const derivedAddresses = {
   EVM_PERSONAL_2: '0x80a5dd65208c29bb0b5b99eedf53ae489d597ec2',
   EVM_PERSONAL_3: '0x91d036588cb42f5bcd6227ebdbd4d09063d673e5',
   EVM_UNKNOWN:    '0x7159c9bda696bf1213933ad3851db30f335a1d0b',
-
-  // Incorrect, need to re-derive for v5
-  EVM_DOMAIN:     '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71',
+  EVM_DOMAIN:     '0xa02fa1b0fcf4bf1f380a2bdaaf4cddedb84571e5',
 };
