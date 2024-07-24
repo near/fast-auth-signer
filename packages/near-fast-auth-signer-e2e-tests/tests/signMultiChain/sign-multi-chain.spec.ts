@@ -24,11 +24,13 @@ test.beforeAll(async () => {
 
 const isAuthenticated = async ({
   isLoggedIn,
-  isNewAccount
+  isNewAccount,
+  shouldRotateKeys = false
 }:
   {
     isLoggedIn: boolean,
-    isNewAccount: boolean
+    isNewAccount: boolean,
+    shouldRotateKeys?: boolean
   }): Promise<{ accountId: string, keypair: KeyPair }> => {
   if (page) {
     if (isLoggedIn && isNewAccount) {
@@ -61,7 +63,8 @@ const isAuthenticated = async ({
         }
       ];
       // Randomize the account to avoid nonce issues
-      const account = accounts[Math.floor(Math.random() * accounts.length)];
+      const accountIndex = shouldRotateKeys ? Math.floor(Math.random() * accounts.length) : 0;
+      const account = accounts[accountIndex];
       const fakKeyPair = KeyPair.fromString(account.FAK);
 
       await page.evaluate(
@@ -129,9 +132,9 @@ test.describe('Sign MultiChain', () => {
     // Can fail on relayer or contract signature
     test('Should Pass: Send ETH with Personal Key', async () => {
       await isWalletSelectorLoaded(page);
-      await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
+      await isAuthenticated({ isLoggedIn: true, isNewAccount: false, shouldRotateKeys: true });
       // Add randomization to the amount to avoid "Smart contract panicked: Signature for this payload already requested" while running the tests in parallel
-      const randomAmount = (Math.random() * 0.0009 + 0.0001).toFixed(6).replace(/\.?0+$/, '');
+      const randomAmount = (Math.random() * 0.00009 + 0.0001).toFixed(6).replace(/\.?0+$/, '');
       await signMultiChain.submitTransaction({
         keyType: 'personalKey', assetType: 'eth', amount: parseFloat(randomAmount), address: receivingAddresses.ETH_BNB
       });
