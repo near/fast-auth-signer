@@ -200,7 +200,7 @@ test.describe('Sign MultiChain', () => {
           ...(domain ? { domain } : {})
         },
         nearNetworkId:        'testnet',
-        multichainContractId: 'v2.multichain-mpc.testnet'
+        multichainContractId: 'v5.multichain-mpc-dev.testnet'
       });
 
       if (shouldTopUp) {

@@ -25,8 +25,8 @@ import {
 } from '../types';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
-const MULTICHAIN_CONTRACT_TESTNET = 'v2.multichain-mpc.testnet';
-const MULTICHAIN_CONTRACT_MAINNET = 'v2.multichain-mpc.testnet';
+const MULTICHAIN_CONTRACT_TESTNET = 'v5.multichain-mpc-dev.testnet';
+const MULTICHAIN_CONTRACT_MAINNET = 'v5.multichain-mpc-dev.testnet';
 
 function toBTC(satoshis: number): number {
   return satoshis / 100000000;

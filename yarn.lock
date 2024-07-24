@@ -9535,6 +9535,11 @@ js-sha3@0.8.0, js-sha3@^0.8.0:
   resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.8.0.tgz#b9b7a5da73afad7dedd0f8c463954cbde6818840"
   integrity sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q==
 
+js-sha3@^0.9.3:
+  version "0.9.3"
+  resolved "https://registry.yarnpkg.com/js-sha3/-/js-sha3-0.9.3.tgz#f0209432b23a66a0f6c7af592c26802291a75c2a"
+  integrity sha512-BcJPCQeLg6WjEx3FE591wVAevlli8lxsxm9/FzV4HXkV49TmBH38Yvrpce6fjbADGMKFrBMGTqrVz3qPIZ88Gg==
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
@@ -10598,10 +10603,10 @@ multicast-dns@^7.2.5:
     dns-packet "^5.2.2"
     thunky "^1.0.2"
 
-multichain-tools@1.0.14-beta.1:
-  version "1.0.14-beta.1"
-  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.14-beta.1.tgz#282cde31beb32902ec2992288e3065067ed10580"
-  integrity sha512-g4YW4TR5nEw3XOVqDmF77Txwmtb9LIlv2ireuEaT84rZo/72Ax3HP/8+FJ4SnajRlZ0QijzFpUhguouzgx28LQ==
+multichain-tools@2.0.14-beta.1:
+  version "2.0.14-beta.1"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-2.0.14-beta.1.tgz#46c9cb4fce5bb5e51cc1ee5c91cf4641c2cbdf27"
+  integrity sha512-Ig78N7/lnbZzoXdbN7ykU/GJhNi3HEuXtOecns/exMNQTErTLbuO41bg1atmHtx+gsFwbaKZ1LeSVoeANgFIhQ==
   dependencies:
     axios "^1.6.8"
     bitcoinjs-lib "^6.1.5"
@@ -10610,13 +10615,14 @@ multichain-tools@1.0.14-beta.1:
     coinselect "^3.1.13"
     elliptic "^6.5.5"
     ethers "^6.11.1"
+    js-sha3 "^0.9.3"
     lodash.pickby "^4.6.0"
     near-api-js "^3.0.4"
 
-multichain-tools@1.0.14-beta.11:
-  version "1.0.14-beta.11"
-  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-1.0.14-beta.11.tgz#c0dd38483af7c13fe695a7eb772e02f5c013c4bc"
-  integrity sha512-ajg4q66pIKhGd7NysUIrzq2/jBHf9a5xWdB183z2lg5NzHYH5u8S4lsGhyJshaeUFG3qdQmrkL4N3KGjWrvlMA==
+multichain-tools@2.0.14-beta.2:
+  version "2.0.14-beta.2"
+  resolved "https://registry.yarnpkg.com/multichain-tools/-/multichain-tools-2.0.14-beta.2.tgz#04b8adeca5e963370b9a29070f80afd933ac7e54"
+  integrity sha512-rhb5qBpqkxygINh8pvSR0cGf0UlIXkbujpcOOKRniymniojBqYTZeDTpkuwDqPqfNrurVgMvioi7S6f/sULZ/g==
   dependencies:
     axios "^1.6.8"
     bitcoinjs-lib "^6.1.5"
@@ -10625,6 +10631,7 @@ multichain-tools@1.0.14-beta.11:
     coinselect "^3.1.13"
     elliptic "^6.5.5"
     ethers "^6.11.1"
+    js-sha3 "^0.9.3"
     lodash.pickby "^4.6.0"
     near-api-js "^3.0.4"
 
@@ -10745,10 +10752,10 @@ near-api-js@^3.0.4:
     near-abi "0.1.1"
     node-fetch "2.6.7"
 
-near-fastauth-wallet@2.0.2-beta.3:
-  version "2.0.2-beta.3"
-  resolved "https://registry.yarnpkg.com/near-fastauth-wallet/-/near-fastauth-wallet-2.0.2-beta.3.tgz#4619c4d9d73651afc10588070239708df60961ec"
-  integrity sha512-lzSveFmj0+7F5qRvkUGbxCwhJOXRsRSDEyMackvZR7s05XPKLk2srhjS3o7TYI2cHmoCrhKwDLx99gIIXqT1Pw==
+near-fastauth-wallet@2.0.2-beta.4:
+  version "2.0.2-beta.4"
+  resolved "https://registry.yarnpkg.com/near-fastauth-wallet/-/near-fastauth-wallet-2.0.2-beta.4.tgz#8101d70bcde99289d327241588b0b1a5768d9154"
+  integrity sha512-i4oVDBoVhS944oUP6lUrN9tmgxHveTtlZz0P6x/O+4iOXjiSOvuZl2ZDe0lfOSFgaccC0++qnNOQXsW5hK7VjA==
   dependencies:
     "@ant-design/icons" "^5.3.6"
     "@near-js/transactions" "^0.2.1"
@@ -10758,7 +10765,7 @@ near-fastauth-wallet@2.0.2-beta.3:
     antd "^5.12.8"
     class-variance-authority "^0.7.0"
     js-sha256 "^0.11.0"
-    multichain-tools "1.0.14-beta.1"
+    multichain-tools "2.0.14-beta.1"
     near-api-js "^2.1.4"
     tslib "^2.3.0"
     usehooks-ts "^2.9.2"
