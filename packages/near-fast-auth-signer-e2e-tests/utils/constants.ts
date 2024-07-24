@@ -15,10 +15,12 @@ export const receivingAddresses = {
 
 // Derived addresses considering the accountId as johndoe12.testnet
 export const derivedAddresses = {
-  EVM_PERSONAL: '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb',
-  EVM_DOMAIN:   '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71',
-  EVM_UNKNOWN:  '0x31feb62afbe48a8953842c4636ce33e3afbba2ec',
-  BTC_PERSONAL: 'mjHqhp21dBz2JHagTLpW7Eiu4KD1VhfuEy',
-  BTC_DOMAIN:   'mftoZ8Qcf47mYGWvEzE8os97BcrSQNAHBn',
-  BTC_UNKNOWN:  'mks5SRmVmvxEqWzjaRz5YqtnZ5bqyv9ESw',
+  EVM_PERSONAL:   '0xf64750f13f75fb9e2f4d9fd98ab72d742d1e33eb',
+  EVM_PERSONAL_2: '0x8394cc558c077707649a07244c296af69f2038c0',
+  EVM_PERSONAL_3: '0xb354b995167b9b26f5421ad7c2b510808a7a5976',
+  EVM_DOMAIN:     '0x81d205120a9f04d3f1ce733c5ed0a0bc66714c71',
+  EVM_UNKNOWN:    '0x31feb62afbe48a8953842c4636ce33e3afbba2ec',
+  BTC_PERSONAL:   'mjHqhp21dBz2JHagTLpW7Eiu4KD1VhfuEy',
+  BTC_DOMAIN:     'mftoZ8Qcf47mYGWvEzE8os97BcrSQNAHBn',
+  BTC_UNKNOWN:    'mks5SRmVmvxEqWzjaRz5YqtnZ5bqyv9ESw',
 };

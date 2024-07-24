@@ -87,6 +87,8 @@ async function requestTokensFromFaucet(wallets: WalletInfo[]): Promise<void> {
 
 export const walletsAddresses: WalletInfo[] = [
   { address: derivedAddresses.EVM_PERSONAL, chain: 'eth' },
+  { address: derivedAddresses.EVM_PERSONAL_2, chain: 'eth' },
+  { address: derivedAddresses.EVM_PERSONAL_3, chain: 'eth' },
   { address: derivedAddresses.EVM_DOMAIN, chain: 'bnb' }
 ];
 

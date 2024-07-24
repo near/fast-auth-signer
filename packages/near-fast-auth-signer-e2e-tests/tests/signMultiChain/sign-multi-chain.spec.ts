@@ -46,21 +46,34 @@ const isAuthenticated = async ({
 
       return { accountId: fullAccountId, keypair };
     } if (isLoggedIn) {
-      const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
-      const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
-
-      const fakKeyPair = KeyPair.fromString(userFAK);
+      const accounts = [
+        {
+          accountId: process.env.MULTICHAIN_TEST_ACCOUNT_ID,
+          FAK:       process.env.MULTICHAIN_TEST_ACCOUNT_FAK
+        },
+        {
+          accountId: process.env.MULTICHAIN_TEST_ACCOUNT_ID_2,
+          FAK:       process.env.MULTICHAIN_TEST_ACCOUNT_FAK_2
+        },
+        {
+          accountId: process.env.MULTICHAIN_TEST_ACCOUNT_ID_3,
+          FAK:       process.env.MULTICHAIN_TEST_ACCOUNT_FAK_3
+        }
+      ];
+      // Randomize the account to avoid nonce issues
+      const account = accounts[Math.floor(Math.random() * accounts.length)];
+      const fakKeyPair = KeyPair.fromString(account.FAK);
 
       await page.evaluate(
         // eslint-disable-next-line no-shadow
         async ([accountId]) => {
           window.localStorage.setItem('accountId', JSON.stringify(accountId));
         },
-        [accountId]
+        [account.accountId]
       );
       await overridePasskeyFunctions(page, { creationKeypair: fakKeyPair, retrievalKeypair: fakKeyPair });
 
-      return { accountId, keypair: fakKeyPair };
+      return { accountId: account.accountId, keypair: fakKeyPair };
     }
     await overridePasskeyFunctions(page, {
       creationKeypair:  KeyPair.fromRandom('ed25519'),
