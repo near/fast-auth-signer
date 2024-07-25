@@ -104,7 +104,7 @@ test.describe('Sign MultiChain', () => {
 
   // We are limited in the number of tests we can run concurrently due to using a single accountId.
   // Increasing the test count could lead to nonce issues, as each transaction requires a unique nonce.
-  test.describe('Native token transactions on testnet RPC', { tag: '@multichain-testnet' }, async () => {
+  test.describe('Native token transactions on testnet RPC', async () => {
     test('Should show transaction details', async () => {
       await isWalletSelectorLoaded(page);
       await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
@@ -173,7 +173,7 @@ test.describe('Sign MultiChain', () => {
     });
   });
 
-  test.describe('Local RPC', { tag: '@multichain-local' }, async () => {
+  test.describe('Local RPC', async () => {
     async function topUpAccount(address: string, amount: string) {
       const funderSigner = await provider.getSigner();
       const tx = await funderSigner.sendTransaction({
