@@ -24,11 +24,18 @@ export function inIframe() {
     return true;
   }
 }
-
 export const decodeIfTruthy = (paramVal) => {
   if (paramVal === 'true' || paramVal === 'false') return paramVal === 'true';
+
   if (paramVal) {
-    return decodeURIComponent(paramVal);
+    const decodedVal = decodeURIComponent(paramVal);
+
+    // Check if the decoded value is different and contains percent-encoded characters
+    if (decodedVal !== paramVal) {
+      return decodeIfTruthy(decodedVal);
+    }
+
+    return decodedVal;
   }
 
   return paramVal;
@@ -90,13 +97,29 @@ export const withTimeout = async (promise, timeoutMs) => {
 export const isSafari = () => /^((?!chrome|android).)*safari/i
   .test(navigator.userAgent);
 
-export const extractQueryParams = (searchParams: URLSearchParams, paramNames: string[]) => {
-  const params = {};
+type ExtractQueryParamsOptions = {
+  decode?: boolean;
+  allowNull?: boolean;
+}
+// Generic function to extract query parameters
+export const extractQueryParams = <T extends string>(
+  searchParams: URLSearchParams, // The URLSearchParams object containing the query parameters
+  paramNames: T[], // An array of parameter names to extract
+  options: ExtractQueryParamsOptions = { decode: true } // Optional settings for decoding and allowing null values
+): { [K in T]: string } => { // The return type is an object with keys from paramNames and values of type string or null
+  const { decode, allowNull } = options || {}; // Destructure the options with default values
+  const params = {} as { [K in T]: string }; // Initialize the params object with the correct type
+
+  // Iterate over the parameter names
   paramNames.forEach((paramName) => {
-    const paramValue = searchParams.get(paramName);
-    if (paramValue !== null) {
+    // Get the parameter value and decode it if necessary
+    const paramValue = decode ? decodeIfTruthy(searchParams.get(paramName)) : searchParams.get(paramName);
+    // If the parameter value is not null or if null values are allowed, add it to the params object
+    if (paramValue !== null || allowNull) {
       params[paramName] = paramValue;
     }
   });
+
+  // Return the params object
   return params;
 };

@@ -1,290 +1,191 @@
 import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
-import BN from 'bn.js';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
-import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
+import { onSignIn, onCreateAccount } from './auth';
 import AuthCallbackError from './AuthCallbackError';
-import { createNEARAccount, fetchAccountIds } from '../../api';
+import { CreateAccountFormValues } from '../../hooks/useCreateAccount';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import {
-  decodeIfTruthy, inIframe, isUrlNotJavascriptProtocol
-} from '../../utils';
-import { basePath, networkId } from '../../utils/config';
-import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
-import {
-  checkFirestoreReady, firebaseAuth,
-} from '../../utils/firebase';
-import {
-  getAddKeyAction, getAddLAKAction
-} from '../../utils/mpc-service';
+import { decodeIfTruthy, extractQueryParams } from '../../utils';
+import { network, networkId } from '../../utils/config';
+import { firebaseAuth } from '../../utils/firebase';
+import CreateAccountForm from '../CreateAccount/CreateAccountForm';
 
-const StyledStatusMessage = styled.div`
+// Styled components
+const PageWrap = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 80vh;
+  height: 100vh;
   width: 100%;
 `;
 
-const onCreateAccount = async ({
-  oidcKeypair,
-  accessToken,
-  accountId,
-  publicKeyFak,
-  public_key_lak,
-  contract_id,
-  methodNames,
-  success_url,
-  setStatusMessage,
-  gateway,
-}) => {
-  const res = await createNEARAccount({
-    accountId,
-    fullAccessKeys:    publicKeyFak ? [publicKeyFak] : [],
-    limitedAccessKeys: public_key_lak ? [{
-      public_key:   public_key_lak,
-      receiver_id:  contract_id,
-      allowance:    NEAR_MAX_ALLOWANCE,
-      method_names: methodNames ?? '',
-    }] : [],
-    accessToken,
-    oidcKeypair,
-  });
+const AccountInfo = styled.div<{ textCentered?: boolean }>`
+  width: 375px;
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 4px;
+  border: 1px solid #FBD38D;
+  background: #FEEBC8;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  @media (min-width: 768px) {
+    max-width: 380px;
+  }
+  margin-bottom: 12px;
+`;
 
-  if (res.type === 'err') return;
-
-  // Add device
-  await window.firestoreController.addDeviceCollection({
-    fakPublicKey: publicKeyFak,
-    lakPublicKey: public_key_lak,
-    gateway,
-    accountId
-  });
-
-  setStatusMessage('Account created successfully!');
-
-  setStatusMessage('Redirecting to app...');
-
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  await window.firestoreController.addAccountIdPublicKey(recoveryPK, accountId);
-
-  const parsedUrl = new URL(
-    success_url && isUrlNotJavascriptProtocol(success_url)
-      ? success_url
-      : window.location.origin + (basePath ? `/${basePath}` : '')
-  );
-  parsedUrl.searchParams.set('account_id', res.near_account_id);
-  parsedUrl.searchParams.set('public_key', public_key_lak);
-  parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
-
-  window.location.replace(parsedUrl.href);
-};
-
-export const onSignIn = async ({
-  accessToken,
-  publicKeyFak,
-  public_key_lak,
-  contract_id,
-  methodNames,
-  setStatusMessage,
-  success_url,
-  searchParams,
-  navigate,
-  gateway,
-  devicePageCallback,
-}: {
-  accessToken: string;
-  publicKeyFak?: string;
-  public_key_lak: string;
-  contract_id: string,
-  methodNames: string[],
-  setStatusMessage: (_arg: string) => void,
-  success_url?: string,
-  searchParams: URLSearchParams,
-  navigate: NavigateFunction,
-  gateway: string,
-  devicePageCallback?: () => void,
-}) => {
-  // Stop from LAK with multi-chain contract
-  const recoveryPK = await window.fastAuthController.getUserCredential(accessToken);
-  const accountIds = await fetchAccountIds(recoveryPK);
-  // TODO: If we want to remove old LAK automatically, use below code and add deleteKeyActions to signAndSendActionsWithRecoveryKey
-  // const existingDevice = await window.firestoreController.getDeviceCollection(publicKeyFak);
-  // // delete old lak key attached to webAuthN public Key
-  // const deleteKeyActions = existingDevice
-  //   ? getDeleteKeysAction(existingDevice.publicKeys.filter((key) => key !== publicKeyFak)) : [];
-
-  // onlyAddLak will be true if current browser already has a FAK with passkey
-  const onlyAddLak = !publicKeyFak || publicKeyFak === 'null';
-  const addKeyActions = onlyAddLak
-    ? getAddLAKAction({
-      publicKeyLak: public_key_lak,
-      contractId:   contract_id,
-      methodNames,
-      allowance:    new BN(NEAR_MAX_ALLOWANCE),
-    }) : getAddKeyAction({
-      publicKeyLak:      public_key_lak,
-      webAuthNPublicKey: publicKeyFak,
-      contractId:        contract_id,
-      methodNames,
-      allowance:         new BN(NEAR_MAX_ALLOWANCE),
-    });
-
-  return (window as any).fastAuthController.signAndSendActionsWithRecoveryKey({
-    oidcToken: accessToken,
-    accountId: accountIds[0],
-    recoveryPK,
-    actions:   addKeyActions
-  })
-    .then((res) => res.json())
-    .then(async (res) => {
-      const failure = res['Receipts Outcome']
-        .find(({ outcome: { status } }) => Object.keys(status).some((k) => k === 'Failure'))?.outcome?.status?.Failure;
-      if (devicePageCallback) {
-        devicePageCallback();
-      }
-      if (failure?.ActionError?.kind?.LackBalanceForState) {
-        navigate(`/devices?${searchParams.toString()}`);
-      } else {
-        await checkFirestoreReady();
-        await window.firestoreController.addDeviceCollection({
-          fakPublicKey: onlyAddLak ? null : publicKeyFak,
-          lakPublicKey: public_key_lak,
-          gateway,
-          accountId:    accountIds[0],
-        });
-
-        setStatusMessage('Account recovered successfully!');
-
-        setStatusMessage('Redirecting to app...');
-
-        const parsedUrl = new URL(
-          success_url && isUrlNotJavascriptProtocol(success_url)
-            ? success_url
-            : window.location.origin + (basePath ? `/${basePath}` : '')
-        );
-        parsedUrl.searchParams.set('account_id', accountIds[0]);
-        parsedUrl.searchParams.set('public_key', public_key_lak);
-        parsedUrl.searchParams.set('all_keys', (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','));
-
-        if (inIframe()) {
-          window.parent.postMessage({
-            type:   'method',
-            method: 'query',
-            id:     1234,
-            params: {
-              request_type: 'complete_authentication',
-              publicKey:    public_key_lak,
-              allKeys:      (publicKeyFak ? [public_key_lak, publicKeyFak, recoveryPK] : [public_key_lak, recoveryPK]).join(','),
-              accountId:    accountIds[0]
-            }
-          }, '*');
-        } else {
-          window.location.replace(parsedUrl.href);
-        }
-      }
-    });
-};
+const StatusMessage = styled.p`
+  color: #2D3748;
+  margin: 0;
+`;
 
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
   const [callbackError, setCallbackError] = useState<Error | null>(null);
+  const [isAccountExisting, setAccountAsExisting] = useState(true);
+  const onSubmitRef = useRef(null);
+  const [inFlight, setInFlight] = useState(false);
 
   const [searchParams] = useSearchParams();
 
-  // The signIn should run only once
   useEffect(() => {
     const signInProcess = async () => {
-      if (isSignInWithEmailLink(firebaseAuth, window.location.href)) {
-        const accountId = decodeIfTruthy(searchParams.get('accountId'));
-        const isRecovery = decodeIfTruthy(searchParams.get('isRecovery'));
-        const success_url = decodeIfTruthy(searchParams.get('success_url'));
-        const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
-        const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-        const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+      if (!isSignInWithEmailLink(firebaseAuth, window.location.href)) {
+        navigate('/signup');
+        return;
+      }
 
-        // eslint-disable-next-line no-alert
-        const email = window.localStorage.getItem('emailForSignIn');
+      const paramNames = ['accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id'];
+      const params = extractQueryParams(searchParams, paramNames);
 
-        if (!email) {
-          const error = new Error('Please use the same device and browser to verify your email');
-          setCallbackError(error);
-          return;
+      const email = window.localStorage.getItem('emailForSignIn');
+
+      if (!email) {
+        setCallbackError(new Error('Please use the same device and browser to verify your email'));
+        return;
+      }
+
+      if (!window.firestoreController) {
+        window.firestoreController = new FirestoreController();
+      }
+
+      setStatusMessage('Verifying email...');
+
+      try {
+        const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
+        if (!user || !user.emailVerified) return;
+
+        const accessToken = await user.getIdToken();
+
+        setStatusMessage(params.isRecovery ? 'Recovering account...' : 'Creating account...');
+        setAccountIdToController({ accountId: params.accountId, networkId });
+
+        let publicKeyFak = '';
+
+        if (await isPassKeyAvailable()) {
+          const keyPair = await createKey(email);
+          publicKeyFak = keyPair.getPublicKey().toString();
+          await window.fastAuthController.setKey(keyPair);
         }
 
+        if (!window.fastAuthController.getAccountId()) {
+          window.fastAuthController.setAccountId(params.accountId);
+        }
+
+        await window.fastAuthController.claimOidcToken(accessToken);
+        const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
         if (!window.firestoreController) {
           window.firestoreController = new FirestoreController();
         }
+        window.firestoreController.updateUser({
+          userUid:   user.uid,
+          oidcToken: accessToken,
+        });
 
-        setStatusMessage('Verifying email...');
+        const callback = params.isRecovery ? onSignIn : onCreateAccount;
+        const callbackParams = {
+          oidcKeypair,
+          accessToken,
+          accountId:         params.accountId,
+          publicKeyFak,
+          public_key_lak:    params.public_key_lak,
+          contract_id:       params.contract_id,
+          methodNames:       params.methodNames,
+          success_url:       params.success_url,
+          setStatusMessage,
+          navigate,
+          searchParams,
+          gateway:           params.success_url,
+          onAccountNotFound: () => {
+            setAccountAsExisting(false);
+            setStatusMessage('Oops! This account doesn\'t seem to exist. Please create one below.');
+          },
+        };
 
-        try {
-          const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
-          if (!user || !user.emailVerified) return;
+        onSubmitRef.current = async (extraParams: { accountId: string }) => {
+          await onCreateAccount({ ...callbackParams, ...extraParams });
+        };
 
-          const accessToken = await user.getIdToken();
-
-          setStatusMessage(isRecovery ? 'Recovering account...' : 'Creating account...');
-          setAccountIdToController({ accountId, networkId });
-
-          let publicKeyFak: string;
-
-          if (await isPassKeyAvailable()) {
-            const keyPair = await createKey(email);
-            publicKeyFak = keyPair.getPublicKey().toString();
-            await window.fastAuthController.setKey(keyPair);
-          }
-
-          if (!window.fastAuthController.getAccountId()) {
-            await window.fastAuthController.setAccountId(accountId);
-          }
-
-          await window.fastAuthController.claimOidcToken(accessToken);
-          const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-          if (!window.firestoreController) {
-            window.firestoreController = new FirestoreController();
-          }
-          window.firestoreController.updateUser({
-            userUid:   user.uid,
-            oidcToken: accessToken,
-          });
-
-          const callback = isRecovery ? onSignIn : onCreateAccount;
-          await callback({
-            oidcKeypair,
-            accessToken,
-            accountId,
-            publicKeyFak,
-            public_key_lak,
-            contract_id,
-            methodNames,
-            success_url,
-            setStatusMessage,
-            navigate,
-            searchParams,
-            gateway:      success_url,
-          });
-        } catch (e) {
-          captureException(e);
-          setCallbackError(e);
-        }
-      } else {
-        navigate('/signup');
+        await callback(callbackParams);
+      } catch (e) {
+        captureException(e);
+        setCallbackError(e);
       }
     };
 
     signInProcess();
   }, [navigate, searchParams]);
 
-  if (callbackError) return <AuthCallbackError error={callbackError} redirectUrl={decodeIfTruthy(searchParams.get('failure_url'))} />;
+  const handleFormSubmit = async (values: CreateAccountFormValues) => {
+    setInFlight(true);
+    setStatusMessage('Loading...');
+    try {
+      const accountId = `${values.username}.${network.fastAuth.accountIdSuffix}`;
+      await onSubmitRef.current({ accountId });
+    } catch (error) {
+      captureException(error);
+      setCallbackError(error);
+    } finally {
+      setInFlight(false);
+    }
+  };
 
-  return <StyledStatusMessage data-test-id="callback-status-message">{statusMessage}</StyledStatusMessage>;
+  if (!isAccountExisting) {
+    return (
+      <PageWrap>
+        <AccountInfo>
+          <StatusMessage data-test-id="callback-status-message">{statusMessage}</StatusMessage>
+        </AccountInfo>
+        <CreateAccountForm
+          onSubmit={handleFormSubmit}
+          loading={inFlight}
+          initialValues={{
+            email:    window.localStorage.getItem('emailForSignIn'),
+            username: decodeIfTruthy(searchParams.get('accountId')),
+          }}
+        />
+      </PageWrap>
+    );
+  }
+
+  if (callbackError) {
+    return <AuthCallbackError error={callbackError} redirectUrl={decodeIfTruthy(searchParams.get('failure_url'))} />;
+  }
+
+  return (
+    <PageWrap>
+      <StatusMessage data-test-id="callback-status-message">{statusMessage}</StatusMessage>
+    </PageWrap>
+  );
 }
 
 export default AuthCallbackPage;
