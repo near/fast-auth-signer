@@ -2,10 +2,10 @@ import { KeyPair } from '@near-js/crypto';
 import { expect, Page, test } from '@playwright/test';
 
 import {
-  receivingAddresses, getFastAuthIframe
+  receivingAddresses,
 } from '../../utils/constants';
 import { overridePasskeyFunctions } from '../../utils/passkeys';
-import { isWalletSelectorLoaded } from '../../utils/walletSelector';
+import { isWalletSelectorLoaded, ensureIframeIsVisible, getIframeElement } from '../../utils/walletSelector';
 import SignMultiChain from '../models/SignMultiChain';
 
 let page: Page;
@@ -15,6 +15,8 @@ const userFAK = process.env.MULTICHAIN_TEST_ACCOUNT_FAK;
 const accountId = process.env.MULTICHAIN_TEST_ACCOUNT_ID;
 
 const fakKeyPair = KeyPair.fromString(userFAK);
+
+let isWebkit = false;
 
 const isAuthenticated = async (loggedIn: boolean) => {
   if (!page) return;
@@ -33,9 +35,11 @@ const isAuthenticated = async (loggedIn: boolean) => {
 
 test.describe.skip('Sign MultiChain', () => {
   test.beforeAll(async ({ browser }) => {
+    isWebkit = browser.browserType().name() === 'webkit';
     const context = await browser.newContext();
     page = await context.newPage();
     signMultiChain = new SignMultiChain(page);
+    signMultiChain.setIsWebkit(isWebkit);
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
@@ -61,13 +65,14 @@ test.describe.skip('Sign MultiChain', () => {
     await signMultiChain.submitTransaction({
       keyType: 'unknownKey', assetType: 'bnb', amount: 0.01, address: receivingAddresses.ETH_BNB
     });
-    const frame = getFastAuthIframe(page);
-    await frame.locator('text=Send 0.01 BNB').waitFor({ state: 'visible' });
-    await frame.locator('button:has-text("Approve")').waitFor({ state: 'visible' });
-    await expect(frame.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
-    await expect(frame.locator('button:has-text("Approve")')).toBeDisabled();
-    await frame.locator('input[type="checkbox"]').check();
-    await expect(frame.locator('button:has-text("Approve")')).toBeEnabled();
+    await ensureIframeIsVisible(page);
+    const iframe =  await getIframeElement(page);
+    await expect(iframe.getByText('Send 0.01 BNB')).toBeVisible();
+    await expect(iframe.getByText('We don’t recognize this app, proceed with caution')).toBeVisible();
+    await iframe.locator('button:has-text("Approve")').waitFor({ state: 'visible' });
+    await expect(iframe.locator('button:has-text("Approve")')).toBeDisabled();
+    await iframe.locator('input[type="checkbox"]').check();
+    await expect(iframe.locator('button:has-text("Approve")')).toBeEnabled();
   });
 
   test('Should Fail: if not authenticated', async () => {
@@ -76,9 +81,10 @@ test.describe.skip('Sign MultiChain', () => {
     await signMultiChain.submitAndApproveTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
+    await ensureIframeIsVisible(page);
+    const iframe =  await getIframeElement(page);
     await signMultiChain.waitForMultiChainResponse();
-    await expect(page.locator('#nfw-connect-iframe')).toBeVisible();
-    await expect(getFastAuthIframe(page).getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
+    await expect(iframe.getByText('You are not authenticated or there has been an indexer failure')).toBeVisible();
   });
 
   test('Should Pass: Send ETH with Personal Key', async () => {
@@ -87,8 +93,9 @@ test.describe.skip('Sign MultiChain', () => {
     await signMultiChain.submitTransaction({
       keyType: 'personalKey', assetType: 'eth', amount: 0.001, address: receivingAddresses.ETH_BNB
     });
-    const frame = getFastAuthIframe(page);
-    await frame.locator('text=Send 0.001 ETH').waitFor({ state: 'visible' });
+    await ensureIframeIsVisible(page);
+    const iframe =  await getIframeElement(page);
+    await expect(iframe.getByText('Send 0.001 ETH')).toBeVisible();
     await signMultiChain.clickApproveButton();
     const multiChainResponse = await signMultiChain.waitForMultiChainResponse();
     expect(multiChainResponse.transactionHash).toBeDefined();
