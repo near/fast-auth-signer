@@ -30,7 +30,7 @@ import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
-import { getMultiChainContract } from '../SignMultichain/utils';
+import { getMultiChainContract } from '../SignMultichain/utils/utils';
 
 const ErrorContainer = styled.div`
 .stats-message {

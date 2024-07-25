@@ -60,15 +60,21 @@ export default defineConfig<TestOptions>({
   ],
 
   /* Run your local dev serve`r` before starting the tests */
-  webServer: [{
-    command:             'cd ../near-fast-auth-signer && NETWORK_ID=testnet yarn run start:test',
-    url:                 'http://127.0.0.1:3000',
-    reuseExistingServer: !process.env.CI,
-  },
-  {
-    command:             'yarn run start',
-    url:                 'http://127.0.0.1:3001',
-    reuseExistingServer: !process.env.CI,
-  }
+  webServer: [
+    {
+      command:             'cd ../near-fast-auth-signer && NETWORK_ID=testnet yarn run start:test',
+      url:                 'http://127.0.0.1:3000',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command:             'yarn run start:hardhat',
+      url:                 'http://127.0.0.1:8545',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command:             'yarn run start',
+      url:                 'http://127.0.0.1:3001',
+      reuseExistingServer: !process.env.CI,
+    }
   ],
 });

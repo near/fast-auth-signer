@@ -18,6 +18,7 @@ const TableContentWrapper = styled.div.attrs<check>(({ hasFunctionCall }) => {
   background-color: #fdfdfc;
   justify-content: space-between;
   flex-wrap: ${({ hasFunctionCall }) => (hasFunctionCall ? 'wrap' : 'nowrap')};
+  overflow: auto;
 
   .left-side {
     flex-grow: 1;
