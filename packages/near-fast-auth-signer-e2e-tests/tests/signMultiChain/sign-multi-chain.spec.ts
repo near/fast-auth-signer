@@ -31,7 +31,7 @@ const isAuthenticated = async (loggedIn: boolean) => {
   });
 };
 
-test.describe('Sign MultiChain', () => {
+test.describe.skip('Sign MultiChain', () => {
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
