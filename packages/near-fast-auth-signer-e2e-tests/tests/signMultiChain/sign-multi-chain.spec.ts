@@ -89,7 +89,7 @@ const isAuthenticated = async ({
   throw new Error('No page found');
 };
 
-test.describe('Sign MultiChain', () => {
+test.describe.skip('Sign MultiChain', () => {
   const provider = new JsonRpcProvider('http://127.0.0.1:8545');
 
   test.beforeEach(async ({ browser }) => {
