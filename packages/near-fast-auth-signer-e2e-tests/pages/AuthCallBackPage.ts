@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test';
+import { getEmailId } from 'near-fast-auth-signer/src/utils/form-validation';
 
 import { TIMEOUT } from '../utils/constants';
 import { getFirebaseAuthLink } from '../utils/email';
@@ -40,6 +41,17 @@ class AuthCallBackPage {
     }
 
     return emailData.uidl;
+  }
+
+  async handleInPageAccountCreation(email: string) {
+    await expect(this.page.getByText('Oops! This account doesn\'t seem to exist. Please create one below.')).toBeVisible();
+    await expect(this.page.locator('[data-testid="email_create"]')).toHaveValue(email);
+    await expect(this.page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
+    await this.page.waitForSelector('button:has-text("Continue"):enabled');
+    await this.page.click('button:has-text("Continue")');
+    await expect(this.page.getByText('Loading...')).toBeVisible({ timeout: TIMEOUT });
+    await expect(this.page.getByText('Loading...')).not.toBeVisible({ timeout: TIMEOUT });
+    await expect(this.page.getByText('Redirecting to app...')).toBeVisible({ timeout: TIMEOUT });
   }
 }
 
