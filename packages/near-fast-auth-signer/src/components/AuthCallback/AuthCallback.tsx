@@ -13,6 +13,7 @@ import { decodeIfTruthy, extractQueryParams } from '../../utils';
 import { network, networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 // eslint-disable-next-line import/no-cycle
+import { storePassKeyAsFAK } from '../../utils/passkey';
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
 
 // Styled components
@@ -89,13 +90,7 @@ function AuthCallbackPage() {
         setStatusMessage(params.isRecovery ? 'Recovering account...' : 'Creating account...');
         setAccountIdToController({ accountId: params.accountId, networkId });
 
-        let publicKeyFak = '';
-
-        if (await isPassKeyAvailable()) {
-          const keyPair = await createKey(email);
-          publicKeyFak = keyPair.getPublicKey().toString();
-          await window.fastAuthController.setKey(keyPair);
-        }
+        const publicKeyFak = await storePassKeyAsFAK(email);
 
         if (!window.fastAuthController.getAccountId()) {
           window.fastAuthController.setAccountId(params.accountId);
@@ -103,6 +98,7 @@ function AuthCallbackPage() {
 
         await window.fastAuthController.claimOidcToken(accessToken);
         const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
         if (!window.firestoreController) {
           window.firestoreController = new FirestoreController();
         }

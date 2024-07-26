@@ -5,12 +5,12 @@ import styled from 'styled-components';
 
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
-import { decodeIfTruthy } from '../../utils';
+import { extractQueryParams } from '../../utils';
 import { networkId } from '../../utils/config';
 import { firebaseAuth } from '../../utils/firebase';
 import { storePassKeyAsFAK } from '../../utils/passkey';
 import { getSocialLoginAccountId } from '../../utils/string';
-import { onCreateAccount, onSignIn } from '../AuthCallback/AuthCallback';
+import { onCreateAccount, onSignIn } from '../AuthCallback/auth';
 
 const Button = styled.button`
   font-size: 14px;
@@ -74,19 +74,18 @@ function SocialButton({
       const result = await signInWithPopup(firebaseAuth, provider);
       const { user } = result;
 
-      // TODO: construct accountId, confirm with UX
       const accountId = getSocialLoginAccountId();
       const { email } = user;
 
-      const success_url = decodeIfTruthy(searchParams.get('success_url'));
-      const public_key_lak = decodeIfTruthy(searchParams.get('public_key_lak'));
-      const contract_id = decodeIfTruthy(searchParams.get('contract_id'));
-      const methodNames = decodeIfTruthy(searchParams.get('methodNames'));
+      const paramNames = ['success_url', 'public_key_lak', 'methodNames', 'contract_id'];
+      const params = extractQueryParams(searchParams, paramNames);
+
       const accessToken = await user.getIdToken();
 
       setAccountIdToController({ accountId, networkId });
 
       const publicKeyFak = await storePassKeyAsFAK(email);
+
       if (!window.fastAuthController.getAccountId()) {
         await window.fastAuthController.setAccountId(accountId);
       }
@@ -118,14 +117,14 @@ function SocialButton({
         accessToken,
         accountId,
         publicKeyFak,
-        public_key_lak,
-        contract_id,
-        methodNames,
-        success_url,
+        public_key_lak:   params.public_key_lak,
+        contract_id:      params.contract_id,
+        methodNames:      params.methodNames,
+        success_url:      params.success_url,
         setStatusMessage: () => {},
         navigate,
         searchParams,
-        gateway:          success_url,
+        gateway:          params.success_url,
       });
     } catch (error) {
       // Handle errors here
