@@ -2,7 +2,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
 import BN from 'bn.js';
-import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, {
   useCallback, useEffect, useRef, useState
 } from 'react';
@@ -33,6 +32,7 @@ import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
 import { getMultiChainContract } from '../SignMultichain/utils';
 import SocialLogin from '../SocialLogin/SocialLogin';
+import { sendOTP } from '../VerifyOtp/otp-utils';
 
 const ErrorContainer = styled.div`
 .stats-message {
@@ -59,25 +59,9 @@ const ErrorContainer = styled.div`
 `;
 
 export const handleCreateAccount = async ({
-  accountId, email, isRecovery, success_url, failure_url, public_key, contract_id, methodNames
+  accountId, email
 }) => {
-  const searchParams = new URLSearchParams({
-    ...(accountId ? { accountId } : {}),
-    ...(isRecovery ? { isRecovery } : {}),
-    ...(success_url ? { success_url } : {}),
-    ...(failure_url ? { failure_url } : {}),
-    ...(public_key ? { public_key_lak: public_key } : {}),
-    ...(contract_id ? { contract_id } : {}),
-    ...(methodNames ? { methodNames } : {})
-  });
-
-  await sendSignInLinkToEmail(firebaseAuth, email, {
-    url: encodeURI(
-      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`,
-    ),
-    handleCodeInApp: true,
-  });
-  window.localStorage.setItem('emailForSignIn', email);
+  await sendOTP(email);
   return {
     accountId,
   };
@@ -145,13 +129,7 @@ function AddDevicePage() {
     try {
       await handleCreateAccount({
         accountId:   null,
-        email:       data.email,
-        isRecovery:  true,
-        success_url,
-        failure_url,
-        public_key,
-        contract_id,
-        methodNames,
+        email:       data.email
       });
       const newSearchParams = new URLSearchParams({
         email:      data.email,
@@ -162,7 +140,7 @@ function AddDevicePage() {
         ...(contract_id ? { contract_id } : {}),
         ...(methodNames ? { methodNames } : {})
       });
-      navigate(`/verify-email?${newSearchParams.toString()}`);
+      navigate(`${basePath ? `/${basePath}` : ''}/verify-otp?${newSearchParams.toString()}`);
     } catch (error: any) {
       console.log(error);
       const errorMessage = typeof error?.message === 'string' ? error.message : 'Something went wrong';

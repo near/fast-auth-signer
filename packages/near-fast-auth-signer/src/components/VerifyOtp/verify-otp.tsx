@@ -1,6 +1,6 @@
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 // import EmailSvg from './icons/EmailSvg';
@@ -8,7 +8,7 @@ import { sendOTP, verifyOTP } from './otp-utils';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { Button } from '../../lib/Button';
 import { openToast } from '../../lib/Toast';
-import { inIframe } from '../../utils';
+import { decodeIfTruthy, inIframe } from '../../utils';
 import { FormContainer, StyledContainer } from '../Layout';
 
 function PinInput({ length = 6, onComplete }) {
@@ -107,25 +107,21 @@ function VerifyOtpPage() {
 
   const [pinCode, setPinCode] = useState('');
 
-  const [query] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const email = query.get('email');
-
-  useEffect(() => {
-    window.localStorage.setItem('emailForSignIn', email);
-  }, [email]);
+  const email = decodeIfTruthy(searchParams.get('email'));
 
   const handleSubmitPin = async (pin) => {
-    // const success_url = query.get('success_url');
-    // const failure_url = query.get('failure_url');
-
     try {
+      setInFlight(true);
       const { customToken } = await verifyOTP(email, pin);
-      console.log(customToken, '<< customtoken');
       const auth = getAuth();
       await signInWithCustomToken(auth, customToken);
-      console.log('User signed in successfully');
-      // Redirect or update UI as needed
+      navigate({
+        pathname: '/auth-callback',
+        search:   searchParams.toString(),
+      });
     } catch (error: any) {
       console.error('Failed to verify OTP:', error);
       //   redirectWithError({ success_url, failure_url, error });
@@ -140,19 +136,26 @@ function VerifyOtpPage() {
   };
 
   useEffect(() => {
-    window.parent.postMessage({
-      type:   'method',
-      method: 'query',
-      id:     1234,
-      params: {
-        request_type: 'complete_authentication',
-      }
-    }, '*');
+    window.parent.postMessage(
+      {
+        type:   'method',
+        method: 'query',
+        id:     1234,
+        params: {
+          request_type: 'complete_authentication',
+        },
+      },
+      '*'
+    );
   }, []);
 
   return (
     <StyledContainer inIframe={inIframe()}>
-      <VerifyForm ref={verifyRef} inIframe={inIframe()} onSubmit={handleSubmitPin}>
+      <VerifyForm
+        ref={verifyRef}
+        inIframe={inIframe()}
+        onSubmit={handleSubmitPin}
+      >
         {/* <EmailSvg /> */}
         <header>
           <h1>Check Your Email</h1>
@@ -161,7 +164,7 @@ function VerifyOtpPage() {
         <p>
           Enter the code sent to
           {' '}
-          <b>{query.get('email')}</b>
+          <b>{email}</b>
         </p>
         <p data-test-id="verify-email-address">
           Need a new code?
@@ -182,9 +185,16 @@ function VerifyOtpPage() {
             <b>Resend Email</b>
           </Link>
         </p>
+
         <PinInput onComplete={(pin) => setPinCode(pin)} />
 
-        <Button variant="affirmative" size="large" label={inFlight ? 'Sending...' : 'Resend'} disabled={inFlight || !pinCode} data-test-id="resend-verify-email-button" onClick={() => handleSubmitPin(pinCode)} />
+        <Button
+          variant="affirmative"
+          size="large"
+          label={inFlight ? 'Loading...' : 'Submit'}
+          disabled={inFlight || !pinCode}
+          onClick={() => handleSubmitPin(pinCode)}
+        />
       </VerifyForm>
     </StyledContainer>
   );

@@ -1,40 +1,15 @@
-import { sendSignInLinkToEmail } from 'firebase/auth';
 import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { sendOTP } from '../components/VerifyOtp/otp-utils';
 import { openToast } from '../lib/Toast';
 import { extractQueryParams } from '../utils';
 import { recordEvent } from '../utils/analytics';
 import { basePath, network } from '../utils/config';
-import { firebaseAuth } from '../utils/firebase';
 
-const EMAIL_FOR_SIGN_IN = 'emailForSignIn';
 const EVENT_SIGNUP_CONTINUE = 'click-signup-continue';
 const EVENT_SIGNUP_ERROR = 'signup-error';
 const ERROR_MESSAGE_DEFAULT = 'Something went wrong';
-
-const sendSignInLink = async ({
-  accountId, email, isRecovery, successUrl, failureUrl, publicKey, contractId, methodNames
-}) => {
-  const searchParams = new URLSearchParams({
-    ...(accountId && { accountId }),
-    ...(isRecovery && { isRecovery }),
-    ...(successUrl && { success_url: successUrl }),
-    ...(failureUrl && { failure_url: failureUrl }),
-    ...(publicKey && { public_key_lak: publicKey }),
-    ...(contractId && { contract_id: contractId }),
-    ...(methodNames && { methodNames })
-  });
-
-  await sendSignInLinkToEmail(firebaseAuth, email, {
-    url: encodeURI(
-      `${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback?${searchParams.toString()}`
-    ),
-    handleCodeInApp: true,
-  });
-  window.localStorage.setItem(EMAIL_FOR_SIGN_IN, email);
-  return { accountId };
-};
 
 export type CreateAccountFormValues = {
   email: string;
@@ -82,17 +57,8 @@ export const useCreateAccount = (): ReturnProps => {
     const publicKey = public_key || public_key_lak;
 
     try {
-      const fullAccountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
-      const { accountId } = await sendSignInLink({
-        accountId:  fullAccountId,
-        email:      data.email,
-        isRecovery: false,
-        successUrl,
-        failureUrl,
-        publicKey,
-        contractId,
-        methodNames,
-      });
+      const accountId = `${data.username}.${network.fastAuth.accountIdSuffix}`;
+      await sendOTP(data.email);
 
       const newSearchParams = new URLSearchParams({
         accountId,
@@ -112,7 +78,7 @@ export const useCreateAccount = (): ReturnProps => {
         params: { request_type: 'complete_authentication' },
       }, '*');
 
-      window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/verify-email?${newSearchParams.toString()}`, '_parent');
+      window.open(`${window.location.origin}${basePath ? `/${basePath}` : ''}/verify-otp?${newSearchParams.toString()}`, '_parent');
     } catch (error) {
       handleCreateAccountError(error);
     } finally {

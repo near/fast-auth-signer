@@ -1,5 +1,5 @@
 import { captureException } from '@sentry/react';
-import { getAuth, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import React, {
   useEffect, useState, useRef, useMemo
 } from 'react';
@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import { onSignIn, onCreateAccount, onSocialLogin } from './auth';
 import AuthCallbackError from './AuthCallbackError';
 import { CreateAccountFormValues } from '../../hooks/useCreateAccount';
+import useFirebaseUser from '../../hooks/useFirebaseUser';
 import { Button } from '../../lib/Button';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
@@ -128,14 +129,9 @@ const onSocialSignIn = async ({
 };
 
 const onEmailSignIn = async ({
-  params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting, onSubmitRef
+  params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting, onSubmitRef, firebaseUser
 }) => {
-  const email = window.localStorage.getItem('emailForSignIn');
-  if (!email) {
-    setCallbackError(new Error('Please use the same device and browser to verify your email'));
-    return;
-  }
-  const { accountId } = params;
+  const { accountId, email } = params;
 
   setStatusMessage('Verifying email...');
 
@@ -144,9 +140,8 @@ const onEmailSignIn = async ({
   }
 
   try {
-    const credential = await signInWithEmailLink(firebaseAuth, email, window.location.href);
-    const { user } = credential;
-    if (!user || !user.emailVerified) return;
+    const { user } = firebaseUser;
+    if (!user) return;
 
     const accessToken = await user.getIdToken();
 
@@ -211,14 +206,14 @@ function AuthCallbackPage() {
   const [onClickSocialLogin, setOnClickSocialLogin] = useState(false);
 
   const [searchParams] = useSearchParams();
-  const paramNames = ['accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id', 'socialLoginName'];
+  const firebaseUser = useFirebaseUser();
+  const paramNames = ['email', 'accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id', 'socialLoginName'];
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const params = useMemo(() => extractQueryParams(searchParams, paramNames), [searchParams]);
 
   useEffect(() => {
     const signInProcess = async () => {
-      if (!isSignInWithEmailLink(firebaseAuth, window.location.href) && !params.socialLoginName) {
-        navigate('/signup');
+      if (!firebaseUser.user || statusMessage !== 'Loading...' || !isAccountExisting) {
         return;
       }
 
@@ -233,14 +228,20 @@ function AuthCallbackPage() {
         }
       } else {
         await onEmailSignIn({
-          params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting, onSubmitRef
+          params,
+          setStatusMessage,
+          setCallbackError,
+          searchParams,
+          navigate,
+          setAccountAsExisting,
+          onSubmitRef,
+          firebaseUser,
         });
       }
     };
 
     signInProcess();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate, searchParams, onClickSocialLogin]);
+  }, [navigate, searchParams, onClickSocialLogin, firebaseUser, statusMessage, isAccountExisting, params]);
 
   const handleFormSubmit = async (values: CreateAccountFormValues) => {
     setInFlight(true);
@@ -266,7 +267,7 @@ function AuthCallbackPage() {
           onSubmit={handleFormSubmit}
           loading={inFlight}
           initialValues={{
-            email:    window.localStorage.getItem('emailForSignIn'),
+            email:    decodeIfTruthy(searchParams.get('email')),
             username: decodeIfTruthy(searchParams.get('accountId')),
           }}
         />
