@@ -43,7 +43,7 @@ export const sendOTP = functions.https.onCall(
       from:    SENDER_EMAIL,
       to:      email,
       subject: 'Your OTP for authentication',
-      text:    `Your OTP is: ${otp}. It will expire in 10 minutes.`,
+      text:    `Your OTP requested by ${email} is: ${otp}. It will expire in 10 minutes.`,
     });
 
     return { success: true, message: 'OTP sent successfully' };
