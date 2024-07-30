@@ -7,16 +7,19 @@ export const formatLink = (link: string): string => link
   .replace(/=3D/g, '=')
   .replace(/&amp;/g, '&');
 
-export const extractLinkAndUIDLFromEmail = (emailContent: string): {link: string, uidl: string } | null => {
-  const link = emailContent.match(/href=3D'([^']+)'>Sign in to NEAR Onboarding/);
-  const uidl = emailContent.match(/--([0-9a-zA-Z]+)--/);
+export const extractOTPFromEmail = (
+  emailContent: string
+): {
+  otp: string;
+} | null => {
+  const otpMatch = emailContent.match(
+    /Your OTP (?:requested by .+? )?is: (\d+)\./
+  );
 
-  if (link && uidl) {
+  if (otpMatch) {
     return {
-      link: formatLink(link[1]),
-      uidl: uidl[1]
+      otp:  otpMatch[1],
     };
   }
-
   return null;
 };

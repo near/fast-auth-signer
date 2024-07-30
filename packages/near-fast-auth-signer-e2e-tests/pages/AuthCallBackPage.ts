@@ -2,7 +2,7 @@ import { expect, Page } from '@playwright/test';
 import { getEmailId } from 'near-fast-auth-signer/src/utils/form-validation';
 
 import { TIMEOUT } from '../utils/constants';
-import { getFirebaseAuthLink } from '../utils/email';
+import { getFirebaseAuthOtp } from '../utils/email';
 import { KeyPairs, overridePasskeyFunctions } from '../utils/passkeys';
 import { addToDeleteQueue } from '../utils/queue';
 
@@ -14,7 +14,7 @@ class AuthCallBackPage {
   }
 
   async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean, keyPairs: KeyPairs): Promise<string> {
-    const emailData = await getFirebaseAuthLink(email, readUIDLs, {
+    const emailData = await getFirebaseAuthOtp(email, readUIDLs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
       host:     'pop3.mailtrap.io',
@@ -29,8 +29,12 @@ class AuthCallBackPage {
       await addToDeleteQueue({ type: 'email', email });
     }
 
-    expect(emailData.link).toBeDefined();
-    await this.page.goto(emailData.link);
+    await Array.from(emailData.otp).reduce(
+      (acc, digit, index) => acc.then(() => this.page.fill(`[data-test-id="otp-input-${index}"]`, digit)),
+      Promise.resolve()
+    );
+
+    await this.page.click('[data-test-id="submit-otp-button"]');
 
     if (isRecovery) {
       await expect(this.page.getByText('Recovering account...')).toBeVisible({ timeout: TIMEOUT });

@@ -1,15 +1,18 @@
 import POP3Client from 'mailpop3';
 import { v4 as uuid } from 'uuid';
 
-import { clearEmailFormatting, extractLinkAndUIDLFromEmail } from './regex';
+import { clearEmailFormatting, extractOTPFromEmail } from './regex';
 
-export function checkAllEmails(config: {
-  user: string;
-  password: string;
-  host: string;
-  port: number;
-  tls: boolean;
-}, isTargetEmail: (_emailBody: string) => boolean): Promise<string | undefined> {
+export function checkAllEmails(
+  config: {
+    user: string;
+    password: string;
+    host: string;
+    port: number;
+    tls: boolean;
+  },
+  isTargetEmail: (_emailBody: string, _uidl: string) => boolean
+): Promise<{ content: string; uidl: string } | undefined> {
   return new Promise((resolve, reject) => {
     const {
       user, password, host, port, tls
@@ -54,9 +57,9 @@ export function checkAllEmails(config: {
       } else {
         count -= 1;
         const cleanEmail = clearEmailFormatting(data);
-        if (isTargetEmail(cleanEmail)) {
+        if (isTargetEmail(cleanEmail, msgnumber.toString())) {
           client.quit();
-          resolve(cleanEmail);
+          resolve({content: cleanEmail, uidl: msgnumber.toString()});
         } else if (count === 0) {
           client.quit();
           resolve(undefined);
@@ -68,44 +71,41 @@ export function checkAllEmails(config: {
   });
 }
 
-type EmailLinkAndUIDL = {
-  link: string;
+type EmailOTPAndUIDL = {
+  otp: string;
   uidl: string;
 }
 
-export const getFirebaseAuthLink = async (email: string, readUIDLs: string[], config: {
+export const getFirebaseAuthOtp = async (email: string, readUIDLs: string[], config: {
   user: string;
   password: string;
   host: string;
   port: number;
   tls: boolean;
-}) => new Promise<EmailLinkAndUIDL | null>((resolve, reject) => {
+}) => new Promise<EmailOTPAndUIDL | null>((resolve, reject) => {
   let retry = 3;
-
   // Wait 5 seconds before start checking e-mails
   setTimeout(() => {
     const interval = setInterval(async () => {
-      let emailLinkAndUIDL: EmailLinkAndUIDL | null = null;
-      const targetEmail = await checkAllEmails(config, (content: string) => {
-        emailLinkAndUIDL = extractLinkAndUIDLFromEmail(content);
-        if (emailLinkAndUIDL) {
-          const ret = content.includes(email) && !readUIDLs.includes(emailLinkAndUIDL.uidl);
-          readUIDLs.push(emailLinkAndUIDL.uidl);
+      let emailOTPAndUIDL: EmailOTPAndUIDL | null = null;
+      const targetEmail = await checkAllEmails(config, (content: string, uidl: string) => {
+        const emailOTP = extractOTPFromEmail(content);
+        emailOTPAndUIDL = { otp: emailOTP.otp, uidl };
+        if (emailOTPAndUIDL) {
+          const ret = content.includes(email) && !readUIDLs.includes(emailOTPAndUIDL.uidl);
+          readUIDLs.push(emailOTPAndUIDL.uidl);
           return ret;
         }
         return false;
       });
-
       if (targetEmail) {
         clearInterval(interval);
-        resolve(emailLinkAndUIDL);
+        resolve(emailOTPAndUIDL);
       }
-
       if (retry === 0) {
         clearInterval(interval);
-        reject(new Error('Firebase auth link email not found'));
+        reject(new Error('OTP email not found'));
       }
-
       retry -= 1;
     }, 5000);
   }, 5000);

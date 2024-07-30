@@ -46,6 +46,7 @@ function PinInput({ length = 6, onComplete }) {
         <input
           // eslint-disable-next-line react/no-array-index-key
           key={index}
+          data-test-id={`otp-input-${index}`}
           ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
@@ -193,6 +194,7 @@ function VerifyOtpPage() {
           size="large"
           label={inFlight ? 'Loading...' : 'Submit'}
           disabled={inFlight || !pinCode}
+          data-test-id="submit-otp-button"
           onClick={() => handleSubmitPin(pinCode)}
         />
       </VerifyForm>
