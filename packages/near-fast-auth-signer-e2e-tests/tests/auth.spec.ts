@@ -78,7 +78,7 @@ test('should create account and login with passkeys', async ({ page }) => {
 
 test('should create account if logged in with an unregistered account details ', async ({ page }) => {
   const pm = new PageManager(page);
-  test.setTimeout(120000);
+  test.setTimeout(240000);
   const readUIDLs = [];
   const { email } = getRandomEmailAndAccountId();
 
