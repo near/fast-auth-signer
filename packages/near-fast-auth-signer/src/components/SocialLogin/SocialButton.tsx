@@ -132,11 +132,7 @@ function SocialButton({
       console.error(error);
       // If firebase account record gets created but near account fail to create, delete firebase account
       if (callback === onCreateAccount) {
-        // on create account failure, we should delete firebase account here
-        console.log('delete firebase account');
         await deleteUserAccount();
-      } else {
-        console.log('sign in?');
       }
     }
   };
