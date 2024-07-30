@@ -7,7 +7,7 @@ import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { extractQueryParams } from '../../utils';
 import { networkId } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
+import { deleteUserAccount, firebaseAuth } from '../../utils/firebase';
 import { storePassKeyAsFAK } from '../../utils/passkey';
 import { getSocialLoginAccountId } from '../../utils/string';
 import { onCreateAccount, onSignIn } from '../AuthCallback/auth';
@@ -70,6 +70,7 @@ function SocialButton({
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const onClick = async () => {
+    let callback;
     try {
       const result = await signInWithPopup(firebaseAuth, provider);
       const { user } = result;
@@ -103,7 +104,7 @@ function SocialButton({
       });
 
       const isNewUser = shouldCreateAccount(user.metadata.creationTime, user.metadata.lastSignInTime);
-      let callback;
+
       if (isNewUser) {
         callback = onCreateAccount;
       } else if (isRecovery) {
@@ -129,6 +130,14 @@ function SocialButton({
     } catch (error) {
       // Handle errors here
       console.error(error);
+      // If firebase account record gets created but near account fail to create, delete firebase account
+      if (callback === onCreateAccount) {
+        // on create account failure, we should delete firebase account here
+        console.log('delete firebase account');
+        await deleteUserAccount();
+      } else {
+        console.log('sign in?');
+      }
     }
   };
   return (

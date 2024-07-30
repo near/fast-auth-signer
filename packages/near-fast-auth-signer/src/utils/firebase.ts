@@ -28,3 +28,9 @@ export const getFirebaseErrorMessage = (error: FirebaseError) => {
 
   return errorCodeMessageMap[errorCode] || 'An unknown error occurred. Please try again later.';
 };
+
+export const deleteUserAccount = async () => {
+  if (firebaseAuth.currentUser) {
+    await firebaseAuth.currentUser.delete();
+  }
+};
