@@ -3,7 +3,6 @@ import { getEmailId } from 'near-fast-auth-signer/src/utils/form-validation';
 
 import { TIMEOUT } from '../utils/constants';
 import { getFirebaseAuthOtp } from '../utils/email';
-import { KeyPairs, overridePasskeyFunctions } from '../utils/passkeys';
 import { addToDeleteQueue } from '../utils/queue';
 
 class AuthCallBackPage {
@@ -13,7 +12,7 @@ class AuthCallBackPage {
     this.page = page;
   }
 
-  async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean, keyPairs: KeyPairs): Promise<string> {
+  async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean): Promise<string> {
     const emailData = await getFirebaseAuthOtp(email, readUIDLs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
@@ -21,8 +20,6 @@ class AuthCallBackPage {
       port:     9950,
       tls:      false
     });
-
-    await overridePasskeyFunctions(this.page, keyPairs);
 
     if (!isRecovery) {
       // only add to delete queue if it's a new account
@@ -33,7 +30,6 @@ class AuthCallBackPage {
       (acc, digit, index) => acc.then(() => this.page.fill(`[data-test-id="otp-input-${index}"]`, digit)),
       Promise.resolve()
     );
-
     await this.page.click('[data-test-id="submit-otp-button"]');
 
     if (isRecovery) {

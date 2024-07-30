@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import admin from 'firebase-admin';
 import { sha256 } from 'js-sha256';
 import {
@@ -7,6 +7,7 @@ import {
 import { NewAccountResponse } from 'near-fast-auth-signer/src/api/types';
 import { CLAIM, getUserCredentialsFrpSignature } from 'near-fast-auth-signer/src/utils/mpc-service';
 
+import { overridePasskeyFunctions } from './passkeys';
 import { addToDeleteQueue, DeleteAccount } from './queue';
 import { serviceAccount } from './serviceAccount';
 import PageManager from '../pages/PageManager';
@@ -235,11 +236,13 @@ export const createAccountAndLandDevicePage = async ({
   email,
   accountId,
   numberOfKeyPairs,
+  page
 }: {
   pm: PageManager;
   email: string;
   accountId: string;
   numberOfKeyPairs: number;
+  page: Page;
 }) => {
   const oidcKeyPair = KeyPair.fromRandom('ED25519');
   const keypairs = generateKeyPairs(numberOfKeyPairs);
@@ -253,11 +256,13 @@ export const createAccountAndLandDevicePage = async ({
 
   expect(createAccountResponse.type).toEqual('ok');
 
+  await overridePasskeyFunctions(page, {
+    creationKeypair:  KeyPair.fromRandom('ED25519'),
+    retrievalKeypair: KeyPair.fromRandom('ED25519'),
+  });
+
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, [], true, {
-    creationKeypair:   KeyPair.fromRandom('ED25519'),
-    retrievalKeypair:  KeyPair.fromRandom('ED25519'),
-  });
+  await pm.getAuthCallBackPage().handleEmail(email, [], true);
 };

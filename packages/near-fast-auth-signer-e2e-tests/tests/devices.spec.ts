@@ -27,6 +27,7 @@ test('device page delete existing keys and continue sign in', async ({ page, bas
     email,
     accountId,
     numberOfKeyPairs: 5,
+    page
   });
 
   // Wait for page to render and execute async operations
@@ -67,6 +68,7 @@ test('device page delete one key and return to device page again', async ({ page
     email,
     accountId,
     numberOfKeyPairs: 6,
+    page
   });
 
   await pm.getDevicesPage().isCheckboxLoaded(6);
