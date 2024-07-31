@@ -12,8 +12,8 @@ class AuthCallBackPage {
     this.page = page;
   }
 
-  async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean): Promise<string> {
-    const emailData = await getFirebaseAuthOtp(email, readUIDLs, {
+  async handleEmail(email: string, readOTPs: string[], isRecovery: boolean): Promise<string> {
+    const emailData = await getFirebaseAuthOtp(email, readOTPs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
       host:     'pop3.mailtrap.io',
@@ -40,7 +40,7 @@ class AuthCallBackPage {
       await expect(this.page.getByText('Creating account...')).not.toBeVisible({ timeout: TIMEOUT });
     }
 
-    return emailData.uidl;
+    return emailData.otp;
   }
 
   // eslint-disable-next-line class-methods-use-this

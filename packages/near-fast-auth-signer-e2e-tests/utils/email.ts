@@ -11,8 +11,8 @@ export function checkAllEmails(
     port: number;
     tls: boolean;
   },
-  isTargetEmail: (_emailBody: string, _uidl: string) => boolean
-): Promise<{ content: string; uidl: string } | undefined> {
+  isTargetEmail: (_emailBody: string) => boolean
+): Promise<{ content: string } | undefined> {
   return new Promise((resolve, reject) => {
     const {
       user, password, host, port, tls
@@ -57,9 +57,9 @@ export function checkAllEmails(
       } else {
         count -= 1;
         const cleanEmail = clearEmailFormatting(data);
-        if (isTargetEmail(cleanEmail, msgnumber.toString())) {
+        if (isTargetEmail(cleanEmail)) {
           client.quit();
-          resolve({content: cleanEmail, uidl: msgnumber.toString()});
+          resolve({ content: cleanEmail });
         } else if (count === 0) {
           client.quit();
           resolve(undefined);
@@ -71,36 +71,34 @@ export function checkAllEmails(
   });
 }
 
-type EmailOTPAndUIDL = {
+type EmailOTP = {
   otp: string;
-  uidl: string;
 }
 
-export const getFirebaseAuthOtp = async (email: string, readUIDLs: string[], config: {
+export const getFirebaseAuthOtp = async (email: string, readOTPs: string[], config: {
   user: string;
   password: string;
   host: string;
   port: number;
   tls: boolean;
-}) => new Promise<EmailOTPAndUIDL | null>((resolve, reject) => {
+}) => new Promise<EmailOTP | null>((resolve, reject) => {
   let retry = 3;
   // Wait 5 seconds before start checking e-mails
   setTimeout(() => {
     const interval = setInterval(async () => {
-      let emailOTPAndUIDL: EmailOTPAndUIDL | null = null;
-      const targetEmail = await checkAllEmails(config, (content: string, uidl: string) => {
-        const emailOTP = extractOTPFromEmail(content);
-        emailOTPAndUIDL = { otp: emailOTP.otp, uidl };
-        if (emailOTPAndUIDL) {
-          const ret = content.includes(email) && !readUIDLs.includes(emailOTPAndUIDL.uidl);
-          readUIDLs.push(emailOTPAndUIDL.uidl);
+      let emailOTP: EmailOTP | null = null;
+      const targetEmail = await checkAllEmails(config, (content: string) => {
+        emailOTP = extractOTPFromEmail(content);
+        if (emailOTP) {
+          const ret = content.includes(email) && !readOTPs.includes(emailOTP.otp);
+          readOTPs.push(emailOTP.otp);
           return ret;
         }
         return false;
       });
       if (targetEmail) {
         clearInterval(interval);
-        resolve(emailOTPAndUIDL);
+        resolve(emailOTP);
       }
       if (retry === 0) {
         clearInterval(interval);

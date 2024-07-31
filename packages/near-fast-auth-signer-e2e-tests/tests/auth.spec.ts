@@ -24,7 +24,7 @@ test.beforeEach(async ({ page, baseURL, relayerURL }) => {
 test('should create account and login with e-mail', async ({ page }) => {
   const pm = new PageManager(page);
   test.setTimeout(120000);
-  const readUIDLs = [];
+  const readOTPs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
   await overridePasskeyFunctions(page, {
     creationKeypair:  KeyPair.fromRandom('ED25519'),
@@ -33,9 +33,9 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false);
+  const otp = await pm.getAuthCallBackPage().handleEmail(email, readOTPs, false);
 
-  readUIDLs.push(emailId);
+  readOTPs.push(otp);
 
   await pm.getAppPage().signOut();
 
@@ -46,14 +46,14 @@ test('should create account and login with e-mail', async ({ page }) => {
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, true);
+  await pm.getAuthCallBackPage().handleEmail(email, readOTPs, true);
 
   await pm.getAppPage().isLoggedIn();
 });
 
 test('should create account and login with passkeys', async ({ page }) => {
   test.setTimeout(120000);
-  const readUIDLs = [];
+  const readOTPs = [];
   const { email, accountId } = getRandomEmailAndAccountId();
 
   const pm = new PageManager(page);
@@ -65,9 +65,9 @@ test('should create account and login with passkeys', async ({ page }) => {
   await pm.getCreateAccountPage().createAccount(email, accountId);
   await pm.getEmailPage().hasLoaded();
 
-  const emailId = await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, false);
+  const otp = await pm.getAuthCallBackPage().handleEmail(email, readOTPs, false);
 
-  readUIDLs.push(emailId);
+  readOTPs.push(otp);
 
   await pm.getAppPage().signOut();
 
@@ -80,8 +80,8 @@ test('should create account and login with passkeys', async ({ page }) => {
 
 test('should create account if logged in with an unregistered account details ', async ({ page }) => {
   const pm = new PageManager(page);
-  test.setTimeout(240000);
-  const readUIDLs = [];
+  test.setTimeout(120000);
+  const readOTPs = [];
   const { email } = getRandomEmailAndAccountId();
 
   await overridePasskeyFunctions(page, {
@@ -91,7 +91,7 @@ test('should create account if logged in with an unregistered account details ',
   await pm.getLoginPage().signInWithEmail(email);
   await pm.getEmailPage().hasLoaded();
 
-  await pm.getAuthCallBackPage().handleEmail(email, readUIDLs, true);
+  await pm.getAuthCallBackPage().handleEmail(email, readOTPs, true);
   await pm.getAuthCallBackPage().handleInPageAccountCreation(email);
   await pm.getAppPage().isLoggedIn();
 });
