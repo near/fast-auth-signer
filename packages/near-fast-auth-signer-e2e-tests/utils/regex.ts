@@ -12,11 +12,11 @@ export const extractOTPFromEmail = (
 ): {
     otp: string;
   } | null => {
-  const otpMatch = emailContent.match(/use this code:\s*(\d{6})/);
+  const otpMatch = emailContent.match(/use this code:<br><br>(\d{6})/);
 
   if (otpMatch) {
     return {
-      otp:  otpMatch[1],
+      otp: otpMatch[1],
     };
   }
   return null;
