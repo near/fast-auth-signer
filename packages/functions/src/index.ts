@@ -41,23 +41,17 @@ export const sendOTP = functions.https.onCall(
     const now = new Date();
     const formattedDate = now.toISOString().replace(/T/, ' ').replace(/\..+/, ' Z');
 
-    const emailContent = `Hello,
-
-We received a request to sign in to NEAR Onboarding using this email address, at ${formattedDate}. If you want to sign in with your ${email} account, use this code:
-
-${otp}
-
-If you did not request this link, you can safely ignore this email.
-
-Thanks,
-
-Your NEAR Onboarding team`;
+    const emailContent = `Hello,\n\nWe received a request to sign in to NEAR Onboarding using this email address, at ${formattedDate}. If you want to sign in with your ${email} account, use this code:\n\n${otp}\n\nIf you did not request this link, you can safely ignore this email.\n\nThanks,\n\nYour NEAR Onboarding team`;
 
     await transporter.sendMail({
       from:    SENDER_EMAIL,
       to:      email,
       subject: `Sign in to NEAR Onboarding requested at ${formattedDate}`,
       text:    emailContent,
+      headers: {
+        'Content-Type':              'text/plain; charset=utf-8',
+        'Content-Transfer-Encoding': 'quoted-printable'
+      }
     });
 
     return { success: true, message: 'OTP sent successfully' };
