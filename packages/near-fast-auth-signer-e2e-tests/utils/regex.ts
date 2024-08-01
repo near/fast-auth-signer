@@ -10,11 +10,9 @@ export const formatLink = (link: string): string => link
 export const extractOTPFromEmail = (
   emailContent: string
 ): {
-  otp: string;
-} | null => {
-  const otpMatch = emailContent.match(
-    /Your OTP (?:requested by .+? )?is: (\d+)\./
-  );
+    otp: string;
+  } | null => {
+  const otpMatch = emailContent.match(/use this code:\s*(\d{6})/);
 
   if (otpMatch) {
     return {
