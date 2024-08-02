@@ -24,7 +24,7 @@ const schema = yup.object().shape({
 
 // TODO: remove condition when we release on mainnet
 const LoginForm = styled(FormContainer)`
-  height: ${environment.NETWORK_ID === 'testnet' ? '560px' : '400px'}
+  height: ${environment.NETWORK_ID === 'testnet' ? '560px;' : '400px;'}
 `;
 
 function Login() {

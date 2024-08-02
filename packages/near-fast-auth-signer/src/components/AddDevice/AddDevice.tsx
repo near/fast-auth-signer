@@ -92,7 +92,7 @@ const schema = yup.object().shape({
 
 // TODO: remove condition when we release on mainnet
 const AddDeviceForm = styled(FormContainer)`
-  height: ${environment.NETWORK_ID === 'testnet' ? '560px' : '420px'}
+  height: ${environment.NETWORK_ID === 'testnet' ? '560px;' : '420px;'}
   gap: 18px;
   justify-content: center;
 `;
@@ -426,7 +426,7 @@ function AddDevicePage() {
           disabled={loading}
         />
 
-        <SocialLogin isRecovery />
+        <SocialLogin />
         <SeparatorWrapper>
           <Separator />
           Or
@@ -451,13 +451,23 @@ function AddDevicePage() {
           <ErrorContainer>
             <div className="stats-message error">
               <ErrorSvg />
-              <span>Failed to authenticate, please retry with email</span>
+              <span>
+                Failed to authenticate, please retry with email
+                {
+                  environment.NETWORK_ID === 'testnet' && (
+                    <span>
+                      {' '}
+                      or social login
+                    </span>
+                  )
+                }
+              </span>
             </div>
           </ErrorContainer>
         ) : null}
       </AddDeviceForm>
     </StyledContainer>
   );
-}
+};
 
 export default AddDevicePage;

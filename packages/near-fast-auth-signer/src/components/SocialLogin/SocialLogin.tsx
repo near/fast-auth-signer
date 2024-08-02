@@ -1,4 +1,3 @@
-import { FacebookAuthProvider, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
 import React from 'react';
 import styled from 'styled-components';
 
@@ -23,29 +22,20 @@ const Container = styled.div`
   gap: 8px;
 `;
 
-type SocialLoginProps = {
-  isRecovery?: boolean;
-};
-
-function SocialLogin({ isRecovery = false }: SocialLoginProps) {
+const SocialLogin: React.FC = () => {
   // TODO: remove below once mainnet is ready
   if (environment.NETWORK_ID !== 'testnet') return null;
 
-  const googleProvider = new GoogleAuthProvider();
-  const facebookProvider = new FacebookAuthProvider();
-  const appleProvider = new OAuthProvider('apple.com');
-
   return (
-    <div>
+    <>
       <Header>Sign in with</Header>
       <Container>
-        <SocialButton provider={googleProvider} logoComponent={<GoogleLogoSvg />} label="Google" isRecovery={isRecovery} />
-        <SocialButton provider={facebookProvider} logoComponent={<FacebookLogoSvg />} label="Facebook" isRecovery={isRecovery} disabled />
-        <SocialButton provider={appleProvider} logoComponent={<AppleLogoSvg />} label="Apple" isRecovery={isRecovery} />
+        <SocialButton logoComponent={<GoogleLogoSvg />} label="Google" />
+        <SocialButton logoComponent={<FacebookLogoSvg />} label="Facebook" disabled />
+        <SocialButton logoComponent={<AppleLogoSvg />} label="Apple" />
       </Container>
-      {/*  */}
-    </div>
+    </>
   );
-}
+};
 
 export default SocialLogin;
