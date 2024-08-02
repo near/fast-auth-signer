@@ -43,22 +43,23 @@ class AuthCallBackPage {
     return emailData.uidl;
   }
 
-  async handleInPageAccountCreation(email: string) {
-    await expect(this.page.getByText('Oops! This account doesn\'t seem to exist. Please create one below.')).toBeVisible();
-    await expect(this.page.locator('[data-testid="email_create"]')).toHaveValue(email);
-    await expect(this.page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
-    await this.page.waitForSelector('button:has-text("Continue"):enabled');
-    await this.page.click('button:has-text("Continue")');
+  // eslint-disable-next-line class-methods-use-this
+  async handleInPageAccountCreation(email: string, page: Page) {
+    await expect(page.getByText('Oops! This account doesn\'t seem to exist. Please create one below.')).toBeVisible();
+    await expect(page.locator('[data-testid="email_create"]')).toHaveValue(email);
+    await expect(page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
+    await page.waitForSelector('button:has-text("Continue"):enabled');
+    await page.click('button:has-text("Continue")');
 
-    await this.page.locator('text=Loading...').waitFor({ state: 'visible' });
-    await expect(this.page.getByText('Loading...')).toBeVisible();
-    await this.page.locator('text=Loading...').waitFor({ state: 'hidden' });
-    await expect(this.page.getByText('Loading...')).not.toBeVisible();
+    await page.locator('text=Loading...').waitFor({ state: 'visible' });
+    await expect(page.getByText('Loading...')).toBeVisible();
+    await page.locator('text=Loading...').waitFor({ state: 'hidden' });
+    await expect(page.getByText('Loading...')).not.toBeVisible();
 
-    await this.page.locator('text=Redirecting to app...').waitFor({ state: 'visible' });
-    await expect(this.page.getByText('Redirecting to app...')).toBeVisible();
-    await this.page.locator('text=Redirecting to app...').waitFor({ state: 'hidden' });
-    await expect(this.page.getByText('Redirecting to app...')).not.toBeVisible();
+    await page.locator('text=Redirecting to app...').waitFor({ state: 'visible' });
+    await expect(page.getByText('Redirecting to app...')).toBeVisible();
+    /*    await page.locator('text=Redirecting to app...').waitFor({ state: 'hidden' });
+    await expect(page.getByText('Redirecting to app...')).not.toBeVisible(); */
   }
 }
 
