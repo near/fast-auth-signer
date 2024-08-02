@@ -95,7 +95,7 @@ function Login() {
           variant="affirmative"
           data-test-id="login_button"
         />
-        <SocialLogin isRecovery />
+        <SocialLogin />
         <SeparatorWrapper>
           <Separator />
           Or
