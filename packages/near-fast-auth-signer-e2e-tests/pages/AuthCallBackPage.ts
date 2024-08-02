@@ -57,6 +57,8 @@ class AuthCallBackPage {
 
     await this.page.locator('text=Redirecting to app...').waitFor({ state: 'visible' });
     await expect(this.page.getByText('Redirecting to app...')).toBeVisible();
+    await this.page.locator('text=Redirecting to app...').waitFor({ state: 'hidden' });
+    await expect(this.page.getByText('Redirecting to app...')).not.toBeVisible();
   }
 }
 
