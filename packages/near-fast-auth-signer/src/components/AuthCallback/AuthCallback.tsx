@@ -228,7 +228,6 @@ function AuthCallbackPage() {
           await onSocialSignIn({
             params, setStatusMessage, setCallbackError, searchParams, navigate
           });
-          setInFlight(false);
         } else {
           setStatusMessage('Click to proceed with fastauth social login');
         }
