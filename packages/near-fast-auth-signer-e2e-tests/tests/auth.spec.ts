@@ -89,6 +89,6 @@ test('should create account if logged in with an unregistered account details ',
     creationKeypair:  KeyPair.fromRandom('ED25519'),
     retrievalKeypair: KeyPair.fromRandom('ED25519'),
   });
-  await pm.getAuthCallBackPage().handleInPageAccountCreation(email);
+  await pm.getAuthCallBackPage().handleInPageAccountCreation(email, page);
   await pm.getAppPage().isLoggedIn();
 });
