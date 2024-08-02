@@ -468,6 +468,6 @@ function AddDevicePage() {
       </AddDeviceForm>
     </StyledContainer>
   );
-};
+}
 
 export default AddDevicePage;
