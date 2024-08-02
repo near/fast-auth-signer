@@ -56,7 +56,7 @@ const SocialLoginButton = styled(Button)`
 `;
 
 const onSocialSignIn = async ({
-  params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting
+  params, setStatusMessage, setCallbackError, searchParams, navigate
 }) => {
   setStatusMessage('Verifying social login...');
   const {
@@ -115,10 +115,6 @@ const onSocialSignIn = async ({
       navigate,
       searchParams,
       gateway:           params.success_url,
-      onAccountNotFound: () => {
-        setAccountAsExisting(false);
-        setStatusMessage('Oops! This account doesn\'t seem to exist. Please create one below.');
-      },
     };
 
     await callback(callbackParams);
@@ -195,7 +191,7 @@ const onEmailSignIn = async ({
     };
 
     onSubmitRef.current = async (extraParams: { accountId: string }) => {
-      await onCreateAccount({ ...callbackParams, ...extraParams, accountId });
+      await onCreateAccount({ ...callbackParams, ...extraParams });
     };
 
     await callback(callbackParams);
@@ -230,7 +226,7 @@ function AuthCallbackPage() {
         if (onClickSocialLogin) {
           setInFlight(true);
           await onSocialSignIn({
-            params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting
+            params, setStatusMessage, setCallbackError, searchParams, navigate
           });
           setInFlight(false);
         } else {
