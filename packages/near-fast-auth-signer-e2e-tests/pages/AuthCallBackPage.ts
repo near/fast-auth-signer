@@ -44,15 +44,15 @@ class AuthCallBackPage {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async handleInPageAccountCreation(email: string, page: Page) {
-    await expect(page.getByText('Oops! This account doesn\'t seem to exist. Please create one below.')).toBeVisible();
-    await expect(page.locator('[data-testid="email_create"]')).toHaveValue(email);
-    await expect(page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
-    await page.waitForSelector('button:has-text("Continue"):enabled');
-    await page.click('button:has-text("Continue")');
-    await page.waitForSelector('text=Loading...');
-    await page.waitForSelector('text=Loading...', { state: 'detached' });
-    await page.waitForSelector('text=Redirecting to app...');
+  async handleInPageAccountCreation(email: string) {
+    await expect(this.page.getByText('Oops! This account doesn\'t seem to exist. Please create one below.')).toBeVisible();
+    await expect(this.page.locator('[data-testid="email_create"]')).toHaveValue(email);
+    await expect(this.page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
+    await this.page.waitForSelector('button:has-text("Continue"):enabled');
+    await this.page.click('button:has-text("Continue")');
+    await this.page.waitForSelector('text=Loading...');
+    await this.page.waitForSelector('text=Loading...', { state: 'detached' });
+    await this.page.waitForSelector('text=Redirecting to app...');
   }
 }
 
