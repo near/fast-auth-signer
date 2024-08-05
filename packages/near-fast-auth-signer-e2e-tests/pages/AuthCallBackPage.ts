@@ -50,9 +50,9 @@ class AuthCallBackPage {
     await expect(page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
     await page.waitForSelector('button:has-text("Continue"):enabled');
     await page.click('button:has-text("Continue")');
-    await expect(page.getByText('Loading...')).toBeVisible({ timeout: TIMEOUT });
-    await expect(page.getByText('Loading...')).not.toBeVisible({ timeout: TIMEOUT });
-    await expect(page.getByText('Redirecting to app...')).toBeVisible({ timeout: TIMEOUT });
+    await page.waitForSelector('text=Loading...');
+    await page.waitForSelector('text=Loading...', { state: 'detached' });
+    await page.waitForSelector('text=Redirecting to app...');
   }
 }
 
