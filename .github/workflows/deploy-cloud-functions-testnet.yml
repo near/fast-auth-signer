@@ -35,7 +35,6 @@ jobs:
         echo "Current directory contents:"
         ls -R
         gcloud config set project pagoda-oboarding-dev
-        gcloud services enable cloudfunctions.googleapis.com
         gcloud functions deploy verifyOTP \
           --runtime nodejs18 \
           --trigger-http \
