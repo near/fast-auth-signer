@@ -45,7 +45,7 @@ jobs:
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
-          --service-account="firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com" \
+          --service-account="firebase-adminsdk" \
           --region=us-central1 \
           --entry-point=verifyOTP \
           --source=lib \
@@ -55,7 +55,7 @@ jobs:
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
-          --service-account="firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com" \
+          --service-account="firebase-adminsdk" \
           --region=us-central1 \
           --entry-point=sendOTP \
           --source=lib \
