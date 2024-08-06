@@ -32,11 +32,14 @@ jobs:
     - name: 'Deploy Cloud Functions'
       run: |
         cd packages/functions
+        echo "Current directory contents:"
+        ls -R
         gcloud config set project pagoda-oboarding-dev
         gcloud functions deploy verifyOTP \
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
+          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=verifyOTP \
           --source=lib \
@@ -46,6 +49,7 @@ jobs:
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
+          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --region=us-central1 \
           --entry-point=sendOTP \
           --source=lib \
