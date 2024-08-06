@@ -1,18 +1,22 @@
-import { createKey, isPassKeyAvailable } from '@near-js/biometric-ed25519';
 import { captureException } from '@sentry/react';
-import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import React, { useEffect, useState, useRef } from 'react';
+import { getAuth, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import React, {
+  useEffect, useState, useRef, useMemo
+} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { onSignIn, onCreateAccount } from './auth';
+import { onSignIn, onCreateAccount, onSocialLogin } from './auth';
 import AuthCallbackError from './AuthCallbackError';
 import { CreateAccountFormValues } from '../../hooks/useCreateAccount';
+import { Button } from '../../lib/Button';
 import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, extractQueryParams } from '../../utils';
 import { network, networkId } from '../../utils/config';
-import { firebaseAuth } from '../../utils/firebase';
+import { deleteUserAccount, firebaseAuth } from '../../utils/firebase';
+// eslint-disable-next-line import/no-cycle
+import { storePassKeyAsFAK } from '../../utils/passkey';
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
 
 // Styled components
@@ -47,6 +51,156 @@ const StatusMessage = styled.p`
   margin: 0;
 `;
 
+const SocialLoginButton = styled(Button)`
+  margin-top: 20px;
+`;
+
+const onSocialSignIn = async ({
+  params, setStatusMessage, setCallbackError, searchParams, navigate
+}) => {
+  setStatusMessage('Verifying social login...');
+  const {
+    accountId: socialAccountId,
+    email: socialEmail,
+    isNewUser,
+  } = await onSocialLogin({ socialLoginName: params.socialLoginName });
+
+  const email = socialEmail;
+  const accountId = socialAccountId;
+
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
+
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user || !user.emailVerified) return;
+
+    const accessToken = await user.getIdToken();
+
+    setStatusMessage(!isNewUser ? 'Recovering account...' : 'Creating account...');
+    setAccountIdToController({ accountId, networkId });
+
+    const publicKeyFak = await storePassKeyAsFAK(email);
+
+    if (!window.fastAuthController.getAccountId()) {
+      window.fastAuthController.setAccountId(accountId);
+    }
+
+    await window.fastAuthController.claimOidcToken(accessToken);
+    const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
+    if (!window.firestoreController) {
+      window.firestoreController = new FirestoreController();
+    }
+
+    window.firestoreController.updateUser({
+      userUid:   user.uid,
+      oidcToken: accessToken,
+    });
+
+    const callback = !isNewUser ? onSignIn : onCreateAccount;
+    const callbackParams = {
+      oidcKeypair,
+      accessToken,
+      accountId,
+      publicKeyFak,
+      public_key_lak:    params.public_key_lak,
+      contract_id:       params.contract_id,
+      methodNames:       params.methodNames,
+      success_url:       params.success_url,
+      setStatusMessage,
+      navigate,
+      searchParams,
+      gateway:           params.success_url,
+    };
+
+    await callback(callbackParams);
+  } catch (e) {
+    captureException(e);
+    setCallbackError(e);
+    if (isNewUser) {
+      await deleteUserAccount();
+    }
+  }
+};
+
+const onEmailSignIn = async ({
+  params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting, onSubmitRef
+}) => {
+  const email = window.localStorage.getItem('emailForSignIn');
+  if (!email) {
+    setCallbackError(new Error('Please use the same device and browser to verify your email'));
+    return;
+  }
+  const { accountId } = params;
+
+  setStatusMessage('Verifying email...');
+
+  if (!window.firestoreController) {
+    window.firestoreController = new FirestoreController();
+  }
+
+  try {
+    const credential = await signInWithEmailLink(firebaseAuth, email, window.location.href);
+    const { user } = credential;
+    if (!user || !user.emailVerified) return;
+
+    const accessToken = await user.getIdToken();
+
+    setStatusMessage(params.isRecovery ? 'Recovering account...' : 'Creating account...');
+    setAccountIdToController({ accountId, networkId });
+
+    const publicKeyFak = await storePassKeyAsFAK(email);
+
+    if (!window.fastAuthController.getAccountId()) {
+      window.fastAuthController.setAccountId(accountId);
+    }
+
+    await window.fastAuthController.claimOidcToken(accessToken);
+    const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
+
+    if (!window.firestoreController) {
+      window.firestoreController = new FirestoreController();
+    }
+    window.firestoreController.updateUser({
+      userUid:   user.uid,
+      oidcToken: accessToken,
+    });
+
+    const callback = params.isRecovery ? onSignIn : onCreateAccount;
+    const callbackParams = {
+      oidcKeypair,
+      accessToken,
+      accountId,
+      publicKeyFak,
+      public_key_lak:    params.public_key_lak,
+      contract_id:       params.contract_id,
+      methodNames:       params.methodNames,
+      success_url:       params.success_url,
+      setStatusMessage,
+      navigate,
+      searchParams,
+      gateway:           params.success_url,
+      onAccountNotFound: () => {
+        setAccountAsExisting(false);
+        setStatusMessage('Oops! This account doesn\'t seem to exist. Please create one below.');
+      },
+    };
+
+    onSubmitRef.current = async (extraParams: { accountId: string }) => {
+      await onCreateAccount({ ...callbackParams, ...extraParams });
+    };
+
+    await callback(callbackParams);
+  } catch (e) {
+    captureException(e);
+    setCallbackError(e);
+  }
+};
+
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [statusMessage, setStatusMessage] = useState('Loading...');
@@ -54,96 +208,39 @@ function AuthCallbackPage() {
   const [isAccountExisting, setAccountAsExisting] = useState(true);
   const onSubmitRef = useRef(null);
   const [inFlight, setInFlight] = useState(false);
+  const [onClickSocialLogin, setOnClickSocialLogin] = useState(false);
 
   const [searchParams] = useSearchParams();
+  const paramNames = ['accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id', 'socialLoginName'];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const params = useMemo(() => extractQueryParams(searchParams, paramNames), [searchParams]);
 
   useEffect(() => {
     const signInProcess = async () => {
-      if (!isSignInWithEmailLink(firebaseAuth, window.location.href)) {
+      if (!isSignInWithEmailLink(firebaseAuth, window.location.href) && !params.socialLoginName) {
         navigate('/signup');
         return;
       }
 
-      const paramNames = ['accountId', 'isRecovery', 'success_url', 'public_key_lak', 'methodNames', 'contract_id'];
-      const params = extractQueryParams(searchParams, paramNames);
-
-      const email = window.localStorage.getItem('emailForSignIn');
-
-      if (!email) {
-        setCallbackError(new Error('Please use the same device and browser to verify your email'));
-        return;
-      }
-
-      if (!window.firestoreController) {
-        window.firestoreController = new FirestoreController();
-      }
-
-      setStatusMessage('Verifying email...');
-
-      try {
-        const { user } = await signInWithEmailLink(firebaseAuth, email, window.location.href);
-        if (!user || !user.emailVerified) return;
-
-        const accessToken = await user.getIdToken();
-
-        setStatusMessage(params.isRecovery ? 'Recovering account...' : 'Creating account...');
-        setAccountIdToController({ accountId: params.accountId, networkId });
-
-        let publicKeyFak = '';
-
-        if (await isPassKeyAvailable()) {
-          const keyPair = await createKey(email);
-          publicKeyFak = keyPair.getPublicKey().toString();
-          await window.fastAuthController.setKey(keyPair);
+      if (params.socialLoginName) {
+        if (onClickSocialLogin) {
+          setInFlight(true);
+          await onSocialSignIn({
+            params, setStatusMessage, setCallbackError, searchParams, navigate
+          });
+        } else {
+          setStatusMessage('Click to proceed with fastauth social login');
         }
-
-        if (!window.fastAuthController.getAccountId()) {
-          window.fastAuthController.setAccountId(params.accountId);
-        }
-
-        await window.fastAuthController.claimOidcToken(accessToken);
-        const oidcKeypair = await window.fastAuthController.getKey(`oidc_keypair_${accessToken}`);
-        if (!window.firestoreController) {
-          window.firestoreController = new FirestoreController();
-        }
-        window.firestoreController.updateUser({
-          userUid:   user.uid,
-          oidcToken: accessToken,
+      } else {
+        await onEmailSignIn({
+          params, setStatusMessage, setCallbackError, searchParams, navigate, setAccountAsExisting, onSubmitRef
         });
-
-        const callback = params.isRecovery ? onSignIn : onCreateAccount;
-        const callbackParams = {
-          oidcKeypair,
-          accessToken,
-          accountId:         params.accountId,
-          publicKeyFak,
-          public_key_lak:    params.public_key_lak,
-          contract_id:       params.contract_id,
-          methodNames:       params.methodNames,
-          success_url:       params.success_url,
-          setStatusMessage,
-          navigate,
-          searchParams,
-          gateway:           params.success_url,
-          onAccountNotFound: () => {
-            setAccountAsExisting(false);
-            setStatusMessage('Oops! This account doesn\'t seem to exist. Please create one below.');
-          },
-        };
-
-        onSubmitRef.current = async (extraParams: { accountId: string }) => {
-          await onCreateAccount({ ...callbackParams, ...extraParams });
-        };
-
-        await callback(callbackParams);
-      } catch (e) {
-        captureException(e);
-        setCallbackError(e);
       }
     };
 
     signInProcess();
-  }, [navigate, searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, searchParams, onClickSocialLogin]);
 
   const handleFormSubmit = async (values: CreateAccountFormValues) => {
     setInFlight(true);
@@ -184,6 +281,18 @@ function AuthCallbackPage() {
   return (
     <PageWrap>
       <StatusMessage data-test-id="callback-status-message">{statusMessage}</StatusMessage>
+      {
+        params.socialLoginName && (
+          <SocialLoginButton
+            type="button"
+            size="large"
+            label={inFlight ? 'Loading...' : 'Continue'}
+            variant="affirmative"
+            onClick={() => setOnClickSocialLogin(true)}
+            disabled={inFlight}
+          />
+        )
+      }
     </PageWrap>
   );
 }

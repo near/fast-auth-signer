@@ -1,13 +1,17 @@
 import { KeyPair } from '@near-js/crypto';
 import BN from 'bn.js';
+import {
+  FacebookAuthProvider, GoogleAuthProvider, OAuthProvider, signInWithPopup
+} from 'firebase/auth';
 import { NavigateFunction } from 'react-router-dom';
 
 import { createNEARAccount, fetchAccountIds } from '../../api';
 import { inIframe, isUrlNotJavascriptProtocol } from '../../utils';
 import { basePath } from '../../utils/config';
 import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
-import { checkFirestoreReady } from '../../utils/firebase';
+import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import { getAddKeyAction, getAddLAKAction } from '../../utils/mpc-service';
+import { getSocialLoginAccountId } from '../../utils/string';
 
 type BaseParams = {
   accessToken: string;
@@ -174,8 +178,54 @@ export async function onSignIn({
             }
           }, '*');
         } else {
+          console.log('else?');
           window.location.replace(parsedUrl.href);
         }
       }
     });
 }
+
+const getProvider = (socialName: string) => {
+  switch (socialName) {
+    case 'google':
+      return new GoogleAuthProvider();
+    case 'facebook':
+      return new FacebookAuthProvider();
+    case 'apple':
+      return new OAuthProvider('apple.com');
+    default:
+      return null;
+  }
+};
+
+const shouldCreateAccount = (createdAt: string, lastLoginAt: string): boolean => {
+  const createdTime = new Date(createdAt).getTime();
+  const lastLoginTime = new Date(lastLoginAt).getTime();
+
+  const diffInMilliseconds = lastLoginTime - createdTime;
+  if (diffInMilliseconds === 0) return true;
+
+  const diffInMinutes = diffInMilliseconds / (1000 * 60);
+
+  return diffInMinutes < 1;
+};
+
+export const onSocialLogin = async ({
+  socialLoginName
+}) => {
+  const provider = getProvider(socialLoginName);
+  if (!provider) throw new Error('Unsupported social login');
+  const response = await signInWithPopup(firebaseAuth, provider);
+  const { user } = response;
+  const { email } = user;
+  window.localStorage.setItem('emailForSignIn', email);
+
+  const isNewUser = shouldCreateAccount(user.metadata.creationTime, user.metadata.lastSignInTime);
+  const accountId = isNewUser ? getSocialLoginAccountId() : null;
+
+  return {
+    accountId,
+    email,
+    isNewUser,
+  };
+};

@@ -96,9 +96,16 @@ module.exports = {
     'arrow-parens':                        ['error', 'always'],
     'key-spacing':                         ['warn', { align: 'value', mode: 'minimum' }],
     'one-var-declaration-per-line':        ['error', 'initializations'],
-    'no-shadow':                         'off',
-    '@typescript-eslint/no-shadow':      'error',
-    'no-unused-vars':                    'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    'no-shadow':                           'off',
+    '@typescript-eslint/no-shadow':        'error',
+    'no-unused-vars':                      'off',
+    '@typescript-eslint/no-unused-vars':   ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    'react/function-component-definition': [
+      2,
+      {
+        namedComponents:   ['arrow-function', 'function-declaration'],
+        unnamedComponents: 'arrow-function',
+      },
+    ],
   },
 };
