@@ -56,6 +56,14 @@ const SocialButton: React.FC<SocialButtonProps> = ({
       parsedUrl.searchParams.set('public_key_lak', params.public_key);
       parsedUrl.searchParams.delete('public_key');
     }
+    window.parent.postMessage({
+      type:   'method',
+      method: 'query',
+      id:     1234,
+      params: {
+        request_type: 'complete_authentication',
+      }
+    }, '*');
     window.open(parsedUrl.href, '_parent');
   };
 

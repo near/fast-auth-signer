@@ -15,7 +15,7 @@ import { setAccountIdToController } from '../../lib/controller';
 import FirestoreController from '../../lib/firestoreController';
 import { decodeIfTruthy, extractQueryParams } from '../../utils';
 import { network, networkId } from '../../utils/config';
-import { deleteUserAccount, firebaseAuth } from '../../utils/firebase';
+import { deleteUserAccount } from '../../utils/firebase';
 // eslint-disable-next-line import/no-cycle
 import { storePassKeyAsFAK } from '../../utils/passkey';
 import CreateAccountForm from '../CreateAccount/CreateAccountForm';
@@ -203,7 +203,6 @@ function AuthCallbackPage() {
   const [isAccountExisting, setAccountAsExisting] = useState(true);
   const onSubmitRef = useRef(null);
   const [inFlight, setInFlight] = useState(false);
-  const [onClickSocialLogin, setOnClickSocialLogin] = useState(false);
 
   const [searchParams] = useSearchParams();
   const firebaseUser = useFirebaseUser();
@@ -213,35 +212,24 @@ function AuthCallbackPage() {
 
   useEffect(() => {
     const signInProcess = async () => {
-      if (!firebaseUser.user || statusMessage !== 'Loading...' || !isAccountExisting) {
+      if (!firebaseUser.user || statusMessage !== 'Loading...' || !isAccountExisting || params.socialLoginName) {
         return;
       }
 
-      if (params.socialLoginName) {
-        if (onClickSocialLogin) {
-          setInFlight(true);
-          await onSocialSignIn({
-            params, setStatusMessage, setCallbackError, searchParams, navigate
-          });
-        } else {
-          setStatusMessage('Click to proceed with fastauth social login');
-        }
-      } else {
-        await onEmailSignIn({
-          params,
-          setStatusMessage,
-          setCallbackError,
-          searchParams,
-          navigate,
-          setAccountAsExisting,
-          onSubmitRef,
-          firebaseUser,
-        });
-      }
+      await onEmailSignIn({
+        params,
+        setStatusMessage,
+        setCallbackError,
+        searchParams,
+        navigate,
+        setAccountAsExisting,
+        onSubmitRef,
+        firebaseUser,
+      });
     };
 
     signInProcess();
-  }, [navigate, searchParams, onClickSocialLogin, firebaseUser, statusMessage, isAccountExisting, params]);
+  }, [navigate, searchParams, firebaseUser, statusMessage, isAccountExisting, params]);
 
   const handleFormSubmit = async (values: CreateAccountFormValues) => {
     setInFlight(true);
@@ -281,7 +269,9 @@ function AuthCallbackPage() {
 
   return (
     <PageWrap>
-      <StatusMessage data-test-id="callback-status-message">{statusMessage}</StatusMessage>
+      <StatusMessage data-test-id="callback-status-message">
+        {params.socialLoginName ? 'Click to proceed with fastauth social login' : statusMessage}
+      </StatusMessage>
       {
         params.socialLoginName && (
           <SocialLoginButton
@@ -289,7 +279,12 @@ function AuthCallbackPage() {
             size="large"
             label={inFlight ? 'Loading...' : 'Continue'}
             variant="affirmative"
-            onClick={() => setOnClickSocialLogin(true)}
+            onClick={async () => {
+              setInFlight(true);
+              await onSocialSignIn({
+                params, setStatusMessage, setCallbackError, searchParams, navigate
+              });
+            }}
             disabled={inFlight}
           />
         )
