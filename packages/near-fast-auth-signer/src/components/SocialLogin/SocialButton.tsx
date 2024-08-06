@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { extractQueryParams } from '../../utils';
+import { basePath } from '../../utils/config';
 
 const Button = styled.button`
   font-size: 14px;
@@ -49,7 +50,7 @@ const SocialButton: React.FC<SocialButtonProps> = ({
   const onClick = async () => {
     const paramNames = ['success_url', 'failure_url', 'public_key', 'methodNames', 'contract_id'];
     const params = extractQueryParams(searchParams, paramNames);
-    const parsedUrl = new URL(`${window.location.origin}/auth-callback${Object.keys(params).length > 0 ? `?${searchParams.toString()}` : ''}`);
+    const parsedUrl = new URL(`${window.location.origin}${basePath ? `/${basePath}` : ''}/auth-callback${Object.keys(params).length > 0 ? `?${searchParams.toString()}` : ''}`);
     parsedUrl.searchParams.set('socialLoginName', label.toLocaleLowerCase());
     if (params.public_key) {
       parsedUrl.searchParams.set('public_key_lak', params.public_key);
