@@ -34,6 +34,8 @@ jobs:
         cd packages/functions
         echo "Current directory contents:"
         ls -R
+        gcloud config set project pagoda-oboarding-dev
+        gcloud services enable cloudfunctions.googleapis.com
         gcloud functions deploy verifyOTP \
           --runtime nodejs18 \
           --trigger-http \
@@ -42,7 +44,8 @@ jobs:
           --region=us-central1 \
           --entry-point=verifyOTP \
           --source=lib \
-          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
+          --verbosity=debug
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
           --trigger-http \
@@ -51,4 +54,5 @@ jobs:
           --region=us-central1 \
           --entry-point=sendOTP \
           --source=lib \
-          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}"  # gmail or gsuite
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
+          --verbosity=debug
