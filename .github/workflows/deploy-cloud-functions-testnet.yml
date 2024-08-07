@@ -42,6 +42,7 @@ jobs:
         ls -R
         gcloud config set project pagoda-oboarding-dev
         gcloud functions deploy verifyOTP \
+          --no-gen2 \
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
@@ -53,6 +54,7 @@ jobs:
           --project pagoda-oboarding-dev
         
         gcloud functions deploy sendOTP \
+          --no-gen2 \
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
