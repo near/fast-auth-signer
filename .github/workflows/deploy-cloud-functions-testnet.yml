@@ -45,7 +45,7 @@ jobs:
           --runtime nodejs18 \
           --trigger-http \
           --allow-unauthenticated \
-          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com\
+          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
           --entry-point=verifyOTP \
           --source=lib \
           --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
