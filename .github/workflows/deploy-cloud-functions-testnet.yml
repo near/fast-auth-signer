@@ -51,8 +51,9 @@ jobs:
           --source=lib \
           --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
           --verbosity=debug \
-          --project pagoda-oboarding-dev
-        
+          --project pagoda-oboarding-dev \
+          --build-service-account=projects/pagoda-oboarding-dev/serviceAccounts/firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com        
+
         gcloud functions deploy sendOTP \
           --no-gen2 \
           --runtime nodejs18 \
@@ -63,4 +64,5 @@ jobs:
           --source=lib \
           --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
           --verbosity=debug \
-          --project pagoda-oboarding-dev
+          --project pagoda-oboarding-dev \
+          --build-service-account=projects/pagoda-oboarding-dev/serviceAccounts/firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com
