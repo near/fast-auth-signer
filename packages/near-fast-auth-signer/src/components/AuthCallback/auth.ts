@@ -218,7 +218,6 @@ export const onSocialLogin = async ({
   const response = await signInWithPopup(firebaseAuth, provider);
   const { user } = response;
   const { email } = user;
-  window.localStorage.setItem('emailForSignIn', email);
 
   const isNewUser = shouldCreateAccount(user.metadata.creationTime, user.metadata.lastSignInTime);
   const accountId = isNewUser ? getSocialLoginAccountId() : null;

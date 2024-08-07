@@ -1,0 +1,68 @@
+name: Deploy Cloud Functions
+on:
+  push:
+    branches: [ main, add-otp-cloud-functions ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.CLOUD_FUNCTIONS_DEPLOYER_TESTNET_SERVICE_ACCOUNT }}'
+
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        version: 'latest'
+
+    - name: 'Update gcloud SDK to the latest version'
+      run: |
+        gcloud components update  
+        
+    - name: 'Install dependencies and build'
+      run: |
+        cd packages/functions
+        npm install
+        npm run build
+        echo "Directory structure after build:"
+        find . -type f
+
+    - name: 'Deploy Cloud Functions'
+      run: |
+        cd packages/functions
+        echo "Current directory contents:"
+        ls -R
+        gcloud config set project pagoda-oboarding-dev
+        gcloud functions deploy verifyOTP \
+          --no-gen2 \
+          --runtime nodejs18 \
+          --trigger-http \
+          --allow-unauthenticated \
+          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
+          --entry-point=verifyOTP \
+          --source=lib \
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
+          --verbosity=debug \
+          --project pagoda-oboarding-dev \
+          --build-service-account=projects/pagoda-oboarding-dev/serviceAccounts/firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com        
+
+        gcloud functions deploy sendOTP \
+          --no-gen2 \
+          --runtime nodejs18 \
+          --trigger-http \
+          --allow-unauthenticated \
+          --service-account=firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com \
+          --entry-point=sendOTP \
+          --source=lib \
+          --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
+          --verbosity=debug \
+          --project pagoda-oboarding-dev \
+          --build-service-account=projects/pagoda-oboarding-dev/serviceAccounts/firebase-adminsdk-bygsj@pagoda-oboarding-dev.iam.gserviceaccount.com

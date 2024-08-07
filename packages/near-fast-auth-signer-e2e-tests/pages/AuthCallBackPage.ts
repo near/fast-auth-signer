@@ -2,8 +2,7 @@ import { expect, Page } from '@playwright/test';
 import { getEmailId } from 'near-fast-auth-signer/src/utils/form-validation';
 
 import { TIMEOUT } from '../utils/constants';
-import { getFirebaseAuthLink } from '../utils/email';
-import { KeyPairs, overridePasskeyFunctions } from '../utils/passkeys';
+import { getFirebaseAuthOtp } from '../utils/email';
 import { addToDeleteQueue } from '../utils/queue';
 
 class AuthCallBackPage {
@@ -13,8 +12,8 @@ class AuthCallBackPage {
     this.page = page;
   }
 
-  async handleEmail(email: string, readUIDLs: string[], isRecovery: boolean, keyPairs: KeyPairs): Promise<string> {
-    const emailData = await getFirebaseAuthLink(email, readUIDLs, {
+  async handleEmail(email: string, readOTPs: string[], isRecovery: boolean): Promise<string> {
+    const emailData = await getFirebaseAuthOtp(email, readOTPs, {
       user:     process.env.MAILTRAP_USER,
       password: process.env.MAILTRAP_PASS,
       host:     'pop3.mailtrap.io',
@@ -22,15 +21,16 @@ class AuthCallBackPage {
       tls:      false
     });
 
-    await overridePasskeyFunctions(this.page, keyPairs);
-
     if (!isRecovery) {
       // only add to delete queue if it's a new account
       await addToDeleteQueue({ type: 'email', email });
     }
 
-    expect(emailData.link).toBeDefined();
-    await this.page.goto(emailData.link);
+    await Array.from(emailData.otp).reduce(
+      (acc, digit, index) => acc.then(() => this.page.fill(`[data-test-id="otp-input-${index}"]`, digit)),
+      Promise.resolve()
+    );
+    await this.page.click('[data-test-id="submit-otp-button"]');
 
     if (isRecovery) {
       await expect(this.page.getByText('Recovering account...')).toBeVisible({ timeout: TIMEOUT });
@@ -40,7 +40,7 @@ class AuthCallBackPage {
       await expect(this.page.getByText('Creating account...')).not.toBeVisible({ timeout: TIMEOUT });
     }
 
-    return emailData.uidl;
+    return emailData.otp;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -50,9 +50,8 @@ class AuthCallBackPage {
     await expect(this.page.locator('[data-testid="username_create"]')).toHaveValue(getEmailId(email));
     await this.page.waitForSelector('button:has-text("Continue"):enabled');
     await this.page.click('button:has-text("Continue")');
-    await this.page.waitForSelector('text=Loading...');
-    await this.page.waitForSelector('text=Loading...', { state: 'detached' });
-    await this.page.waitForSelector('text=Redirecting to app...');
+    await expect(this.page.getByText('Loading...')).toBeVisible({ timeout: TIMEOUT });
+    await expect(this.page.getByText('Loading...')).not.toBeVisible({ timeout: TIMEOUT });
   }
 }
 

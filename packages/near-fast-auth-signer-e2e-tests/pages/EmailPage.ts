@@ -10,7 +10,7 @@ class EmailPage {
   }
 
   async hasLoaded() {
-    await expect(this.page.getByRole('button', { name: 'Resend' })).toHaveText('Resend', { timeout: TIMEOUT });
+    await expect(this.page.getByRole('button', { name: 'Submit' })).toHaveText('Submit', { timeout: TIMEOUT });
   }
 }
 
