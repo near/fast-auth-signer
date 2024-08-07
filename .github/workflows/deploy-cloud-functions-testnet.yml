@@ -49,7 +49,9 @@ jobs:
           --entry-point=verifyOTP \
           --source=lib \
           --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
-          --verbosity=debug
+          --verbosity=debug \
+          --project pagoda-oboarding-dev
+        
         gcloud functions deploy sendOTP \
           --runtime nodejs18 \
           --trigger-http \
@@ -58,4 +60,5 @@ jobs:
           --entry-point=sendOTP \
           --source=lib \
           --set-env-vars GMAIL_SENDER="${{ secrets.GMAIL_OTP_SENDER }}",GMAIL_PASSWORD="${{ secrets.GMAIL_OTP_SENDER_PASSWORD }}" \
-          --verbosity=debug
+          --verbosity=debug \
+          --project pagoda-oboarding-dev
