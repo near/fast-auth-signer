@@ -20,12 +20,12 @@ jobs:
 
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v1'
-      
-    - name: 'Test Google Cloud Authentication'
+      with:
+        version: 'latest'
+
+    - name: 'Update gcloud SDK to the latest version'
       run: |
-        gcloud config set project pagoda-oboarding-dev
-        gcloud auth list
-        gcloud projects list   
+        gcloud components update  
         
     - name: 'Install dependencies and build'
       run: |
