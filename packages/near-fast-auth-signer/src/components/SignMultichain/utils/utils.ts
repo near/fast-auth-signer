@@ -25,8 +25,8 @@ import {
 } from '../types';
 
 // TODO: use this for blacklisting on limited access key creation AND sign
-const MULTICHAIN_CONTRACT_TESTNET = 'v5.multichain-mpc-dev.testnet';
-const MULTICHAIN_CONTRACT_MAINNET = 'v5.multichain-mpc-dev.testnet';
+const MULTICHAIN_CONTRACT_TESTNET = 'v1.signer-prod.testnet';
+const MULTICHAIN_CONTRACT_MAINNET = 'v1.signer-prod.testnet';
 
 function toBTC(satoshis: number): number {
   return satoshis / 100000000;
@@ -39,10 +39,13 @@ type BTCFeeProperties = {
     value: number;
     script: string;
   }[];
-  outputs: {
+  outputs: ({
     address: string;
     value: number;
-  }[];
+  } | {
+    script: Buffer;
+    value: number;
+  })[];
   fee: number;
 };
 
