@@ -11,7 +11,9 @@ import WalletSvg from '../../Images/WalletSvg';
 import { Button } from '../../lib/Button';
 import Input from '../../lib/Input/Input';
 import { inIframe } from '../../utils';
+import environment from '../../utils/environment';
 import { FormContainer, StyledContainer } from '../Layout';
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const schema = yup.object().shape({
   email: yup
@@ -20,8 +22,9 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+// TODO: remove condition when we release on mainnet
 const LoginForm = styled(FormContainer)`
-  height: 400px;
+  height: ${environment.NETWORK_ID === 'testnet' ? '560px;' : '400px;'}
 `;
 
 function Login() {
@@ -92,7 +95,7 @@ function Login() {
           variant="affirmative"
           data-test-id="login_button"
         />
-
+        <SocialLogin />
         <SeparatorWrapper>
           <Separator />
           Or

@@ -26,11 +26,13 @@ import {
 import { recordEvent } from '../../utils/analytics';
 import { basePath } from '../../utils/config';
 import { NEAR_MAX_ALLOWANCE } from '../../utils/constants';
+import environment from '../../utils/environment';
 import { checkFirestoreReady, firebaseAuth } from '../../utils/firebase';
 import ErrorSvg from '../CreateAccount/icons/ErrorSvg';
 import { FormContainer, StyledContainer } from '../Layout';
 import { Separator, SeparatorWrapper } from '../Login/Login.style';
 import { getMultiChainContract } from '../SignMultichain/utils/utils';
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const ErrorContainer = styled.div`
 .stats-message {
@@ -88,8 +90,9 @@ const schema = yup.object().shape({
     .required('Please enter a valid email address'),
 });
 
+// TODO: remove condition when we release on mainnet
 const AddDeviceForm = styled(FormContainer)`
-  height: 420px;
+  height: ${environment.NETWORK_ID === 'testnet' ? '560px;' : '420px;'}
   gap: 18px;
   justify-content: center;
 `;
@@ -422,6 +425,8 @@ function AddDevicePage() {
           data-test-id="add-device-continue-button"
           disabled={loading}
         />
+
+        <SocialLogin />
         <SeparatorWrapper>
           <Separator />
           Or
@@ -446,7 +451,17 @@ function AddDevicePage() {
           <ErrorContainer>
             <div className="stats-message error">
               <ErrorSvg />
-              <span>Failed to authenticate, please retry with email</span>
+              <span>
+                Failed to authenticate, please retry with email
+                {
+                  environment.NETWORK_ID === 'testnet' && (
+                    <span>
+                      {' '}
+                      or social login
+                    </span>
+                  )
+                }
+              </span>
             </div>
           </ErrorContainer>
         ) : null}

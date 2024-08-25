@@ -13,11 +13,14 @@ import Input from '../../lib/Input/Input';
 import { openToast } from '../../lib/Toast';
 import { recordEvent } from '../../utils/analytics';
 import { network } from '../../utils/config';
+import environment from '../../utils/environment';
 import { accountAddressPatternNoSubAccount, getEmailId } from '../../utils/form-validation';
 import { FormContainer } from '../Layout';
+// eslint-disable-next-line import/no-cycle
+import SocialLogin from '../SocialLogin/SocialLogin';
 
 const CreateAccountFormContainer = styled(FormContainer)`
-  height: 500px;
+  height: ${environment.NETWORK_ID === 'testnet' ? '645px;' : '500px;'}
 `;
 
 const emailProviders = ['gmail', 'yahoo', 'outlook'];
@@ -242,6 +245,7 @@ const CreateAccountForm = forwardRef<HTMLFormElement, CreateAccountFormProps>(({
         size="large"
         data-test-id="continue_button_create"
       />
+      <SocialLogin />
     </CreateAccountFormContainer>
   );
 });
