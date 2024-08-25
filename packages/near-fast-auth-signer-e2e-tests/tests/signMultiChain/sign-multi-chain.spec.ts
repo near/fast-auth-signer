@@ -89,7 +89,7 @@ const isAuthenticated = async ({
   throw new Error('No page found');
 };
 
-test.describe.skip('Sign MultiChain', () => {
+test.describe('Sign MultiChain', () => {
   const provider = new JsonRpcProvider('http://127.0.0.1:8545');
 
   test.beforeEach(async ({ browser }) => {
@@ -149,7 +149,7 @@ test.describe.skip('Sign MultiChain', () => {
     });
 
     // Can fail on relayer or contract signature
-    test.skip('Should Pass: Send BNB with domain Key', async () => {
+    test('Should Pass: Send BNB with domain Key', async () => {
       await isWalletSelectorLoaded(page);
       await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
       await signMultiChain.submitTransaction({
@@ -203,7 +203,7 @@ test.describe.skip('Sign MultiChain', () => {
           ...(domain ? { domain } : {})
         },
         nearNetworkId:        'testnet',
-        multichainContractId: 'v5.multichain-mpc-dev.testnet'
+        multichainContractId: 'v1.signer-prod.testnet'
       });
 
       if (shouldTopUp) {
@@ -279,7 +279,7 @@ test.describe.skip('Sign MultiChain', () => {
         test.setTimeout(180000);
 
         const contractDeployed = await deployFTContract();
-        const { accountId, keypair } = await isAuthenticated({ isLoggedIn: true, isNewAccount: true });
+        const { accountId, keypair } = await isAuthenticated({ isLoggedIn: true, isNewAccount: false });
         await new TestDapp(page).loginWithKeyPairLocalStorage(accountId, KeyPair.fromRandom('ed25519'), keypair);
 
         const personalKey = await fetchAddressAndTopUp({ accountId, keyType: 'personalKey' });

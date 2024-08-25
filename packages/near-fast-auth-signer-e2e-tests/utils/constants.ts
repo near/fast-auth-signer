@@ -15,9 +15,9 @@ export const receivingAddresses = {
 
 // Derived addresses considering the accountId as johndoe12.testnet
 export const derivedAddresses = {
-  EVM_PERSONAL:   '0x65a2e1dfe3b157c3d491f32d6c2c44e4d3a69dd9',
-  EVM_PERSONAL_2: '0x80a5dd65208c29bb0b5b99eedf53ae489d597ec2',
-  EVM_PERSONAL_3: '0x91d036588cb42f5bcd6227ebdbd4d09063d673e5',
-  EVM_UNKNOWN:    '0x7159c9bda696bf1213933ad3851db30f335a1d0b',
-  EVM_DOMAIN:     '0xa02fa1b0fcf4bf1f380a2bdaaf4cddedb84571e5',
+  EVM_PERSONAL:   '0xcd624654b0503c75e2b0d47a2e4f01624273e0a7',
+  EVM_PERSONAL_2: '0x24a4281423f0b9a808e6a14f07ca291650207119',
+  EVM_PERSONAL_3: '0xe0de18b6dea2dc4ee206ab182aed77639fc0f93b',
+  EVM_UNKNOWN:    '0x410e07f96e3952ad41de47ea648a724f540fbfe5',
+  EVM_DOMAIN:     '0x5f1ae590ade2543b0423e900f1323c62689b1c42',
 };

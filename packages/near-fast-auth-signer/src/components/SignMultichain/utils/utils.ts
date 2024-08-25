@@ -214,7 +214,9 @@ export const multichainSignAndSend = async ({
   };
 
   const signMultiChainWithFee: EVMRequest | BitcoinRequest = {
-    nearAuthentication: { networkId, keypair, accountId },
+    nearAuthentication: {
+      networkId, keypair, accountId
+    },
     fastAuthRelayerUrl: FAST_AUTH_RELAYER_URL,
     ...signMultichainRequest,
     chainConfig:        {
