@@ -3,7 +3,15 @@ import * as yup from 'yup';
 import { BaseSendMultichainMessageSchema } from '../schema';
 
 export const SendEVMMultichainMessageSchema = BaseSendMultichainMessageSchema.shape({
-  transaction:    yup.mixed().required(),
+  transaction: yup.object().shape({
+    to:                   yup.string().required(),
+    value:                yup.mixed().required(),
+    from:                 yup.string().optional(),
+    gasLimit:             yup.mixed().optional(),
+    maxPriorityFeePerGas: yup.mixed().optional(),
+    maxFeePerGas:         yup.mixed().optional(),
+    data:                 yup.string().optional(),
+  }).required(),
   chainConfig: yup.object().shape({
     providerUrl: yup.string().optional(),
     contract:    yup.string().optional(),

@@ -147,12 +147,10 @@ function SignMultichain() {
           const ethersProvider = new ethers
             .JsonRpcProvider(getMultichainAssetInfo(transaction)?.chainConfig.providerUrl);
 
-          const temp = await getEVMFunctionCallMessage(
+          setEVMFunctionCallMessage(await getEVMFunctionCallMessage(
             { data, value, to },
             ethersProvider
-          );
-
-          setEVMFunctionCallMessage(temp);
+          ));
         }
       }
 

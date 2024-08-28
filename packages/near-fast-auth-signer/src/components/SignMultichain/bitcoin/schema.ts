@@ -6,7 +6,14 @@ export const SendBTCMultichainMessageSchema = BaseSendMultichainMessageSchema.sh
   transaction: yup.object().shape({
     to:      yup.string().required(),
     value:   yup.string().required(),
-    inputs:  yup.array().optional(),
+    inputs: yup.array().of(
+      yup.object().shape({
+        txid:   yup.string().required(),
+        vout:   yup.number().required(),
+        value:  yup.number().optional(),
+        script: yup.string().optional()
+      })
+    ).optional(),
     outputs: yup.array(yup.object({
       address: yup.string().required(),
       value:   yup.number().required()
