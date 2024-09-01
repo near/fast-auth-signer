@@ -11,6 +11,12 @@ export const SendEVMMultichainMessageSchema = BaseSendMultichainMessageSchema.sh
     maxPriorityFeePerGas: yup.mixed().optional(),
     maxFeePerGas:         yup.mixed().optional(),
     data:                 yup.string().optional(),
+    chainId:              yup.number().oneOf([
+      1,
+      11155111,
+      56,
+      97
+    ]).required(),
   }).required(),
   chainConfig: yup.object().shape({
     providerUrl: yup.string().optional(),
