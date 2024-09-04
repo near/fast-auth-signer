@@ -14,7 +14,7 @@
     "react-dom": "^18.2.0",
     "near-fast-auth-signer": "*", 
     "@near-wallet-selector/core": "8.7.0",
-    "near-fastauth-wallet": "^0.0.17"
+    "near-fastauth-wallet": "^2.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",
