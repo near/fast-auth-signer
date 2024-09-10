@@ -1,21 +1,24 @@
+import { ethers } from 'ethers';
+import { EVMRequest } from 'multichain-tools';
 import React, {
   useState, useCallback, useRef, useMemo
 } from 'react';
 import styled from 'styled-components';
 
 import {
-  Chain, EvmSendMultichainMessage, SendMultichainMessage
+  Chain,
+  SendMultichainMessage,
 } from './types';
+import { getEVMFunctionCallMessage } from './utils/evm';
 import {
   validateMessage,
   getTokenAndTotalPrice,
-  multichainAssetToNetworkName,
   shortenAddress,
   multichainSignAndSend,
   multichainGetFeeProperties,
   TransactionFeeProperties,
-  getTokenSymbol
-} from './utils';
+  getMultichainAssetInfo,
+} from './utils/utils';
 import { getAuthState } from '../../hooks/useAuthState';
 import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { IframeRequestEvent, useIframeRequest } from '../../hooks/useIframeRequest';
@@ -64,22 +67,21 @@ const WarningContainer = styled.div`
 function SignMultichain() {
   const signTransactionRef = useRef(null);
   const [amountInfo, setAmountInfo] = useState<TransactionAmountDisplay>({ price: '...', tokenAmount: 0 });
-  const [message, setMessage] = useState<SendMultichainMessage>(null);
+  const [message, setMessage] = useState<SendMultichainMessage | null>(null);
   const [inFlight, setInFlight] = useState(false);
   const [error, setError] = useState(null);
   const [isValid, setValid] = useState(null);
   const [origin, setOrigin] = useState(null);
   const [isDomainKey, setIsDomainKey] = useState(true);
   const tokenSymbol = useMemo(
-    () => getTokenSymbol({
-      chain:   message?.chain,
-      chainId: (message as EvmSendMultichainMessage)?.chainId,
-    }),
+    () => message && getMultichainAssetInfo(message)?.tokenSymbol,
     [message]
   );
   const [isUnsafe, setUnsafe] = useState(false);
   const [check, setCheck] = useState(false);
   const isSafariBrowser = isSafari();
+  const [isEVMFunctionCall, setIsEVMFunctionCall] = useState(false);
+  const [evmFunctionCallMessage, setEVMFunctionCallMessage] = useState(null);
 
   // Send form height to modal if in iframe
   useIframeDialogConfig({
@@ -88,7 +90,6 @@ function SignMultichain() {
   });
 
   const onError = (text: string) => {
-    window.parent.postMessage({ type: 'multiChainResponse', message: text, closeIframe: true }, '*');
     setError(text);
   };
 
@@ -97,21 +98,16 @@ function SignMultichain() {
     feeProperties: TransactionFeeProperties
   ) => {
     try {
-      const isUserAuthenticated = await getAuthState();
-      if (isUserAuthenticated !== true) {
-        onError('You are not authenticated or there has been an indexer failure');
-      } else {
-        const response = await multichainSignAndSend({
-          signMultichainRequest,
-          feeProperties,
-        });
-        if (response.success && 'transactionHash' in response) {
-          window.parent.postMessage({
-            type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
-          }, '*');
-        } else if (response.success === false) {
-          onError(response.errorMessage);
-        }
+      const response = await multichainSignAndSend({
+        signMultichainRequest,
+        feeProperties,
+      });
+      if (response.success && 'transactionHash' in response) {
+        window.parent.postMessage({
+          type: 'multiChainResponse', transactionHash: response.transactionHash, message: 'Successfully signed and sent transaction', closeIframe: true
+        }, '*');
+      } else if (response.success === false) {
+        onError(response.errorMessage);
       }
     } catch (e) {
       onError(e.message);
@@ -131,23 +127,43 @@ function SignMultichain() {
         return;
       }
 
+      const isUserAuthenticated = await getAuthState();
+      if (isUserAuthenticated !== true) {
+        onError('You are not authenticated or there has been an indexer failure');
+        return;
+      }
+
       // if the domain is the same as the origin, hide the modal
-      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+      if (transaction?.derivationPath.domain === event?.origin && !isSafariBrowser) {
         // Check early to hide the UI quicker
         window.parent.postMessage({ hideModal: true }, '*');
       }
 
-      if (transaction?.domain && transaction?.domain !== event?.origin) {
+      if (transaction.derivationPath.chain === 60) {
+        const evmRequest = transaction as EVMRequest;
+        if (evmRequest.transaction.data) {
+          setIsEVMFunctionCall(true);
+          const { data, value, to } = evmRequest.transaction;
+          const ethersProvider = new ethers
+            .JsonRpcProvider(getMultichainAssetInfo(transaction)?.chainConfig.providerUrl);
+
+          setEVMFunctionCallMessage(await getEVMFunctionCallMessage(
+            { data, value, to },
+            ethersProvider
+          ));
+        }
+      }
+
+      if (transaction?.derivationPath.domain && transaction?.derivationPath.domain !== event?.origin) {
         setUnsafe(true);
       }
 
       const { tokenAmount, tokenPrice } = await getTokenAndTotalPrice(transaction);
-      const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties({
-        chain: transaction.chain,
-        to:    transaction.to,
-        value: transaction.value.toString(),
-        from:  transaction.from,
-      });
+      const { feeDisplay, ...feeProperties } = await multichainGetFeeProperties(
+        transaction,
+        window.fastAuthController.getAccountId()
+      );
+
       const gasFeeInUSD = parseFloat(feeDisplay.toString()) * tokenPrice;
       const transactionCost =  Math.ceil(gasFeeInUSD * 100) / 100;
 
@@ -157,9 +173,10 @@ function SignMultichain() {
         feeProperties
       });
       setValid(true);
-      setIsDomainKey(transaction?.domain === event?.origin);
+      setIsDomainKey(transaction?.derivationPath.domain === event?.origin);
       setMessage(transaction);
-      if (transaction?.domain === event?.origin && !isSafariBrowser) {
+
+      if (transaction?.derivationPath.domain === event?.origin && !isSafariBrowser) {
         await signMultichainTransaction(transaction, feeProperties);
       }
     } catch (e) {
@@ -215,14 +232,14 @@ function SignMultichain() {
   }
 
   return (
-    <ModalSignWrapper ref={signTransactionRef} hide={message?.domain === origin} warning={isUnsafe}>
+    <ModalSignWrapper ref={signTransactionRef} hide={message?.derivationPath?.domain === origin} warning={isUnsafe}>
       <div className="modal-body">
         <div className="modal-top">
           <ModalIconSvg />
           <h3>Approve Transaction?</h3>
           <div className="transaction-details">
             { isUnsafe ? <WarningCircleSVG /> : <InternetSvg />}
-            { message?.domain || origin || 'Unknown App'}
+            { message?.derivationPath?.domain || origin || 'Unknown App'}
           </div>
         </div>
         <div className="modal-middle">
@@ -240,7 +257,7 @@ function SignMultichain() {
               rightSide={(
                 <TableRow
                   asset={tokenSymbol as Chain}
-                  content={<b><span title={message?.to || ''}>{`${shortenAddress(message?.to || '...')}`}</span></b>}
+                  content={<b><span title={message?.transaction?.to || ''}>{`${shortenAddress(message?.transaction.to || '...')}`}</span></b>}
                 />
               )}
             />
@@ -249,13 +266,15 @@ function SignMultichain() {
               rightSide={(
                 <TableRow
                   asset={tokenSymbol as Chain}
-                  content={multichainAssetToNetworkName({
-                    chain:   message?.chain,
-                    chainId: (message as EvmSendMultichainMessage)?.chainId,
-                  })}
+                  content={message && getMultichainAssetInfo(message)?.networkName}
                 />
               )}
             />
+            {isEVMFunctionCall && evmFunctionCallMessage && (
+              <TableContent
+                leftSide={evmFunctionCallMessage}
+              />
+            )}
           </div>
           <div className="table-wrapper">
             <TableContent
@@ -273,7 +292,7 @@ function SignMultichain() {
                 <p>
                   I’ve carefully reviewed the request and trust
                   {' '}
-                  <b>{message?.domain}</b>
+                  <b>{message?.derivationPath?.domain}</b>
                 </p>
               </Container>
               <WarningContainer>

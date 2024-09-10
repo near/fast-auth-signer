@@ -9,7 +9,7 @@ import useIframeDialogConfig from '../../hooks/useIframeDialogConfig';
 import { useInvalidContractId } from '../../hooks/useInvalidContractId';
 import { inIframe } from '../../utils';
 import { StyledContainer } from '../Layout';
-import { getMultiChainContract } from '../SignMultichain/utils';
+import { getMultiChainContract } from '../SignMultichain/utils/utils';
 
 function CreateAccount() {
   const createAccountFormRef = useRef(null);

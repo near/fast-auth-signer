@@ -1,16 +1,16 @@
-import { SignMessageParams } from '@near-wallet-selector/core';
+import { Account, SignMessageParams } from '@near-wallet-selector/core';
+import { FastAuthWallet } from 'near-fastauth-wallet';
 import React, { useEffect, useState } from 'react';
 
-import SignMultiChain, { TransactionFormValues } from './components/SignMultiChain';
+import SignMultiChain from './components/SignMultiChain';
 import useWalletSelector from './hooks/useWalletSelector';
-import {
-  getTransactionPayload,
-} from '../utils/multiChain';
+
+type FastAuthWalletInterface = Awaited<ReturnType<typeof FastAuthWallet>>;
 
 export default function App() {
   const selectorInstance = useWalletSelector();
-  const [fastAuthWallet, setFastAuthWallet] = useState<any>();
-  const [accounts, setAccounts] = useState<any[] | undefined>(undefined);
+  const [fastAuthWallet, setFastAuthWallet] = useState<FastAuthWalletInterface | null>(null);
+  const [accounts, setAccounts] = useState<Account[] | undefined>(undefined);
   const [isMessageSignatureValid, setIsMessageSignatureValid] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,8 @@ export default function App() {
       if (!selectorInstance) return;
 
       const wallet = await selectorInstance.wallet('fast-auth-wallet');
-      setFastAuthWallet(wallet);
+      // Using any because the selector exposes the NEP wallet interface that cannot be cast to the current FastAuthWallet interface
+      setFastAuthWallet(wallet as any);
     };
 
     getWallet();
@@ -64,17 +65,13 @@ export default function App() {
     try {
       setIsMessageSignatureValid(false);
       const messageSignature = await fastAuthWallet.signMessage(signMessageParams);
-      const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
-      setIsMessageSignatureValid(isValid);
+      if (messageSignature) {
+        const isValid = await fastAuthWallet.verifySignMessage(signMessageParams, messageSignature);
+        setIsMessageSignatureValid(isValid);
+      }
     } catch (error) {
       console.error('Error signing message:', error);
     }
-  };
-
-  const handleSubmitTransaction = async (values: TransactionFormValues) => {
-    const accountId = JSON.parse(window.localStorage.accountId);
-    const payload = await getTransactionPayload({ ...values, accountId });
-    await fastAuthWallet.signMultiChainTransaction(payload);
   };
 
   if (!selectorInstance || !fastAuthWallet || accounts === undefined) {
@@ -89,7 +86,6 @@ export default function App() {
       <button type="button" onClick={handleSignUp}>
         Create Account
       </button>
-
       {accounts.length > 0 ? (
         <div>
           <button type="button" onClick={handleSignOut}>
@@ -102,13 +98,13 @@ export default function App() {
           Sign In
         </button>
       )}
-      <SignMultiChain onSubmitForm={handleSubmitTransaction} />
+      <SignMultiChain />
       <button
         type="button"
         data-testid="sign-transaction-button"
         onClick={() => {
           fastAuthWallet
-            .signAndSendTransaction(
+            .signAndSendDelegateAction(
               JSON.parse(window.localStorage.transactionData)
             );
         }}
