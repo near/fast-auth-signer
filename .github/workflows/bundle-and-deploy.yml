@@ -38,7 +38,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: fastauth-dist
-          path: ./dist
+          path: ./dist/
 
       - uses: google-github-actions/setup-gcloud@v1
       - uses: google-github-actions/auth@v1
