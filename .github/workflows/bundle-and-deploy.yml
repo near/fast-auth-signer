@@ -37,8 +37,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: frontend-dist-${{ inputs.environment }}
-          path: ./dist/${{ inputs.environment }}
+          name: fastauth-dist
+          path: ./dist
 
       - uses: google-github-actions/setup-gcloud@v1
       - uses: google-github-actions/auth@v1
