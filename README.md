@@ -1,3 +1,5 @@
+** ⚠️ Deprecated ⚠️:  See NEAR Auth for active service: https://docs.auth.near.org/
+
 # fast-auth-signer ![Docker Pulls](https://img.shields.io/docker/pulls/nearprotocol/fast-auth-sdk-frontend?link=https%3A%2F%2Fhub.docker.com%2Fr%2Fnearprotocol%2Ffast-auth-sdk-frontend)
 Monorepo for fast-auth-signer functionality - contains frontend app, and associated E2E test suites defined using Playwright
 
